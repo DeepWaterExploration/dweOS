@@ -10,3 +10,6 @@
 [submodule "backend/thirdparty/json"]
 	path = backend/thirdparty/json
 	url = https://github.com/nlohmann/json.git
+[submodule "backend/thirdparty/socket.io-client-cpp"]
+	path = backend/thirdparty/socket.io-client-cpp
+	url = https://github.com/socketio/socket.io-client-cpp.git

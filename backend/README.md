@@ -135,3 +135,45 @@
 
 </details>
 
+#### Set a UVC Control
+
+<details>
+<summary><code>POST</code> <code><b>/devices/set_uvc_control</b></code> <code>Sets a UVC Control</code></summary>
+
+##### Parameters
+
+> | name | type | data type | description |
+> |------|------|-----------|-------------|
+> | `index` | required | integer | The index of the connected camera |
+> | `control` | required | object | The control object |
+> | `control.id` | required | integer | The control ID |
+> | `control.value` | required | integer | The control value |
+
+##### Responses
+
+> | http code | content-type | response |
+> |-----------|--------------|----------|
+> | 200 | N/A | N/A |
+> | 403 | N/A | Error, invalid index |
+
+</details>
+
+#### Set an exploreHD option
+
+<details>
+<summary><code>POST</code> <code><b>/devices/set_option</b></code> <code>Sets an exploreHD option</code></summary>
+
+##### Parameters
+
+> | name | type | data type | description |
+> |------|------|-----------|-------------|
+> | `index` | required | integer | The index of the connected camera |
+> | `option` | required | string | The option ("bitrate", "gop", "mode") |
+> | `value` | required | integer / string | The option value |
+
+##### Responses
+
+> | http code | content-type | response |
+> |-----------|--------------|----------|
+> | 200 | N/A | N/A |
+> | 403 | N/A | Error, invalid index / Error, invalid value |

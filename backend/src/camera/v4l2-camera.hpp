@@ -93,10 +93,10 @@ namespace v4l2 {
         Camera *find_camera_with_format(uint32_t pixel_format);
 
         void query_uvc_controls();
-        
-        int set_pu(int id, int32_t value);
 
-        int get_pu(int id, int32_t &value);
+        int set_pu(uint32_t id, int32_t value);
+
+        int get_pu(uint32_t id, int32_t &value);
 
         std::vector<Control> get_uvc_controls();
 

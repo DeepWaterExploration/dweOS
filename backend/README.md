@@ -48,7 +48,7 @@
 #### Configuring a camera stream
 
 <details>
-<summary><code>POST</code> <code><b>/device</b></code> <code>Configure a camera stream</code></summary>
+<summary><code>POST</code> <code><b>/device</b></code> <code>Configures a camera stream</code></summary>
 
 ##### Parameters
 
@@ -69,3 +69,69 @@
 > |-----------|--------------|----------|
 > | 200 | N/A | N/A |
 > | 403 | N/A | Error, invalid index |
+
+</details>
+
+#### Add a stream endpoint
+
+<details>
+<summary><code>POST</code> <code><b>/add_stream_endpoint</b></code> <code>Adds a stream endpoint</code></summary>
+
+##### Parameters
+
+> | name | type | data type | description |
+> |------|------|-----------|-------------|
+> | `index` | required | integer | The index of the connected camera |
+> | `endpoint` | required | object | The stream endpoint object |
+> | `endpoint.host` | required | string | The host of the stream endpoint |
+> | `endpoint.port` | required | integer | The port of the stream endpoint |
+
+##### Responses
+
+> | http code | content-type | response |
+> |-----------|--------------|----------|
+> | 200 | N/A | N/A |
+> | 403 | N/A | Error, invalid index |
+
+</details>
+
+#### Start a stream
+
+<details>
+<summary><code>POST</code> <code><b>/add_stream_endpoint</b></code> <code>Starts a stream</code></summary>
+
+##### Parameters
+
+> | name | type | data type | description |
+> |------|------|-----------|-------------|
+> | `index` | required | integer | The index of the connected camera |
+
+##### Responses
+
+> | http code | content-type | response |
+> |-----------|--------------|----------|
+> | 200 | N/A | N/A |
+> | 403 | N/A | Error, invalid index |
+
+</details>
+
+#### Stop a stream
+
+<details>
+<summary><code>POST</code> <code><b>/add_stream_endpoint</b></code> <code>Stops a stream</code></summary>
+
+##### Parameters
+
+> | name | type | data type | description |
+> |------|------|-----------|-------------|
+> | `index` | required | integer | The index of the connected camera |
+
+##### Responses
+
+> | http code | content-type | response |
+> |-----------|--------------|----------|
+> | 200 | N/A | N/A |
+> | 403 | N/A | Error, invalid index |
+
+</details>
+

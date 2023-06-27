@@ -45,13 +45,14 @@ int Camera::uvc_get_ctrl(uint32_t unit, uint32_t ctrl, uint8_t *data, uint8_t si
     return ioctl(_fd, UVCIOC_CTRL_QUERY, &xctrlq);
 }
 
-int Device::set_pu(int id, int32_t value) {
+int Device::set_pu(uint32_t id, int32_t value) {
     int fd = _cameras.at(0)->get_file_descriptor();
-    v4l2_control control = {id, value};
-    return ioctl(fd, VIDIOC_G_CTRL, &control);
+    struct v4l2_control control = {id, value};
+    return ioctl(fd, VIDIOC_S_CTRL, &control);
 }
 
-int Device::get_pu(int id, int32_t &value) {
+int Device::get_pu(uint32_t id, int32_t &value)
+{
     int fd = _cameras.at(0)->get_file_descriptor();
     v4l2_control control = {id, 0};
     int res = ioctl(fd, VIDIOC_G_CTRL, &control);

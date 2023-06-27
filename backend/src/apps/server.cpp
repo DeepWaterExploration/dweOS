@@ -217,6 +217,12 @@ int main(int argc, char** argv) {
     devices.enumerate();
 
     std::cout << "Running API backend.\n";
+
+    libehd::Device *device = devices.get_ehd(0);
+    v4l2::Device *v4l2_device = device->get_v4l2_device();
+    v4l2_device->configure_stream(V4L2_PIX_FMT_H264, 1920, 1080, v4l2::Interval(1, 30), gst::STREAM_TYPE_UDP);
+    v4l2_device->add_stream_endpoint("127.0.0.1", 5600);
+    v4l2_device->start_stream();
     
     /* Test code to show the devices in plain text in the browser */
     svr.Get("/devices", [&devices](const httplib::Request &, httplib::Response &res) {

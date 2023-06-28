@@ -1,6 +1,6 @@
 {
   "name": "@deepwaterexploration/dwe-controls",
-  "version": "0.2.4",
+  "version": "2.2.4",
   "description": "Web Based UVC Control Driver for the DeepWater Exploration exploreHD and HDCam",
   "main": "lib/index.js",
   "bin": "bin/index.js",
@@ -32,7 +32,8 @@
     "@mui/material": "^5.13.6",
     "million": "^2.2.1",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.14.0"
   },
   "devDependencies": {
     "@babel/core": "^7.22.5",

@@ -19,17 +19,20 @@ include_directories(
     /usr/include/gstreamer-1.0
     src
     thirdparty/cpp-httplib
+    thirdparty/websocketpp
 )
 
 add_subdirectory(thirdparty/cwalk)
 add_subdirectory(thirdparty/fmt)
 add_subdirectory(thirdparty/json)
+add_subdirectory(thirdparty/websocketpp)
 
 set(SOURCE
     ${SOURCE}
     src/camera/v4l2-camera.cpp
     src/ehd/ehd-option.cpp
     src/ehd/ehd-device.cpp
+    src/ehd/device-list.cpp
     src/gstreamer/gst-pipeline.cpp
 )
 
@@ -42,4 +45,3 @@ target_link_libraries(libehd PRIVATE cwalk)
 target_link_libraries(libehd PRIVATE fmt)
 target_link_libraries(libehd PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(libehd PRIVATE Threads::Threads)
-# target_link_libraries(libehd PRIVATE httpserver)

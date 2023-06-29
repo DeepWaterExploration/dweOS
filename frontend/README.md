@@ -18,7 +18,6 @@ Here is an overview of the main directories and their purposes:
 │   ├── App.tsx                   # Main application component written in TypeScript (React)
 │   ├── main.tsx                  # Entry point file written in TypeScript (React)
 │   └── vite-env.d.ts             # Declaration file for Vite environment variables
-├── electron-builder.json5      # Electron-builder configuration file
 ├── package.json                # NPM package configuration
 ├── package-lock.json           # NPM package configuration
 ├── tsconfig.json               # TypeScript configuration file

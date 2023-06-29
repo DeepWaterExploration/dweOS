@@ -1,80 +1,29 @@
-import React, { ReactNode } from 'react';
-import { Route } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
 // routes to different pages
-import { routes, RouteType } from '../routes'
+import { routes, RouteType } from "../routes";
 
-import {
-  Divider,
-  ListSubheader,
-  ListItemIcon,
-  ListItemText,
-  ListItemButton,
-  Typography,
-} from '@mui/material';
+interface GetRoutesProps {
+  routes: RouteType[];
+}
 
-const GetRoutes = (routes: RouteType[]): ReactNode => {
-  const devicesRoutes = routes.filter((route) => route.category === 'Devices');
-  const communicationsRoutes = routes.filter(
-    (route) => route.category === 'Communications'
-  );
-
+const GetRoutes = ({ routes }: GetRoutesProps): JSX.Element => {
   return (
-    <React.Fragment>
-      <Divider sx={{ my: 1 }} />
-      <ListSubheader component="div" inset>
-        <Typography variant="inherit" fontWeight="bold">
-          Devices
-        </Typography>
-      </ListSubheader>
-      {devicesRoutes.map((route) => {
-        if (route.route) {
+    <Routes>
+      {routes.map(route => {
+        if (route.route && route.component) {
           return (
-            <Route
-              path={route.route}
-              element={route.component}
-              key={route.key}
-            >
-              <ListItemButton>
-                <ListItemIcon>
-                  {route.icon}
-                </ListItemIcon>
-                <ListItemText primary={route.name} />
-              </ListItemButton>
-            </Route>
-          )
+            <Route path={route.route} element={route.component} key={route.key} />
+          );
         }
         return null; // Add a default return value if the if condition is not met
       })}
-      <ListSubheader component="div" inset>
-        <Typography variant="inherit" fontWeight="bold">
-        Communications
-        </Typography>
-      </ListSubheader>
-      {communicationsRoutes.map((route) => {
-        if (route.route) {
-          return (
-            <Route
-              path={route.route}
-              element={route.component}
-              key={route.key}
-            >
-              <ListItemButton>
-                <ListItemIcon>
-                  {route.icon}
-                </ListItemIcon>
-                <ListItemText primary={route.name} />
-              </ListItemButton>
-            </Route>
-          )
-        }
-        return null; // Add a default return value if the if condition is not met
-      })}
-      <Divider sx={{ my: 1 }} />
-    </React.Fragment>
+    </Routes>
   );
 };
 
-const NavigationRoutes = GetRoutes(routes);
+const NavigationRoutes = (): JSX.Element => {
+  return <GetRoutes routes={routes} />;
+};
 
-export default NavigationRoutes
+export default NavigationRoutes;

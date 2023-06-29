@@ -63,7 +63,10 @@ int Device::get_pu(uint32_t id, int32_t &value)
 void Device::query_uvc_controls() {
     int fd = _cameras.at(0)->get_file_descriptor(); // TODO: error checking
     _controls.clear();
-    for (uint32_t cid = V4L2_CID_USER_BASE; cid < V4L2_CID_LASTP1; cid++) {
+    for (uint32_t cid = V4L2_CID_USER_BASE; cid < V4L2_CID_CAMERA_SENSOR_ROTATION+1; cid++) {
+        if (cid == V4L2_CID_LASTP1) {
+            cid = V4L2_CID_CAMERA_CLASS_BASE;
+        }
         Control control;
         v4l2_queryctrl qctrl;
         qctrl.id = cid;

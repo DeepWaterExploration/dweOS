@@ -26,6 +26,12 @@ namespace gst {
         RawPipeline() { }
 
         /**
+         * @brief Delete a Raw Pipeline object
+         * 
+        */
+        ~RawPipeline();
+
+        /**
          * @brief Construct a new Raw Pipeline object
          * 
          * @param pipeline_str pipeline string

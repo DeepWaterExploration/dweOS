@@ -80,6 +80,8 @@ namespace v4l2 {
     public:
         Device(v4l2::devices::DEVICE_INFO info);
 
+        ~Device();
+
         inline std::string get_device_file_path() {
             return _device_path;
         }

@@ -1,5 +1,9 @@
 #include "device-list.hpp"
 
+typedef void * (*THREADFUNCPTR)(void *);
+
+DeviceList::DeviceList(BroadcastServer &broadcast_server) : _broadcast_server(broadcast_server) { }
+
 libehd::Device *DeviceList::get_ehd(int index) {
     if (index >= ehd_devices.size()) return nullptr;
     return ehd_devices[index];
@@ -149,13 +153,13 @@ json DeviceList::serialize_ehd(libehd::Device *ehd) {
 
 void DeviceList::enumerate() {
     _devices_array = json::array();
-    std::vector<v4l2::devices::DEVICE_INFO> devices_info;
-    v4l2::devices::list(devices_info);
+    _devices.clear();
+    v4l2::devices::list(_devices);
 
     v4l2_devices.clear();
     ehd_devices.clear();
 
-    for (const auto &device_info : devices_info) {
+    for (const auto &device_info : _devices) {
         v4l2::Device *v4l2_device = new v4l2::Device(device_info);
 
         /* Check if device is an exploreHD */
@@ -167,8 +171,14 @@ void DeviceList::enumerate() {
             json device_object = serialize_ehd(ehd);
 
             _devices_array.push_back(device_object);
+        } else {
+            delete v4l2_device;
         }
     }
+}
+
+void DeviceList::start_monitoring() {
+    pthread_create(&_monitor_thread, NULL, (THREADFUNCPTR)&DeviceList::_monitor_devices, this);
 }
 
 json DeviceList::serialize() {
@@ -177,4 +187,72 @@ json DeviceList::serialize() {
         devices_array.push_back(serialize_ehd(ehd));
     }
     return devices_array;
+}
+
+void DeviceList::_monitor_devices() {
+    while (1) {
+        std::vector<v4l2::devices::DEVICE_INFO> devices;
+        std::vector<v4l2::devices::DEVICE_INFO> removed_devices;
+        std::vector<v4l2::devices::DEVICE_INFO> added_devices;
+        v4l2::devices::list(devices);
+
+        for (auto a : devices) {
+            bool foundDevice = false;
+            for (auto b : _devices) {
+                if (a.bus_info == b.bus_info) {
+                    foundDevice = true;
+                }
+            }
+            if (!foundDevice) {
+                std::cout << "Added Device: " << a.bus_info << "\n";
+                added_devices.push_back(a);
+            }
+        }
+
+        usleep(50000);
+
+        for (auto a : _devices) {
+            bool foundDevice = false;
+            for (auto b : devices) {
+                if (a.bus_info == b.bus_info) {
+                    foundDevice = true;
+                }
+            }
+            if (!foundDevice) {
+                std::cout << "Removed Device: " << a.bus_info << "\n";
+                removed_devices.push_back(a);
+            }
+        }
+
+        for (const auto &device_info : added_devices) {
+            v4l2::Device *v4l2_device = new v4l2::Device(device_info);
+
+            /* Check if device is an exploreHD */
+            if (v4l2_device->get_device_attr("idVendor") == "0c45" &&
+                v4l2_device->get_device_attr("idProduct") == "6366") {
+                libehd::Device *ehd = libehd::Device::construct_device(v4l2_device);
+                ehd_devices.push_back(ehd);
+                json device_object = serialize_ehd(ehd);
+                _devices_array.push_back(device_object);
+            } else {
+                delete v4l2_device;
+            }
+        }
+
+        for (const auto &device_info : removed_devices) {
+            auto itr = ehd_devices.begin();
+            while (itr != ehd_devices.end()) {
+                std::string bus_info = (*itr)->get_v4l2_device()->get_info().bus_info;
+                if (device_info.bus_info == bus_info) {
+                    ehd_devices.erase(itr);
+                    std::cout << "Removed: " << bus_info << "\n";
+                    itr++;
+                } else {
+                    itr++;
+                }
+            }
+        }
+
+        _devices = devices;
+    }
 }

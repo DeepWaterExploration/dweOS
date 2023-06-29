@@ -4,20 +4,12 @@
 #include "gstreamer/gst-pipeline.hpp"
 #include "nlohmann/json.hpp"
 #include "ehd/device-list.hpp"
-#include "websocketpp/server.hpp"
-#include "websocketpp/config/asio_no_tls.hpp"
+#include "net/broadcast-server.hpp"
+
 using json = nlohmann::json;
 
-typedef websocketpp::server<websocketpp::config::asio> server;
-
-using websocketpp::lib::placeholders::_1;
-using websocketpp::lib::placeholders::_2;
-using websocketpp::lib::bind;
-
-// pull out the type of messages sent by our config
-typedef server::message_ptr message_ptr;
-
 httplib::Server svr;
+BroadcastServer broadcast_server;
 
 int getIndex(const httplib::Params &params, httplib::Response &res) {
     int index = -1;
@@ -41,8 +33,10 @@ int main(int argc, char** argv) {
     /* Initialize gstreamer */
     gst_init(&argc, &argv);
 
-    DeviceList devices;
+    DeviceList devices(broadcast_server);
     devices.enumerate();
+
+    broadcast_server.start(9000);
 
     std::cout << "Running API backend.\n";
 
@@ -51,8 +45,13 @@ int main(int argc, char** argv) {
     v4l2_device->configure_stream(V4L2_PIX_FMT_H264, 1920, 1080, v4l2::Interval(1, 30), gst::STREAM_TYPE_UDP);
     v4l2_device->add_stream_endpoint("127.0.0.1", 5600);
     v4l2_device->start_stream();
-    
-    /* Test code to show the devices in plain text in the browser */
+
+    /* monitor */
+
+    devices.start_monitoring();
+
+    /* API */
+
     svr.Get("/devices", [&devices](const httplib::Request &, httplib::Response &res) {
         /* re-enumerate */
         json devices_array = devices.serialize();

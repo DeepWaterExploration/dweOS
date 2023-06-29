@@ -12,6 +12,7 @@ Device *Device::construct_device(v4l2::Device *device) {
 }
 
 v4l2::Device *Device::get_v4l2_device() {
+    std::cout << "asd\n";
     return _device;
 }
 
@@ -23,6 +24,10 @@ Device::Device(v4l2::Device *device) :
         _options.insert(std::make_pair("mode",    new xu::Option(h264Camera, xu::USR_ID, xu::USR_H264_CTRL, xu::H264_MODE_CTRL)));
         /* Additional options can be inserted here */
     }
+
+Device::~Device() {
+    delete _device;
+}
 
 uint32_t Device::get_bitrate() {
     xu::Option *opt = _options.at("bitrate");

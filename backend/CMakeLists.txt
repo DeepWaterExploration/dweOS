@@ -34,6 +34,7 @@ set(SOURCE
     src/ehd/ehd-device.cpp
     src/ehd/device-list.cpp
     src/gstreamer/gst-pipeline.cpp
+    src/net/broadcast-server.cpp
 )
 
 add_executable(libehd

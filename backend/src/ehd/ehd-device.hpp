@@ -71,6 +71,11 @@ namespace libehd {
          */
         void set_h264_mode(H264Mode mode);
 
+        /**
+         * @brief Destroy a uvc ehd device object
+        */
+        ~Device();
+
     private:
         /**
          * @brief Construct a new uvc ehd device object

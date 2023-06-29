@@ -213,6 +213,11 @@ Device::Device(v4l2::devices::DEVICE_INFO info) : _info(info) {
     query_uvc_controls();
 }
 
+Device::~Device() {
+    if (_pipeline)
+        delete _pipeline;
+}
+
 std::string Device::get_device_attr(std::string attr) {
     if (_cached_attrs.count(attr) > 0) {
         return _cached_attrs.at(attr);

@@ -6,6 +6,11 @@ typedef void * (*THREADFUNCPTR)(void *);
 
 /* gst::RawPipeline definitions */
 
+RawPipeline::~RawPipeline() {
+    if (_isRunning)
+        stop();
+}
+
 void RawPipeline::start() {
     if (_isRunning) {
         stop();

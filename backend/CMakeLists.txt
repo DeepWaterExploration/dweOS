@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1)
-project(libehd VERSION 0.0.1 LANGUAGES CXX)
+project(backend VERSION 0.0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -37,12 +37,12 @@ set(SOURCE
     src/net/broadcast-server.cpp
 )
 
-add_executable(libehd
+add_executable(backend
     ${SOURCE}
     src/apps/server.cpp)
-target_compile_options(libehd PRIVATE "-Wno-pmf-conversions") # Remove warning regarding function conversion
-target_link_libraries(libehd PRIVATE ${GSTLIBS_LIBRARIES})
-target_link_libraries(libehd PRIVATE cwalk)
-target_link_libraries(libehd PRIVATE fmt)
-target_link_libraries(libehd PRIVATE nlohmann_json::nlohmann_json)
-target_link_libraries(libehd PRIVATE Threads::Threads)
+target_compile_options(backend PRIVATE "-Wno-pmf-conversions") # Remove warning regarding function conversion
+target_link_libraries(backend PRIVATE ${GSTLIBS_LIBRARIES})
+target_link_libraries(backend PRIVATE cwalk)
+target_link_libraries(backend PRIVATE fmt)
+target_link_libraries(backend PRIVATE nlohmann_json::nlohmann_json)
+target_link_libraries(backend PRIVATE Threads::Threads)

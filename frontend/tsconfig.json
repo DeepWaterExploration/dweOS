@@ -1,10 +1,15 @@
 {
   "compilerOptions": {
-    /* Basic Options */
+    /* Basic options */
+    "baseUrl": ".",
+    "paths": {
+      "src/*": ["src/*"],
+      "@svg/*": ["public/assets/svg/*"]
+    },
     "target": "ES2020",
     "useDefineForClassFields": true,
-    "lib": ["dom", "es2020", "dom.iterable"],
-    "module": "es2020",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
     "skipLibCheck": true,
 
     /* Bundler mode */
@@ -21,6 +26,7 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["./src/**/*"],
-  "exclude": ["**/*.spec.ts", "**/*.test.ts"]
+  "include": ["src", "src/custom.d.ts"
+],
+  // "references": [{ "path": "./tsconfig.node.json" }]
 }

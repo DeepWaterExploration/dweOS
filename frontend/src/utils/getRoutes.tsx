@@ -1,7 +1,7 @@
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 
 // routes to different pages
-import { routes, RouteType } from "../routes";
+import { RouteType, routes } from "../routes";
 
 interface GetRoutesProps {
   routes: RouteType[];
@@ -13,7 +13,11 @@ const GetRoutes = ({ routes }: GetRoutesProps): JSX.Element => {
       {routes.map(route => {
         if (route.route && route.component) {
           return (
-            <Route path={route.route} element={route.component} key={route.key} />
+            <Route
+              path={route.route}
+              element={route.component}
+              key={route.key}
+            />
           );
         }
         return null; // Add a default return value if the if condition is not met

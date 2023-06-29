@@ -1,29 +1,30 @@
-import React, { useState } from "react";
-import { styled } from "@mui/material/styles";
-import MuiAppBar from "@mui/material/AppBar";
-import Toolbar from "@mui/material/Toolbar";
-import IconButton from "@mui/material/IconButton";
-import MenuIcon from "@mui/icons-material/Menu";
-import PowerSettingsNewIcon from "@mui/icons-material/PowerSettingsNew";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
 import Brightness7Icon from "@mui/icons-material/Brightness7";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import MenuIcon from "@mui/icons-material/Menu";
+import PowerSettingsNewIcon from "@mui/icons-material/PowerSettingsNew";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import { Divider, Grid, Typography } from "@mui/material";
+import MuiAppBar from "@mui/material/AppBar";
 import MuiDrawer from "@mui/material/Drawer";
+import IconButton from "@mui/material/IconButton";
 import List from "@mui/material/List";
-import Box from "@mui/system/Box";
-import NavigationItems from "./getNavigationItems";
-import NavigationRoutes from "./getRoutes";
-import DWELogo_white from "../svg/DWELogo_white.svg";
-import { Grid, Typography, Divider } from "@mui/material";
 // import WifiMenu from './WifiMenu'
-import ListSubheader from "@mui/material/ListSubheader";
-import { darkTheme, lightTheme } from "../utils/Themes";
 // import { lightTheme, darkTheme } from '../utils/themes'
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import ListSubheader from "@mui/material/ListSubheader";
+import { styled } from "@mui/material/styles";
+import Toolbar from "@mui/material/Toolbar";
+import Box from "@mui/system/Box";
+import React, { useState } from "react";
+import { BrowserRouter as Router } from "react-router-dom";
+
+import DWELogo_white from "../svg/DWELogo_white.svg";
+import NavigationItems from "../utils/getNavigationItems";
+import NavigationRoutes from "../utils/getRoutes";
+import { darkTheme, lightTheme } from "../utils/themes";
 
 const drawerWidth = 240;
 
@@ -130,12 +131,6 @@ export default function NavigationBar() {
                 sx={{ mx: 3 }}
                 style={{ backgroundColor: "white", height: 40, width: 3 }}
               />
-              <Typography
-                component='h1'
-                variant='h6'
-                color='inherit'
-                noWrap
-              ></Typography>
               <Typography
                 component='h1'
                 variant='h6'

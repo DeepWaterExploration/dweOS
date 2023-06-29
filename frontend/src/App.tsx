@@ -15,7 +15,7 @@ import // BrowserRouter as Router,
 import NavigationBar from "./components/navigationBar";
 
 // theme components
-import { Box, CssBaseline, Container, Grid } from "@mui/material";
+import { Box, Container, CssBaseline, Grid } from "@mui/material";
 
 function App() {
   // const { pathname } = useLocation()

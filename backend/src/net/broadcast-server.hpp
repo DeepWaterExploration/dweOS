@@ -18,6 +18,8 @@ class BroadcastServer {
 public:
     void start(int port);
 
+    void stop();
+
     void broadcast(std::string msg);
 
 private:

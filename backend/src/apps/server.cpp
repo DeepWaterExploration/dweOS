@@ -5,6 +5,7 @@
 #include "nlohmann/json.hpp"
 #include "ehd/device-list.hpp"
 #include "net/broadcast-server.hpp"
+#include <csignal>
 
 using json = nlohmann::json;
 
@@ -29,9 +30,16 @@ int getIndex(const httplib::Params &params, httplib::Response &res) {
     return index;
 }
 
+void signalHandler(int signum) {
+    broadcast_server.stop();
+    exit(signum);
+}
+
 int main(int argc, char** argv) {
     /* Initialize gstreamer */
     gst_init(&argc, &argv);
+
+    signal(SIGINT, signalHandler);
 
     DeviceList devices(broadcast_server);
     devices.enumerate();

@@ -16,6 +16,10 @@ void BroadcastServer::start(int port) {
     pthread_create(&_thread, NULL, (THREADFUNCPTR)&BroadcastServer::_run, this);
 }
 
+void BroadcastServer::stop() {
+    pthread_cancel(_thread);
+}
+
 void BroadcastServer::broadcast(std::string msg) {
     for (auto itr = _connections.begin(); itr != _connections.end(); itr++) {
         _ws.send(*itr, msg, websocketpp::frame::opcode::text);

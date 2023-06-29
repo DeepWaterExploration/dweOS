@@ -191,6 +191,8 @@ json DeviceList::serialize() {
 
 void DeviceList::_monitor_devices() {
     while (1) {
+        bool emitChanges = false;
+
         std::vector<v4l2::devices::DEVICE_INFO> devices;
         std::vector<v4l2::devices::DEVICE_INFO> removed_devices;
         std::vector<v4l2::devices::DEVICE_INFO> added_devices;
@@ -205,6 +207,7 @@ void DeviceList::_monitor_devices() {
             }
             if (!foundDevice) {
                 std::cout << "Added Device: " << a.bus_info << "\n";
+                emitChanges = true;
                 added_devices.push_back(a);
             }
         }
@@ -220,6 +223,7 @@ void DeviceList::_monitor_devices() {
             }
             if (!foundDevice) {
                 std::cout << "Removed Device: " << a.bus_info << "\n";
+                emitChanges = true;
                 removed_devices.push_back(a);
             }
         }
@@ -246,11 +250,14 @@ void DeviceList::_monitor_devices() {
                 if (device_info.bus_info == bus_info) {
                     ehd_devices.erase(itr);
                     std::cout << "Removed: " << bus_info << "\n";
-                    itr++;
                 } else {
                     itr++;
                 }
             }
+        }
+
+        if (emitChanges) {
+            _broadcast_server.broadcast("changed");
         }
 
         _devices = devices;

@@ -1,5 +1,3 @@
-import React from "react";
-
 // Material Dashboard 2 React layouts
 // import Cameras from 'layouts/cameras'
 // import Lights from 'layouts/lights'
@@ -9,13 +7,14 @@ import React from "react";
 
 // Import Material-UI components and icons
 import {
-  VideoCameraBackOutlined as VideoCameraBackOutlinedIcon,
   Lightbulb as LightbulbIcon,
   SettingsOutlined as SettingsOutlinedIcon,
   SignalWifi0BarOutlined as SignalWifi0BarOutlinedIcon,
   StorageOutlined as StorageOutlinedIcon,
+  VideoCameraBackOutlined as VideoCameraBackOutlinedIcon,
 } from "@mui/icons-material";
 import { Box } from "@mui/material";
+import React from "react";
 
 export interface RouteType {
   route: string;

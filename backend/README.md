@@ -98,7 +98,7 @@
 #### Start a stream
 
 <details>
-<summary><code>POST</code> <code><b>/add_stream_endpoint</b></code> <code>Starts a stream</code></summary>
+<summary><code>POST</code> <code><b>/start_stream</b></code> <code>Starts a stream</code></summary>
 
 ##### Parameters
 
@@ -118,7 +118,7 @@
 #### Stop a stream
 
 <details>
-<summary><code>POST</code> <code><b>/add_stream_endpoint</b></code> <code>Stops a stream</code></summary>
+<summary><code>POST</code> <code><b>/stop_stream</b></code> <code>Stops a stream</code></summary>
 
 ##### Parameters
 

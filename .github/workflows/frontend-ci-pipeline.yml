@@ -4,34 +4,94 @@ name: Test Building Code
 on: [push, pull_request, workflow_dispatch]
 # The sequence of runs in this workflow:
 jobs:
-  # This workflow contains a single job called "build"
-  build:
+  lint:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+
     steps:
+      - run: lsb_release -a
+      - run: uname -a
       - name: Check out Repository Code
         uses: actions/checkout@v3
+      - name: Set Up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.15.0'
+
+      - name: Cache app node_modules
+        id: cache-app-modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            frontend/node_modules
+          key: ${{ runner.os }}-${{ hashFiles('frontend/package.json', 'frontend/package-lock.json') }}
+
+      - name: Restore cached .eslintcache and tsconfig.tsbuildinfo
+        uses: actions/cache/restore@v3
+        id: cache-lint
+        with:
+          path: |
+            frontend/.eslintcache
+            frontend/tsconfig.tsbuildinfo
+          key: lint-${{ runner.os }}-${{ hashFiles('frontend/package.json', 'frontend/package-lock.json', 'frontend/.eslintrc.cjs', 'frontend/.eslint/**', 'frontend/tsconfig.json') }}
+
+      - name: Install app node_modules
+        if: steps.cache-app-modules.outputs.cache-hit != 'true'
+        run: |
+          cd frontend
+          npm ci
+        env:
+          NPM_CONFIG_LOGLEVEL: verbose
+      - run: |
+          cd frontend
+          npm run lint
+      - run: git diff --exit-code
+
+      - name: Update cached .eslintcache and tsconfig.tsbuildinfo
+        uses: actions/cache/save@v3
+        if: github.ref == 'refs/heads/main'
+        with:
+          path: |
+            frontend/.eslintcache
+            frontend/tsconfig.tsbuildinfo
+          key: ${{ steps.cache-lint.outputs.cache-primary-key }}
+  build:
+    needs: lint
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    timeout-minutes: 10
+    steps:
+      - run: lsb_release -a
+      - run: uname -a
+      - name: Check out Repository Code
+        uses: actions/checkout@v3
+      - name: Set Up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.15.0'
+
+      - name: Cache app node_modules
+        id: cache-app-modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            frontend/node_modules
+          key: ${{ runner.os }}-${{ hashFiles('frontend/package.json', 'frontend/package-lock.json') }}
+
+      - name: Install Desktop node_modules
+        if: steps.cache-app-modules.outputs.cache-hit != 'true'
+        run: |
+          cd frontend
+          npm ci
+        env:
+          NPM_CONFIG_LOGLEVEL: verbose
+
       - name: Cache Streaming Dependencies
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
           packages: libunwind-dev libudev-dev libgstreamer-plugins-base1.0-dev libgstreamer1.0-dev gstreamer1.0-plugins-good gstreamer1.0-plugins-bad
           version: 1.1
-      - name: Set Up Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16
-      - name: Cache Node Dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            frontend/node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-      - name: Install Node Dependencies
-        run: |
-          cd frontend
-          npm install
+
       - name: Build Repository Code
         run: |
           cd frontend

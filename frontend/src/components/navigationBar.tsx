@@ -1,23 +1,27 @@
+// eslint-disable-next-line import/named
 import Brightness4Icon from "@mui/icons-material/Brightness4";
 import Brightness7Icon from "@mui/icons-material/Brightness7";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import MenuIcon from "@mui/icons-material/Menu";
 import PowerSettingsNewIcon from "@mui/icons-material/PowerSettingsNew";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
-import { Divider, Grid, Typography } from "@mui/material";
-import MuiAppBar from "@mui/material/AppBar";
+import {
+  Box,
+  Divider,
+  Grid,
+  IconButton,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  ListSubheader,
+  Toolbar,
+  Typography,
+} from "@mui/material";
+// eslint-disable-next-line import/named
+import MuiAppBar, { AppBarProps as MuiAppBarProps } from "@mui/material/AppBar";
 import MuiDrawer from "@mui/material/Drawer";
-import IconButton from "@mui/material/IconButton";
-import List from "@mui/material/List";
-// import WifiMenu from './WifiMenu'
-// import { lightTheme, darkTheme } from '../utils/themes'
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
-import ListSubheader from "@mui/material/ListSubheader";
 import { styled } from "@mui/material/styles";
-import Toolbar from "@mui/material/Toolbar";
-import Box from "@mui/system/Box";
 import React, { useState } from "react";
 import { BrowserRouter as Router } from "react-router-dom";
 
@@ -25,12 +29,18 @@ import DWELogo_white from "../svg/DWELogo_white.svg";
 import NavigationItems from "../utils/getNavigationItems";
 import NavigationRoutes from "../utils/getRoutes";
 import { darkTheme, lightTheme } from "../utils/themes";
+// import WifiMenu from './WifiMenu'
+// import { lightTheme, darkTheme } from '../utils/themes'
 
 const drawerWidth = 240;
 
+interface AppBarProps extends MuiAppBarProps {
+  open?: boolean;
+}
+
 const AppBar = styled(MuiAppBar, {
   shouldForwardProp: prop => prop !== "open",
-})(({ theme, open }) => ({
+})<AppBarProps>(({ theme, open }) => ({
   zIndex: theme.zIndex.drawer + 1,
   transition: theme.transitions.create(["width", "margin"], {
     easing: theme.transitions.easing.sharp,

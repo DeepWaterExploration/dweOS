@@ -16,7 +16,7 @@ jobs:
       - name: Set Up Node
         uses: actions/setup-node@v3
         with:
-          node-version: '18.15.0'
+          node-version-file: 'frontend/.nvmrc'
 
       - name: Cache app node_modules
         id: cache-app-modules
@@ -24,7 +24,9 @@ jobs:
         with:
           path: |
             frontend/node_modules
-          key: ${{ runner.os }}-${{ hashFiles('frontend/package.json', 'frontend/package-lock.json') }}
+          key: ${{ runner.os }}-npm-cache-${{ hashFiles('frontend/package.json', 'frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-cache-
 
       - name: Restore cached .eslintcache and tsconfig.tsbuildinfo
         uses: actions/cache/restore@v3
@@ -68,7 +70,7 @@ jobs:
       - name: Set Up Node
         uses: actions/setup-node@v3
         with:
-          node-version: '18.15.0'
+          node-version-file: 'frontend/.nvmrc'
 
       - name: Cache app node_modules
         id: cache-app-modules
@@ -76,9 +78,9 @@ jobs:
         with:
           path: |
             frontend/node_modules
-          key: ${{ runner.os }}-${{ hashFiles('frontend/package.json', 'frontend/package-lock.json') }}
+          key: ${{ runner.os }}-npm-cache-${{ hashFiles('frontend/package.json', 'frontend/package-lock.json') }}
 
-      - name: Install Desktop node_modules
+      - name: Install app node_modules
         if: steps.cache-app-modules.outputs.cache-hit != 'true'
         run: |
           cd frontend

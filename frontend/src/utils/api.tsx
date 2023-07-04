@@ -1,10 +1,11 @@
 import fetch from "node-fetch";
 
 /* The Device object is the same as the one defined in the backend */
-interface Device {
-  id: string;
-  name: string;
-  type: string;
+export interface Device {
+  caps: {
+    driver: boolean;
+  };
+  devicePath: string;
 }
 
 /**

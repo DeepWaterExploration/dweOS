@@ -4,6 +4,11 @@ export interface Device {
     driver: boolean;
   };
   devicePath: string;
+  options: {
+    bitrate: number;
+    h264: boolean;
+    vbr: boolean;
+  };
 }
 
 /**
@@ -268,7 +273,7 @@ export async function setUVCControl(
 }
 
 /**
- * Setan exploreHD option on a device.
+ * Configure exploreHD option on a device.
  * @param {number} index - The index of the connected camera.
  * @param {number} option - The option to set.
  * @param {number} value - The value to set the option to.
@@ -299,4 +304,24 @@ export async function setExploreHDOption(index: number): Promise<void> {
     console.error(error);
     throw new Error("Failed to set exploreHD option");
   }
+}
+
+/**
+ * Restore a device to factory settings.
+ */
+export async function resetSettings(): Promise<void> {
+  const url = "/reset_settings";
+  const config = {
+    method: "POST",
+  };
+  try {
+    const response = await fetch(url, config);
+    if (!response.ok) {
+      throw new Error("Failed to reset settings");
+    }
+  } catch (error) {
+    console.error(error);
+    throw new Error("Failed to reset settings");
+  }
+  window.location.reload();
 }

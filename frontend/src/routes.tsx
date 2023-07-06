@@ -1,5 +1,4 @@
 // Material Dashboard 2 React layouts
-// import Cameras from 'layouts/cameras'
 // import Lights from 'layouts/lights'
 // import Misc from 'layouts/misc'
 // import WiFi from 'layouts/wifi'
@@ -16,6 +15,8 @@ import {
 import { Box } from "@mui/material";
 import React from "react";
 
+import CamerasPage from "./layouts/cameras";
+
 export interface RouteType {
   route: string;
   component: React.ReactNode;
@@ -30,8 +31,7 @@ export interface RouteType {
 export const routes: RouteType[] = [
   {
     route: "/devices/cameras",
-    component: <Box />,
-    // <Cameras />,
+    component: <CamerasPage />,
     exact: true,
     icon: <VideoCameraBackOutlinedIcon />,
     category: "Devices",

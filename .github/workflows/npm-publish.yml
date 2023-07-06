@@ -1,8 +1,10 @@
 ---
-name: Publish to NPM
+name: Publish Package to NPM
+# Controls when the workflow will run
 on:
   release:
     types: [created]
+# The sequence of runs in this workflow:
 jobs:
   build:
     runs-on: ubuntu-latest

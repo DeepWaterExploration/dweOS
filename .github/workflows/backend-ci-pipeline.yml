@@ -1,7 +1,8 @@
 ---
 name: CI/CD Pipeline for Backend
-on:
-  push:
+# Controls when the workflow will run
+on: [push, pull_request, workflow_dispatch]
+# The sequence of runs in this workflow:
 jobs:
   build:
     runs-on: ubuntu-latest

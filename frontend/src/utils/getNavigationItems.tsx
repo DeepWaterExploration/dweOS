@@ -24,7 +24,6 @@ const GetRoutes = ({ routes }: GetRoutesProps): JSX.Element => {
   );
   return (
     <React.Fragment>
-      <Divider sx={{ my: 1 }} />
       <ListSubheader component='div' inset>
         <Typography variant='inherit' fontWeight='bold'>
           Devices
@@ -43,6 +42,7 @@ const GetRoutes = ({ routes }: GetRoutesProps): JSX.Element => {
           // return null; // Add a default return value if the if condition is not met
         })}
       </List>
+      <Divider sx={{ my: 1 }} />
       <ListSubheader component='div' inset>
         <Typography variant='inherit' fontWeight='bold'>
           Communications
@@ -61,7 +61,6 @@ const GetRoutes = ({ routes }: GetRoutesProps): JSX.Element => {
           // return null; // Add a default return value if the if condition is not met
         })}
       </List>
-      <Divider sx={{ my: 1 }} />
     </React.Fragment>
   );
 };

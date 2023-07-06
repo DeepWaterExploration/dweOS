@@ -5,3 +5,8 @@
   font-weight: normal;
   font-style: normal;
 }
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}

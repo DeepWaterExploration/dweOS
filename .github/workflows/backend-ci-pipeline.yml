@@ -49,8 +49,8 @@ jobs:
         base_image: ${{ matrix.base_image }}
         cpu: ${{ matrix.cpu }}
         commands: |
-          # sudo apt-cache search libglib2.0-dev
-          # sudo apt-get install -y libgtk2.0-dev
+          sudo apt-cache search libglib2.0-dev
+          sudo apt-get install -y libgtk2.0-dev
           sudo apt-get install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
           sudo apt-get install -y libudev-dev
           sudo apt-get install -y libboost-all-dev

@@ -1,5 +1,3 @@
-import fetch from "node-fetch";
-
 /* The Device object is the same as the one defined in the backend */
 export interface Device {
   caps: {

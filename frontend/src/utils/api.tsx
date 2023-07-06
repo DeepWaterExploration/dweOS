@@ -17,23 +17,26 @@ export interface Device {
  * @throws {Error} - If the request to retrieve the device list fails.
  */
 export async function getDevices(): Promise<Device[]> {
-  const url = "/devices";
-  const config = {
+  const url = "http://localhost:8080/devices";
+  const config: RequestInit = {
+    mode: "cors",
     method: "GET",
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
   };
-  try {
-    return await fetch(url, config)
-      // Process the response data
-      .then(response => response.json())
-      .then(data => data as Device[]);
-  } catch (error) {
-    console.log("Failed to retrieve device list");
-    console.error(error);
-    return [];
-  }
+  return await fetch(url, config)
+    // Process the response data
+    .then((response: Response) => response.json())
+    .then((data: Device[]) => {
+      return data;
+    })
+    .catch((error: Error) => {
+      console.log("Failed to retrieve device list");
+      console.error(error);
+      return [];
+    });
 }
 
 /**
@@ -43,23 +46,26 @@ export async function getDevices(): Promise<Device[]> {
  * @throws {Error} - If the request to retrieve the device fails.
  */
 export async function getDevice(id: number): Promise<Device> {
-  const url = `/devices/${id}`;
-  const config = {
+  const url = `http://localhost:8080/devices/${id}`;
+  const config: RequestInit = {
+    mode: "cors",
     method: "GET",
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
   };
-  try {
-    return await fetch(url, config)
-      // Process the response data
-      .then(response => response.json())
-      .then(data => data as Device);
-  } catch (error) {
-    console.log(`Failed to retrieve device ${id}`);
-    console.error(error);
-    return {} as Device;
-  }
+  return await fetch(url, config)
+    // Process the response data
+    .then((response: Response) => response.json())
+    .then((data: Device) => {
+      return data;
+    })
+    .catch((error: Error) => {
+      console.log(`Failed to retrieve device ${id}`);
+      console.error(error);
+      return {} as Device;
+    });
 }
 
 /* If we ever need to add more formats, just add them here */
@@ -94,20 +100,27 @@ interface Format {
  * @throws {Error} - If the request to configure the device fails.
  */
 export async function setDevice(id: number, format: Format) {
-  const url = `/devices/${id}`;
-  const config = {
+  const url = `http://localhost:8080/devices/${id}`;
+  const config: RequestInit = {
+    mode: "cors",
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
     body: JSON.stringify(format),
   };
-  try {
-    return await fetch(url, config);
-  } catch (error) {
-    console.log(`Failed to configure device ${id}`);
-    console.error(error);
-  }
+  return await fetch(url, config)
+    // Process the response data
+    .then((response: Response) => response.json())
+    .then((data: Device) => {
+      return data;
+    })
+    .catch((error: Error) => {
+      console.log(`Failed to configure device ${id}`);
+      console.error(error);
+      return {} as Device;
+    });
 }
 
 /**
@@ -131,31 +144,35 @@ export async function addStreamEndpoint(
   index: number,
   endpoint: Endpoint
 ): Promise<void> {
-  const url = "/add_stream_endpoint";
+  const url = "http://localhost:8080/add_stream_endpoint";
   const data = {
     index,
     endpoint,
   };
-  const config = {
+  const config: RequestInit = {
+    mode: "cors",
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
     body: JSON.stringify(data),
   };
 
-  try {
-    const response = await fetch(url, config);
-    if (!response.ok) {
-      if (response.status === 403) {
-        throw new Error("Error: Invalid index");
+  return await fetch(url, config)
+    // Process the response data
+    .then((response: Response) => {
+      if (!response.ok) {
+        if (response.status === 403) {
+          throw new Error("Error: Invalid index");
+        }
+        throw new Error("Failed to add stream endpoint");
       }
-      throw new Error("Failed to add stream endpoint");
-    }
-  } catch (error) {
-    console.error(error);
-    throw new Error("Failed to add stream endpoint");
-  }
+    })
+    .catch((error: Error) => {
+      console.log("Failed to add stream endpoint");
+      console.error(error);
+    });
 }
 
 /**
@@ -165,30 +182,34 @@ export async function addStreamEndpoint(
  * @throws {Error} - If the index is invalid or the request fails.
  */
 export async function startStream(index: number): Promise<void> {
-  const url = "/start_stream";
+  const url = "http://localhost:8080/start_stream";
   const data = {
     index,
   };
-  const config = {
+  const config: RequestInit = {
+    mode: "cors",
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
     body: JSON.stringify(data),
   };
 
-  try {
-    const response = await fetch(url, config);
-    if (!response.ok) {
-      if (response.status === 403) {
-        throw new Error("Error: Invalid index");
+  return await fetch(url, config)
+    // Process the response data
+    .then((response: Response) => {
+      if (!response.ok) {
+        if (response.status === 403) {
+          throw new Error("Error: Invalid index");
+        }
+        throw new Error("Failed to start stream");
       }
-      throw new Error("Failed to start stream");
-    }
-  } catch (error) {
-    console.error(error);
-    throw new Error("Failed to start stream");
-  }
+    })
+    .catch((error: Error) => {
+      console.log("Failed to start stream");
+      console.error(error);
+    });
 }
 
 /**
@@ -198,30 +219,34 @@ export async function startStream(index: number): Promise<void> {
  * @throws {Error} - If the index is invalid or the request fails.
  */
 export async function stopStream(index: number): Promise<void> {
-  const url = "/stop_stream";
+  const url = "http://localhost:8080/stop_stream";
   const data = {
     index,
   };
-  const config = {
+  const config: RequestInit = {
+    mode: "cors",
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
     body: JSON.stringify(data),
   };
 
-  try {
-    const response = await fetch(url, config);
-    if (!response.ok) {
-      if (response.status === 403) {
-        throw new Error("Error: Invalid index");
+  return await fetch(url, config)
+    // Process the response data
+    .then((response: Response) => {
+      if (!response.ok) {
+        if (response.status === 403) {
+          throw new Error("Error: Invalid index");
+        }
+        throw new Error("Failed to stop stream");
       }
-      throw new Error("Failed to stop stream");
-    }
-  } catch (error) {
-    console.error(error);
-    throw new Error("Failed to stop stream");
-  }
+    })
+    .catch((error: Error) => {
+      console.log("Failed to stop stream");
+      console.error(error);
+    });
 }
 
 /**
@@ -246,30 +271,35 @@ export async function setUVCControl(
   index: number,
   control: Control
 ): Promise<void> {
-  const url = "/set_uvc_control";
+  const url = "http://localhost:8080/set_uvc_control";
   const data = {
     index,
     control,
   };
-  const config = {
+  const config: RequestInit = {
+    mode: "cors",
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
     body: JSON.stringify(data),
   };
-  try {
-    const response = await fetch(url, config);
-    if (!response.ok) {
-      if (response.status === 403) {
-        throw new Error("Error: Invalid index");
+
+  return await fetch(url, config)
+    // Process the response data
+    .then((response: Response) => {
+      if (!response.ok) {
+        if (response.status === 403) {
+          throw new Error("Error: Invalid index");
+        }
+        throw new Error("Failed to set UVC control");
       }
-      throw new Error("Failed to set UVC control");
-    }
-  } catch (error) {
-    console.error(error);
-    throw new Error("Failed to set UVC control");
-  }
+    })
+    .catch((error: Error) => {
+      console.log("Failed to set UVC control");
+      console.error(error);
+    });
 }
 
 /**
@@ -281,47 +311,60 @@ export async function setUVCControl(
  * @throws {Error} - If the index is invalid or the request fails.
  */
 export async function setExploreHDOption(index: number): Promise<void> {
-  const url = "/set_explorehd_option";
+  const url = "http://localhost:8080/set_explorehd_option";
   const data = {
     index,
   };
-  const config = {
+  const config: RequestInit = {
+    mode: "cors",
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
     body: JSON.stringify(data),
   };
-  try {
-    const response = await fetch(url, config);
-    if (!response.ok) {
-      if (response.status === 403) {
-        throw new Error("Error: Invalid index");
+
+  return await fetch(url, config)
+    // Process the response data
+    .then((response: Response) => {
+      if (!response.ok) {
+        if (response.status === 403) {
+          throw new Error("Error: Invalid index");
+        }
+        throw new Error("Failed to set exploreHD option");
       }
-      throw new Error("Failed to set exploreHD option");
-    }
-  } catch (error) {
-    console.error(error);
-    throw new Error("Failed to set exploreHD option");
-  }
+    })
+    .catch((error: Error) => {
+      console.log("Failed to set exploreHD option");
+      console.error(error);
+    });
 }
 
 /**
  * Restore a device to factory settings.
  */
 export async function resetSettings(): Promise<void> {
-  const url = "/reset_settings";
-  const config = {
+  const url = "http://localhost:8080/reset_settings";
+  const config: RequestInit = {
+    mode: "cors",
     method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
   };
-  try {
-    const response = await fetch(url, config);
-    if (!response.ok) {
-      throw new Error("Failed to reset settings");
-    }
-  } catch (error) {
-    console.error(error);
-    throw new Error("Failed to reset settings");
-  }
-  window.location.reload();
+
+  return await fetch(url, config)
+    // Process the response data
+    .then((response: Response) => {
+      if (!response.ok) {
+        throw new Error("Failed to reset settings");
+      }
+      window.location.reload();
+    })
+    .catch((error: Error) => {
+      console.log("Failed to reset settings");
+      console.error(error);
+    });
 }

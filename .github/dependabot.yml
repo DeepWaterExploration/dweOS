@@ -11,18 +11,25 @@ updates:
     open-pull-requests-limit: 10
     schedule:
       interval: "daily"
-  # Raise all npm pull requests with custom labels
+      time: "10:00"
+      # Use Los Angeles Standard Time (UTC -07:00)
+      timezone: "America/Los_Angeles"
+    # Raise all npm pull requests with custom labels
     labels:
       - "github-actions"
       - "dependencies"
 
   # Maintain dependencies for npm
-  - package-ecosystem: "npm"
-    directory: "/frontend/"
+  - package-ecosystem: "npm" # See documentation for possible values
+    directory: "/frontend/" # Location of package manifests
     open-pull-requests-limit: 10
     schedule:
       interval: "daily"
+      time: "10:00"
+      # Use Los Angeles Standard Time (UTC -07:00)
+      timezone: "America/Los_Angeles"
     # Raise all npm pull requests with custom labels
     labels:
       - "npm"
       - "dependencies"
+    versioning-strategy: "increase"

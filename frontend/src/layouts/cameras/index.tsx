@@ -1,15 +1,12 @@
 import Grid from "@mui/material/Grid";
 import React, { useCallback, useEffect, useState } from "react";
-import { io } from "socket.io-client";
 
 import DeviceCard from "./DeviceCard";
-import { Device } from "../../utils/api";
+import { Device, getDevices } from "../../utils/api";
 
 const CamerasPage: React.FC = () => {
   const [exploreHD_cards, setExploreHD_cards] = useState<JSX.Element[]>([]);
   const [other_cards, setOther_cards] = useState<JSX.Element[]>([]);
-  const [socket] = useState(io());
-  console.log("socket", socket);
   const addCard = useCallback(
     (device: Device): void => {
       if (device.caps.driver) {
@@ -60,36 +57,12 @@ const CamerasPage: React.FC = () => {
   };
 
   useEffect(() => {
-    // Add event listeners to handle device connection status updates
-    socket.on("connect", () => {
-      console.log("connect");
-      fetch("/devices")
-        .then(response => response.json())
-        .then(devices => addDevices(devices));
+    // get the devices from the backend
+    getDevices().then(devices => {
+      console.log("Devices: ", devices);
+      addDevices(devices);
     });
-    socket.on("disconnect", () => {
-      console.log("disconnect");
-      fetch("/devices")
-        .then(response => response.json())
-        .then(devices => {
-          for (const device of devices) {
-            removeDevice(device);
-          }
-        });
-    });
-    socket.on("added", addedDevices => {
-      console.log("added", addedDevices);
-      for (const device of addedDevices) {
-        addCard(device);
-      }
-    });
-    socket.on("removed", removedDevices => {
-      console.log("removed", removedDevices);
-      for (const device of removedDevices) {
-        removeDevice(device);
-      }
-    });
-  }, [addCard, addDevices, socket]);
+  }, [addDevices]);
 
   return (
     <Grid

@@ -60,10 +60,20 @@ int main(int argc, char** argv) {
 
     /* API */
 
+    svr.Options("/(.*)",
+        [&](const httplib::Request &, httplib::Response &res) {
+        res.set_header("Access-Control-Allow-Methods", " POST, GET, OPTIONS");
+        res.set_header("Content-Type", "text/html; charset=utf-8");
+        res.set_header("Access-Control-Allow-Headers", "X-Requested-With, Content-Type, Accept");
+        res.set_header("Access-Control-Allow-Origin", "*");
+        res.set_header("Connection", "close");
+    });
+
     svr.Get("/devices", [&devices](const httplib::Request &, httplib::Response &res) {
         /* re-enumerate */
         json devices_array = devices.serialize();
         res.set_content(devices_array.dump(), "application/json");
+        res.set_header("Access-Control-Allow-Origin", "*");
     });
 
     svr.Get("/device", [&devices](const httplib::Request &req, httplib::Response &res) {
@@ -78,6 +88,7 @@ int main(int argc, char** argv) {
         }
         json resbody = devices.serialize_ehd(ehd);
         res.set_content(resbody.dump(), "application/json");
+        res.set_header("Access-Control-Allow-Origin", "*");
     });
 
     svr.Post("/configure_stream", [&devices](const httplib::Request &req, httplib::Response &res) {
@@ -109,6 +120,7 @@ int main(int argc, char** argv) {
         int denominator = interval_object["denominator"];
 
         device->configure_stream(pixel_format, width, height, v4l2::Interval(numerator, denominator), gst::STREAM_TYPE_UDP);
+        res.set_header("Access-Control-Allow-Origin", "*");
     });
 
     svr.Post("/add_stream_endpoint", [&devices](const httplib::Request &req, httplib::Response &res) {
@@ -126,6 +138,7 @@ int main(int argc, char** argv) {
 
         v4l2::Device *device = ehd->get_v4l2_device();
         device->add_stream_endpoint(host, port);
+        res.set_header("Access-Control-Allow-Origin", "*");
     });
 
     svr.Post("/start_stream", [&devices](const httplib::Request &req, httplib::Response &res) {
@@ -143,6 +156,7 @@ int main(int argc, char** argv) {
             std::cout << "Starting stream for device at index: " << index << "\n";
             device->start_stream();
         }
+        res.set_header("Access-Control-Allow-Origin", "*");
     });
 
     svr.Post("/stop_stream", [&devices](const httplib::Request &req, httplib::Response &res) {
@@ -160,6 +174,7 @@ int main(int argc, char** argv) {
             std::cout << "Starting stream for device at index: " << index << "\n";
             device->stop_stream();
         }
+        res.set_header("Access-Control-Allow-Origin", "*");
     });
 
     svr.Post("/devices/set_uvc_control", [&devices](const httplib::Request &req, httplib::Response &res) {
@@ -178,6 +193,7 @@ int main(int argc, char** argv) {
         std::cout << "ID: " << id << ", value: " << value << "\n";
         v4l2::Device *device = ehd->get_v4l2_device();
         device->set_pu(id, value);
+        res.set_header("Access-Control-Allow-Origin", "*");
     });
 
     svr.Post("/devices/set_option", [&devices](const httplib::Request &req, httplib::Response &res) {
@@ -207,6 +223,7 @@ int main(int argc, char** argv) {
             }
             ehd->set_h264_mode(mode);
         }
+        res.set_header("Access-Control-Allow-Origin", "*");
     });
 
     /* Leave the pipeline threads running */

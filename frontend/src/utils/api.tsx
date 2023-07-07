@@ -24,7 +24,7 @@ export async function getDevices(): Promise<Device[]> {
     headers: {
       "Content-Type": "application/json",
     },
-    credentials: "include",
+    // credentials: "include",
   };
   return await fetch(url, config)
     // Process the response data
@@ -53,7 +53,7 @@ export async function getDevice(id: number): Promise<Device> {
     headers: {
       "Content-Type": "application/json",
     },
-    credentials: "include",
+    // credentials: "include",
   };
   return await fetch(url, config)
     // Process the response data
@@ -107,7 +107,7 @@ export async function setDevice(id: number, format: Format) {
     headers: {
       "Content-Type": "application/json",
     },
-    credentials: "include",
+    // credentials: "include",
     body: JSON.stringify(format),
   };
   return await fetch(url, config)
@@ -155,7 +155,7 @@ export async function addStreamEndpoint(
     headers: {
       "Content-Type": "application/json",
     },
-    credentials: "include",
+    // credentials: "include",
     body: JSON.stringify(data),
   };
 
@@ -192,7 +192,7 @@ export async function startStream(index: number): Promise<void> {
     headers: {
       "Content-Type": "application/json",
     },
-    credentials: "include",
+    // credentials: "include",
     body: JSON.stringify(data),
   };
 
@@ -229,7 +229,7 @@ export async function stopStream(index: number): Promise<void> {
     headers: {
       "Content-Type": "application/json",
     },
-    credentials: "include",
+    // credentials: "include",
     body: JSON.stringify(data),
   };
 
@@ -282,7 +282,7 @@ export async function setUVCControl(
     headers: {
       "Content-Type": "application/json",
     },
-    credentials: "include",
+    // credentials: "include",
     body: JSON.stringify(data),
   };
 
@@ -321,7 +321,7 @@ export async function setExploreHDOption(index: number): Promise<void> {
     headers: {
       "Content-Type": "application/json",
     },
-    credentials: "include",
+    // credentials: "include",
     body: JSON.stringify(data),
   };
 
@@ -352,7 +352,7 @@ export async function resetSettings(): Promise<void> {
     headers: {
       "Content-Type": "application/json",
     },
-    credentials: "include",
+    // credentials: "include",
   };
 
   return await fetch(url, config)

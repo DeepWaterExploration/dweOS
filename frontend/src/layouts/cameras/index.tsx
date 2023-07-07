@@ -9,6 +9,7 @@ const CamerasPage: React.FC = () => {
   const [other_cards, setOther_cards] = useState<JSX.Element[]>([]);
   const addCard = useCallback(
     (device: Device): void => {
+      console.log(device);
       if (device.caps.driver) {
         // takes the prevState, and using the `spread` operator
         // appends the new Card to the new array

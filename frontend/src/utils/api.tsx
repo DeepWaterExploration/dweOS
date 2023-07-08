@@ -1,14 +1,84 @@
 /* The Device object is the same as the one defined in the backend */
 export interface Device {
-  caps: {
-    driver: boolean;
+  cameras: Camera[];
+  controls: Control[];
+  info: {
+    name: string;
+    /* Differenciator between cameras (device path) */
+    path: string;
+    pid: string;
+    manufacturer: string;
+    model: string;
+    // Add more properties if needed
   };
-  devicePath: string;
   options: {
     bitrate: number;
-    h264: boolean;
-    vbr: boolean;
+    gop: number;
+    mode: string;
+    // Add more properties if needed
   };
+  stream: {
+    device_path: string;
+    encode_type: encodeType;
+    stream_type: streamType;
+    // Add more properties if needed
+  };
+}
+
+interface Camera {
+  device_path: string;
+  formats: CameraFormat[];
+}
+
+interface CameraFormat {
+  format: string;
+  sizes: CameraSize[];
+}
+
+export interface CameraSize {
+  height: number;
+  intervals: CameraInterval[];
+  width: number;
+}
+
+interface CameraInterval {
+  /* The stream interval numerator */
+  numerator: number;
+  /* The stream interval denominator */
+  denominator: number;
+}
+
+interface Control {
+  flags: CameraFlags; // Update the type if possible
+  id: number;
+  name: string;
+}
+
+interface CameraFlags {
+  default_value: number;
+  disabled: boolean;
+  grabbed: boolean;
+  max: number;
+  min: number;
+  read_only: boolean;
+  slider: number;
+  step: number;
+  type: number;
+  update: number;
+  volatility: number;
+  write_only: boolean;
+}
+
+/* If we ever need to add more compression formats, just add them here */
+export enum encodeType {
+  MJPEG = "MJPEG",
+  H264 = "H264",
+}
+
+/* If we ever need to support more stream protocols, just add them here */
+export enum streamType {
+  TCP = "TCP",
+  UDP = "UDP",
 }
 
 /**
@@ -66,12 +136,6 @@ export async function getDevice(id: number): Promise<Device> {
       console.error(error);
       return {} as Device;
     });
-}
-
-/* If we ever need to add more formats, just add them here */
-export enum format {
-  MJPEG = "MJPEG",
-  H264 = "H264",
 }
 
 /**

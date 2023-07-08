@@ -6,26 +6,18 @@ import { Device, getDevices } from "../../utils/api";
 
 const CamerasPage: React.FC = () => {
   const [exploreHD_cards, setExploreHD_cards] = useState<JSX.Element[]>([]);
-  const [other_cards, setOther_cards] = useState<JSX.Element[]>([]);
   const addCard = useCallback(
     (device: Device): void => {
       console.log(device);
-      if (device.caps.driver) {
-        // takes the prevState, and using the `spread` operator
-        // appends the new Card to the new array
-        // to update the state
-        setExploreHD_cards(prevCards => [
-          ...prevCards,
-          <DeviceCard key={exploreHD_cards.length} device={device} />,
-        ]);
-      } else {
-        setOther_cards(prevCards => [
-          ...prevCards,
-          <DeviceCard key={other_cards.length} device={device} />,
-        ]);
-      }
+      // takes the prevState, and using the `spread` operator
+      // appends the new Card to the new array
+      // to update the state
+      setExploreHD_cards((prevCards) => [
+        ...prevCards,
+        <DeviceCard key={exploreHD_cards.length} device={device} />,
+      ]);
     },
-    [exploreHD_cards.length, other_cards.length]
+    [exploreHD_cards.length]
   );
 
   const addDevices = useCallback(
@@ -38,32 +30,33 @@ const CamerasPage: React.FC = () => {
   );
 
   const removeDevice = (device: Device): void => {
-    const devicePath = device.devicePath;
+    const devicePath = device.info.path;
     // modifies state using the "previous state"
     // rather than directly modifying current state variable
-
-    if (device.caps.driver) {
-      setExploreHD_cards(prevCards => {
-        return prevCards.filter(card => {
-          return card.props.device.devicePath != devicePath;
-        });
+    setExploreHD_cards((prevCards) => {
+      return prevCards.filter((card) => {
+        return card.props.device.info.path != devicePath;
       });
-    } else {
-      setOther_cards(prevState =>
-        prevState.filter(card => {
-          return card.props.device.devicePath != devicePath;
-        })
-      );
-    }
+    });
   };
 
   useEffect(() => {
-    // get the devices from the backend
-    getDevices().then(devices => {
+    // Code to run once when the component is defined
+    console.log("Component defined");
+    getDevices().then((devices) => {
       console.log("Devices: ", devices);
       addDevices(devices);
     });
-  }, [addDevices]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // useEffect(() => {
+  //   // get the devices from the backend
+  //   getDevices().then((devices) => {
+  //     console.log("Devices: ", devices);
+  //     addDevices(devices);
+  //   });
+  // }, [addDevices]);
 
   return (
     <Grid
@@ -73,7 +66,6 @@ const CamerasPage: React.FC = () => {
       style={{ justifyContent: "center", paddingBottom: "20px" }}
     >
       {exploreHD_cards}
-      {other_cards}
     </Grid>
   );
 };

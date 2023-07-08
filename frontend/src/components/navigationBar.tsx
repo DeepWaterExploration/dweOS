@@ -30,9 +30,6 @@ import NavigationItems from "../utils/getNavigationItems";
 import NavigationRoutes from "../utils/getRoutes";
 import { darkTheme, lightTheme } from "../utils/themes";
 
-// import WifiMenu from './WifiMenu'
-// import { lightTheme, darkTheme } from '../utils/themes'
-
 const drawerWidth = 240;
 
 interface AppBarProps extends MuiAppBarProps {
@@ -40,7 +37,7 @@ interface AppBarProps extends MuiAppBarProps {
 }
 
 const AppBar = styled(MuiAppBar, {
-  shouldForwardProp: prop => prop !== "open",
+  shouldForwardProp: (prop) => prop !== "open",
 })<AppBarProps>(({ theme, open }) => ({
   zIndex: theme.zIndex.drawer + 1,
   transition: theme.transitions.create(["width", "margin"], {
@@ -58,7 +55,7 @@ const AppBar = styled(MuiAppBar, {
 }));
 
 const Drawer = styled(MuiDrawer, {
-  shouldForwardProp: prop => prop !== "open",
+  shouldForwardProp: (prop) => prop !== "open",
 })(({ theme, open }) => ({
   "& .MuiDrawer-paper": {
     position: "relative",
@@ -91,7 +88,6 @@ export default function NavigationBar() {
   const toggleTheme = () => {
     const newTheme = theme.palette.mode === "dark" ? lightTheme : darkTheme;
     setTheme(newTheme);
-    console.log(newTheme.palette.mode);
     localStorage.setItem("theme", newTheme.palette.mode);
   };
   const toggleDrawer = () => {
@@ -141,12 +137,6 @@ export default function NavigationBar() {
                   sx={{ mx: 3 }}
                   style={{ backgroundColor: "white", height: 40, width: 3 }}
                 />
-                <Typography
-                  component='h1'
-                  variant='h6'
-                  color='inherit'
-                  noWrap
-                ></Typography>
                 <Typography component='h1' variant='h6' color='inherit' noWrap>
                   Stereo
                 </Typography>
@@ -205,7 +195,7 @@ export default function NavigationBar() {
                 </ListSubheader>
                 <ListItemButton onClick={toggleTheme}>
                   <ListItemIcon>
-                    {theme.palette.mode === "dark" ? (
+                    {theme.palette.mode === "light" ? (
                       <Brightness7Icon />
                     ) : (
                       <Brightness4Icon />
@@ -213,7 +203,7 @@ export default function NavigationBar() {
                   </ListItemIcon>
                   <ListItemText
                     primary={
-                      theme.palette.mode === "dark"
+                      theme.palette.mode === "light"
                         ? "Light Theme"
                         : "Dark Theme"
                     }

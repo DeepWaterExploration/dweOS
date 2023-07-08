@@ -11,7 +11,7 @@ interface GetRoutesProps {
 const GetRoutes = ({ routes }: GetRoutesProps): JSX.Element => {
   return (
     <Routes>
-      {routes.map(route => {
+      {routes.map((route) => {
         if (route.route && route.component) {
           return (
             <Route
@@ -36,7 +36,7 @@ const NavigationRoutes: React.FC<NavigationRoutesProps> = () => {
     <Box
       component='main'
       sx={{
-        backgroundColor: theme =>
+        backgroundColor: (theme) =>
           theme.palette.mode === "light"
             ? theme.palette.grey[100]
             : theme.palette.grey[900],
@@ -47,11 +47,11 @@ const NavigationRoutes: React.FC<NavigationRoutesProps> = () => {
     >
       {/* <Toolbar /> */}
       <Container maxWidth='lg' sx={{ mt: 4, mb: 4 }}>
-        <Grid container spacing={3} style={{ paddingTop: "16px" }}>
+        <Grid container spacing={3} style={{ paddingTop: "3.5em" }}>
           {/* DeviceCards */}
           <div style={{ minHeight: "14px" }} />
           <div style={{ height: "calc(100vh - 14px)" }}>
-            <GetRoutes routes={routes} />;
+            <GetRoutes routes={routes} />
           </div>
         </Grid>
       </Container>

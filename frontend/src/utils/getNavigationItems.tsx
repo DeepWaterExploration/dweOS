@@ -18,9 +18,9 @@ interface GetRoutesProps {
 }
 
 const GetRoutes = ({ routes }: GetRoutesProps): JSX.Element => {
-  const devicesRoutes = routes.filter(route => route.category === "Devices");
+  const devicesRoutes = routes.filter((route) => route.category === "Devices");
   const communicationsRoutes = routes.filter(
-    route => route.category === "Communications"
+    (route) => route.category === "Communications"
   );
   return (
     <React.Fragment>
@@ -30,7 +30,7 @@ const GetRoutes = ({ routes }: GetRoutesProps): JSX.Element => {
         </Typography>
       </ListSubheader>
       <List>
-        {devicesRoutes.map(route => {
+        {devicesRoutes.map((route) => {
           if (route.route && route.component) {
             return (
               <ListItem key={route.key} component={Link} to={route.route}>
@@ -49,7 +49,7 @@ const GetRoutes = ({ routes }: GetRoutesProps): JSX.Element => {
         </Typography>
       </ListSubheader>
       <List>
-        {communicationsRoutes.map(route => {
+        {communicationsRoutes.map((route) => {
           if (route.route && route.component) {
             return (
               <ListItem key={route.key} component={Link} to={route.route}>

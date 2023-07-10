@@ -1,5 +1,6 @@
 #include <linux/uvcvideo.h>
 #include <linux/usb/video.h>
+#include <regex>
 #include "v4l2-camera.hpp"
 
 using namespace v4l2;
@@ -211,6 +212,17 @@ Device::Device(v4l2::devices::DEVICE_INFO info) : _info(info) {
         cwk_path_get_absolute("/sys/class/video4linux/", link.c_str(), result, sizeof(result));
         cwk_path_join(result, "../../../", result, sizeof(result));
         _device_path = std::string(result);
+    }
+
+    std::regex regex(R"((\d+)-(\d+))");
+    std::smatch match;
+    if (std::regex_search(_device_path, match, regex)) {
+        _usbInfo.usbController = std::stoi(match[1]);
+        _usbInfo.portIndex = std::stoi(match[2]);
+        std::cout << "USB Controller: " << _usbInfo.usbController << std::endl;
+        std::cout << "Port Index: " << _usbInfo.portIndex << std::endl;
+    } else {
+        throw std::runtime_error("Invalid path format.");
     }
 
     query_uvc_controls();

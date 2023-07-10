@@ -123,6 +123,7 @@ namespace v4l2 {
         v4l2::devices::DEVICE_INFO _info;
         std::vector<Control> _controls;
         gst::Pipeline *_pipeline;
+        USBInfo _usbInfo;
     };
 
 }

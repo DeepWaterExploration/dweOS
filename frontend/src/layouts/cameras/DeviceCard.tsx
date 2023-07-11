@@ -24,6 +24,7 @@ import {
 import React, { useEffect, useState } from "react";
 
 import { CameraFormatSize, Device, setDevice } from "../../utils/api";
+import { Padding } from "@mui/icons-material";
 
 interface SupportingTextProps {
   children: React.ReactNode;
@@ -107,9 +108,12 @@ const ResolutionMenu: React.FC<ResolutionMenuProps> = (props) => {
         component='nav'
         aria-label='Device settings'
         sx={{
-          bgcolor: "background.paper",
+          bgcolor: "background",
           display: "inline-block",
           width: "auto",
+          boxShadow: "rgba(0, 0, 0, 0.2) 0px 3px 1px -2px, rgba(0, 0, 0, 0.14) 0px 2px 2px 0px, rgba(0, 0, 0, 0.12) 0px 1px 5px 0px",
+          padding: "0px",
+          margin: "0px",
         }}
       >
         <ListItem
@@ -119,6 +123,9 @@ const ResolutionMenu: React.FC<ResolutionMenuProps> = (props) => {
           aria-label='when device is locked'
           aria-expanded={open ? "true" : undefined}
           onClick={handleClickListItem}
+          sx={{ margin: "0px",
+          padding: "6px 16px"
+         }}
         >
           <ListItemText primary={primaryText} />
         </ListItem>
@@ -223,14 +230,13 @@ interface StreamOptionsProps {
 }
 
 const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
+  console.log(props.device);
   const [udp, setUDP] = useState(props.device.stream.isStreaming);
   const [hostAddress, setHostAddress] = useState(props.device.stream.host);
   const [port, setPort] = useState(props.device.stream.port);
   const [resolution, setResolution] = useState(
     `${props.device.stream.format.height}x${props.device.stream.format.width}`
   );
-  console.log(props.device);
-  console.log(typeof resolution);
   const restartStream = () => {
     // makePostRequest(
     //   "/restartStream",
@@ -373,13 +379,13 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                     defaultValue as number
                   );
 
-                  useEffect(() => {
-                    makePostRequest("/setControl", {
-                      devicePath,
-                      id,
-                      value: controlValue,
-                    });
-                  }, [controlValue]);
+                  // useEffect(() => {
+                  //   makePostRequest("/setControl", {
+                  //     devicePath,
+                  //     id,
+                  //     value: controlValue,
+                  //   });
+                  // }, [controlValue]);
 
                   return (
                     <>
@@ -411,13 +417,13 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                     defaultValue as boolean
                   );
 
-                  useEffect(() => {
-                    makePostRequest("/setControl", {
-                      devicePath,
-                      id,
-                      value: controlValue ? 1 : 0,
-                    });
-                  }, [controlValue]);
+                  // useEffect(() => {
+                  //   makePostRequest("/setControl", {
+                  //     devicePath,
+                  //     id,
+                  //     value: controlValue ? 1 : 0,
+                  //   });
+                  // }, [controlValue]);
 
                   return (
                     <>
@@ -439,13 +445,13 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                     defaultValue as string
                   );
 
-                  useEffect(() => {
-                    makePostRequest("/setControl", {
-                      devicePath,
-                      id,
-                      value: controlValue,
-                    });
-                  }, [controlValue]);
+                  // useEffect(() => {
+                  //   makePostRequest("/setControl", {
+                  //     devicePath,
+                  //     id,
+                  //     value: controlValue,
+                  //   });
+                  // }, [controlValue]);
 
                   return (
                     <>

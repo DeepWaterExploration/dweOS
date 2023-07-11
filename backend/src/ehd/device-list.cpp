@@ -151,6 +151,15 @@ json DeviceList::serialize_ehd(libehd::Device *ehd) {
     return device_object;
 }
 
+libehd::Device *DeviceList::find_device_with_path(std::string path) {
+    for (auto dev : ehd_devices) {
+        if (dev->get_v4l2_device()->get_device_file_path() == path) {
+            return dev;
+        }
+    }
+    return nullptr;
+}
+
 void DeviceList::enumerate() {
     _devices_array = json::array();
     _devices.clear();
@@ -166,11 +175,9 @@ void DeviceList::enumerate() {
         if (v4l2_device->get_device_attr("idVendor") == "0c45" &&
             v4l2_device->get_device_attr("idProduct") == "6366") {
             libehd::Device *ehd = libehd::Device::construct_device(v4l2_device);
-            ehd_devices.push_back(ehd);
-
             json device_object = serialize_ehd(ehd);
-
             _devices_array.push_back(device_object);
+            ehd_devices.push_back(ehd);
         } else {
             delete v4l2_device;
         }
@@ -235,9 +242,9 @@ void DeviceList::_monitor_devices() {
             if (v4l2_device->get_device_attr("idVendor") == "0c45" &&
                 v4l2_device->get_device_attr("idProduct") == "6366") {
                 libehd::Device *ehd = libehd::Device::construct_device(v4l2_device);
-                ehd_devices.push_back(ehd);
                 json device_object = serialize_ehd(ehd);
                 _devices_array.push_back(device_object);
+                ehd_devices.push_back(ehd);
             } else {
                 delete v4l2_device;
             }

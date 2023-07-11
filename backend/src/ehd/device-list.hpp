@@ -14,6 +14,8 @@ public:
 
     json serialize_ehd(libehd::Device *ehd);
 
+    libehd::Device *find_device_with_path(std::string path);
+
     void enumerate();
 
     void start_monitoring();

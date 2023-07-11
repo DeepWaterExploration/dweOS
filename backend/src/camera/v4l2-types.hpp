@@ -81,6 +81,10 @@ namespace v4l2 {
         int32_t max, min, step, default_value;
         std::vector<MenuItem> menuItems;
     };
+
+    struct USBInfo {
+        int usbController, portIndex;
+    };
 }
 
 #endif

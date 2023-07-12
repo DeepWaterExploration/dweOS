@@ -11,6 +11,9 @@ import {
   FormGroup,
   Grid,
   IconButton,
+  List,
+  ListItem,
+  ListItemText,
   Menu,
   MenuItem,
   Slider,
@@ -20,7 +23,8 @@ import {
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 
-import { CameraSize, Device, setDevice } from "../../utils/api";
+import { CameraFormatSize, Device, setDevice } from "../../utils/api";
+import { Padding } from "@mui/icons-material";
 
 interface SupportingTextProps {
   children: React.ReactNode;
@@ -44,7 +48,6 @@ interface DeviceSwitchProps {
   name: string;
   checked: boolean;
   text: string;
-  children: React.ReactNode;
 }
 
 const DeviceSwitch: React.FC<DeviceSwitchProps> = (props) => {
@@ -64,19 +67,32 @@ const DeviceSwitch: React.FC<DeviceSwitchProps> = (props) => {
 
 interface ResolutionMenuProps {
   defaultResolution: string;
-  resolutions: CameraSize[];
+  resolutions: CameraFormatSize[];
   onResolutionChange: (res: string) => void;
 }
 
 const ResolutionMenu: React.FC<ResolutionMenuProps> = (props) => {
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [selectedIndex, setSelectedIndex] = React.useState(0);
   const open = Boolean(anchorEl);
+  // const primaryText = props.resolutions[selectedIndex].width + "x" + props.resolutions[selectedIndex].height;
   const [currentResolution, setCurrentResolution] = useState<string>(
     props.defaultResolution
   );
+  const primaryText = `Resolution: ${currentResolution}`;
 
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleClickListItem = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuItemClick = (
+    event: React.MouseEvent<HTMLElement>,
+    index: number,
+    item: CameraFormatSize
+  ) => {
+    setCurrentResolution(`${item.height}x${item.width}`);
+    setSelectedIndex(index);
+    setAnchorEl(null);
   };
 
   const handleClose = () => {
@@ -86,38 +102,51 @@ const ResolutionMenu: React.FC<ResolutionMenuProps> = (props) => {
   useEffect(() => {
     props.onResolutionChange(currentResolution);
   }, [currentResolution, props]);
-
   return (
     <div>
-      <Button
-        color='inherit'
-        variant='contained'
-        id='basic-button'
-        aria-controls={open ? "basic-menu" : undefined}
-        aria-haspopup='true'
-        aria-expanded={open ? "true" : undefined}
-        onClick={handleClick}
+      <List
+        component='nav'
+        aria-label='Device settings'
+        sx={{
+          bgcolor: "background",
+          display: "inline-block",
+          width: "auto",
+          boxShadow: "rgba(0, 0, 0, 0.2) 0px 3px 1px -2px, rgba(0, 0, 0, 0.14) 0px 2px 2px 0px, rgba(0, 0, 0, 0.12) 0px 1px 5px 0px",
+          padding: "0px",
+          margin: "0px",
+        }}
       >
-        Resolution: {currentResolution}
-      </Button>
+        <ListItem
+          id='lock-button'
+          aria-haspopup='listbox'
+          aria-controls='lock-menu'
+          aria-label='when device is locked'
+          aria-expanded={open ? "true" : undefined}
+          onClick={handleClickListItem}
+          sx={{ margin: "0px",
+          padding: "6px 16px"
+         }}
+        >
+          <ListItemText primary={primaryText} />
+        </ListItem>
+      </List>
       <Menu
-        id='basic-menu'
+        id='lock-menu'
         anchorEl={anchorEl}
         open={open}
         onClose={handleClose}
         MenuListProps={{
-          "aria-labelledby": "basic-button",
+          "aria-labelledby": "lock-button",
+          role: "listbox",
         }}
       >
-        {props.resolutions.map((item) => (
+        {props.resolutions.map((option, index) => (
           <MenuItem
-            key={item}
-            onClick={() => {
-              setCurrentResolution(item);
-              handleClose();
-            }}
+            key={`${option.height}x${option.width}`}
+            selected={index === selectedIndex}
+            onClick={(event) => handleMenuItemClick(event, index, option)}
           >
-            {item}
+            {option.height}x{option.width}
           </MenuItem>
         ))}
       </Menu>
@@ -126,23 +155,15 @@ const ResolutionMenu: React.FC<ResolutionMenuProps> = (props) => {
 };
 
 interface DeviceOptionsProps {
-  device: {
-    devicePath: string;
-    options: {
-      bitrate: number;
-      h264: boolean;
-      vbr: boolean;
-    };
-    resolutions: string[];
-  };
+  device: Device;
 }
 
 const DeviceOptions: React.FC<DeviceOptionsProps> = (props) => {
-  const device = props.device.devicePath;
+  const device = props.device.stream.device_path;
 
   const [bitrate, setBitrate] = useState(props.device.options.bitrate);
   const [bitrateSlider, setBitrateSlider] = useState(
-    props.device.options.bitrate
+    props.device.options.bitrate / 1000000
   );
   const [h264, setH264] = useState(props.device.options.h264);
   const [vbr, setVBR] = useState(props.device.options.vbr);
@@ -165,7 +186,7 @@ const DeviceOptions: React.FC<DeviceOptionsProps> = (props) => {
         <span>Bitrate: {bitrateSlider} Mbps</span>
         <Slider
           name='bitrate'
-          defaultValue={props.device.options.bitrate}
+          defaultValue={bitrateSlider}
           disabled={vbr}
           onChangeCommitted={(_, newValue) => {
             setBitrate(newValue as number);
@@ -209,11 +230,13 @@ interface StreamOptionsProps {
 }
 
 const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
+  console.log(props.device);
   const [udp, setUDP] = useState(props.device.stream.isStreaming);
   const [hostAddress, setHostAddress] = useState(props.device.stream.host);
   const [port, setPort] = useState(props.device.stream.port);
-  const [resolution, setResolution] = useState(props.device.stream.resolution);
-
+  const [resolution, setResolution] = useState(
+    `${props.device.stream.format.height}x${props.device.stream.format.width}`
+  );
   const restartStream = () => {
     // makePostRequest(
     //   "/restartStream",
@@ -299,7 +322,7 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                 props.device.cameras.filter(
                   (camera) =>
                     props.device.stream.device_path === camera.device_path
-                )[0].formats
+                )[0].formats[0].sizes
               }
             />
           </div>
@@ -356,13 +379,13 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                     defaultValue as number
                   );
 
-                  useEffect(() => {
-                    makePostRequest("/setControl", {
-                      devicePath,
-                      id,
-                      value: controlValue,
-                    });
-                  }, [controlValue]);
+                  // useEffect(() => {
+                  //   makePostRequest("/setControl", {
+                  //     devicePath,
+                  //     id,
+                  //     value: controlValue,
+                  //   });
+                  // }, [controlValue]);
 
                   return (
                     <>
@@ -394,13 +417,13 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                     defaultValue as boolean
                   );
 
-                  useEffect(() => {
-                    makePostRequest("/setControl", {
-                      devicePath,
-                      id,
-                      value: controlValue ? 1 : 0,
-                    });
-                  }, [controlValue]);
+                  // useEffect(() => {
+                  //   makePostRequest("/setControl", {
+                  //     devicePath,
+                  //     id,
+                  //     value: controlValue ? 1 : 0,
+                  //   });
+                  // }, [controlValue]);
 
                   return (
                     <>
@@ -422,13 +445,13 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                     defaultValue as string
                   );
 
-                  useEffect(() => {
-                    makePostRequest("/setControl", {
-                      devicePath,
-                      id,
-                      value: controlValue,
-                    });
-                  }, [controlValue]);
+                  // useEffect(() => {
+                  //   makePostRequest("/setControl", {
+                  //     devicePath,
+                  //     id,
+                  //     value: controlValue,
+                  //   });
+                  // }, [controlValue]);
 
                   return (
                     <>
@@ -505,10 +528,10 @@ const DeviceCard: React.FC<DeviceCardProps> = (props) => {
               <TextField
                 onChange={(e) => {
                   props.device.info.name = e.target.value;
-                  setDevice(
-                    props.device.stream.device_path,
-                    props.device.info.name
-                  );
+                  // setDevice(
+                  //   props.device.stream.device_path,
+                  //   props.device.info.name
+                  // );
                   // makePostRequest("/setDeviceName", {
                   //   devicePath: props.device.stream.device_path,
                   //   name: e.target.value,

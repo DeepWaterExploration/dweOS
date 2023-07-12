@@ -129,33 +129,6 @@ export default function NavigationBar() {
                     alt='DWE Logo'
                   />
                 </Box>
-                <Typography component='h1' variant='h6' color='inherit' noWrap>
-                  Home
-                </Typography>
-                <Divider
-                  orientation='vertical'
-                  sx={{ mx: 3 }}
-                  style={{ backgroundColor: "white", height: 40, width: 3 }}
-                />
-                <Typography component='h1' variant='h6' color='inherit' noWrap>
-                  Stereo
-                </Typography>
-                <Divider
-                  orientation='vertical'
-                  sx={{ mx: 3 }}
-                  style={{ backgroundColor: "white", height: 40, width: 3 }}
-                />
-                <Typography component='h1' variant='h6' color='inherit' noWrap>
-                  ML/AI
-                </Typography>
-                <Divider
-                  orientation='vertical'
-                  sx={{ mx: 3 }}
-                  style={{ backgroundColor: "white", height: 40, width: 3 }}
-                />
-                <Typography component='h1' variant='h6' color='inherit' noWrap>
-                  Simulation
-                </Typography>
               </Box>
               <Grid justifyContent='flex-end'>{/* <WifiMenu /> */}</Grid>
               <PowerSettingsNewIcon />

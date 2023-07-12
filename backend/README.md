@@ -1,10 +1,13 @@
 # Backend
 
-## Dependencies
+## Intalling Dependencies
 
-- glib-2.0
-- gstreamer-check-1.0
-- libudev
+```
+sudo apt-get install libglib2.0-dev
+sudo apt-get install libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+sudo apt-get install -y libudev-dev
+sudo apt-get install libboost-all-dev 
+```
 
 ## API
 
@@ -34,7 +37,7 @@
 
 > | name | type | data type | description |
 > |------|------|-----------|-------------|
-> | `index` | required | integer | The index of the connected camera |
+> | `usbInfo` | required | string | The usb info of the connected camera |
 
 ##### Responses
 
@@ -54,7 +57,7 @@
 
 > | name | type | data type | description |
 > |------|------|-----------|-------------|
-> | `index` | required | integer | The index of the connected camera |
+> | `usbInfo` | required | string | The usb info of the connected camera |
 > | `format` | required | object | The format of the stream |
 > | `format.format` | required | string | The pixel format of the stream ("MJPG", "H264") |
 > | `format.width` | required | integer | The stream width |
@@ -81,7 +84,7 @@
 
 > | name | type | data type | description |
 > |------|------|-----------|-------------|
-> | `index` | required | integer | The index of the connected camera |
+> | `usbInfo` | required | string | The usb info of the connected camera |
 > | `endpoint` | required | object | The stream endpoint object |
 > | `endpoint.host` | required | string | The host of the stream endpoint |
 > | `endpoint.port` | required | integer | The port of the stream endpoint |
@@ -104,7 +107,7 @@
 
 > | name | type | data type | description |
 > |------|------|-----------|-------------|
-> | `index` | required | integer | The index of the connected camera |
+> | `usbInfo` | required | string | The usb info of the connected camera |
 
 ##### Responses
 
@@ -124,7 +127,7 @@
 
 > | name | type | data type | description |
 > |------|------|-----------|-------------|
-> | `index` | required | integer | The index of the connected camera |
+> | `usbInfo` | required | string | The usb info of the connected camera |
 
 ##### Responses
 
@@ -144,7 +147,7 @@
 
 > | name | type | data type | description |
 > |------|------|-----------|-------------|
-> | `index` | required | integer | The index of the connected camera |
+> | `usbInfo` | required | string | The usb info of the connected camera |
 > | `control` | required | object | The control object |
 > | `control.id` | required | integer | The control ID |
 > | `control.value` | required | integer | The control value |
@@ -167,7 +170,7 @@
 
 > | name | type | data type | description |
 > |------|------|-----------|-------------|
-> | `index` | required | integer | The index of the connected camera |
+> | `usbInfo` | required | string | The usb info of the connected camera |
 > | `option` | required | string | The option ("bitrate", "gop", "mode") |
 > | `value` | required | integer / string | The option value |
 

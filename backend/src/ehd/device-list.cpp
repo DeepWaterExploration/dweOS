@@ -4,9 +4,14 @@ typedef void * (*THREADFUNCPTR)(void *);
 
 DeviceList::DeviceList(BroadcastServer &broadcast_server) : _broadcast_server(broadcast_server) { }
 
-libehd::Device *DeviceList::get_ehd(int index) {
-    if (index >= ehd_devices.size()) return nullptr;
-    return ehd_devices[index];
+libehd::Device *DeviceList::get_ehd(std::string usbInfo) {
+    for (libehd::Device *device : ehd_devices) {
+        v4l2::Device *v4l2_device = device->get_v4l2_device();
+        if (usbInfo == v4l2_device->get_usb_info()) {
+            return device;
+        }
+    }
+    return nullptr;
 }
 
 json DeviceList::serialize_pipeline(gst::Pipeline *pipeline) {
@@ -70,13 +75,8 @@ json DeviceList::serialize_ehd(libehd::Device *ehd) {
     device_object["info"]["vid"] = v4l2_device->get_device_attr("idVendor");
     device_object["info"]["pid"] = v4l2_device->get_device_attr("idProduct");
 
-    device_object["info"]["usb"] = json::object();
-    v4l2::USBInfo usbInfo = v4l2_device->get_usb_info();
-    device_object["info"]["usb"]["controller"] = usbInfo.usbController;
-    device_object["info"]["usb"]["portIndex"] = usbInfo.portIndex;
-    if (usbInfo.deviceIndex >= 0) {
-        device_object["info"]["usb"]["deviceIndex"] = usbInfo.deviceIndex;
-    }
+    std::string usbInfo = v4l2_device->get_usb_info();
+    device_object["info"]["usbInfo"] = usbInfo;
 
     device_object["options"] = {
         {"bitrate", ehd->get_bitrate()},

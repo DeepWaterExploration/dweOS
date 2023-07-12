@@ -216,20 +216,26 @@ Device::Device(v4l2::devices::DEVICE_INFO info) : _info(info) {
 
     std::regex regex(R"((?:(\d+)-(\d+))(?:\/\d+-\d+.(\d+))?)");
     std::smatch match;
-    std::cout << _device_path << std::endl;
     if (std::regex_search(_device_path, match, regex)) {
-        _usbInfo.usbController = std::stoi(match[1]);
-        _usbInfo.portIndex = std::stoi(match[2]);
-        _usbInfo.deviceIndex = -1;
-        std::cout << "USB Controller: " << _usbInfo.usbController << std::endl;
-        std::cout << "Port Index: " << _usbInfo.portIndex << std::endl;
+        int usbController = std::stoi(match[1]);
+        int portIndex = std::stoi(match[2]);
+        int deviceIndex = -1;
         if (match[3].matched) {
-            _usbInfo.deviceIndex = std::stoi(match[3]);
-            std::cout << "Device Index: " << _usbInfo.deviceIndex << std::endl;
+            deviceIndex = std::stoi(match[3]);
+        }
+        _usbInfo = "";
+        _usbInfo += match[1];
+        _usbInfo += ".";
+        _usbInfo += match[2];
+        if (deviceIndex >= 0) {
+            _usbInfo += ".";
+            _usbInfo += match[3];
         }
     } else {
         throw std::runtime_error("Invalid path format.");
     }
+
+    std::cout << "Device found at port: " << _usbInfo << std::endl;
 
     query_uvc_controls();
 }

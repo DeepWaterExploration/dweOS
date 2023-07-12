@@ -106,7 +106,7 @@ namespace v4l2 {
             return _info;
         }
 
-        inline USBInfo get_usb_info() {
+        inline std::string get_usb_info() {
             return _usbInfo;
         }
 
@@ -127,7 +127,7 @@ namespace v4l2 {
         v4l2::devices::DEVICE_INFO _info;
         std::vector<Control> _controls;
         gst::Pipeline *_pipeline;
-        USBInfo _usbInfo;
+        std::string _usbInfo;
     };
 
 }

@@ -8,7 +8,7 @@ class DeviceList {
 public:
     DeviceList(BroadcastServer &broadcast_server);
 
-    libehd::Device *get_ehd(int index);
+    libehd::Device *get_ehd(std::string usbInfo);
 
     json serialize_pipeline(gst::Pipeline *pipeline);
 

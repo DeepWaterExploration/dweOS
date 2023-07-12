@@ -12,22 +12,21 @@ using json = nlohmann::json;
 httplib::Server svr;
 BroadcastServer broadcast_server;
 
-int getIndex(const httplib::Params &params, httplib::Response &res) {
-    int index = -1;
+std::string getUSBInfo(const httplib::Params &params, httplib::Response &res) {
+    std::string usbInfo = "";
     /* manually find because params.find is unreliable */
     for (auto itr = params.begin(); itr != params.end(); itr++) {
-        if (itr->first == "index") {
-            index = std::stoi(itr->second);
+        if (itr->first == "usbInfo") {
+            usbInfo = itr->second;
         }
     }
 
     /* if index was not found */
-    if (index < 0) {
+    if (usbInfo == "") {
         res.status = 400; /* Status 400: Bad Request */
-        return index;
     }
 
-    return index;
+    return usbInfo;
 }
 
 void signalHandler(int signum) {
@@ -48,7 +47,7 @@ int main(int argc, char** argv) {
 
     std::cout << "Running API backend.\n";
 
-    libehd::Device *device = devices.get_ehd(0);
+    libehd::Device *device = devices.get_ehd("1.2.4");
     v4l2::Device *v4l2_device = device->get_v4l2_device();
     v4l2_device->configure_stream(V4L2_PIX_FMT_H264, 1920, 1080, v4l2::Interval(1, 30), gst::STREAM_TYPE_UDP);
     v4l2_device->add_stream_endpoint("127.0.0.1", 5600);
@@ -77,10 +76,8 @@ int main(int argc, char** argv) {
     });
 
     svr.Get("/device", [&devices](const httplib::Request &req, httplib::Response &res) {
-        int index = getIndex(req.params, res);
-        if (index < 0) return;
-
-        libehd::Device *ehd = devices.get_ehd(index);
+        std::string usbInfo = getUSBInfo(req.params, res);
+        libehd::Device *ehd = devices.get_ehd(usbInfo);
         /* index is invalid */
         if (!ehd) {
             res.status = 400; /* Status 400: Bad Request */
@@ -93,9 +90,9 @@ int main(int argc, char** argv) {
 
     svr.Post("/configure_stream", [&devices](const httplib::Request &req, httplib::Response &res) {
         json requestBody = json::parse(req.body);
-        int index = requestBody["index"];
+        std::string usbInfo = requestBody["usbInfo"];
+        libehd::Device *ehd = devices.get_ehd(usbInfo);
         json format = requestBody["format"];
-        libehd::Device *ehd = devices.get_ehd(index);
         /* index is invalid */
         if (!ehd) {
             res.status = 400; /* Status 400: Bad Request */
@@ -125,11 +122,12 @@ int main(int argc, char** argv) {
 
     svr.Post("/add_stream_endpoint", [&devices](const httplib::Request &req, httplib::Response &res) {
         json requestBody = json::parse(req.body);
-        int index = requestBody["index"];
+        std::string usbInfo = requestBody["usbInfo"];
+        libehd::Device *ehd = devices.get_ehd(usbInfo);
+        
         json endpoint = requestBody["endpoint"];
         std::string host = endpoint["host"];
         int port = endpoint["port"];
-        libehd::Device *ehd = devices.get_ehd(index);
         /* index is invalid */
         if (!ehd) {
             res.status = 400; /* Status 400: Bad Request */
@@ -143,8 +141,8 @@ int main(int argc, char** argv) {
 
     svr.Post("/start_stream", [&devices](const httplib::Request &req, httplib::Response &res) {
         json requestBody = json::parse(req.body);
-        int index = requestBody["index"];
-        libehd::Device *ehd = devices.get_ehd(index);
+        std::string usbInfo = requestBody["usbInfo"];
+        libehd::Device *ehd = devices.get_ehd(usbInfo);
         /* index is invalid */
         if (!ehd) {
             res.status = 400; /* Status 400: Bad Request */
@@ -153,7 +151,7 @@ int main(int argc, char** argv) {
         
         v4l2::Device *device = ehd->get_v4l2_device();
         if (device->is_stream_configured()) {
-            std::cout << "Starting stream for device at index: " << index << "\n";
+            std::cout << "Starting stream for device at port: " << usbInfo << "\n";
             device->start_stream();
         }
         res.set_header("Access-Control-Allow-Origin", "*");
@@ -161,8 +159,8 @@ int main(int argc, char** argv) {
 
     svr.Post("/stop_stream", [&devices](const httplib::Request &req, httplib::Response &res) {
         json requestBody = json::parse(req.body);
-        int index = requestBody["index"];
-        libehd::Device *ehd = devices.get_ehd(index);
+        std::string usbInfo = requestBody["usbInfo"];
+        libehd::Device *ehd = devices.get_ehd(usbInfo);
         /* index is invalid */
         if (!ehd) {
             res.status = 400; /* Status 400: Bad Request */
@@ -171,7 +169,7 @@ int main(int argc, char** argv) {
         
         v4l2::Device *device = ehd->get_v4l2_device();
         if (device->is_stream_configured()) {
-            std::cout << "Starting stream for device at index: " << index << "\n";
+            std::cout << "Stopping stream for device at port: " << usbInfo << "\n";
             device->stop_stream();
         }
         res.set_header("Access-Control-Allow-Origin", "*");
@@ -179,8 +177,8 @@ int main(int argc, char** argv) {
 
     svr.Post("/devices/set_uvc_control", [&devices](const httplib::Request &req, httplib::Response &res) {
         json requestBody = json::parse(req.body);
-        int index = requestBody["index"];
-        libehd::Device *ehd = devices.get_ehd(index);
+        std::string usbInfo = requestBody["usbInfo"];
+        libehd::Device *ehd = devices.get_ehd(usbInfo);
         /* index is invalid */
         if (!ehd) {
             res.status = 400; /* Status 400: Bad Request */
@@ -198,8 +196,8 @@ int main(int argc, char** argv) {
 
     svr.Post("/devices/set_option", [&devices](const httplib::Request &req, httplib::Response &res) {
         json requestBody = json::parse(req.body);
-        int index = requestBody["index"];
-        libehd::Device *ehd = devices.get_ehd(index);
+        std::string usbInfo = requestBody["usbInfo"];
+        libehd::Device *ehd = devices.get_ehd(usbInfo);
         /* index is invalid */
         if (!ehd) {
             res.status = 400; /* Status 400: Bad Request */

@@ -69,6 +69,15 @@ json DeviceList::serialize_ehd(libehd::Device *ehd) {
     device_object["info"]["name"] = v4l2_device->get_info().device_name;
     device_object["info"]["vid"] = v4l2_device->get_device_attr("idVendor");
     device_object["info"]["pid"] = v4l2_device->get_device_attr("idProduct");
+
+    device_object["info"]["usb"] = json::object();
+    v4l2::USBInfo usbInfo = v4l2_device->get_usb_info();
+    device_object["info"]["usb"]["controller"] = usbInfo.usbController;
+    device_object["info"]["usb"]["portIndex"] = usbInfo.portIndex;
+    if (usbInfo.deviceIndex >= 0) {
+        device_object["info"]["usb"]["deviceIndex"] = usbInfo.deviceIndex;
+    }
+
     device_object["options"] = {
         {"bitrate", ehd->get_bitrate()},
         {"mode",
@@ -256,7 +265,6 @@ void DeviceList::_monitor_devices() {
                 std::string bus_info = (*itr)->get_v4l2_device()->get_info().bus_info;
                 if (device_info.bus_info == bus_info) {
                     ehd_devices.erase(itr);
-                    std::cout << "Removed: " << bus_info << "\n";
                 } else {
                     itr++;
                 }

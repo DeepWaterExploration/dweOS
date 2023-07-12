@@ -83,7 +83,7 @@ namespace v4l2 {
     };
 
     struct USBInfo {
-        int usbController, portIndex;
+        int usbController, portIndex, deviceIndex;
     };
 }
 

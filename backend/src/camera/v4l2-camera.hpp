@@ -106,6 +106,10 @@ namespace v4l2 {
             return _info;
         }
 
+        inline USBInfo get_usb_info() {
+            return _usbInfo;
+        }
+
         void configure_stream(uint32_t pixel_format, uint32_t width, uint32_t height, Interval interval, gst::StreamType streamType);
         void start_stream();
         void stop_stream();

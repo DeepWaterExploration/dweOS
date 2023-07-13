@@ -47,14 +47,7 @@ int main(int argc, char** argv) {
 
     std::cout << "Running API backend.\n";
 
-    libehd::Device *device = devices.get_ehd("1.2.4");
-    v4l2::Device *v4l2_device = device->get_v4l2_device();
-    v4l2_device->configure_stream(V4L2_PIX_FMT_H264, 1920, 1080, v4l2::Interval(1, 30), gst::STREAM_TYPE_UDP);
-    v4l2_device->add_stream_endpoint("127.0.0.1", 5600);
-    v4l2_device->start_stream();
-
     /* monitor */
-
     devices.start_monitoring();
 
     /* API */
@@ -124,7 +117,7 @@ int main(int argc, char** argv) {
         json requestBody = json::parse(req.body);
         std::string usbInfo = requestBody["usbInfo"];
         libehd::Device *ehd = devices.get_ehd(usbInfo);
-        
+
         json endpoint = requestBody["endpoint"];
         std::string host = endpoint["host"];
         int port = endpoint["port"];
@@ -148,7 +141,7 @@ int main(int argc, char** argv) {
             res.status = 400; /* Status 400: Bad Request */
             return;
         }
-        
+
         v4l2::Device *device = ehd->get_v4l2_device();
         if (device->is_stream_configured()) {
             std::cout << "Starting stream for device at port: " << usbInfo << "\n";
@@ -166,7 +159,7 @@ int main(int argc, char** argv) {
             res.status = 400; /* Status 400: Bad Request */
             return;
         }
-        
+
         v4l2::Device *device = ehd->get_v4l2_device();
         if (device->is_stream_configured()) {
             std::cout << "Stopping stream for device at port: " << usbInfo << "\n";
@@ -213,7 +206,7 @@ int main(int argc, char** argv) {
         } else if (option == "mode") {
             std::string mode_str = requestBody["value"];
             libehd::H264Mode mode;
-            if (mode_str == "CBR") mode = libehd::MODE_CONSTANT_BITRATE; 
+            if (mode_str == "CBR") mode = libehd::MODE_CONSTANT_BITRATE;
             else if (mode_str == "VBR") mode = libehd::MODE_VARIABLE_BITRATE;
             else {
                 res.status = 400; /* Status 400: Bad Request */

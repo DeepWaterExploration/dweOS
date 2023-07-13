@@ -1,0 +1,13 @@
+---
+BasedOnStyle: Google
+AccessModifierOffset: '0'
+AlignAfterOpenBracket: DontAlign
+AlignConsecutiveMacros: 'true'
+AlignConsecutiveAssignments: 'false'
+AlignEscapedNewlines: Left
+AlignOperands: 'true'
+AlignTrailingComments: 'true'
+IndentWidth: '2'
+SpacesInParentheses: 'false'
+SpacesInSquareBrackets: 'false'
+UseTab: Never

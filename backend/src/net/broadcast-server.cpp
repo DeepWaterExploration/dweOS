@@ -11,13 +11,21 @@ void BroadcastServer::start(int port) {
     _ws.set_open_handler(bind(&BroadcastServer::_on_open, this, ::_1));
     _ws.set_close_handler(bind(&BroadcastServer::_on_close, this, ::_1));
 
+    _ws.set_reuse_addr(true);
     _ws.listen(port);
     _ws.start_accept();
-    // _ws.run();
     pthread_create(&_thread, NULL, (THREADFUNCPTR)&BroadcastServer::_run, this);
 }
 
-void BroadcastServer::stop() { pthread_kill(_thread, 0); }
+void BroadcastServer::stop() {
+    _ws.stop_listening();
+    _ws.stop_perpetual();
+    for (auto hdl : _connections) {
+        _ws.close(hdl, websocketpp::close::status::going_away, "shutting down");
+    }
+    _connections.clear();
+    pthread_join(_thread, 0);
+}
 
 void BroadcastServer::broadcast(std::string raw_msg) {
     for (auto itr = _connections.begin(); itr != _connections.end(); itr++) {

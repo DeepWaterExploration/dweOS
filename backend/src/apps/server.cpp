@@ -31,8 +31,8 @@ std::string getUSBInfo(const httplib::Params &params, httplib::Response &res) {
 }
 
 void signalHandler(int signum) {
-    // broadcast_server.stop();
-    // std::cout << "stopping server.\n";
+    std::cout << "Shutting down.\n";
+    broadcast_server.stop();
     exit(signum);
 }
 

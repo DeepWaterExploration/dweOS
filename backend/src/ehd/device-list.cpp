@@ -1,8 +1,9 @@
 #include "device-list.hpp"
 
-typedef void * (*THREADFUNCPTR)(void *);
+typedef void *(*THREADFUNCPTR)(void *);
 
-DeviceList::DeviceList(BroadcastServer &broadcast_server) : _broadcast_server(broadcast_server) { }
+DeviceList::DeviceList(BroadcastServer &broadcast_server)
+    : _broadcast_server(broadcast_server) {}
 
 libehd::Device *DeviceList::get_ehd(std::string usbInfo) {
     for (libehd::Device *device : ehd_devices) {
@@ -81,8 +82,8 @@ json DeviceList::serialize_ehd(libehd::Device *ehd) {
     device_object["options"] = {
         {"bitrate", ehd->get_bitrate()},
         {"mode",
-         (ehd->get_h264_mode() == libehd::MODE_CONSTANT_BITRATE ? "CBR"
-                                                                : "VBR")},
+            (ehd->get_h264_mode() == libehd::MODE_CONSTANT_BITRATE ? "CBR"
+                                                                   : "VBR")},
         {"gop", ehd->get_gop()},
     };
 
@@ -194,7 +195,8 @@ void DeviceList::enumerate() {
 }
 
 void DeviceList::start_monitoring() {
-    pthread_create(&_monitor_thread, NULL, (THREADFUNCPTR)&DeviceList::_monitor_devices, this);
+    pthread_create(&_monitor_thread, NULL,
+        (THREADFUNCPTR)&DeviceList::_monitor_devices, this);
 }
 
 json DeviceList::serialize() {
@@ -248,7 +250,8 @@ void DeviceList::_monitor_devices() {
             /* Check if device is an exploreHD */
             if (v4l2_device->get_device_attr("idVendor") == "0c45" &&
                 v4l2_device->get_device_attr("idProduct") == "6366") {
-                libehd::Device *ehd = libehd::Device::construct_device(v4l2_device);
+                libehd::Device *ehd =
+                    libehd::Device::construct_device(v4l2_device);
                 json device_object = serialize_ehd(ehd);
                 added_device_objects.push_back(device_object);
                 _devices_array.push_back(device_object);
@@ -261,11 +264,14 @@ void DeviceList::_monitor_devices() {
         for (const auto &device_info : removed_devices) {
             auto itr = ehd_devices.begin();
             while (itr != ehd_devices.end()) {
-                std::string bus_info = (*itr)->get_v4l2_device()->get_info().bus_info;
+                std::string bus_info =
+                    (*itr)->get_v4l2_device()->get_info().bus_info;
                 if (device_info.bus_info == bus_info) {
                     json device_object = serialize_ehd(*itr);
                     removed_device_objects.push_back(device_object);
-                    std::cout << "Device removed from port: " << (*itr)->get_v4l2_device()->get_usb_info() << "\n";
+                    std::cout << "Device removed from port: "
+                              << (*itr)->get_v4l2_device()->get_usb_info()
+                              << "\n";
                     ehd_devices.erase(itr);
                 } else {
                     itr++;

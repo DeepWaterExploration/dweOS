@@ -1,6 +1,6 @@
 #include "broadcast-server.hpp"
 
-typedef void * (*THREADFUNCPTR)(void *);
+typedef void *(*THREADFUNCPTR)(void *);
 
 void BroadcastServer::start(int port) {
     _ws.set_access_channels(websocketpp::log::alevel::all);
@@ -8,18 +8,17 @@ void BroadcastServer::start(int port) {
 
     _ws.init_asio();
 
-    _ws.set_open_handler(bind(&BroadcastServer::_on_open,this,::_1));
-    _ws.set_close_handler(bind(&BroadcastServer::_on_close,this,::_1));
+    _ws.set_open_handler(bind(&BroadcastServer::_on_open, this, ::_1));
+    _ws.set_close_handler(bind(&BroadcastServer::_on_close, this, ::_1));
 
     _ws.listen(port);
     _ws.start_accept();
     _ws.run();
-    // pthread_create(&_thread, NULL, (THREADFUNCPTR)&BroadcastServer::_run, this);
+    // pthread_create(&_thread, NULL, (THREADFUNCPTR)&BroadcastServer::_run,
+    // this);
 }
 
-void BroadcastServer::stop() {
-    pthread_kill(_thread, 0);
-}
+void BroadcastServer::stop() { pthread_kill(_thread, 0); }
 
 void BroadcastServer::broadcast(std::string raw_msg) {
     for (auto itr = _connections.begin(); itr != _connections.end(); itr++) {
@@ -33,9 +32,7 @@ void BroadcastServer::emit(std::string event_name, json msg) {
     broadcast(raw_msg);
 }
 
-void BroadcastServer::_run(void *)  {
-    _ws.run();
-}
+void BroadcastServer::_run(void *) { _ws.run(); }
 
 void BroadcastServer::_on_open(websocketpp::connection_hdl hdl) {
     /* connected */

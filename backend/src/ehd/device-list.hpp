@@ -1,11 +1,11 @@
-#include "nlohmann/json.hpp"
 #include "camera/v4l2-camera.hpp"
 #include "ehd/ehd-device.hpp"
 #include "net/broadcast-server.hpp"
+#include "nlohmann/json.hpp"
 using json = nlohmann::json;
 
 class DeviceList {
-public:
+    public:
     DeviceList(BroadcastServer &broadcast_server);
 
     libehd::Device *get_ehd(std::string usbInfo);
@@ -22,13 +22,13 @@ public:
 
     json serialize();
 
-public:
-    std::vector<v4l2::Device*> v4l2_devices;
-    std::vector<libehd::Device*> ehd_devices;
+    public:
+    std::vector<v4l2::Device *> v4l2_devices;
+    std::vector<libehd::Device *> ehd_devices;
 
     json _devices_array;
 
-private:
+    private:
     void _monitor_devices();
 
     pthread_t _monitor_thread;

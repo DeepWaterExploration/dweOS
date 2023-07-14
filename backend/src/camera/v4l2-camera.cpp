@@ -1,7 +1,9 @@
-#include <linux/uvcvideo.h>
-#include <linux/usb/video.h>
-#include <regex>
 #include "v4l2-camera.hpp"
+
+#include <linux/usb/video.h>
+#include <linux/uvcvideo.h>
+
+#include <regex>
 
 using namespace v4l2;
 
@@ -21,7 +23,8 @@ std::string v4l2::fourcc2s(uint32_t fourcc) {
 
 /* v4l2::Camera definitions */
 
-int Camera::uvc_set_ctrl(uint32_t unit, uint32_t ctrl, uint8_t *data, uint8_t size) {
+int Camera::uvc_set_ctrl(
+    uint32_t unit, uint32_t ctrl, uint8_t *data, uint8_t size) {
     struct uvc_xu_control_query xctrlq;
     xctrlq.unit = unit;
     xctrlq.selector = ctrl;
@@ -34,7 +37,8 @@ int Camera::uvc_set_ctrl(uint32_t unit, uint32_t ctrl, uint8_t *data, uint8_t si
     return ioctl(_fd, UVCIOC_CTRL_QUERY, &xctrlq);
 }
 
-int Camera::uvc_get_ctrl(uint32_t unit, uint32_t ctrl, uint8_t *data, uint8_t size) {
+int Camera::uvc_get_ctrl(
+    uint32_t unit, uint32_t ctrl, uint8_t *data, uint8_t size) {
     struct uvc_xu_control_query xctrlq;
     xctrlq.unit = unit;
     xctrlq.selector = ctrl;
@@ -52,8 +56,7 @@ int Device::set_pu(uint32_t id, int32_t value) {
     return ioctl(fd, VIDIOC_S_CTRL, &control);
 }
 
-int Device::get_pu(uint32_t id, int32_t &value)
-{
+int Device::get_pu(uint32_t id, int32_t &value) {
     int fd = _cameras.at(0)->get_file_descriptor();
     v4l2_control control = {id, 0};
     int res = ioctl(fd, VIDIOC_G_CTRL, &control);
@@ -62,9 +65,10 @@ int Device::get_pu(uint32_t id, int32_t &value)
 }
 
 void Device::query_uvc_controls() {
-    int fd = _cameras.at(0)->get_file_descriptor(); // TODO: error checking
+    int fd = _cameras.at(0)->get_file_descriptor();  // TODO: error checking
     _controls.clear();
-    for (uint32_t cid = V4L2_CID_USER_BASE; cid < V4L2_CID_CAMERA_SENSOR_ROTATION+1; cid++) {
+    for (uint32_t cid = V4L2_CID_USER_BASE;
+         cid < V4L2_CID_CAMERA_SENSOR_ROTATION + 1; cid++) {
         if (cid == V4L2_CID_LASTP1) {
             cid = V4L2_CID_CAMERA_CLASS_BASE;
         }
@@ -73,9 +77,10 @@ void Device::query_uvc_controls() {
         qctrl.id = cid;
         if (ioctl(fd, VIDIOC_QUERYCTRL, &qctrl) == -1) continue;
         control.id = cid;
-        control.name = (char*)qctrl.name;
-        // std::cout << "  UVC Control: " << cid << " (" << control.name << ")" << "\n";
-        
+        control.name = (char *)qctrl.name;
+        // std::cout << "  UVC Control: " << cid << " (" << control.name << ")"
+        // << "\n";
+
         control.flags.disabled = (qctrl.flags & V4L2_CTRL_FLAG_DISABLED);
         control.flags.grabbed = (qctrl.flags & V4L2_CTRL_FLAG_GRABBED);
         control.flags.read_only = (qctrl.flags & V4L2_CTRL_FLAG_READ_ONLY);
@@ -83,7 +88,7 @@ void Device::query_uvc_controls() {
         control.flags.slider = (qctrl.flags & V4L2_CTRL_FLAG_SLIDER);
         control.flags.write_only = (qctrl.flags & V4L2_CTRL_FLAG_WRITE_ONLY);
         control.flags.volatility = (qctrl.flags & V4L2_CTRL_FLAG_VOLATILE);
-        
+
         control.type = (v4l2_ctrl_type)qctrl.type;
         control.max = qctrl.maximum;
         control.min = qctrl.minimum;
@@ -92,20 +97,22 @@ void Device::query_uvc_controls() {
 
         switch (qctrl.type) {
             case v4l2_ctrl_type::V4L2_CTRL_TYPE_MENU:
-                for (uint32_t mindex = 0; mindex < qctrl.maximum + 1; mindex++) {
+                for (uint32_t mindex = 0; mindex < qctrl.maximum + 1;
+                     mindex++) {
                     v4l2_querymenu qmenu;
                     qmenu.id = control.id;
                     qmenu.index = mindex;
                     if (ioctl(fd, VIDIOC_QUERYMENU, &qmenu) == 0) {
                         MenuItem menuItem;
                         menuItem.index = mindex;
-                        menuItem.name = (char*)qmenu.name;
+                        menuItem.name = (char *)qmenu.name;
                         control.menuItems.push_back(menuItem);
                     }
                 }
                 break;
             case v4l2_ctrl_type::V4L2_CTRL_TYPE_INTEGER_MENU:
-                for (uint32_t mindex = 0; mindex < qctrl.maximum + 1; mindex++) {
+                for (uint32_t mindex = 0; mindex < qctrl.maximum + 1;
+                     mindex++) {
                     v4l2_querymenu qmenu;
                     qmenu.id = control.id;
                     qmenu.index = mindex;
@@ -122,23 +129,21 @@ void Device::query_uvc_controls() {
     }
 }
 
-std::vector<Control> Device::get_uvc_controls() {
-    return _controls;
-}
+std::vector<Control> Device::get_uvc_controls() { return _controls; }
 
 ErrorType Camera::camera_open() {
     _fd = open(_path.c_str(), O_RDWR, 0);
     if (_fd == -1) {
         return V4L2_OPEN_FAILURE;
     }
-    for (uint32_t i = 0; ; i++) {
+    for (uint32_t i = 0;; i++) {
         v4l2_fmtdesc fmt = {0};
         fmt.index = i;
         fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         if (ioctl(_fd, VIDIOC_ENUM_FMT, &fmt) == -1) break;
         Format format;
         format.pixelformat = fmt.pixelformat;
-        for (uint32_t j = 0; ; j++) {
+        for (uint32_t j = 0;; j++) {
             v4l2_frmsizeenum frmsize = {0};
             frmsize.index = j;
             frmsize.pixel_format = fmt.pixelformat;
@@ -147,7 +152,7 @@ ErrorType Camera::camera_open() {
                 FormatSize format_size;
                 format_size.width = frmsize.discrete.width;
                 format_size.height = frmsize.discrete.height;
-                for (uint32_t k = 0; ; k++) {
+                for (uint32_t k = 0;; k++) {
                     v4l2_frmivalenum frmival = {0};
                     frmival.index = k;
                     frmival.pixel_format = fmt.pixelformat;
@@ -156,9 +161,9 @@ ErrorType Camera::camera_open() {
                     if (ioctl(_fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival) == -1)
                         break;
                     if (frmival.type = V4L2_FRMIVAL_TYPE_DISCRETE) {
-                        format_size.intervals.push_back({
-                            frmival.discrete.numerator, frmival.discrete.denominator
-                        });
+                        format_size.intervals.push_back(
+                            {frmival.discrete.numerator,
+                                frmival.discrete.denominator});
                     }
                 }
                 format.sizes.push_back(format_size);
@@ -205,11 +210,14 @@ Device::Device(v4l2::devices::DEVICE_INFO info) : _info(info) {
     }
 
     if (info.device_paths.size() > 0) {
-        std::string cam_name = std::filesystem::path(_info.device_paths.at(0)).filename();
+        std::string cam_name =
+            std::filesystem::path(_info.device_paths.at(0)).filename();
         char result[FILENAME_MAX];
-        cwk_path_join("/sys/class/video4linux/", cam_name.c_str(), result, sizeof(result));
+        cwk_path_join("/sys/class/video4linux/", cam_name.c_str(), result,
+            sizeof(result));
         std::string link = std::filesystem::read_symlink(result);
-        cwk_path_get_absolute("/sys/class/video4linux/", link.c_str(), result, sizeof(result));
+        cwk_path_get_absolute(
+            "/sys/class/video4linux/", link.c_str(), result, sizeof(result));
         cwk_path_join(result, "../../../", result, sizeof(result));
         _device_path = std::string(result);
     }
@@ -241,8 +249,7 @@ Device::Device(v4l2::devices::DEVICE_INFO info) : _info(info) {
 }
 
 Device::~Device() {
-    if (_pipeline)
-        delete _pipeline;
+    if (_pipeline) delete _pipeline;
 }
 
 std::string Device::get_device_attr(std::string attr) {
@@ -253,8 +260,10 @@ std::string Device::get_device_attr(std::string attr) {
     attr_path += attr;
     std::ifstream in(_device_path + "/" + attr);
     if (in.good()) {
-        std::string contents((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
-        contents.erase(std::remove(contents.begin(), contents.end(), '\n'), contents.cend());
+        std::string contents((std::istreambuf_iterator<char>(in)),
+            std::istreambuf_iterator<char>());
+        contents.erase(std::remove(contents.begin(), contents.end(), '\n'),
+            contents.cend());
         _cached_attrs.insert(std::make_pair(attr, contents));
         return contents;
     }
@@ -268,18 +277,21 @@ Camera *Device::find_camera_with_format(uint32_t pixel_format) {
     return NULL;
 }
 
-void Device::configure_stream(uint32_t pixel_format, uint32_t width, uint32_t height, Interval interval, gst::StreamType streamType=gst::STREAM_TYPE_UDP) {
+void Device::configure_stream(uint32_t pixel_format, uint32_t width,
+    uint32_t height, Interval interval,
+    gst::StreamType streamType = gst::STREAM_TYPE_UDP) {
     /* Make sure if a pipeline has already been configured, it is not running */
     if (_pipeline->getIsConfigured()) {
         _pipeline->stop();
         delete _pipeline;
         _pipeline = new gst::Pipeline();
     }
-    
+
     gst::StreamInformation streamInfo;
     Camera *camera = find_camera_with_format(pixel_format);
     if (!camera)
-        throw std::runtime_error("Specified camera does not have the pixel format given.");
+        throw std::runtime_error(
+            "Specified camera does not have the pixel format given.");
     streamInfo.device_path = camera->get_path();
 
     gst::EncodeType encodeType;
@@ -292,10 +304,11 @@ void Device::configure_stream(uint32_t pixel_format, uint32_t width, uint32_t he
             break;
         default:
             encodeType = gst::ENCODE_TYPE_NONE;
-            throw std::runtime_error("Pixel format not recognized at this time.");
+            throw std::runtime_error(
+                "Pixel format not recognized at this time.");
             break;
     }
-    
+
     streamInfo.encode_type = encodeType;
     streamInfo.width = width;
     streamInfo.height = height;
@@ -305,13 +318,9 @@ void Device::configure_stream(uint32_t pixel_format, uint32_t width, uint32_t he
     _pipeline->setStreamInformation(streamInfo);
 }
 
-void Device::start_stream() {
-    _pipeline->start();
-}
+void Device::start_stream() { _pipeline->start(); }
 
-void Device::stop_stream() {
-    _pipeline->stop();
-}
+void Device::stop_stream() { _pipeline->stop(); }
 
 void Device::add_stream_endpoint(const std::string &host, uint32_t port) {
     gst::StreamEndpoint endpoint;
@@ -320,6 +329,4 @@ void Device::add_stream_endpoint(const std::string &host, uint32_t port) {
     _pipeline->addEndpoint(endpoint);
 }
 
-bool Device::is_stream_configured() {
-    return _pipeline->getIsConfigured();
-}
+bool Device::is_stream_configured() { return _pipeline->getIsConfigured(); }

@@ -13,9 +13,8 @@ void BroadcastServer::start(int port) {
 
     _ws.listen(port);
     _ws.start_accept();
-    _ws.run();
-    // pthread_create(&_thread, NULL, (THREADFUNCPTR)&BroadcastServer::_run,
-    // this);
+    // _ws.run();
+    pthread_create(&_thread, NULL, (THREADFUNCPTR)&BroadcastServer::_run, this);
 }
 
 void BroadcastServer::stop() { pthread_kill(_thread, 0); }

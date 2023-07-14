@@ -207,12 +207,13 @@ json DeviceList::serialize() {
 
 void DeviceList::_monitor_devices() {
     while (1) {
-        bool emitChanges = false;
-
         std::vector<v4l2::devices::DEVICE_INFO> devices;
         std::vector<v4l2::devices::DEVICE_INFO> removed_devices;
         std::vector<v4l2::devices::DEVICE_INFO> added_devices;
         v4l2::devices::list(devices);
+
+        json added_device_objects = json::array();
+        json removed_device_objects = json::array();
 
         for (auto a : devices) {
             bool foundDevice = false;
@@ -222,12 +223,11 @@ void DeviceList::_monitor_devices() {
                 }
             }
             if (!foundDevice) {
-                std::cout << "Added Device: " << a.bus_info << "\n";
-                emitChanges = true;
                 added_devices.push_back(a);
             }
         }
 
+        /* Ensure the devices have time to initialize */
         usleep(50000);
 
         for (auto a : _devices) {
@@ -238,8 +238,6 @@ void DeviceList::_monitor_devices() {
                 }
             }
             if (!foundDevice) {
-                std::cout << "Removed Device: " << a.bus_info << "\n";
-                emitChanges = true;
                 removed_devices.push_back(a);
             }
         }
@@ -252,6 +250,7 @@ void DeviceList::_monitor_devices() {
                 v4l2_device->get_device_attr("idProduct") == "6366") {
                 libehd::Device *ehd = libehd::Device::construct_device(v4l2_device);
                 json device_object = serialize_ehd(ehd);
+                added_device_objects.push_back(device_object);
                 _devices_array.push_back(device_object);
                 ehd_devices.push_back(ehd);
             } else {
@@ -264,6 +263,9 @@ void DeviceList::_monitor_devices() {
             while (itr != ehd_devices.end()) {
                 std::string bus_info = (*itr)->get_v4l2_device()->get_info().bus_info;
                 if (device_info.bus_info == bus_info) {
+                    json device_object = serialize_ehd(*itr);
+                    removed_device_objects.push_back(device_object);
+                    std::cout << "Device removed from port: " << (*itr)->get_v4l2_device()->get_usb_info() << "\n";
                     ehd_devices.erase(itr);
                 } else {
                     itr++;
@@ -271,8 +273,12 @@ void DeviceList::_monitor_devices() {
             }
         }
 
-        if (emitChanges) {
-            _broadcast_server.broadcast("changed");
+        if (added_device_objects.size() > 0) {
+            _broadcast_server.emit("added_devices", added_device_objects);
+        }
+
+        if (removed_device_objects.size() > 0) {
+            _broadcast_server.emit("removed_devices", removed_device_objects);
         }
 
         _devices = devices;

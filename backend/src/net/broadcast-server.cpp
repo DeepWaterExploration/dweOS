@@ -13,17 +13,24 @@ void BroadcastServer::start(int port) {
 
     _ws.listen(port);
     _ws.start_accept();
-    pthread_create(&_thread, NULL, (THREADFUNCPTR)&BroadcastServer::_run, this);
+    _ws.run();
+    // pthread_create(&_thread, NULL, (THREADFUNCPTR)&BroadcastServer::_run, this);
 }
 
 void BroadcastServer::stop() {
-    pthread_cancel(_thread);
+    pthread_kill(_thread, 0);
 }
 
-void BroadcastServer::broadcast(std::string msg) {
+void BroadcastServer::broadcast(std::string raw_msg) {
     for (auto itr = _connections.begin(); itr != _connections.end(); itr++) {
-        _ws.send(*itr, msg, websocketpp::frame::opcode::text);
+        _ws.send(*itr, raw_msg, websocketpp::frame::opcode::text);
     }
+}
+
+void BroadcastServer::emit(std::string event_name, json msg) {
+    std::string raw_msg = event_name + "\n";
+    raw_msg += msg.dump();
+    broadcast(raw_msg);
 }
 
 void BroadcastServer::_run(void *)  {

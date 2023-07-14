@@ -7,7 +7,7 @@ AlignConsecutiveAssignments: 'false'
 AlignEscapedNewlines: Left
 AlignOperands: 'true'
 AlignTrailingComments: 'true'
-IndentWidth: '2'
+IndentWidth: '4'
 SpacesInParentheses: 'false'
 SpacesInSquareBrackets: 'false'
 UseTab: Never

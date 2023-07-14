@@ -30,7 +30,8 @@ std::string getUSBInfo(const httplib::Params &params, httplib::Response &res) {
 }
 
 void signalHandler(int signum) {
-    broadcast_server.stop();
+    // broadcast_server.stop();
+    // std::cout << "stopping server.\n";
     exit(signum);
 }
 
@@ -41,11 +42,10 @@ int main(int argc, char** argv) {
     signal(SIGINT, signalHandler);
 
     DeviceList devices(broadcast_server);
+    std::cout << "Beginning initial device enumeration." << std::endl;
     devices.enumerate();
 
-    broadcast_server.start(9000);
-
-    std::cout << "Running API backend.\n";
+    std::cout << "Running API server.\n";
 
     /* monitor */
     devices.start_monitoring();
@@ -218,5 +218,6 @@ int main(int argc, char** argv) {
     });
 
     /* Leave the pipeline threads running */
+    broadcast_server.start(9002);
     svr.listen("localhost", 8080);
 }

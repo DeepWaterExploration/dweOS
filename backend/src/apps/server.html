@@ -8,7 +8,7 @@
 <body>
     <script>
         // Create WebSocket connection.
-        const socket = new WebSocket("ws://localhost:9000");
+        const socket = new WebSocket("ws://localhost:9002");
 
         // Connection opened
         socket.addEventListener("open", (event) => {
@@ -17,7 +17,11 @@
 
         // Listen for messages
         socket.addEventListener("message", (event) => {
-            console.log("Message from server ", event.data);
+            let lines = event.data.split('\n');
+            let event_name = lines[0];
+            let msg = JSON.parse(lines[1]);
+            console.log("Event: ", event_name);
+            console.log(msg);
         });
     </script>
 </body>

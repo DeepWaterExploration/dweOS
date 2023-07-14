@@ -5,8 +5,10 @@
 #include <websocketpp/server.hpp>
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <pthread.h>
+#include <nlohmann/json.hpp>
 
 typedef websocketpp::server<websocketpp::config::asio> server;
+using json = nlohmann::json;
 
 using websocketpp::lib::placeholders::_1;
 using websocketpp::lib::placeholders::_2;
@@ -20,7 +22,9 @@ public:
 
     void stop();
 
-    void broadcast(std::string msg);
+    void broadcast(std::string raw_msg);
+
+    void emit(std::string event_name, json msg);
 
 private:
     typedef std::set<websocketpp::connection_hdl,std::owner_less<websocketpp::connection_hdl>> con_list;

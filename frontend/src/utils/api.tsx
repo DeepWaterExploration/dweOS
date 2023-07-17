@@ -2,59 +2,48 @@
 export interface Device {
   cameras: Camera[];
   controls: Control[];
-  info: {
-    name: string;
-    /* Differenciator between cameras (device path) */
-    path: string;
-    pid: string;
-    manufacturer: string;
-    model: string;
-    // Add more properties if needed
-  };
-  options: {
-    bitrate: number;
-    gop: number;
-    mode: string;
-    // Add more properties if needed
-  };
-  stream: {
-    device_path: string;
-    encode_type: encodeType;
-    stream_type: streamType;
-    // Add more properties if needed
-  };
+  info: CameraInfo;
+  options: StreamOptions;
+  stream: Stream;
 }
 
-interface Camera {
+export interface Camera {
   device_path: string;
   formats: CameraFormat[];
 }
 
-interface CameraFormat {
+export interface CameraFormat {
   format: string;
-  sizes: CameraSize[];
+  sizes: CameraFormatSize[];
 }
 
-export interface CameraSize {
+export interface CameraFormatSize {
   height: number;
   intervals: CameraInterval[];
   width: number;
 }
 
-interface CameraInterval {
+/**
+ * Represents a camera interval
+ */
+export interface CameraInterval {
   /* The stream interval numerator */
   numerator: number;
   /* The stream interval denominator */
   denominator: number;
 }
 
-interface Control {
-  flags: CameraFlags; // Update the type if possible
+/**
+ * Represents a UVC control.
+ */
+export interface Control {
+  flags: ControlFlags;
+  /* The control ID */
   id: number;
   name: string;
 }
 
-interface CameraFlags {
+export interface ControlFlags {
   default_value: number;
   disabled: boolean;
   grabbed: boolean;
@@ -69,6 +58,29 @@ interface CameraFlags {
   write_only: boolean;
 }
 
+export interface CameraInfo {
+  /* Differenciator between cameras (device path) */
+  name: string;
+  path: string;
+  pid: string;
+  usbInfo: string;
+  vid: string;
+}
+
+export interface StreamOptions {
+  bitrate: number;
+  gop: number;
+  mode: string;
+}
+
+export interface Stream {
+  device_path: string;
+  encode_type: encodeType;
+  stream_type: streamType;
+  endpoints: StreamEndpoint[];
+  format: StreamFormat;
+}
+
 /* If we ever need to add more compression formats, just add them here */
 export enum encodeType {
   MJPEG = "MJPEG",
@@ -77,8 +89,29 @@ export enum encodeType {
 
 /* If we ever need to support more stream protocols, just add them here */
 export enum streamType {
-  TCP = "TCP",
   UDP = "UDP",
+}
+
+/**
+ * Represents a stream format.
+ */
+interface StreamFormat {
+  /* The stream width */
+  width: number;
+  /* The stream height */
+  height: number;
+  /* The stream interval */
+  interval: CameraInterval;
+}
+
+/**
+ * Represents a stream endpoint.
+ */
+interface StreamEndpoint {
+  /* The stream endpoint host */
+  host: string;
+  /* The stream endpoint port */
+  port: number;
 }
 
 /**
@@ -139,32 +172,13 @@ export async function getDevice(id: number): Promise<Device> {
 }
 
 /**
- * Represents a stream format.
- */
-interface Format {
-  /* The pixel format of the stream */
-  format: format;
-  /* The stream width */
-  width: number;
-  /* The stream height */
-  height: number;
-  /* The stream interval */
-  interval: {
-    /* The stream interval numerator */
-    numerator: number;
-    /* The stream interval denominator */
-    denominator: number;
-  };
-}
-
-/**
  * Configures a device stream with the provided settings.
  * @param {number} index - The index of the connected camera.
- * @param {Format} format - The format of the stream.
+ * @param {StreamFormat} format - The format of the stream.
  * @throws {Error} - If the request to configure the device fails.
  */
-export async function setDevice(id: number, format: Format) {
-  const url = `http://localhost:8080/devices/${id}`;
+export async function setDevice(id: number, format: StreamFormat) {
+  const url = `http://localhost:8080/devices${id}`;
   const config: RequestInit = {
     mode: "cors",
     method: "POST",
@@ -188,16 +202,6 @@ export async function setDevice(id: number, format: Format) {
 }
 
 /**
- * Represents a stream endpoint.
- */
-interface Endpoint {
-  /* The stream endpoint host */
-  host: string;
-  /* The stream endpoint port */
-  port: number;
-}
-
-/**
  * Add a stream endpoint to a device.
  * @param {number} index - The index of the connected camera.
  * @param {Endpoint} endpoint - The stream endpoint object.
@@ -206,7 +210,7 @@ interface Endpoint {
  */
 export async function addStreamEndpoint(
   index: number,
-  endpoint: Endpoint
+  endpoint: StreamEndpoint
 ): Promise<void> {
   const url = "http://localhost:8080/add_stream_endpoint";
   const data = {
@@ -311,16 +315,6 @@ export async function stopStream(index: number): Promise<void> {
       console.log("Failed to stop stream");
       console.error(error);
     });
-}
-
-/**
- * Represents a UVC control.
- */
-interface Control {
-  /* The control ID */
-  id: number;
-  /* The control value */
-  value: number;
 }
 
 /**

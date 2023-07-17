@@ -23,8 +23,9 @@ import {
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 
-import { CameraFormatSize, Device, setDevice } from "../../utils/api";
-import { Padding } from "@mui/icons-material";
+import { CameraFormatSize, Device } from "../../utils/api";
+
+// import { Padding } from "@mui/icons-material";
 
 interface SupportingTextProps {
   children: React.ReactNode;
@@ -159,26 +160,14 @@ interface DeviceOptionsProps {
 }
 
 const DeviceOptions: React.FC<DeviceOptionsProps> = (props) => {
-  const device = props.device.stream.device_path;
-
+  // const device = props.device.stream.device_path;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [bitrate, setBitrate] = useState(props.device.options.bitrate);
   const [bitrateSlider, setBitrateSlider] = useState(
     props.device.options.bitrate / 1000000
   );
   const [h264, setH264] = useState(props.device.options.h264);
   const [vbr, setVBR] = useState(props.device.options.vbr);
-
-  useEffect(() => {
-    const body = {
-      devicePath: device,
-      options: {
-        bitrate,
-        h264,
-        vbr,
-      },
-    };
-    // makePostRequest("/options", body);
-  }, [bitrate, h264, vbr]);
 
   return (
     <>
@@ -230,13 +219,12 @@ interface StreamOptionsProps {
 }
 
 const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
-  console.log(props.device);
+  console.log("device", props.device);
   const [udp, setUDP] = useState(props.device.stream.isStreaming);
   const [hostAddress, setHostAddress] = useState(props.device.stream.host);
   const [port, setPort] = useState(props.device.stream.port);
-  const [resolution, setResolution] = useState(
-    `${props.device.stream.format.height}x${props.device.stream.format.width}`
-  );
+  const [resolution, setResolution] = useState(props.device.stream === undefined ? `${props.device.stream.format.height}x${props.device.stream.format.width}` : "");
+    // `${props.device.stream.format.height}x${props.device.stream.format.width}`
   const restartStream = () => {
     // makePostRequest(
     //   "/restartStream",
@@ -357,6 +345,7 @@ interface CameraControlsProps {
 }
 
 const CameraControls: React.FC<CameraControlsProps> = (props) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { controls, devicePath } = props;
   const [controlsCollapsed, setControlsCollapsed] = useState(true);
 

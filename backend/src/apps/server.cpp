@@ -1,12 +1,14 @@
+#include <httplib.h>
+
 #include <csignal>
+#include <gstreamer/gst-pipeline.hpp>
+#include <net/broadcast-server.hpp>
+#include <nlohmann/json.hpp>
+#include <pugixml.hpp>
 
 #include "camera/v4l2-camera.hpp"
 #include "ehd/device-list.hpp"
 #include "ehd/ehd-device.hpp"
-#include "gstreamer/gst-pipeline.hpp"
-#include "httplib.h"
-#include "net/broadcast-server.hpp"
-#include "nlohmann/json.hpp"
 
 using json = nlohmann::json;
 
@@ -42,6 +44,20 @@ int main(int argc, char **argv) {
 
     signal(SIGINT, signalHandler);
 
+    /* Settings */
+
+    pugi::xml_document doc;
+    pugi::xml_parse_result result = doc.load_file("test.xml");
+    if (!result) return -1;
+
+    pugi::xml_node settings = doc.child("Settings");
+    std::cout << "Settings file version: "
+              << settings.attribute("version").value() << std::endl;
+    for (pugi::xml_node device : settings.child("Devices").children("Device")) {
+        std::cout << "USB Info: " << device.attribute("usbInfo").value()
+                  << std::endl;
+    }
+
     DeviceList devices(broadcast_server);
     std::cout << "Beginning initial device enumeration." << std::endl;
     devices.enumerate();
@@ -49,6 +65,7 @@ int main(int argc, char **argv) {
     std::cout << "Running API server.\n";
 
     /* monitor */
+
     devices.start_monitoring();
 
     /* API */

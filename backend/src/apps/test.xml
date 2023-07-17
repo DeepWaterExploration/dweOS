@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Settings version="1.0">
+  <Devices>
+    <Device usbInfo="1.2.4">
+      <Options>
+        <Bitrate>10000000</Bitrate>
+        <Mode>vbr</Mode>
+        <H264>true</H264>
+      </Options>
+      <Controls>
+        <Control id="9963776" name="Brightness">
+          <Flags defaultValue="0" disabled="0" grabbed="0" max="0" min="0" read_only="0"
+            slider="0" step="1" type="1" update="0" volatility="0" write_only="0" />
+        </Control>
+      </Controls>
+    </Device>
+  </Devices>
+</Settings>

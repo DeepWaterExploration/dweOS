@@ -22,10 +22,13 @@ include_directories(
     thirdparty/websocketpp
 )
 
+configure_file(src/apps/test.xml test.xml COPYONLY)
+
 add_subdirectory(thirdparty/cwalk)
 add_subdirectory(thirdparty/fmt)
 add_subdirectory(thirdparty/json)
 add_subdirectory(thirdparty/websocketpp)
+add_subdirectory(thirdparty/pugixml)
 
 set(SOURCE
     ${SOURCE}
@@ -46,3 +49,4 @@ target_link_libraries(backend PRIVATE cwalk)
 target_link_libraries(backend PRIVATE fmt)
 target_link_libraries(backend PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(backend PRIVATE Threads::Threads)
+target_link_libraries(backend PRIVATE pugixml)

@@ -53,12 +53,13 @@ int main(int argc, char **argv) {
 
     /* API */
 
-    svr.Options("/(.*)", [&](const httplib::Request &, httplib::Response &res) {
-        res.set_header("Access-Control-Allow-Methods", " POST, GET, OPTIONS");
+    svr.Options("/(.*)",
+        [&](const httplib::Request& req, httplib::Response& res) {
+        res.set_header("Access-Control-Allow-Origin", req.get_header_value("Origin"));
+        res.set_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        res.set_header("Access-Control-Allow-Headers", "X-Requested-With, Content-Type, Accept");
         res.set_header("Content-Type", "text/html; charset=utf-8");
-        res.set_header("Access-Control-Allow-Headers",
-            "X-Requested-With, Content-Type, Accept");
-        res.set_header("Access-Control-Allow-Origin", "*");
+        res.set_header("Access-Control-Allow-Credentials", "true");
         res.set_header("Connection", "close");
     });
 

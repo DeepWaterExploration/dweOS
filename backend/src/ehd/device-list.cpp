@@ -84,7 +84,7 @@ json DeviceList::serialize_ehd(libehd::Device *ehd) {
         {"mode",
             (ehd->get_h264_mode() == libehd::MODE_CONSTANT_BITRATE ? "CBR"
                                                                    : "VBR")},
-        {"gop", ehd->get_gop()},
+        {"h264", ehd->get_gop() != 0 ? true : false},
     };
 
     device_object["cameras"] = json::array();

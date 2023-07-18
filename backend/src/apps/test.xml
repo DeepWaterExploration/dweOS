@@ -2,11 +2,7 @@
 <Settings version="1.0">
   <Devices>
     <Device usbInfo="1.2.4">
-      <Options>
-        <Bitrate>10000000</Bitrate>
-        <Mode>vbr</Mode>
-        <H264>true</H264>
-      </Options>
+      <Options bitrate="10000000" mode="vbr" h264="true" />
       <Controls>
         <Control id="9963776" name="Brightness">
           <Flags defaultValue="0" disabled="0" grabbed="0" max="0" min="0" read_only="0"

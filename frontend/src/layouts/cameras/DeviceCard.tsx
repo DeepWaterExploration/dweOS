@@ -22,10 +22,14 @@ import {
   Typography,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
+import { styles } from "./style";
 
-import { CameraFormatSize, Device } from "../../utils/api";
-
+import { CameraFormatSize, Control, Device, bitrateMode, controlType, StreamEndpoint } from "../../utils/api";
+import PopupState, { bindMenu, bindTrigger } from "material-ui-popup-state";
+import AddIcon from '@mui/icons-material/Add';
 // import { Padding } from "@mui/icons-material";
+
+const IP_REGEX = /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/;
 
 interface SupportingTextProps {
   children: React.ReactNode;
@@ -124,9 +128,10 @@ const ResolutionMenu: React.FC<ResolutionMenuProps> = (props) => {
           aria-label='when device is locked'
           aria-expanded={open ? "true" : undefined}
           onClick={handleClickListItem}
-          sx={{ margin: "0px",
-          padding: "6px 16px"
-         }}
+          sx={{
+            margin: "0px",
+            padding: "6px 16px"
+          }}
         >
           <ListItemText primary={primaryText} />
         </ListItem>
@@ -167,7 +172,7 @@ const DeviceOptions: React.FC<DeviceOptionsProps> = (props) => {
     props.device.options.bitrate / 1000000
   );
   const [h264, setH264] = useState(props.device.options.h264);
-  const [vbr, setVBR] = useState(props.device.options.vbr);
+  const [mode, setMode] = useState(props.device.options.mode);
 
   return (
     <>
@@ -176,7 +181,7 @@ const DeviceOptions: React.FC<DeviceOptionsProps> = (props) => {
         <Slider
           name='bitrate'
           defaultValue={bitrateSlider}
-          disabled={vbr}
+          disabled={mode === bitrateMode.VBR}
           onChangeCommitted={(_, newValue) => {
             setBitrate(newValue as number);
           }}
@@ -196,18 +201,18 @@ const DeviceOptions: React.FC<DeviceOptionsProps> = (props) => {
           name='h264Switch'
           onChange={(e) => {
             setH264(e.target.checked);
-            setVBR(e.target.checked ? false : vbr);
+            setMode(e.target.checked ? bitrateMode.CBR : mode);
           }}
           text='H.264'
         />
         <DeviceSwitch
-          checked={vbr}
+          checked={mode === bitrateMode.VBR}
           name='vbrSwitch'
           onChange={(e) => {
-            setVBR(e.target.checked);
+            setMode(e.target.checked ? bitrateMode.VBR : bitrateMode.CBR);
             setH264(e.target.checked ? false : h264);
           }}
-          text='VBR (Variable Bitrate)'
+          text={mode === bitrateMode.VBR ? 'VBR (Variable Bitrate)' : 'CBR (Constant Bitrate)'}
         />
       </FormGroup>
     </>
@@ -219,125 +224,137 @@ interface StreamOptionsProps {
 }
 
 const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
-  console.log("device", props.device);
-  const [udp, setUDP] = useState(props.device.stream.isStreaming);
-  const [hostAddress, setHostAddress] = useState(props.device.stream.host);
-  const [port, setPort] = useState(props.device.stream.port);
-  const [resolution, setResolution] = useState(props.device.stream === undefined ? `${props.device.stream.format.height}x${props.device.stream.format.width}` : "");
-    // `${props.device.stream.format.height}x${props.device.stream.format.width}`
-  const restartStream = () => {
-    // makePostRequest(
-    //   "/restartStream",
-    //   {
-    //     devicePath: device,
-    //     stream: {
-    //       hostAddress,
-    //       port,
-    //       resolution,
-    //     },
-    //   },
-    //   xhr => {
-    //     const response = JSON.parse(xhr.response);
-    //     setPort(response.port);
-    //   }
-    // );
+  const [stream, setStream] = useState(props.device.stream.device_path !== undefined);
+  const [endpointsCollapsed, setEndpointsCollapsed] = useState(true);
+
+  const [host, setHost] = useState("192.168.2.1");
+  const [port, setPort] = useState(5600);
+  const [ipError, setIpError] = useState("");
+  const [portError, setPortError] = useState("");
+
+  const [endpoints, setEndpoints] = useState<StreamEndpoint[]>(props.device.stream.endpoints ? props.device.stream.endpoints : []);
+
+  const handleAddEndpoint = () => {
+    // Check if the IP is valid
+    const validIP: boolean = IP_REGEX.test(host);
+    if (!validIP) {
+      setIpError("Invalid IP address");
+    } else {
+      setIpError("");
+    }
+    // Check if the port is valid
+    const validPort: boolean = port >= 1024 && port <= 65535;
+    if (!validPort) {
+      setPortError("Invalid port");
+    } else {
+      setPortError("");
+    }
+    // Perform necessary actions with the valid IP and port values
+    if (validIP && validPort) {
+      console.log("IP:", host);
+      console.log("Port:", port);
+      if (endpoints.find(endpoint => endpoint.host === host && endpoint.port === port)) {
+        setIpError("An endpoint with the specified ip and port pair already exists");
+        setPortError(" ");
+        return;
+      } else {
+        // makePostRequest("/addEndpoint", {
+        setEndpoints(endpoints => [...endpoints, {
+          host, port
+        }]);
+      }
+    }
   };
-
-  useEffect(() => {
-    restartStream();
-  }, [resolution]);
-
-  useEffect(() => {
-    // if (udp) {
-    //   makePostRequest(
-    //     "/addStream",
-    //     {
-    //       devicePath: device,
-    //       stream: {
-    //         hostAddress,
-    //         port,
-    //       },
-    //     },
-    //     xhr => {
-    //       const response = JSON.parse(xhr.response);
-    //       setPort(response.port);
-    //     }
-    //   );
-    // } else {
-    //   makePostRequest("/removeStream", {
-    //     devicePath: device,
-    //   })
-    //   ;
-    // }
-  }, [udp]);
 
   return (
     <FormGroup>
-      <DeviceSwitch
-        onChange={(e) => {
-          setUDP(e.target.checked);
-        }}
-        checked={udp}
-        name='streamSwitch'
-        text='UDP Stream'
-      />
-      {udp ? (
-        <>
-          <TextField
-            label='address'
-            onChange={(e) => {
-              setHostAddress(e.target.value);
-            }}
-            variant='standard'
-            value={hostAddress}
-          />
-          <TextField
-            label='port'
-            onChange={(e) => {
-              setPort(Number(e.target.value));
-            }}
-            variant='standard'
-            type='number'
-            value={port}
-          />
-          <div style={{ marginTop: "20px" }}>
-            <ResolutionMenu
-              onResolutionChange={(res) => {
-                setResolution(res);
-              }}
-              defaultResolution={resolution}
-              resolutions={
-                props.device.cameras.filter(
-                  (camera) =>
-                    props.device.stream.device_path === camera.device_path
-                )[0].formats[0].sizes
-              }
-            />
-          </div>
-          <Button
-            color='grey'
-            variant='contained'
-            style={{ marginTop: "20px" }}
-            onClick={restartStream}
-          >
-            Restart Stream
-          </Button>
-        </>
-      ) : undefined}
-    </FormGroup>
+      <DeviceSwitch onChange={(e) => { setStream(e.target.checked) }} checked={stream} name="streamSwitch" text="Stream" />
+      {
+        stream ?
+          <>
+            <div>
+              <div>
+                <span>Stream Endpoints</span>
+                <IconButton onClick={() => setEndpointsCollapsed(!endpointsCollapsed)}>
+                  {endpointsCollapsed ? <ArrowDropDownIcon /> : <ArrowDropUpIcon />}
+                </IconButton>
+              </div>
+              <Collapse in={!endpointsCollapsed}>
+                {
+                  endpoints.map((endpoint) => {
+                    return <>
+                      <Typography>{endpoint.host}</Typography>
+                      <Typography>{endpoint.port}</Typography>
+                    </>
+                  })
+                }
+              </Collapse>
+            </div>
+
+            {/* Container for User Input and Interaction */}
+            <div style={
+              styles.cardContent.div
+            }>
+              {/* IP Address input */}
+              <TextField
+                sx={styles.textField}
+                label="IP Address"
+                variant="outlined"
+                size="small"
+                value={host}
+                onChange={(e) => setHost(e.target.value)}
+                error={!!ipError}
+                helperText={ipError}
+              />
+              {/* Port Input */}
+              <TextField
+                sx={styles.portField}
+                label="Port"
+                variant="outlined"
+                size="small"
+                value={port}
+                onChange={(e) => setPort(parseInt(e.target.value))}
+                error={!!portError}
+                helperText={portError}
+                type="number"
+                inputProps={{ min: 1024, max: 65535 }} // Specify minimum and maximum values
+              />
+              {/* Add Stream Endpoint Button */}
+              <IconButton
+                sx={{
+                  width: "40px",
+                  height: "40px",
+                  color: "white",
+                  marginLeft: "-10px"
+                }}
+                onClick={() => {
+                  handleAddEndpoint();
+                }}
+              >
+                <AddIcon />
+              </IconButton>
+
+            </div>
+            <Button color="grey" variant="contained" style={{
+              marginTop: '20px',
+            }}>Restart Stream</Button>
+          </>
+          : undefined
+      }
+    </FormGroup >
   );
 };
 
-interface Control {
-  type: "int" | "bool" | "menu";
-  name: string;
-  id: number;
-  value: number | boolean | string;
-  min?: number;
-  max?: number;
-  step?: number;
-  menu?: string[];
-}
+// interface Control {
+//   type: "int" | "bool" | "menu";
+//   name: string;
+//   id: number;
+//   value: number | boolean | string;
+//   min?: number;
+//   max?: number;
+//   step?: number;
+//   menu?: string[];
+// }
 
 interface CameraControlsProps {
   controls: Control[];
@@ -360,9 +377,10 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
         <Collapse in={!controlsCollapsed}>
           <FormGroup style={{ marginTop: "25px" }}>
             {controls.map((control) => {
-              switch (control.type) {
-                case "int": {
-                  const { min, max, step, name, id } = control;
+              switch (control.flags.type) {
+                case controlType.INTEGER: {
+                  const { name, id } = control;
+                  const { min, max, step } = control.flags;
                   const defaultValue = control.value;
                   const [controlValue, setControlValue] = useState<number>(
                     defaultValue as number
@@ -396,9 +414,9 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                     </>
                   );
                 }
-                case "bool": {
+                case controlType.BOOLEAN: {
                   let { name, id } = control;
-                  const defaultValue = control.value;
+                  const defaultValue = control.value === 1 ? true : false;
                   if (name.includes("White Balance")) {
                     name = "AI TrueColor Technology™";
                   }
@@ -422,15 +440,17 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                           setControlValue(checked);
                         }}
                         name={`setDeviceNamecontrol-${id}`}
-                        defaultChecked={defaultValue == 1}
+                        defaultChecked={defaultValue}
                       />
                     </>
                   );
                 }
-                case "menu": {
-                  const { menu, name, id } = control;
+                case controlType.MENU: {
+                  let { name, id } = control;
+                  const { menu } = control.flags;
+                  if (!menu) break;
                   const defaultValue = menu[control.value as number];
-                  const [controlValue, setControlValue] = useState<string>(
+                  const [controlValue, setControlValue] = useState<string | number>(
                     defaultValue as string
                   );
 
@@ -444,17 +464,28 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
 
                   return (
                     <>
-                      <span>{name}</span>
-                      <select
-                        value={controlValue}
-                        onChange={(e) => setControlValue(e.target.value)}
-                      >
-                        {menu.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
+                      <PopupState variant="popover" popupId={"" + id}>
+                        {(popupState) => (
+                          <>
+                            <div>
+                              <span>{name}: {controlValue}</span>
+                              <IconButton {...bindTrigger(popupState)}>
+                                <ArrowDropDownIcon />
+                              </IconButton>
+                            </div>
+                            <Menu {...bindMenu(popupState)}>
+                              {
+                                menu.map((item, _) => {
+                                  return <MenuItem onClick={() => {
+                                    setControlValue(item);
+                                    popupState.close();
+                                  }}>{item}</MenuItem>
+                                })
+                              }
+                            </Menu>
+                          </>
+                        )}
+                      </PopupState>
                     </>
                   );
                 }
@@ -506,15 +537,13 @@ const DeviceCard: React.FC<DeviceCardProps> = (props) => {
           title={props.device.info.name}
           subheader={
             <>
-              {props.device.info.manufacturer
-                ? `Manufacturer: ${props.device.info.manufacturer}`
-                : "Manufacturer: DeepWater Exploration Inc"}
+              {`Manufacturer: ${props.device.info.manufacturer}`}
               <LineBreak />
-              {props.device.info.model
-                ? `Model: ${props.device.info.model}`
-                : "Model: DWE-EHDUSBR2"}
+              {`Model: ${props.device.info.model}`}
               <LineBreak />
-              <TextField
+              {`USB ID: ${props.device.info.usbInfo}`}
+              <LineBreak />
+              <TextField sx={{ top: 10 }}
                 onChange={(e) => {
                   props.device.info.name = e.target.value;
                   // setDevice(
@@ -529,15 +558,16 @@ const DeviceCard: React.FC<DeviceCardProps> = (props) => {
                 helperText='Device Nickname'
                 placeholder='Device Nickname'
                 variant='standard'
-                defaultValue={props.device.info.name}
+                defaultValue={""}
               ></TextField>
             </>
           }
         />
         <CardContent>
-          <SupportingText>
-            Device: {props.device.stream.device_path}
-          </SupportingText>
+          {props.device.stream.device_path ?
+            <SupportingText>
+              Device: {props.device.stream.device_path}
+            </SupportingText> : <></>}
           {deviceOptions}
           <StreamOptions device={props.device} />
           {cameraControls}

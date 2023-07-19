@@ -4,6 +4,7 @@
   src: url(./fonts/HelveticaNeueLTStd-Lt.otf) format('opentype');
   font-weight: normal;
   font-style: normal;
+  descent-override: 0%;
 }
 
 a {

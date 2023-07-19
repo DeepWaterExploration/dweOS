@@ -41,6 +41,7 @@ export interface Control {
   /* The control ID */
   id: number;
   name: string;
+  value: number;
 }
 
 export interface ControlFlags {
@@ -52,10 +53,11 @@ export interface ControlFlags {
   read_only: boolean;
   slider: number;
   step: number;
-  type: number;
+  type: controlType;
   update: number;
   volatility: number;
   write_only: boolean;
+  menu?: number[] | string[]
 }
 
 export interface CameraInfo {
@@ -65,12 +67,14 @@ export interface CameraInfo {
   pid: string;
   usbInfo: string;
   vid: string;
+  manufacturer: string;
+  model: string;
 }
 
 export interface StreamOptions {
   bitrate: number;
-  gop: number;
-  mode: string;
+  h264: boolean;
+  mode: bitrateMode;
 }
 
 export interface Stream {
@@ -85,6 +89,23 @@ export interface Stream {
 export enum encodeType {
   MJPEG = "MJPEG",
   H264 = "H264",
+}
+
+export enum controlType {
+  INTEGER = 1,
+  BOOLEAN = 2,
+  MENU = 3,
+  BUTTON = 4,
+  INTEGER64 = 5,
+  CTRL_CLASS = 6,
+  STRING = 7,
+  BITMASK = 8,
+  INTEGER_MENU = 9
+}
+
+export enum bitrateMode {
+  VBR = "VBR",
+  CBR = "CBR",
 }
 
 /* If we ever need to support more stream protocols, just add them here */
@@ -107,7 +128,7 @@ interface StreamFormat {
 /**
  * Represents a stream endpoint.
  */
-interface StreamEndpoint {
+export interface StreamEndpoint {
   /* The stream endpoint host */
   host: string;
   /* The stream endpoint port */

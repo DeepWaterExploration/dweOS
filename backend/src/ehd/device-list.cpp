@@ -75,6 +75,8 @@ json DeviceList::serialize_ehd(libehd::Device *ehd) {
     device_object["info"]["name"] = v4l2_device->get_info().device_name;
     device_object["info"]["vid"] = v4l2_device->get_device_attr("idVendor");
     device_object["info"]["pid"] = v4l2_device->get_device_attr("idProduct");
+    device_object["info"]["manufacturer"] = "DeepWater Exploration Inc.";
+    device_object["info"]["model"] = "DWE-EHDUSBR2";
 
     std::string usbInfo = v4l2_device->get_usb_info();
     device_object["info"]["usbInfo"] = usbInfo;
@@ -97,6 +99,9 @@ json DeviceList::serialize_ehd(libehd::Device *ehd) {
         json control_object = json::object();
         control_object["id"] = control.id;
         control_object["name"] = control.name;
+        int32_t value;
+        v4l2_device->get_pu(control.id, value);
+        control_object["value"] = value;
 
         json flags = json::object();
         flags["disabled"] = (int)control.flags.disabled;

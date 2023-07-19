@@ -2,35 +2,40 @@ import { grey } from "@mui/material/colors";
 import "../main.css";
 import { createTheme } from "@mui/material/styles";
 
-const lightTheme = createTheme({
+const commonThemeOptions = {
   typography: {
     fontFamily: "HelveticaNeueLight, sans-serif",
     fontWeightRegular: 400,
   },
-  // overrides: {
-  //   MuiTypography: {
-  //     styleOverrides: {
-  //       root: {
-  //         letterSpacing: "0.05em",
-  //       },
-  //     },
-  //   },
-  //   MuiCssBaseline: {
-  //     "@global": {
-  //       "@font-face": {
-  //         fontFamily: "HelveticaNeueLight",
-  //         fontStyle: "normal",
-  //         fontWeight: 400,
-  //         src: `
-  //         local('HelveticaNeueLight'),
-  //         local('HelveticaNeueLight'),
-  //         url(./fonts/HelveticaNeue-Light.otf) format('opentype')
-  //       `,
-  //       },
-  //     },
-  //   },
-  // },
+  overrides: {
+    MuiTypography: {
+      styleOverrides: {
+        root: {
+          letterSpacing: "0.05em",
+        },
+      },
+    },
+    MuiCssBaseline: {
+      "@global": {
+        "@font-face": {
+          fontFamily: "HelveticaNeueLight",
+          fontStyle: "normal",
+          fontWeight: 400,
+          src: `
+          local('HelveticaNeueLight'),
+          local('HelveticaNeueLight'),
+          url(./fonts/HelveticaNeue-Light.otf) format('opentype')
+        `,
+        },
+      },
+    },
+  },
+};
+
+const lightTheme = createTheme({
+  ...commonThemeOptions,
   palette: {
+    mode: "light",
     grey: {
       // main: grey[200],
       // dark: grey[300],
@@ -43,33 +48,7 @@ const lightTheme = createTheme({
 });
 
 const darkTheme = createTheme({
-  typography: {
-    fontFamily: "HelveticaNeueLight, sans-serif",
-    fontWeightRegular: 400,
-  },
-  // overrides: {
-  //   MuiTypography: {
-  //     styleOverrides: {
-  //       root: {
-  //         letterSpacing: "0.05em",
-  //       },
-  //     },
-  //   },
-  //   MuiCssBaseline: {
-  //     "@global": {
-  //       "@font-face": {
-  //         fontFamily: "HelveticaNeueLight",
-  //         fontStyle: "normal",
-  //         fontWeight: 400,
-  //         src: `
-  //         local('HelveticaNeueLight'),
-  //         local('HelveticaNeueLight'),
-  //         url(./fonts/HelveticaNeue-Light.otf) format('opentype')
-  //       `,
-  //       },
-  //     },
-  //   },
-  // },
+  ...commonThemeOptions,
   palette: {
     mode: "dark",
   },

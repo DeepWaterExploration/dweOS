@@ -332,6 +332,7 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
               <Typography fontWeight='800'>Stream Endpoints</Typography>
             </AccordionSummary>
             <AccordionDetails>
+              {endpoints.length === 0 ? <Typography fontWeight='500'>No stream endpoint added.</Typography> : undefined}
               <Box
                 sx={{
                   backgroundColor: "background.paper",
@@ -614,7 +615,7 @@ const DeviceCard: React.FC<DeviceCardProps> = (props) => {
         padding: "20px",
       }}
     >
-      <Card sx={{ minWidth: 500, boxShadow: 3, textAlign: "left" }}>
+      <Card sx={{ minWidth: 512, boxShadow: 3, textAlign: "left" }}>
         <CardHeader
           action={deviceWarning}
           title={props.device.info.name}

@@ -318,7 +318,7 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
         text='Stream'
       />
       {stream ? (
-        <div>
+        <>
           <Accordion
             style={{
               width: "100%",
@@ -427,7 +427,7 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
           >
             Restart Stream
           </Button>
-        </div>
+        </>
       ) : undefined}
     </FormGroup>
   );

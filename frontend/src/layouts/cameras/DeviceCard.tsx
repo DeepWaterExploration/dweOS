@@ -318,115 +318,117 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
         text='Stream'
       />
       {stream ? (
-        <Accordion
-          style={{
-            width: "100%",
-          }}
-        >
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls='panel2a-content'
-            id='panel2a-header'
+        <div>
+          <Accordion
+            style={{
+              width: "100%",
+            }}
           >
-            <Typography fontWeight="800">Stream Endpoints</Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-          <Box
-        sx={{
-          backgroundColor: "background.paper",
-          visibility: endpoints.length > 0 ? "visible" : "hidden",
-        }}
-      >
-        <List dense={true}>
-          {endpoints.map((endpoint) => {
-            return (
-              <ListItem
-                key={`${endpoint.host}:${endpoint.port}`}
-                secondaryAction={
-                  <IconButton
-                    edge='end'
-                    aria-label='delete'
-                    onClick={() =>
-                      setEndpoints((prevEndpoints) =>
-                        prevEndpoints.filter(
-                          (e) =>
-                            `${e.host}:${e.port}` !==
-                            `${endpoint.host}:${endpoint.port}`
-                        )
-                      )
-                    }
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                }
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              aria-controls='panel2a-content'
+              id='panel2a-header'
+            >
+              <Typography fontWeight='800'>Stream Endpoints</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Box
+                sx={{
+                  backgroundColor: "background.paper",
+                  visibility: endpoints.length > 0 ? "visible" : "hidden",
+                }}
               >
-                <ListItemAvatar>
-                  <Avatar>
-                    <LinkedCameraIcon />
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={`IP Address: ${endpoint.host}`}
-                  secondary={`Port: ${endpoint.port}`}
-                />
-              </ListItem>
-            );
-          })}
-        </List>
-      </Box>
-          </AccordionDetails>
-        </Accordion>
+                <List dense={true}>
+                  {endpoints.map((endpoint) => {
+                    return (
+                      <ListItem
+                        key={`${endpoint.host}:${endpoint.port}`}
+                        secondaryAction={
+                          <IconButton
+                            edge='end'
+                            aria-label='delete'
+                            onClick={() =>
+                              setEndpoints((prevEndpoints) =>
+                                prevEndpoints.filter(
+                                  (e) =>
+                                    `${e.host}:${e.port}` !==
+                                    `${endpoint.host}:${endpoint.port}`
+                                )
+                              )
+                            }
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        }
+                      >
+                        <ListItemAvatar>
+                          <Avatar>
+                            <LinkedCameraIcon />
+                          </Avatar>
+                        </ListItemAvatar>
+                        <ListItemText
+                          primary={`IP Address: ${endpoint.host}`}
+                          secondary={`Port: ${endpoint.port}`}
+                        />
+                      </ListItem>
+                    );
+                  })}
+                </List>
+              </Box>
+            </AccordionDetails>
+          </Accordion>
+          {/* Container for User Input and Interaction */}
+          <div style={styles.cardContent.div}>
+            {/* IP Address input */}
+            <TextField
+              sx={styles.textField}
+              label='IP Address'
+              variant='outlined'
+              size='small'
+              value={host}
+              onChange={(e) => setHost(e.target.value)}
+              error={!!ipError}
+              helperText={ipError}
+            />
+            {/* Port Input */}
+            <TextField
+              sx={styles.portField}
+              label='Port'
+              variant='outlined'
+              size='small'
+              value={port}
+              onChange={(e) => setPort(parseInt(e.target.value))}
+              error={!!portError}
+              helperText={portError}
+              type='number'
+              inputProps={{ min: 1024, max: 65535 }} // Specify minimum and maximum values
+            />
+            {/* Add Stream Endpoint Button */}
+            <IconButton
+              sx={{
+                width: "40px",
+                height: "40px",
+                color: "white",
+                marginLeft: "-10px",
+              }}
+              onClick={() => {
+                handleAddEndpoint();
+              }}
+            >
+              <AddIcon />
+            </IconButton>
+          </div>
+          <Button
+            color='grey'
+            variant='contained'
+            style={{
+              marginTop: "20px",
+            }}
+          >
+            Restart Stream
+          </Button>
+        </div>
       ) : undefined}
-      {/* Container for User Input and Interaction */}
-  <div style={styles.cardContent.div}>
-    {/* IP Address input */}
-    <TextField
-      sx={styles.textField}
-      label='IP Address'
-      variant='outlined'
-      size='small'
-      value={host}
-      onChange={(e) => setHost(e.target.value)}
-      error={!!ipError}
-      helperText={ipError}
-    />
-    {/* Port Input */}
-    <TextField
-      sx={styles.portField}
-      label='Port'
-      variant='outlined'
-      size='small'
-      value={port}
-      onChange={(e) => setPort(parseInt(e.target.value))}
-      error={!!portError}
-      helperText={portError}
-      type='number'
-      inputProps={{ min: 1024, max: 65535 }} // Specify minimum and maximum values
-    />
-    {/* Add Stream Endpoint Button */}
-    <IconButton
-      sx={{
-        width: "40px",
-        height: "40px",
-        color: "white",
-        marginLeft: "-10px",
-      }}
-      onClick={() => {
-        handleAddEndpoint();
-      }}
-    >
-      <AddIcon />
-    </IconButton>
-  </div>
-  <Button
-    color='grey'
-    variant='contained'
-    style={{
-      marginTop: "20px",
-    }}
-  >
-    Restart Stream
-  </Button>
     </FormGroup>
   );
 };

@@ -1,6 +1,15 @@
+import AddIcon from "@mui/icons-material/Add";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
+import DeleteIcon from "@mui/icons-material/Delete";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import LinkedCameraIcon from "@mui/icons-material/LinkedCamera";
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Avatar,
+  Box,
   Button,
   Card,
   CardContent,
@@ -13,6 +22,7 @@ import {
   IconButton,
   List,
   ListItem,
+  ListItemAvatar,
   ListItemText,
   Menu,
   MenuItem,
@@ -21,15 +31,23 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
-import { styles } from "./style";
-
-import { CameraFormatSize, Control, Device, bitrateMode, controlType, StreamEndpoint } from "../../utils/api";
 import PopupState, { bindMenu, bindTrigger } from "material-ui-popup-state";
-import AddIcon from '@mui/icons-material/Add';
+import React, { useEffect, useState } from "react";
+
+import { styles } from "./style";
+import {
+  CameraFormatSize,
+  Control,
+  Device,
+  StreamEndpoint,
+  bitrateMode,
+  controlType,
+} from "../../utils/api";
+
 // import { Padding } from "@mui/icons-material";
 
-const IP_REGEX = /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/;
+const IP_REGEX =
+  /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/;
 
 interface SupportingTextProps {
   children: React.ReactNode;
@@ -116,7 +134,8 @@ const ResolutionMenu: React.FC<ResolutionMenuProps> = (props) => {
           bgcolor: "background",
           display: "inline-block",
           width: "auto",
-          boxShadow: "rgba(0, 0, 0, 0.2) 0px 3px 1px -2px, rgba(0, 0, 0, 0.14) 0px 2px 2px 0px, rgba(0, 0, 0, 0.12) 0px 1px 5px 0px",
+          boxShadow:
+            "rgba(0, 0, 0, 0.2) 0px 3px 1px -2px, rgba(0, 0, 0, 0.14) 0px 2px 2px 0px, rgba(0, 0, 0, 0.12) 0px 1px 5px 0px",
           padding: "0px",
           margin: "0px",
         }}
@@ -130,7 +149,7 @@ const ResolutionMenu: React.FC<ResolutionMenuProps> = (props) => {
           onClick={handleClickListItem}
           sx={{
             margin: "0px",
-            padding: "6px 16px"
+            padding: "6px 16px",
           }}
         >
           <ListItemText primary={primaryText} />
@@ -212,7 +231,11 @@ const DeviceOptions: React.FC<DeviceOptionsProps> = (props) => {
             setMode(e.target.checked ? bitrateMode.VBR : bitrateMode.CBR);
             setH264(e.target.checked ? false : h264);
           }}
-          text={mode === bitrateMode.VBR ? 'VBR (Variable Bitrate)' : 'CBR (Constant Bitrate)'}
+          text={
+            mode === bitrateMode.VBR
+              ? "VBR (Variable Bitrate)"
+              : "CBR (Constant Bitrate)"
+          }
         />
       </FormGroup>
     </>
@@ -224,15 +247,19 @@ interface StreamOptionsProps {
 }
 
 const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
-  const [stream, setStream] = useState(props.device.stream.device_path !== undefined);
-  const [endpointsCollapsed, setEndpointsCollapsed] = useState(true);
+  const [stream, setStream] = useState(
+    props.device.stream.device_path !== undefined
+  );
+  const [endpointsCollapsed, setEndpointsCollapsed] = useState(false);
 
   const [host, setHost] = useState("192.168.2.1");
   const [port, setPort] = useState(5600);
   const [ipError, setIpError] = useState("");
   const [portError, setPortError] = useState("");
 
-  const [endpoints, setEndpoints] = useState<StreamEndpoint[]>(props.device.stream.endpoints ? props.device.stream.endpoints : []);
+  const [endpoints, setEndpoints] = useState<StreamEndpoint[]>(
+    props.device.stream.endpoints ? props.device.stream.endpoints : []
+  );
 
   const handleAddEndpoint = () => {
     // Check if the IP is valid
@@ -253,108 +280,156 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
     if (validIP && validPort) {
       console.log("IP:", host);
       console.log("Port:", port);
-      if (endpoints.find(endpoint => endpoint.host === host && endpoint.port === port)) {
-        setIpError("An endpoint with the specified ip and port pair already exists");
+      if (
+        endpoints.find(
+          (endpoint) => endpoint.host === host && endpoint.port === port
+        )
+      ) {
+        setIpError(
+          "An endpoint with the specified ip and port pair already exists"
+        );
         setPortError(" ");
         return;
       } else {
         // makePostRequest("/addEndpoint", {
-        setEndpoints(endpoints => [...endpoints, {
-          host, port
-        }]);
+        setEndpoints((endpoints) => [
+          ...endpoints,
+          {
+            host,
+            port,
+          },
+        ]);
       }
     }
   };
-
   return (
-    <FormGroup>
-      <DeviceSwitch onChange={(e) => { setStream(e.target.checked) }} checked={stream} name="streamSwitch" text="Stream" />
-      {
-        stream ?
-          <>
-            <div>
-              <div>
-                <span>Stream Endpoints</span>
-                <IconButton onClick={() => setEndpointsCollapsed(!endpointsCollapsed)}>
-                  {endpointsCollapsed ? <ArrowDropDownIcon /> : <ArrowDropUpIcon />}
-                </IconButton>
-              </div>
-              <Collapse in={!endpointsCollapsed}>
-                {
-                  endpoints.map((endpoint) => {
-                    return <>
-                      <Typography>{endpoint.host}</Typography>
-                      <Typography>{endpoint.port}</Typography>
-                    </>
-                  })
+    <FormGroup
+      style={{
+        display: "flex",
+        width: "100%",
+      }}
+    >
+      <DeviceSwitch
+        onChange={(e) => {
+          setStream(e.target.checked);
+        }}
+        checked={stream}
+        name='streamSwitch'
+        text='Stream'
+      />
+      {stream ? (
+        <Accordion
+          style={{
+            width: "100%",
+          }}
+        >
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon />}
+            aria-controls='panel2a-content'
+            id='panel2a-header'
+          >
+            <Typography fontWeight="800">Stream Endpoints</Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+          <Box
+        sx={{
+          backgroundColor: "background.paper",
+          visibility: endpoints.length > 0 ? "visible" : "hidden",
+        }}
+      >
+        <List dense={true}>
+          {endpoints.map((endpoint) => {
+            return (
+              <ListItem
+                key={`${endpoint.host}:${endpoint.port}`}
+                secondaryAction={
+                  <IconButton
+                    edge='end'
+                    aria-label='delete'
+                    onClick={() =>
+                      setEndpoints((prevEndpoints) =>
+                        prevEndpoints.filter(
+                          (e) =>
+                            `${e.host}:${e.port}` !==
+                            `${endpoint.host}:${endpoint.port}`
+                        )
+                      )
+                    }
+                  >
+                    <DeleteIcon />
+                  </IconButton>
                 }
-              </Collapse>
-            </div>
-
-            {/* Container for User Input and Interaction */}
-            <div style={
-              styles.cardContent.div
-            }>
-              {/* IP Address input */}
-              <TextField
-                sx={styles.textField}
-                label="IP Address"
-                variant="outlined"
-                size="small"
-                value={host}
-                onChange={(e) => setHost(e.target.value)}
-                error={!!ipError}
-                helperText={ipError}
-              />
-              {/* Port Input */}
-              <TextField
-                sx={styles.portField}
-                label="Port"
-                variant="outlined"
-                size="small"
-                value={port}
-                onChange={(e) => setPort(parseInt(e.target.value))}
-                error={!!portError}
-                helperText={portError}
-                type="number"
-                inputProps={{ min: 1024, max: 65535 }} // Specify minimum and maximum values
-              />
-              {/* Add Stream Endpoint Button */}
-              <IconButton
-                sx={{
-                  width: "40px",
-                  height: "40px",
-                  color: "white",
-                  marginLeft: "-10px"
-                }}
-                onClick={() => {
-                  handleAddEndpoint();
-                }}
               >
-                <AddIcon />
-              </IconButton>
-
-            </div>
-            <Button color="grey" variant="contained" style={{
-              marginTop: '20px',
-            }}>Restart Stream</Button>
-          </>
-          : undefined
-      }
-    </FormGroup >
+                <ListItemAvatar>
+                  <Avatar>
+                    <LinkedCameraIcon />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={`IP Address: ${endpoint.host}`}
+                  secondary={`Port: ${endpoint.port}`}
+                />
+              </ListItem>
+            );
+          })}
+        </List>
+      </Box>
+          </AccordionDetails>
+        </Accordion>
+      ) : undefined}
+      {/* Container for User Input and Interaction */}
+  <div style={styles.cardContent.div}>
+    {/* IP Address input */}
+    <TextField
+      sx={styles.textField}
+      label='IP Address'
+      variant='outlined'
+      size='small'
+      value={host}
+      onChange={(e) => setHost(e.target.value)}
+      error={!!ipError}
+      helperText={ipError}
+    />
+    {/* Port Input */}
+    <TextField
+      sx={styles.portField}
+      label='Port'
+      variant='outlined'
+      size='small'
+      value={port}
+      onChange={(e) => setPort(parseInt(e.target.value))}
+      error={!!portError}
+      helperText={portError}
+      type='number'
+      inputProps={{ min: 1024, max: 65535 }} // Specify minimum and maximum values
+    />
+    {/* Add Stream Endpoint Button */}
+    <IconButton
+      sx={{
+        width: "40px",
+        height: "40px",
+        color: "white",
+        marginLeft: "-10px",
+      }}
+      onClick={() => {
+        handleAddEndpoint();
+      }}
+    >
+      <AddIcon />
+    </IconButton>
+  </div>
+  <Button
+    color='grey'
+    variant='contained'
+    style={{
+      marginTop: "20px",
+    }}
+  >
+    Restart Stream
+  </Button>
+    </FormGroup>
   );
 };
-
-// interface Control {
-//   type: "int" | "bool" | "menu";
-//   name: string;
-//   id: number;
-//   value: number | boolean | string;
-//   min?: number;
-//   max?: number;
-//   step?: number;
-//   menu?: string[];
-// }
 
 interface CameraControlsProps {
   controls: Control[];
@@ -450,9 +525,9 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                   const { menu } = control.flags;
                   if (!menu) break;
                   const defaultValue = menu[control.value as number];
-                  const [controlValue, setControlValue] = useState<string | number>(
-                    defaultValue as string
-                  );
+                  const [controlValue, setControlValue] = useState<
+                    string | number
+                  >(defaultValue as string);
 
                   // useEffect(() => {
                   //   makePostRequest("/setControl", {
@@ -464,24 +539,30 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
 
                   return (
                     <>
-                      <PopupState variant="popover" popupId={"" + id}>
+                      <PopupState variant='popover' popupId={"" + id}>
                         {(popupState) => (
                           <>
                             <div>
-                              <span>{name}: {controlValue}</span>
+                              <span>
+                                {name}: {controlValue}
+                              </span>
                               <IconButton {...bindTrigger(popupState)}>
                                 <ArrowDropDownIcon />
                               </IconButton>
                             </div>
                             <Menu {...bindMenu(popupState)}>
-                              {
-                                menu.map((item, _) => {
-                                  return <MenuItem onClick={() => {
-                                    setControlValue(item);
-                                    popupState.close();
-                                  }}>{item}</MenuItem>
-                                })
-                              }
+                              {menu.map((item, _) => {
+                                return (
+                                  <MenuItem
+                                    onClick={() => {
+                                      setControlValue(item);
+                                      popupState.close();
+                                    }}
+                                  >
+                                    {item}
+                                  </MenuItem>
+                                );
+                              })}
                             </Menu>
                           </>
                         )}
@@ -543,7 +624,8 @@ const DeviceCard: React.FC<DeviceCardProps> = (props) => {
               <LineBreak />
               {`USB ID: ${props.device.info.usbInfo}`}
               <LineBreak />
-              <TextField sx={{ top: 10 }}
+              <TextField
+                sx={{ top: 10 }}
                 onChange={(e) => {
                   props.device.info.name = e.target.value;
                   // setDevice(
@@ -564,10 +646,13 @@ const DeviceCard: React.FC<DeviceCardProps> = (props) => {
           }
         />
         <CardContent>
-          {props.device.stream.device_path ?
+          {props.device.stream.device_path ? (
             <SupportingText>
               Device: {props.device.stream.device_path}
-            </SupportingText> : <></>}
+            </SupportingText>
+          ) : (
+            <></>
+          )}
           {deviceOptions}
           <StreamOptions device={props.device} />
           {cameraControls}

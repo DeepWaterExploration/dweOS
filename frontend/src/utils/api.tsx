@@ -57,7 +57,7 @@ export interface ControlFlags {
   update: number;
   volatility: number;
   write_only: boolean;
-  menu?: number[] | string[]
+  menu?: number[] | string[];
 }
 
 export interface CameraInfo {
@@ -100,7 +100,7 @@ export enum controlType {
   CTRL_CLASS = 6,
   STRING = 7,
   BITMASK = 8,
-  INTEGER_MENU = 9
+  INTEGER_MENU = 9,
 }
 
 export enum bitrateMode {

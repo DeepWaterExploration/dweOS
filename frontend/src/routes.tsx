@@ -1,8 +1,7 @@
 // Material Dashboard 2 React layouts
-// import Lights from 'layouts/lights'
-// import Misc from 'layouts/misc'
-// import WiFi from 'layouts/wifi'
-// import Wired from 'layouts/wired'
+// import Lights from './layouts/lights'
+// import Misc from './layouts/misc'
+// import WiFi from './layouts/wifi'
 
 // Import Material-UI components and icons
 import {
@@ -16,6 +15,7 @@ import { Box } from "@mui/material";
 import React from "react";
 
 import CamerasPage from "./layouts/cameras";
+import Wired from "./layouts/wired";
 
 export interface RouteType {
   route: string;
@@ -74,8 +74,7 @@ export const routes: RouteType[] = [
   },
   {
     route: "/communications/wired",
-    component: <Box />,
-    //  <Wired />,
+    component: <Wired />,
     exact: true,
     icon: <StorageOutlinedIcon />,
     category: "Communications",

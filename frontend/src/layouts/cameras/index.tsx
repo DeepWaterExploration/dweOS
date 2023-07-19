@@ -24,7 +24,7 @@ const CamerasPage: React.FC = () => {
       // takes the prevState, and using the `spread` operator
       // appends the new Card to the new array
       // to update the state
-      setExploreHD_cards(prevCards => {
+      setExploreHD_cards((prevCards) => {
         return [
           ...prevCards,
           <DeviceCard key={exploreHD_cards.length} device={device} />,

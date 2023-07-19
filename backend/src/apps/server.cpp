@@ -13,7 +13,7 @@
 using json = nlohmann::json;
 
 httplib::Server svr;
-BroadcastServer broadcast_server;
+static DeviceList devices;
 
 std::string getUSBInfo(const httplib::Params &params, httplib::Response &res) {
     std::string usbInfo = "";
@@ -34,7 +34,7 @@ std::string getUSBInfo(const httplib::Params &params, httplib::Response &res) {
 
 void signalHandler(int signum) {
     std::cout << "Shutting down.\n";
-    broadcast_server.stop();
+    devices.stop_monitoring();
     exit(signum);
 }
 
@@ -58,52 +58,47 @@ int main(int argc, char **argv) {
                   << std::endl;
     }
 
-    DeviceList devices(broadcast_server);
     std::cout << "Beginning initial device enumeration." << std::endl;
     devices.enumerate();
 
     std::cout << "Running API server.\n";
 
-    /* monitor */
-
-    devices.start_monitoring();
-
     /* API */
 
-    svr.Options("/(.*)",
-        [&](const httplib::Request& req, httplib::Response& res) {
-        res.set_header("Access-Control-Allow-Origin", req.get_header_value("Origin"));
+    svr.Options("/(.*)", [&](const httplib::Request &req,
+                             httplib::Response &res) {
+        res.set_header(
+            "Access-Control-Allow-Origin", req.get_header_value("Origin"));
         res.set_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-        res.set_header("Access-Control-Allow-Headers", "X-Requested-With, Content-Type, Accept");
+        res.set_header("Access-Control-Allow-Headers",
+            "X-Requested-With, Content-Type, Accept");
         res.set_header("Content-Type", "text/html; charset=utf-8");
         res.set_header("Access-Control-Allow-Credentials", "true");
         res.set_header("Connection", "close");
     });
 
-    svr.Get("/devices",
-        [&devices](const httplib::Request &, httplib::Response &res) {
-            /* re-enumerate */
-            json devices_array = devices.serialize();
-            res.set_content(devices_array.dump(), "application/json");
-            res.set_header("Access-Control-Allow-Origin", "*");
-        });
+    svr.Get("/devices", [](const httplib::Request &, httplib::Response &res) {
+        /* re-enumerate */
+        json devices_array = devices.serialize();
+        res.set_content(devices_array.dump(), "application/json");
+        res.set_header("Access-Control-Allow-Origin", "*");
+    });
 
-    svr.Get("/device",
-        [&devices](const httplib::Request &req, httplib::Response &res) {
-            std::string usbInfo = getUSBInfo(req.params, res);
-            libehd::Device *ehd = devices.get_ehd(usbInfo);
-            /* index is invalid */
-            if (!ehd) {
-                res.status = 400; /* Status 400: Bad Request */
-                return;
-            }
-            json resbody = devices.serialize_ehd(ehd);
-            res.set_content(resbody.dump(), "application/json");
-            res.set_header("Access-Control-Allow-Origin", "*");
-        });
+    svr.Get("/device", [](const httplib::Request &req, httplib::Response &res) {
+        std::string usbInfo = getUSBInfo(req.params, res);
+        libehd::Device *ehd = devices.get_ehd(usbInfo);
+        /* index is invalid */
+        if (!ehd) {
+            res.status = 400; /* Status 400: Bad Request */
+            return;
+        }
+        json resbody = devices.serialize_ehd(ehd);
+        res.set_content(resbody.dump(), "application/json");
+        res.set_header("Access-Control-Allow-Origin", "*");
+    });
 
     svr.Post("/configure_stream",
-        [&devices](const httplib::Request &req, httplib::Response &res) {
+        [](const httplib::Request &req, httplib::Response &res) {
             json requestBody = json::parse(req.body);
             std::string usbInfo = requestBody["usbInfo"];
             libehd::Device *ehd = devices.get_ehd(usbInfo);
@@ -137,7 +132,7 @@ int main(int argc, char **argv) {
         });
 
     svr.Post("/add_stream_endpoint",
-        [&devices](const httplib::Request &req, httplib::Response &res) {
+        [](const httplib::Request &req, httplib::Response &res) {
             json requestBody = json::parse(req.body);
             std::string usbInfo = requestBody["usbInfo"];
             libehd::Device *ehd = devices.get_ehd(usbInfo);
@@ -157,7 +152,7 @@ int main(int argc, char **argv) {
         });
 
     svr.Post("/start_stream",
-        [&devices](const httplib::Request &req, httplib::Response &res) {
+        [](const httplib::Request &req, httplib::Response &res) {
             json requestBody = json::parse(req.body);
             std::string usbInfo = requestBody["usbInfo"];
             libehd::Device *ehd = devices.get_ehd(usbInfo);
@@ -177,7 +172,7 @@ int main(int argc, char **argv) {
         });
 
     svr.Post("/stop_stream",
-        [&devices](const httplib::Request &req, httplib::Response &res) {
+        [](const httplib::Request &req, httplib::Response &res) {
             json requestBody = json::parse(req.body);
             std::string usbInfo = requestBody["usbInfo"];
             libehd::Device *ehd = devices.get_ehd(usbInfo);
@@ -197,7 +192,7 @@ int main(int argc, char **argv) {
         });
 
     svr.Post("/devices/set_uvc_control",
-        [&devices](const httplib::Request &req, httplib::Response &res) {
+        [](const httplib::Request &req, httplib::Response &res) {
             json requestBody = json::parse(req.body);
             std::string usbInfo = requestBody["usbInfo"];
             libehd::Device *ehd = devices.get_ehd(usbInfo);
@@ -217,7 +212,7 @@ int main(int argc, char **argv) {
         });
 
     svr.Post("/devices/set_option",
-        [&devices](const httplib::Request &req, httplib::Response &res) {
+        [](const httplib::Request &req, httplib::Response &res) {
             json requestBody = json::parse(req.body);
             std::string usbInfo = requestBody["usbInfo"];
             libehd::Device *ehd = devices.get_ehd(usbInfo);
@@ -249,7 +244,7 @@ int main(int argc, char **argv) {
             res.set_header("Access-Control-Allow-Origin", "*");
         });
 
-    /* Leave the pipeline threads running */
-    broadcast_server.start(9002);
+    /* Start the server */
+    devices.start_monitoring();
     svr.listen("localhost", 8080);
 }

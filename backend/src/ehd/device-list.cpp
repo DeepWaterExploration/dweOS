@@ -2,8 +2,7 @@
 
 typedef void *(*THREADFUNCPTR)(void *);
 
-DeviceList::DeviceList(BroadcastServer &broadcast_server)
-    : _broadcast_server(broadcast_server) {}
+DeviceList::DeviceList() : _broadcast_server(BroadcastServer()) {}
 
 libehd::Device *DeviceList::get_ehd(std::string usbInfo) {
     for (libehd::Device *device : ehd_devices) {
@@ -199,7 +198,13 @@ void DeviceList::enumerate() {
     }
 }
 
+void DeviceList::stop_monitoring() {
+    pthread_cancel(_monitor_thread);
+    _broadcast_server.stop();
+}
+
 void DeviceList::start_monitoring() {
+    _broadcast_server.start(9002);
     pthread_create(&_monitor_thread, NULL,
         (THREADFUNCPTR)&DeviceList::_monitor_devices, this);
 }

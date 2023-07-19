@@ -6,7 +6,7 @@
       <Controls>
         <Control id="9963776" name="Brightness">
           <Flags defaultValue="0" disabled="0" grabbed="0" max="0" min="0" read_only="0"
-            slider="0" step="1" type="1" update="0" volatility="0" write_only="0" />
+            slider="0" step="1" type="1" update="0" volatility="0" write_only="0" value="0" />
         </Control>
       </Controls>
     </Device>

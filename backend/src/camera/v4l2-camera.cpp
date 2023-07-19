@@ -222,23 +222,12 @@ Device::Device(v4l2::devices::DEVICE_INFO info) : _info(info) {
         _device_path = std::string(result);
     }
 
-    std::regex regex(R"((?:(\d+)-(\d+))(?:\/\d+-\d+.(\d+))?)");
+    std::regex regex(R"((\d+)-([\d+\.?]+))");
     std::smatch match;
-    if (std::regex_search(_device_path, match, regex)) {
-        int usbController = std::stoi(match[1]);
-        int portIndex = std::stoi(match[2]);
-        int deviceIndex = -1;
-        if (match[3].matched) {
-            deviceIndex = std::stoi(match[3]);
-        }
-        _usbInfo = "";
-        _usbInfo += match[1];
-        _usbInfo += ".";
-        _usbInfo += match[2];
-        if (deviceIndex >= 0) {
-            _usbInfo += ".";
-            _usbInfo += match[3];
-        }
+    std::filesystem::path device_path(_device_path);
+    std::string filename = device_path.filename().generic_string();
+    if (std::regex_search(filename, match, regex)) {
+        _usbInfo = match[1].str() + "." + match[2].str();
     } else {
         throw std::runtime_error("Invalid path format.");
     }

@@ -1,4 +1,3 @@
-import { grey } from "@mui/material/colors";
 import "../main.css";
 import { createTheme } from "@mui/material/styles";
 
@@ -23,10 +22,28 @@ const commonThemeOptions = {
           fontWeight: 400,
           src: `
           local('HelveticaNeueLight'),
-          local('HelveticaNeueLight'),
           url(./fonts/HelveticaNeue-Light.otf) format('opentype')
         `,
         },
+      },
+    },
+    MuiAccordion: {
+      root: {
+        "&$expanded": {
+          margin: "auto", // Centers the Accordion when expanded
+        },
+      },
+    },
+    MuiAccordionSummary: {
+      content: {
+        "&$expanded": {
+          margin: "12px 0", // Adds extra spacing inside the AccordionSummary when expanded
+        },
+      },
+    },
+    MuiAccordionDetails: {
+      root: {
+        padding: 16, // Adds padding inside the AccordionDetails
       },
     },
   },
@@ -36,10 +53,6 @@ const lightTheme = createTheme({
   ...commonThemeOptions,
   palette: {
     mode: "light",
-    grey: {
-      // main: grey[200],
-      // dark: grey[300],
-    },
     primary: {
       dark: "#092037",
       main: "#15314d",

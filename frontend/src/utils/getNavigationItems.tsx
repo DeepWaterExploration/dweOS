@@ -2,6 +2,7 @@ import {
   Divider,
   List,
   ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   ListSubheader,
@@ -15,9 +16,13 @@ import { RouteType, routes } from "../routes";
 
 interface GetRoutesProps {
   routes: RouteType[];
+  open: boolean;
 }
 
-const GetRoutes = ({ routes }: GetRoutesProps): JSX.Element => {
+// NavigationItems
+
+const GetRoutes: React.FC<GetRoutesProps> = ({ routes, open }) => {
+  console.log("Is it open? ", open);
   const devicesRoutes = routes.filter((route) => route.category === "Devices");
   const communicationsRoutes = routes.filter(
     (route) => route.category === "Communications"
@@ -25,48 +30,104 @@ const GetRoutes = ({ routes }: GetRoutesProps): JSX.Element => {
   return (
     <React.Fragment>
       <ListSubheader component='div' inset>
-        <Typography variant='inherit' fontWeight='bold'>
+        <Typography
+          variant='inherit'
+          fontWeight='bold'
+          sx={{ opacity: open ? 1 : 0 }}
+        >
           Devices
         </Typography>
       </ListSubheader>
-      <List>
-        {devicesRoutes.map((route) => {
-          if (route.route && route.component) {
-            return (
-              <ListItem key={route.key} component={Link} to={route.route}>
-                <ListItemIcon>{route.icon}</ListItemIcon>
-                <ListItemText primary={route.name} />
-              </ListItem>
-            );
-          }
-          // return null; // Add a default return value if the if condition is not met
-        })}
-      </List>
+      {devicesRoutes.map((route) => {
+        if (route.route && route.component) {
+          return (
+            <ListItem
+              disablePadding
+              key={route.key}
+              component={Link}
+              to={route.route}
+              sx={{ display: "block" }}
+            >
+              <ListItemButton
+                sx={{
+                  minHeight: 48,
+                  justifyContent: open ? "initial" : "center",
+                  px: 2.5,
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 0,
+                    mr: open ? 3 : "auto",
+                    justifyContent: "center",
+                  }}
+                >
+                  {route.icon}
+                </ListItemIcon>
+                <ListItemText
+                  primary={route.name}
+                  sx={{ opacity: open ? 1 : 0 }}
+                />
+              </ListItemButton>
+            </ListItem>
+          );
+        }
+      })}
       <Divider sx={{ my: 1 }} />
       <ListSubheader component='div' inset>
-        <Typography variant='inherit' fontWeight='bold'>
+        <Typography
+          variant='inherit'
+          fontWeight='bold'
+          sx={{ opacity: open ? 1 : 0 }}
+        >
           Communications
         </Typography>
       </ListSubheader>
-      <List>
-        {communicationsRoutes.map((route) => {
-          if (route.route && route.component) {
-            return (
-              <ListItem key={route.key} component={Link} to={route.route}>
-                <ListItemIcon>{route.icon}</ListItemIcon>
-                <ListItemText primary={route.name} />
-              </ListItem>
-            );
-          }
-          // return null; // Add a default return value if the if condition is not met
-        })}
-      </List>
+      {communicationsRoutes.map((route) => {
+        if (route.route && route.component) {
+          return (
+            <ListItem
+              disablePadding
+              key={route.key}
+              component={Link}
+              to={route.route}
+              sx={{ display: "block" }}
+            >
+              <ListItemButton
+                sx={{
+                  minHeight: 48,
+                  justifyContent: open ? "initial" : "center",
+                  px: 2.5,
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 0,
+                    mr: open ? 3 : "auto",
+                    justifyContent: "center",
+                  }}
+                >
+                  {route.icon}
+                </ListItemIcon>
+                <ListItemText
+                  primary={route.name}
+                  sx={{ opacity: open ? 1 : 0 }}
+                />
+              </ListItemButton>
+            </ListItem>
+          );
+        }
+      })}
     </React.Fragment>
   );
 };
 
-const NavigationItems = (): JSX.Element => {
-  return <GetRoutes routes={routes} />;
+interface NavigationItemsProps {
+  open: boolean;
+}
+
+const NavigationItems: React.FC<NavigationItemsProps> = (): JSX.Element => {
+  return <GetRoutes routes={routes} open={open} />;
 };
 
 export default NavigationItems;

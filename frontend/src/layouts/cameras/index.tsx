@@ -73,9 +73,12 @@ const CamerasPage: React.FC = () => {
   return (
     <Grid
       container
-      spacing={0}
+      spacing={4}
       alignItems='baseline'
-      style={{ justifyContent: "center", paddingBottom: "20px" }}
+      flexWrap='wrap'
+      style={{
+        justifyContent: "space-evenly",
+      }}
     >
       {exploreHD_cards}
     </Grid>

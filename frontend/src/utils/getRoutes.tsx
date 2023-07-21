@@ -43,18 +43,15 @@ const NavigationRoutes: React.FC<NavigationRoutesProps> = () => {
         flexGrow: 1,
         height: "100vh",
         overflow: "auto",
+        paddingTop: "7em",
       }}
     >
       {/* <Toolbar /> */}
-      <Container maxWidth='lg' sx={{ mt: 4, mb: 4 }}>
-        <Grid container spacing={3} style={{ paddingTop: "3.5em" }}>
-          {/* DeviceCards */}
-          <div style={{ minHeight: "14px" }} />
-          <div style={{ height: "calc(100vh - 14px)" }}>
-            <GetRoutes routes={routes} />
-          </div>
-        </Grid>
-      </Container>
+      {/* DeviceCards */}
+      <div style={{ minHeight: "14px" }} />
+      <div style={{ height: "calc(100vh - 14px)" }}>
+        <GetRoutes routes={routes} />
+      </div>
     </Box>
   );
 };

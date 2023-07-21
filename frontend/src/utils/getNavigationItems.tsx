@@ -12,16 +12,14 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 // routes to different pages
-import { RouteType, routes } from "../routes";
+import { RouteItem } from "../types/types";
 
-interface GetRoutesProps {
-  routes: RouteType[];
+interface NavigationItemsProps {
+  routes: RouteItem[];
   open: boolean;
 }
 
-// NavigationItems
-
-const GetRoutes: React.FC<GetRoutesProps> = ({ routes, open }) => {
+const NavigationItems: React.FC<NavigationItemsProps> = ({ routes, open }) => {
   console.log("Is it open? ", open);
   const devicesRoutes = routes.filter((route) => route.category === "Devices");
   const communicationsRoutes = routes.filter(
@@ -122,12 +120,12 @@ const GetRoutes: React.FC<GetRoutesProps> = ({ routes, open }) => {
   );
 };
 
-interface NavigationItemsProps {
-  open: boolean;
-}
+// interface NavigationItemsProps {
+//   open: boolean;
+// }
 
-const NavigationItems: React.FC<NavigationItemsProps> = (): JSX.Element => {
-  return <GetRoutes routes={routes} open={open} />;
-};
+// const NavigationItems: React.FC<NavigationItemsProps> = (): JSX.Element => {
+//   return <GetRoutes routes={routes} open={open} />;
+// };
 
 export default NavigationItems;

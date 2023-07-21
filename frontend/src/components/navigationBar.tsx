@@ -27,6 +27,7 @@ import { CSSObject, Theme, ThemeProvider, styled } from "@mui/material/styles";
 import React, { useState } from "react";
 import { BrowserRouter as Router } from "react-router-dom";
 
+import { routes } from "../routes";
 import DWELogo_white from "../svg/DWELogo_white.svg";
 import { resetSettings } from "../utils/api";
 import NavigationItems from "../utils/getNavigationItems";
@@ -176,7 +177,7 @@ export default function NavigationBar() {
             </DrawerHeader>
             <Divider />
             <List component='nav'>
-              <NavigationItems open={open} />
+              <NavigationItems routes={routes} open={open} />
               <Divider sx={{ my: 1 }} />
               <React.Fragment>
                 <ListSubheader component='div' inset>

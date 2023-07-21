@@ -2,10 +2,11 @@ import { Box, Container, Grid } from "@mui/material";
 import { Route, Routes } from "react-router-dom";
 
 // routes to different pages
-import { RouteType, routes } from "../routes";
+import { routes } from "../routes";
+import { RouteItem } from "../types/types";
 
 interface GetRoutesProps {
-  routes: RouteType[];
+  routes: RouteItem[];
 }
 
 const GetRoutes = ({ routes }: GetRoutesProps): JSX.Element => {

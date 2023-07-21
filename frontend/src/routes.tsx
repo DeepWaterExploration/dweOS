@@ -12,30 +12,19 @@ import {
   VideoCameraBackOutlined as VideoCameraBackOutlinedIcon,
 } from "@mui/icons-material";
 import { Box } from "@mui/material";
-import React from "react";
 
 import CamerasPage from "./layouts/cameras";
 import Wired from "./layouts/wired";
+import { RouteItem, routeType } from "./types/types";
 
-export interface RouteType {
-  route: string;
-  component: React.ReactNode;
-  exact?: boolean;
-  icon: React.ReactElement;
-  category: string;
-  type: string;
-  name: string;
-  key: string;
-}
-
-export const routes: RouteType[] = [
+export const routes: RouteItem[] = [
   {
     route: "/devices/cameras",
     component: <CamerasPage />,
     exact: true,
     icon: <VideoCameraBackOutlinedIcon />,
     category: "Devices",
-    type: "collapse",
+    type: routeType.COLLAPSE,
     name: "Cameras",
     key: "cameras",
   },
@@ -46,7 +35,7 @@ export const routes: RouteType[] = [
     exact: true,
     icon: <LightbulbIcon />,
     category: "Devices",
-    type: "collapse",
+    type: routeType.COLLAPSE,
     name: "Lights",
     key: "lights",
   },
@@ -57,7 +46,7 @@ export const routes: RouteType[] = [
     exact: true,
     icon: <SettingsOutlinedIcon />,
     category: "Devices",
-    type: "collapse",
+    type: routeType.COLLAPSE,
     name: "Misc",
     key: "misc",
   },
@@ -68,7 +57,7 @@ export const routes: RouteType[] = [
     exact: true,
     icon: <SignalWifi0BarOutlinedIcon />,
     category: "Communications",
-    type: "collapse",
+    type: routeType.COLLAPSE,
     name: "WiFi",
     key: "wifi",
   },
@@ -78,7 +67,7 @@ export const routes: RouteType[] = [
     exact: true,
     icon: <StorageOutlinedIcon />,
     category: "Communications",
-    type: "collapse",
+    type: routeType.COLLAPSE,
     name: "Wired",
     key: "wired",
   },

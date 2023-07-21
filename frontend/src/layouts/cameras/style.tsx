@@ -38,6 +38,7 @@ export const styles = {
       display: "flex",
       gap: "15px",
       marginTop: "20px",
+      marginBottom: "20px",
     },
   },
   textField: {

@@ -15,6 +15,7 @@ import {
   CardHeader,
   FormControlLabel,
   FormGroup,
+  Grid,
   IconButton,
   List,
   ListItem,
@@ -39,6 +40,25 @@ import {
   bitrateMode,
   controlType,
 } from "../../types/types";
+
+const currencies = [
+  {
+    value: "USD",
+    label: "$",
+  },
+  {
+    value: "EUR",
+    label: "€",
+  },
+  {
+    value: "BTC",
+    label: "฿",
+  },
+  {
+    value: "JPY",
+    label: "¥",
+  },
+];
 
 const IP_REGEX =
   /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/;
@@ -189,26 +209,68 @@ const DeviceOptions: React.FC<DeviceOptionsProps> = (props) => {
 
   return (
     <>
-      <SupportingText>
-        <span>Bitrate: {bitrateSlider} Mbps</span>
-        <Slider
-          name='bitrate'
-          defaultValue={bitrateSlider}
-          disabled={mode === bitrateMode.VBR}
-          onChangeCommitted={(_, newValue) => {
-            setBitrate(newValue as number);
-          }}
-          onChange={(_, newValue) => {
-            setBitrateSlider(newValue as number);
-          }}
-          style={{ marginLeft: "20px", width: "calc(100% - 25px)" }}
-          size='small'
-          max={15}
-          min={0.1}
-          step={0.1}
-        />
-      </SupportingText>
       <FormGroup>
+        <Grid
+          container
+          direction='row'
+          justifyContent='space-between'
+          alignItems='center'
+        >
+          <Grid
+            container
+            direction='column'
+            justifyContent='center'
+            alignItems='center'
+            width='50%'
+          >
+            <Typography fontWeight='800' style={{ width: "100%" }}>
+              Bitrate: {bitrateSlider} Mbps
+            </Typography>
+            <Slider
+              name='bitrate'
+              defaultValue={bitrateSlider}
+              disabled={mode === bitrateMode.VBR}
+              onChangeCommitted={(_, newValue) => {
+                setBitrate(newValue as number);
+              }}
+              onChange={(_, newValue) => {
+                setBitrateSlider(newValue as number);
+              }}
+              style={{ width: "calc(100% - 30px)" }}
+              size='small'
+              max={15}
+              min={0.1}
+              step={0.1}
+            />
+          </Grid>
+          <Grid
+            container
+            direction='column'
+            justifyContent='center'
+            alignItems='center'
+            width='50%'
+          >
+            <Typography fontWeight='800' style={{ width: "100%" }}>
+              Group of Pictures {bitrateSlider}
+            </Typography>
+            <Slider
+              name='bitrate'
+              defaultValue={bitrateSlider}
+              disabled={mode === bitrateMode.VBR}
+              onChangeCommitted={(_, newValue) => {
+                setBitrate(newValue as number);
+              }}
+              onChange={(_, newValue) => {
+                setBitrateSlider(newValue as number);
+              }}
+              style={{ width: "calc(100% - 30px)" }}
+              size='small'
+              max={15}
+              min={0.1}
+              step={0.1}
+            />
+          </Grid>
+        </Grid>
         <DeviceSwitch
           checked={h264}
           name='h264Switch'
@@ -322,6 +384,77 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
       />
       {stream ? (
         <>
+          <div style={styles.cardContent.div}>
+            <TextField
+              sx={{ width: "50%"}}
+              select
+              label='Resolution'
+              variant='outlined'
+              defaultValue='EUR'
+              size="small"
+            >
+              {currencies.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+              {/* {props.resolutions.map((option, index) => (
+                <MenuItem
+                  key={`${option.height}x${option.width}`}
+                  selected={index === selectedIndex}
+                  onClick={(event) => handleMenuItemClick(event, index, option)}
+                >
+                  {option.height}x{option.width}
+                </MenuItem>
+              ))} */}
+            </TextField>
+            <TextField
+              sx={{ width: "20%"}}
+              select
+              label='FPS'
+              variant='outlined'
+              defaultValue='EUR'
+              size="small"
+            >
+              {currencies.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+              {/* {props.resolutions.map((option, index) => (
+                <MenuItem
+                  key={`${option.height}x${option.width}`}
+                  selected={index === selectedIndex}
+                  onClick={(event) => handleMenuItemClick(event, index, option)}
+                >
+                  {option.height}x{option.width}
+                </MenuItem>
+              ))} */}
+            </TextField>
+            <TextField
+              sx={{ width: "30%"}}
+              select
+              label='Format'
+              variant='outlined'
+              defaultValue='EUR'
+              size="small"
+            >
+              {currencies.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+              {/* {props.resolutions.map((option, index) => (
+                <MenuItem
+                  key={`${option.height}x${option.width}`}
+                  selected={index === selectedIndex}
+                  onClick={(event) => handleMenuItemClick(event, index, option)}
+                >
+                  {option.height}x{option.width}
+                </MenuItem>
+              ))} */}
+            </TextField>
+          </div>
           <Accordion
             style={{
               width: "100%",
@@ -341,12 +474,13 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                 }}
               >
                 {endpoints.length === 0 ? (
-                  <Typography fontWeight='500'
-                  style={{
-                    width: "100%",
-                    textAlign: "center",
-                    padding: "25px",
-                  }}
+                  <Typography
+                    fontWeight='500'
+                    style={{
+                      width: "100%",
+                      textAlign: "center",
+                      padding: "25px",
+                    }}
                   >
                     No stream endpoint added
                   </Typography>
@@ -432,13 +566,7 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
               <AddIcon />
             </IconButton>
           </div>
-          <Button
-            color='grey'
-            variant='contained'
-            style={{
-              marginTop: "20px",
-            }}
-          >
+          <Button color='grey' variant='contained'>
             Restart Stream
           </Button>
         </>
@@ -460,7 +588,7 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
     <Accordion
       style={{
         width: "100%",
-        marginTop: "25px",
+        marginTop: "20px",
         visibility: "visible",
         // border: "1px solid rgb(117, 117, 117)",
         // borderRadius: "5px",
@@ -474,7 +602,7 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
         <Typography fontWeight='800'>Camera Controls</Typography>
       </AccordionSummary>
       <AccordionDetails>
-        <FormGroup style={{ marginTop: "25px" }}>
+        <FormGroup style={{ marginTop: "20px" }}>
           {controls.map((control) => {
             switch (control.flags.type) {
               case controlType.INTEGER: {

@@ -16,7 +16,7 @@
   "homepage": "https://github.com/DeepwaterExploration/DWE_OS#readme",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "chmod +x ./build_frontend.sh && ./build_frontend.sh",
     "preview": "vite preview",
     "format": "npx prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\" --report-unused-disable-directives --max-warnings 0",

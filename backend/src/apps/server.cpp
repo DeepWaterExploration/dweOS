@@ -9,6 +9,7 @@
 #include "camera/v4l2-camera.hpp"
 #include "ehd/device-list.hpp"
 #include "ehd/ehd-device.hpp"
+#include "settings/settings-manager.hpp"
 
 using json = nlohmann::json;
 
@@ -45,19 +46,9 @@ int main(int argc, char **argv) {
     signal(SIGINT, signalHandler);
 
     /* Settings */
+    settings::SettingsManager settingsManager;
 
-    pugi::xml_document doc;
-    pugi::xml_parse_result result = doc.load_file("test.xml");
-    if (!result) return -1;
-
-    pugi::xml_node settings = doc.child("Settings");
-    std::cout << "Settings file version: "
-              << settings.attribute("version").value() << std::endl;
-    for (pugi::xml_node device : settings.child("Devices").children("Device")) {
-        std::cout << "USB Info: " << device.attribute("usbInfo").value()
-                  << std::endl;
-    }
-
+    /* Enumeration */
     std::cout << "Beginning initial device enumeration." << std::endl;
     devices.enumerate();
 

@@ -4,11 +4,14 @@
     <Device usbInfo="1.2.4">
       <Options bitrate="10000000" mode="vbr" h264="true" />
       <Controls>
-        <Control id="9963776" name="Brightness">
-          <Flags defaultValue="0" disabled="0" grabbed="0" max="0" min="0" read_only="0"
-            slider="0" step="1" type="1" update="0" volatility="0" write_only="0" value="0" />
-        </Control>
+        <Control id="9963776" value="0" />
       </Controls>
+      <Stream encodeType="H264" streamType="UDP" width="1920" height="1080" numerator="1"
+        denominator="30">
+        <Endpoints>
+          <Endpoint host="192.168.2.1" port="5600" />
+        </Endpoints>
+      </Stream>
     </Device>
   </Devices>
 </Settings>

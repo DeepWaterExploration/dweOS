@@ -38,6 +38,7 @@ set(SOURCE
     src/ehd/device-list.cpp
     src/gstreamer/gst-pipeline.cpp
     src/net/broadcast-server.cpp
+    src/settings/settings-manager.cpp
 )
 
 add_executable(backend

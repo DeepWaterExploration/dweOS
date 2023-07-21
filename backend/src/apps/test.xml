@@ -2,7 +2,7 @@
 <Settings version="1.0">
   <Devices>
     <Device usbInfo="1.2.4">
-      <Options bitrate="10000000" mode="vbr" h264="true" />
+      <Options bitrate="10000000" mode="vbr" gop="29" />
       <Controls>
         <Control id="9963776" value="0" />
       </Controls>

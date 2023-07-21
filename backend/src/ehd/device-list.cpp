@@ -85,7 +85,7 @@ json DeviceList::serialize_ehd(libehd::Device *ehd) {
         {"mode",
             (ehd->get_h264_mode() == libehd::MODE_CONSTANT_BITRATE ? "CBR"
                                                                    : "VBR")},
-        {"h264", ehd->get_gop() != 0 ? true : false},
+        {"gop", ehd->get_gop()},
     };
 
     device_object["cameras"] = json::array();
@@ -196,6 +196,11 @@ void DeviceList::enumerate() {
             delete v4l2_device;
         }
     }
+}
+
+void DeviceList::load_devices(
+    const std::vector<settings::SerializedDevice> &devices) {
+    // TODO
 }
 
 void DeviceList::stop_monitoring() {

@@ -1,10 +1,13 @@
 #ifndef DEVICE_LIST_HPP
 #define DEVICE_LIST_HPP
 
+#include <vector>
+
 #include "camera/v4l2-camera.hpp"
 #include "ehd/ehd-device.hpp"
 #include "net/broadcast-server.hpp"
 #include "nlohmann/json.hpp"
+#include "settings/settings-manager.hpp"
 using json = nlohmann::json;
 
 class DeviceList {
@@ -20,6 +23,8 @@ class DeviceList {
     libehd::Device *find_device_with_path(std::string path);
 
     void enumerate();
+
+    void load_devices(const std::vector<settings::SerializedDevice> &devices);
 
     void start_monitoring();
 

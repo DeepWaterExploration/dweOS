@@ -30,7 +30,7 @@ struct SerializedDevice {
     std::string usbInfo;
     uint32_t bitrate;
     std::string mode;
-    bool h264;
+    uint32_t gop;
     SerializedStream stream;
     std::vector<SerializedControl> controls;
 };

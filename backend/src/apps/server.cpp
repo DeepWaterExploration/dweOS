@@ -51,6 +51,7 @@ int main(int argc, char **argv) {
     /* Enumeration */
     std::cout << "Beginning initial device enumeration." << std::endl;
     devices.enumerate();
+    devices.load_devices(settingsManager.get_devices());
 
     std::cout << "Running API server.\n";
 

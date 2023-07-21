@@ -20,7 +20,7 @@ SettingsManager::SettingsManager() {
             .usbInfo = options_node.attribute("usbInfo").value(),
             .bitrate = options_node.attribute("bitrate").as_uint(),
             .mode = options_node.attribute("mode").as_string(),
-            .h264 = options_node.attribute("usbInfo").as_bool()};
+            .gop = options_node.attribute("gop").as_uint()};
 
         /* UVC Controls */
         for (pugi::xml_node control :

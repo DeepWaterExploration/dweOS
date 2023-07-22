@@ -108,10 +108,13 @@ const Drawer = styled(MuiDrawer, {
 export default function NavigationBar() {
   const [open, setOpen] = useState(true);
   const [theme, setTheme] = useState(
-    localStorage.getItem("theme") == "dark" ? dweTheme("dark") : dweTheme("light")
+    localStorage.getItem("theme") == "dark"
+      ? dweTheme("dark")
+      : dweTheme("light")
   );
   const toggleTheme = () => {
-    const newTheme = theme.palette.mode === "dark" ? dweTheme("light") : dweTheme("dark");
+    const newTheme =
+      theme.palette.mode === "dark" ? dweTheme("light") : dweTheme("dark");
     setTheme(newTheme);
     localStorage.setItem("theme", newTheme.palette.mode);
   };
@@ -122,7 +125,7 @@ export default function NavigationBar() {
     <ThemeProvider theme={theme}>
       <Router>
         <React.Fragment>
-          <AppBar position='absolute' open={open}>
+          <AppBar position='absolute' open={open} enableColorOnDark>
             <Toolbar>
               <IconButton
                 color='inherit'
@@ -180,11 +183,12 @@ export default function NavigationBar() {
               <NavigationItems routes={routes} open={open} />
               <Divider sx={{ my: 1 }} />
               <React.Fragment>
-                <ListSubheader component='div' inset>
+                <ListSubheader component='div' inset sx={{ background: "inherit !important"}}
+                >
                   <Typography
                     variant='inherit'
                     fontWeight='bold'
-                    sx={{ opacity: open ? 1 : 0 }}
+                    sx={{ opacity: open ? 1 : 0}}
                   >
                     Options
                   </Typography>

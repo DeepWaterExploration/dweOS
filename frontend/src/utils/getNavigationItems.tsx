@@ -9,7 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 import React from "react";
-import { Link } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 
 // routes to different pages
 import { RouteItem } from "../types/types";
@@ -20,18 +20,21 @@ interface NavigationItemsProps {
 }
 
 const NavigationItems: React.FC<NavigationItemsProps> = ({ routes, open }) => {
-  console.log("Is it open? ", open);
   const devicesRoutes = routes.filter((route) => route.category === "Devices");
   const communicationsRoutes = routes.filter(
     (route) => route.category === "Communications"
   );
+  const locationName = useLocation().pathname;
   return (
     <React.Fragment>
       <ListSubheader component='div' inset>
         <Typography
           variant='inherit'
           fontWeight='bold'
-          sx={{ opacity: open ? 1 : 0 }}
+          sx={{
+            opacity: open ? 1 : 0,
+            color: locationName.includes("devices") ? "primary" : "white",
+          }}
         >
           Devices
         </Typography>
@@ -44,7 +47,9 @@ const NavigationItems: React.FC<NavigationItemsProps> = ({ routes, open }) => {
               key={route.key}
               component={Link}
               to={route.route}
-              sx={{ display: "block" }}
+              sx={{
+                display: "block",
+              }}
             >
               <ListItemButton
                 sx={{
@@ -58,13 +63,21 @@ const NavigationItems: React.FC<NavigationItemsProps> = ({ routes, open }) => {
                     minWidth: 0,
                     mr: open ? 3 : "auto",
                     justifyContent: "center",
+                    color: `${
+                      locationName === route.route ? "black" : "white"
+                    } !important`,
                   }}
                 >
                   {route.icon}
                 </ListItemIcon>
                 <ListItemText
                   primary={route.name}
-                  sx={{ opacity: open ? 1 : 0 }}
+                  sx={{
+                    opacity: open ? 1 : 0,
+                    color: `${
+                      locationName === route.route ? "black" : "white"
+                    } !important`,
+                  }}
                 />
               </ListItemButton>
             </ListItem>
@@ -76,7 +89,10 @@ const NavigationItems: React.FC<NavigationItemsProps> = ({ routes, open }) => {
         <Typography
           variant='inherit'
           fontWeight='bold'
-          sx={{ opacity: open ? 1 : 0 }}
+          sx={{
+            opacity: open ? 1 : 0,
+            color: locationName.includes("devices") ? "primary" : "white",
+          }}
         >
           Communications
         </Typography>
@@ -103,13 +119,21 @@ const NavigationItems: React.FC<NavigationItemsProps> = ({ routes, open }) => {
                     minWidth: 0,
                     mr: open ? 3 : "auto",
                     justifyContent: "center",
+                    color: `${
+                      locationName === route.route ? "black" : "white"
+                    } !important`,
                   }}
                 >
                   {route.icon}
                 </ListItemIcon>
                 <ListItemText
                   primary={route.name}
-                  sx={{ opacity: open ? 1 : 0 }}
+                  sx={{
+                    opacity: open ? 1 : 0,
+                    color: `${
+                      locationName === route.route ? "black" : "white"
+                    } !important`,
+                  }}
                 />
               </ListItemButton>
             </ListItem>

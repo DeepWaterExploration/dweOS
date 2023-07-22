@@ -40,6 +40,7 @@ import {
   bitrateMode,
   controlType,
 } from "../../types/types";
+import { setUVCControl } from "../../utils/api";
 
 const currencies = [
   {
@@ -577,12 +578,12 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
 
 interface CameraControlsProps {
   controls: Control[];
-  devicePath: string;
+  usbInfo: string;
 }
 
 const CameraControls: React.FC<CameraControlsProps> = (props) => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { controls, devicePath } = props;
+  const { controls, usbInfo } = props;
   const [controlsCollapsed, setControlsCollapsed] = useState(true);
   return (
     <Accordion
@@ -613,13 +614,9 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                   defaultValue as number
                 );
 
-                // useEffect(() => {
-                //   makePostRequest("/setControl", {
-                //     devicePath,
-                //     id,
-                //     value: controlValue,
-                //   });
-                // }, [controlValue]);
+                useEffect(() => {
+                  setUVCControl(usbInfo, controlValue, id);
+                }, [controlValue]);
 
                 return (
                   <>
@@ -748,7 +745,7 @@ const DeviceCard: React.FC<DeviceCardProps> = (props) => {
   const deviceWarning = null;
 
   const cameraControls = (
-    <CameraControls controls={controls} devicePath={props.device.info.path} />
+    <CameraControls controls={controls} usbInfo={props.device.info.usbInfo} />
   );
 
   return (

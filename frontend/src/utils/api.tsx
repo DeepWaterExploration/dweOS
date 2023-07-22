@@ -212,13 +212,17 @@ export async function stopStream(index: number): Promise<void> {
  * @throws {Error} - If the index is invalid or the request fails.
  */
 export async function setUVCControl(
-  index: number,
-  control: Control
+  usbInfo: string,
+  value: number,
+  id: number
 ): Promise<void> {
-  const url = "http://localhost:8080/set_uvc_control";
+  const url = "http://localhost:8080/devices/set_uvc_control";
   const data = {
-    index,
-    control,
+    usbInfo,
+    control: {
+      value,
+      id,
+    },
   };
   const config: RequestInit = {
     mode: "cors",

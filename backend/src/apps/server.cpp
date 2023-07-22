@@ -197,7 +197,6 @@ int main(int argc, char **argv) {
             json control = requestBody["control"];
             int id = control["id"];
             int value = control["value"];
-            std::cout << "ID: " << id << ", value: " << value << "\n";
             v4l2::Device *device = ehd->get_v4l2_device();
             device->set_pu(id, value);
             res.set_header("Access-Control-Allow-Origin", "*");

@@ -4,7 +4,7 @@
     <Device usbInfo="1.2.3">
       <Options bitrate="10000000" mode="1" gop="29" />
       <Controls>
-        <Control id="9963776" value="64" />
+        <Control id="9963776" value="0" />
       </Controls>
       <Stream encodeType="H264" streamType="1" width="1920" height="1080" numerator="1"
         denominator="30">

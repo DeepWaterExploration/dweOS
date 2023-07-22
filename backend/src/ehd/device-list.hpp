@@ -26,8 +26,6 @@ class DeviceList {
 
     void enumerate();
 
-    void load_devices(const std::vector<settings::SerializedDevice> &devices);
-
     void start_monitoring();
 
     void stop_monitoring();
@@ -41,9 +39,15 @@ class DeviceList {
     private:
     void _monitor_devices();
 
+    void _load_device(libehd::Device *device,
+        const settings::SerializedDevice *serialized_device);
+
+    void _load_devices();
+
     pthread_t _monitor_thread;
     std::vector<v4l2::devices::DEVICE_INFO> _devices;
     BroadcastServer _broadcast_server;
+    settings::SettingsManager _settingsManager;
 
     json _devices_array;
 };

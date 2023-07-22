@@ -45,13 +45,10 @@ int main(int argc, char **argv) {
 
     signal(SIGINT, signalHandler);
 
-    /* Settings */
-    settings::SettingsManager settingsManager;
-
     /* Enumeration */
     std::cout << "Beginning initial device enumeration." << std::endl;
     devices.enumerate();
-    devices.load_devices(settingsManager.get_devices());
+    // devices.load_devices(settingsManager.get_devices());
 
     std::cout << "Running API server.\n";
 

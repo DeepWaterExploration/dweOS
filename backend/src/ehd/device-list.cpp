@@ -2,7 +2,9 @@
 
 typedef void *(*THREADFUNCPTR)(void *);
 
-DeviceList::DeviceList() : _broadcast_server(BroadcastServer()) {}
+DeviceList::DeviceList()
+    : _broadcast_server(BroadcastServer()),
+      _settingsManager(settings::SettingsManager()) {}
 
 libehd::Device *DeviceList::get_ehd(std::string usbInfo) {
     for (libehd::Device *device : ehd_devices) {
@@ -205,42 +207,50 @@ void DeviceList::enumerate() {
             delete v4l2_device;
         }
     }
+
+    /* Load the saved devices after enumeration */
+    _load_devices();
 }
 
-void DeviceList::load_devices(
-    const std::vector<settings::SerializedDevice> &devices) {
-    for (settings::SerializedDevice serialized_device : devices) {
-        libehd::Device *device = find_device_with_id(serialized_device.usbInfo);
+void DeviceList::_load_device(libehd::Device *device,
+    const settings::SerializedDevice *serialized_device) {
+    v4l2::Device *v4l2_device = device->get_v4l2_device();
+    std::cout << "Stored device found: " << v4l2_device->get_usb_info()
+              << std::endl;
+
+    /* Options */
+    device->set_bitrate(serialized_device->bitrate);
+    device->set_h264_mode(serialized_device->mode);
+    device->set_gop(serialized_device->gop);
+
+    /* Controls */
+    for (settings::SerializedControl control : serialized_device->controls) {
+        v4l2_device->set_pu(control.id, control.value);
+    }
+
+    /* Stream */
+    if (serialized_device->stream) {
+        v4l2_device->configure_stream(
+            v4l2::s2fourcc(serialized_device->stream->encodeType),
+            serialized_device->stream->width, serialized_device->stream->height,
+            v4l2::Interval(serialized_device->stream->numerator,
+                serialized_device->stream->denominator),
+            (gst::StreamType)serialized_device->stream->streamType);
+        for (settings::SerializedEndpoint endpoint :
+            serialized_device->stream->endpoints) {
+            v4l2_device->add_stream_endpoint(endpoint.host, endpoint.port);
+        }
+        v4l2_device->start_stream();
+    }
+}
+
+void DeviceList::_load_devices() {
+    for (settings::SerializedDevice *serialized_device :
+        _settingsManager.get_devices()) {
+        libehd::Device *device =
+            find_device_with_id(serialized_device->usbInfo);
         if (!device) continue;
-        v4l2::Device *v4l2_device = device->get_v4l2_device();
-        std::cout << "Stored device found: " << v4l2_device->get_usb_info()
-                  << std::endl;
-
-        /* Options */
-        device->set_bitrate(serialized_device.bitrate);
-        device->set_h264_mode(serialized_device.mode);
-        device->set_gop(serialized_device.gop);
-
-        /* Controls */
-        for (settings::SerializedControl control : serialized_device.controls) {
-            v4l2_device->set_pu(control.id, control.value);
-        }
-
-        /* Stream */
-        if (serialized_device.stream) {
-            v4l2_device->configure_stream(
-                v4l2::s2fourcc(serialized_device.stream->encodeType),
-                serialized_device.stream->width,
-                serialized_device.stream->height,
-                v4l2::Interval(serialized_device.stream->numerator,
-                    serialized_device.stream->denominator),
-                (gst::StreamType)serialized_device.stream->streamType);
-            for (settings::SerializedEndpoint endpoint :
-                serialized_device.stream->endpoints) {
-                v4l2_device->add_stream_endpoint(endpoint.host, endpoint.port);
-            }
-            v4l2_device->start_stream();
-        }
+        _load_device(device, serialized_device);
     }
 }
 
@@ -312,6 +322,15 @@ void DeviceList::_monitor_devices() {
                 added_device_objects.push_back(device_object);
                 _devices_array.push_back(device_object);
                 ehd_devices.push_back(ehd);
+
+                settings::SerializedDevice *serialized_device =
+                    _settingsManager.find_device_with_id(
+                        v4l2_device->get_usb_info());
+                if (serialized_device) {
+                    std::cout << "Device plugged in with existing settings: "
+                              << serialized_device->usbInfo << std::endl;
+                    _load_device(ehd, serialized_device);
+                }
             } else {
                 delete v4l2_device;
             }

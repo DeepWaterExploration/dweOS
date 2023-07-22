@@ -16,7 +16,7 @@ SettingsManager::SettingsManager() {
     for (pugi::xml_node device : settings.child("Devices").children("Device")) {
         /* Initial device setup */
         pugi::xml_node options_node = device.child("Options");
-        SerializedDevice serialized_device = {
+        SerializedDevice* serialized_device = new SerializedDevice{
             .usbInfo = device.attribute("usbInfo").value(),
             .bitrate = options_node.attribute("bitrate").as_uint(),
             .mode = (libehd::H264Mode)options_node.attribute("mode").as_uint(),
@@ -28,7 +28,7 @@ SettingsManager::SettingsManager() {
             SerializedControl serialized_control = {
                 .id = control.attribute("id").as_uint(),
                 .value = control.attribute("value").as_int()};
-            serialized_device.controls.push_back(serialized_control);
+            serialized_device->controls.push_back(serialized_control);
         }
 
         /* Stream */
@@ -54,8 +54,15 @@ SettingsManager::SettingsManager() {
                 serialized_stream->endpoints.push_back(serialized_endpoint);
             }
         }
-        serialized_device.stream = serialized_stream;
+        serialized_device->stream = serialized_stream;
 
         _devices.push_back(serialized_device);
     }
+}
+
+SerializedDevice* SettingsManager::find_device_with_id(std::string usbInfo) {
+    for (SerializedDevice* device : _devices) {
+        if (device->usbInfo == usbInfo) return device;
+    }
+    return nullptr;
 }

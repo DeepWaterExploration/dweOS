@@ -49,11 +49,17 @@ class SettingsManager {
      *
      * @return std::vector<SerializedDevice> devices
      */
-    inline std::vector<SerializedDevice> get_devices() { return _devices; }
+    inline std::vector<SerializedDevice*> get_devices() { return _devices; }
+
+    /**
+     * @brief Find a serialized device with a specified ID
+     *
+     */
+    SerializedDevice* find_device_with_id(std::string usbInfo);
 
     private:
     /* Devices */
-    std::vector<SerializedDevice> _devices;
+    std::vector<SerializedDevice*> _devices;
 
     /* XML */
     pugi::xml_document _doc;

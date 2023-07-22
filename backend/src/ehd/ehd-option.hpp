@@ -100,6 +100,12 @@ class Option {
         _data_ptr += sizeof(T);
     }
 
+    /**
+     * @brief clear the internal buffers
+     *
+     */
+    void clear();
+
     private:
     /* Internal device handle */
     v4l2::Camera *_camera;

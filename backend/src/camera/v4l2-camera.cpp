@@ -21,6 +21,12 @@ std::string v4l2::fourcc2s(uint32_t fourcc) {
     return str;
 }
 
+uint32_t v4l2::s2fourcc(std::string s) {
+    if (s.length() != 4)
+        throw std::runtime_error("String length is not equal to 4");
+    return v4l2_fourcc(s.at(0), s.at(1), s.at(2), s.at(3));
+}
+
 /* v4l2::Camera definitions */
 
 int Camera::uvc_set_ctrl(

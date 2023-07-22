@@ -15,7 +15,8 @@ struct SerializedEndpoint {
 };
 
 struct SerializedStream {
-    std::string encodeType, streamType;
+    std::string encodeType;
+    uint32_t streamType;
     uint32_t width, height;
     uint32_t numerator, denominator;
     std::vector<SerializedEndpoint> endpoints;
@@ -29,9 +30,9 @@ struct SerializedControl {
 struct SerializedDevice {
     std::string usbInfo;
     uint32_t bitrate;
-    std::string mode;
+    libehd::H264Mode mode;
     uint32_t gop;
-    SerializedStream stream;
+    SerializedStream* stream;
     std::vector<SerializedControl> controls;
 };
 

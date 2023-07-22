@@ -22,6 +22,8 @@ class DeviceList {
 
     libehd::Device *find_device_with_path(std::string path);
 
+    libehd::Device *find_device_with_id(std::string usbID);
+
     void enumerate();
 
     void load_devices(const std::vector<settings::SerializedDevice> &devices);

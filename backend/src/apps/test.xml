@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <Settings version="1.0">
   <Devices>
-    <Device usbInfo="1.2.4">
-      <Options bitrate="10000000" mode="vbr" gop="29" />
+    <Device usbInfo="1.2.3">
+      <Options bitrate="10000000" mode="1" gop="29" />
       <Controls>
-        <Control id="9963776" value="0" />
+        <Control id="9963776" value="64" />
       </Controls>
-      <Stream encodeType="H264" streamType="UDP" width="1920" height="1080" numerator="1"
+      <Stream encodeType="H264" streamType="1" width="1920" height="1080" numerator="1"
         denominator="30">
         <Endpoints>
-          <Endpoint host="192.168.2.1" port="5600" />
+          <Endpoint host="127.0.0.1" port="5600" />
         </Endpoints>
       </Stream>
     </Device>

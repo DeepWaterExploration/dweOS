@@ -35,6 +35,14 @@ namespace v4l2 {
  */
 std::string fourcc2s(uint32_t fourcc);
 
+/**
+ * @brief Convert a string to a pixel format
+ *
+ * @param s string containing 4 characters
+ * @return uint32_t Converted V4L2 pixel format
+ */
+uint32_t s2fourcc(std::string s);
+
 class Camera {
     public:
     Camera(std::string path) : _path(path) {}

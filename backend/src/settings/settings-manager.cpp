@@ -17,9 +17,9 @@ SettingsManager::SettingsManager() {
         /* Initial device setup */
         pugi::xml_node options_node = device.child("Options");
         SerializedDevice serialized_device = {
-            .usbInfo = options_node.attribute("usbInfo").value(),
+            .usbInfo = device.attribute("usbInfo").value(),
             .bitrate = options_node.attribute("bitrate").as_uint(),
-            .mode = options_node.attribute("mode").as_string(),
+            .mode = (libehd::H264Mode)options_node.attribute("mode").as_uint(),
             .gop = options_node.attribute("gop").as_uint()};
 
         /* UVC Controls */
@@ -33,11 +33,12 @@ SettingsManager::SettingsManager() {
 
         /* Stream */
         pugi::xml_node stream_node = device.child("Stream");
+        SerializedStream* serialized_stream = nullptr;
         // Is there a stream?
         if (stream_node) {
-            SerializedStream serialized_stream = {
+            serialized_stream = new SerializedStream{
                 .encodeType = stream_node.attribute("encodeType").as_string(),
-                .streamType = stream_node.attribute("streamType").as_string(),
+                .streamType = stream_node.attribute("streamType").as_uint(),
                 .width = stream_node.attribute("width").as_uint(),
                 .height = stream_node.attribute("height").as_uint(),
                 .numerator = stream_node.attribute("numerator").as_uint(),
@@ -50,10 +51,10 @@ SettingsManager::SettingsManager() {
                     .host = endpoint_node.attribute("host").as_string(),
                     .port = endpoint_node.attribute("port").as_uint(),
                 };
-                serialized_stream.endpoints.push_back(serialized_endpoint);
+                serialized_stream->endpoints.push_back(serialized_endpoint);
             }
-            serialized_device.stream = serialized_stream;
         }
+        serialized_device.stream = serialized_stream;
 
         _devices.push_back(serialized_device);
     }

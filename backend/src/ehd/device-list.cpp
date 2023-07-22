@@ -174,6 +174,15 @@ libehd::Device *DeviceList::find_device_with_path(std::string path) {
     return nullptr;
 }
 
+libehd::Device *DeviceList::find_device_with_id(std::string usbID) {
+    for (libehd::Device *device : ehd_devices) {
+        if (device->get_v4l2_device()->get_usb_info() == usbID) {
+            return device;
+        }
+    }
+    return nullptr;
+}
+
 void DeviceList::enumerate() {
     _devices_array = json::array();
     _devices.clear();
@@ -200,7 +209,39 @@ void DeviceList::enumerate() {
 
 void DeviceList::load_devices(
     const std::vector<settings::SerializedDevice> &devices) {
-    // TODO
+    for (settings::SerializedDevice serialized_device : devices) {
+        libehd::Device *device = find_device_with_id(serialized_device.usbInfo);
+        if (!device) continue;
+        v4l2::Device *v4l2_device = device->get_v4l2_device();
+        std::cout << "Stored device found: " << v4l2_device->get_usb_info()
+                  << std::endl;
+
+        /* Options */
+        device->set_bitrate(serialized_device.bitrate);
+        device->set_h264_mode(serialized_device.mode);
+        device->set_gop(serialized_device.gop);
+
+        /* Controls */
+        for (settings::SerializedControl control : serialized_device.controls) {
+            v4l2_device->set_pu(control.id, control.value);
+        }
+
+        /* Stream */
+        if (serialized_device.stream) {
+            v4l2_device->configure_stream(
+                v4l2::s2fourcc(serialized_device.stream->encodeType),
+                serialized_device.stream->width,
+                serialized_device.stream->height,
+                v4l2::Interval(serialized_device.stream->numerator,
+                    serialized_device.stream->denominator),
+                (gst::StreamType)serialized_device.stream->streamType);
+            for (settings::SerializedEndpoint endpoint :
+                serialized_device.stream->endpoints) {
+                v4l2_device->add_stream_endpoint(endpoint.host, endpoint.port);
+            }
+            v4l2_device->start_stream();
+        }
+    }
 }
 
 void DeviceList::stop_monitoring() {

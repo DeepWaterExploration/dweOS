@@ -55,3 +55,9 @@ void Option::get() {
 
     free(data);
 }
+
+void Option::clear() {
+    _data = (uint8_t *)malloc(_size);
+    memset(_data, 0, _size);
+    _data_ptr = _data;
+}

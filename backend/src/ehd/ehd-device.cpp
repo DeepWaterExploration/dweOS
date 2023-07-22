@@ -36,6 +36,7 @@ uint32_t Device::get_bitrate() {
     opt->get();
     uint32_t bitrate;
     opt->unpack(bitrate, BIG_ENDIAN);
+    opt->clear();
     return bitrate;
 }
 
@@ -43,6 +44,7 @@ void Device::set_bitrate(uint32_t bitrate) {
     xu::Option *opt = _options.at("bitrate");
     opt->pack(bitrate, BIG_ENDIAN);
     opt->set();
+    opt->clear();
 }
 
 uint16_t Device::get_gop() {
@@ -50,6 +52,7 @@ uint16_t Device::get_gop() {
     opt->get();
     uint16_t gop;
     opt->unpack(gop);
+    opt->clear();
     return gop;
 }
 
@@ -57,6 +60,7 @@ void Device::set_gop(uint16_t gop) {
     xu::Option *opt = _options.at("gop");
     opt->pack<uint16_t>(gop);
     opt->set();
+    opt->clear();
 }
 
 H264Mode Device::get_h264_mode() {
@@ -64,6 +68,7 @@ H264Mode Device::get_h264_mode() {
     opt->get();
     uint8_t mode;
     opt->unpack(mode);
+    opt->clear();
     return static_cast<H264Mode>(mode);
 }
 
@@ -71,4 +76,5 @@ void Device::set_h264_mode(H264Mode mode) {
     xu::Option *opt = _options.at("mode");
     opt->pack(static_cast<uint8_t>(mode));
     opt->set();
+    opt->clear();
 }

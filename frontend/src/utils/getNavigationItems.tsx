@@ -8,7 +8,7 @@ import {
   Typography,
 } from "@mui/material";
 import React from "react";
-import { useLocation, Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 // routes to different pages
 import { RouteItem } from "../types/types";
@@ -16,9 +16,14 @@ import { RouteItem } from "../types/types";
 interface NavigationItemsProps {
   routes: RouteItem[];
   open: boolean;
+  theme: any;
 }
 
-const NavigationItems: React.FC<NavigationItemsProps> = ({ routes, open }) => {
+const NavigationItems: React.FC<NavigationItemsProps> = ({
+  routes,
+  open,
+  theme,
+}) => {
   const devicesRoutes = routes.filter((route) => route.category === "Devices");
   const communicationsRoutes = routes.filter(
     (route) => route.category === "Communications"
@@ -26,14 +31,21 @@ const NavigationItems: React.FC<NavigationItemsProps> = ({ routes, open }) => {
   const locationName = useLocation().pathname;
   return (
     <React.Fragment>
-                      <ListSubheader component='div' inset sx={{ background: "inherit !important"}}>
-
+      <ListSubheader
+        component='div'
+        inset
+        sx={{ background: "inherit !important" }}
+      >
         <Typography
           variant='inherit'
           fontWeight='bold'
           sx={{
             opacity: open ? 1 : 0,
-            color: locationName.includes("devices") ? "primary" : "white",
+            color: `${
+              locationName.includes("devices")
+                ? theme.palette.primary.main
+                : "inherit"
+            } !important`,
           }}
         >
           Devices
@@ -64,7 +76,9 @@ const NavigationItems: React.FC<NavigationItemsProps> = ({ routes, open }) => {
                     mr: open ? 3 : "auto",
                     justifyContent: "center",
                     color: `${
-                      locationName === route.route ? "black" : "white"
+                      locationName === route.route
+                        ? theme.palette.primary.main
+                        : "inherit"
                     } !important`,
                   }}
                 >
@@ -75,7 +89,9 @@ const NavigationItems: React.FC<NavigationItemsProps> = ({ routes, open }) => {
                   sx={{
                     opacity: open ? 1 : 0,
                     color: `${
-                      locationName === route.route ? "black" : "white"
+                      locationName === route.route
+                        ? theme.palette.primary.main
+                        : "inherit"
                     } !important`,
                   }}
                 />
@@ -85,13 +101,21 @@ const NavigationItems: React.FC<NavigationItemsProps> = ({ routes, open }) => {
         }
       })}
       <Divider sx={{ my: 1 }} />
-      <ListSubheader component='div' inset sx={{ background: "inherit !important"}}>
+      <ListSubheader
+        component='div'
+        inset
+        sx={{ background: "inherit !important" }}
+      >
         <Typography
           variant='inherit'
           fontWeight='bold'
           sx={{
             opacity: open ? 1 : 0,
-            color: locationName.includes("devices") ? "primary" : "white",
+            color: `${
+              locationName.includes("communications")
+                ? theme.palette.primary.main
+                : "inherit"
+            } !important`,
           }}
         >
           Communications
@@ -120,7 +144,9 @@ const NavigationItems: React.FC<NavigationItemsProps> = ({ routes, open }) => {
                     mr: open ? 3 : "auto",
                     justifyContent: "center",
                     color: `${
-                      locationName === route.route ? "black" : "white"
+                      locationName === route.route
+                        ? theme.palette.primary.main
+                        : "inherit"
                     } !important`,
                   }}
                 >
@@ -131,7 +157,9 @@ const NavigationItems: React.FC<NavigationItemsProps> = ({ routes, open }) => {
                   sx={{
                     opacity: open ? 1 : 0,
                     color: `${
-                      locationName === route.route ? "black" : "white"
+                      locationName === route.route
+                        ? theme.palette.primary.main
+                        : "inherit"
                     } !important`,
                   }}
                 />

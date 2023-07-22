@@ -579,7 +579,7 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
               <AddIcon />
             </IconButton>
           </div>
-          <Button color='grey' variant='contained'>
+          <Button color='primary' variant='contained'>
             Restart Stream
           </Button>
         </>

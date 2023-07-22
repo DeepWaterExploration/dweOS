@@ -1,6 +1,5 @@
 import {
   Divider,
-  List,
   ListItem,
   ListItemButton,
   ListItemIcon,
@@ -27,7 +26,8 @@ const NavigationItems: React.FC<NavigationItemsProps> = ({ routes, open }) => {
   const locationName = useLocation().pathname;
   return (
     <React.Fragment>
-      <ListSubheader component='div' inset>
+                      <ListSubheader component='div' inset sx={{ background: "inherit !important"}}>
+
         <Typography
           variant='inherit'
           fontWeight='bold'
@@ -85,7 +85,7 @@ const NavigationItems: React.FC<NavigationItemsProps> = ({ routes, open }) => {
         }
       })}
       <Divider sx={{ my: 1 }} />
-      <ListSubheader component='div' inset>
+      <ListSubheader component='div' inset sx={{ background: "inherit !important"}}>
         <Typography
           variant='inherit'
           fontWeight='bold'

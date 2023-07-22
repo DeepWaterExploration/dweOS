@@ -324,4 +324,8 @@ void Device::add_stream_endpoint(const std::string &host, uint32_t port) {
     _pipeline->addEndpoint(endpoint);
 }
 
+void Device::remove_stream_endpoint(int index) {
+    _pipeline->removeEndpoint(index);
+}
+
 bool Device::is_stream_configured() { return _pipeline->getIsConfigured(); }

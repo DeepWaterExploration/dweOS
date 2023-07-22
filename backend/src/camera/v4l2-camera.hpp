@@ -104,6 +104,7 @@ class Device {
     void start_stream();
     void stop_stream();
     void add_stream_endpoint(const std::string &host, uint32_t port);
+    void remove_stream_endpoint(int index);
     bool is_stream_configured();
 
     inline gst::Pipeline *get_pipeline() { return _pipeline; }

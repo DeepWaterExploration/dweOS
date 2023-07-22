@@ -117,9 +117,14 @@ class Pipeline : public RawPipeline {
 
     bool getIsConfigured() { return _isConfigured; }
 
-    void addEndpoint(const StreamEndpoint &endpoint) {
+    inline void addEndpoint(const StreamEndpoint &endpoint) {
         _streamInfo.endpoints.push_back(endpoint);
         setPipelineString(_constructPipeline());
+    }
+
+    inline void removeEndpoint(int index) {
+        _streamInfo.endpoints.erase(
+            std::next(_streamInfo.endpoints.begin(), index));
     }
 
     private:

@@ -140,6 +140,25 @@ int main(int argc, char **argv) {
             res.set_header("Access-Control-Allow-Origin", "*");
         });
 
+    svr.Post("/remove_stream_endpoint",
+        [](const httplib::Request &req, httplib::Response &res) {
+            json requestBody = json::parse(req.body);
+            std::string usbInfo = requestBody["usbInfo"];
+            libehd::Device *ehd = devices.get_ehd(usbInfo);
+
+            int index = requestBody["index"];
+
+            /* index is invalid */
+            if (!ehd) {
+                res.status = 400; /* Status 400: Bad Request */
+                return;
+            }
+
+            v4l2::Device *device = ehd->get_v4l2_device();
+            device->remove_stream_endpoint(index);
+            res.set_header("Access-Control-Allow-Origin", "*");
+        });
+
     svr.Post("/start_stream",
         [](const httplib::Request &req, httplib::Response &res) {
             json requestBody = json::parse(req.body);

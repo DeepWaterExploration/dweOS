@@ -18,9 +18,11 @@ SettingsManager::SettingsManager() {
         pugi::xml_node options_node = device.child("Options");
         SerializedDevice* serialized_device = new SerializedDevice{
             .usbInfo = device.attribute("usbInfo").value(),
+            .nickname = device.attribute("nickname").value(),
             .bitrate = options_node.attribute("bitrate").as_uint(),
             .mode = (libehd::H264Mode)options_node.attribute("mode").as_uint(),
-            .gop = options_node.attribute("gop").as_uint()};
+            .gop = options_node.attribute("gop").as_uint(),
+        };
 
         /* UVC Controls */
         for (pugi::xml_node control :

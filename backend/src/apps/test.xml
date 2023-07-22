@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <Settings version="1.0">
   <Devices>
-    <Device usbInfo="1.2.3">
+    <Device usbInfo="1.2.3" nickname="Test Camera">
       <Options bitrate="10000000" mode="1" gop="29" />
       <Controls>
         <Control id="9963776" value="0" />

@@ -78,6 +78,9 @@ json DeviceList::serialize_ehd(libehd::Device *ehd) {
     device_object["info"]["pid"] = v4l2_device->get_device_attr("idProduct");
     device_object["info"]["manufacturer"] = "DeepWater Exploration Inc.";
     device_object["info"]["model"] = "DWE-EHDUSBR2";
+    if (ehd->get_nickname() != "") {
+        device_object["info"]["nickname"] = ehd->get_nickname();
+    }
 
     std::string usbInfo = v4l2_device->get_usb_info();
     device_object["info"]["usbInfo"] = usbInfo;
@@ -217,6 +220,9 @@ void DeviceList::_load_device(libehd::Device *device,
     v4l2::Device *v4l2_device = device->get_v4l2_device();
     std::cout << "Stored device found: " << v4l2_device->get_usb_info()
               << std::endl;
+
+    /* Nickname */
+    device->set_nickname(serialized_device->nickname);
 
     /* Options */
     device->set_bitrate(serialized_device->bitrate);

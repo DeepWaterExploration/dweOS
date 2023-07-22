@@ -29,6 +29,7 @@ struct SerializedControl {
 
 struct SerializedDevice {
     std::string usbInfo;
+    std::string nickname;
     uint32_t bitrate;
     libehd::H264Mode mode;
     uint32_t gop;

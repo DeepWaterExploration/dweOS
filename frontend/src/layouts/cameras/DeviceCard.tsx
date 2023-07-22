@@ -29,7 +29,7 @@ import {
   Typography,
 } from "@mui/material";
 import PopupState, { bindMenu, bindTrigger } from "material-ui-popup-state";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import { styles } from "./style";
 import {
@@ -60,6 +60,18 @@ const currencies = [
     label: "¥",
   },
 ];
+
+const useDidMountEffect = (
+  func: React.EffectCallback,
+  deps?: React.DependencyList | undefined
+) => {
+  const didMount = useRef(false);
+
+  useEffect(() => {
+    if (didMount.current) func();
+    else didMount.current = true;
+  }, deps);
+};
 
 const IP_REGEX =
   /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/;
@@ -614,7 +626,7 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                   defaultValue as number
                 );
 
-                useEffect(() => {
+                useDidMountEffect(() => {
                   setUVCControl(usbInfo, controlValue, id);
                 }, [controlValue]);
 
@@ -648,13 +660,9 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                   defaultValue as boolean
                 );
 
-                // useEffect(() => {
-                //   makePostRequest("/setControl", {
-                //     devicePath,
-                //     id,
-                //     value: controlValue ? 1 : 0,
-                //   });
-                // }, [controlValue]);
+                useDidMountEffect(() => {
+                  setUVCControl(usbInfo, controlValue ? 1 : 0, id);
+                }, [controlValue]);
 
                 return (
                   <>
@@ -673,18 +681,17 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                 let { name, id } = control;
                 const { menu } = control.flags;
                 if (!menu) break;
-                const defaultValue = menu[control.value as number];
-                const [controlValue, setControlValue] = useState<
-                  string | number
-                >(defaultValue as string);
+                const defaultValue = menu[control.value as number] as string;
+                const [controlValue, setControlValue] =
+                  useState<string>(defaultValue);
 
-                // useEffect(() => {
-                //   makePostRequest("/setControl", {
-                //     devicePath,
-                //     id,
-                //     value: controlValue,
-                //   });
-                // }, [controlValue]);
+                useDidMountEffect(() => {
+                  setUVCControl(
+                    usbInfo,
+                    menu.findIndex((value) => value === controlValue),
+                    id
+                  );
+                }, [controlValue]);
 
                 return (
                   <>
@@ -705,7 +712,7 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                                 <MenuItem
                                   key={item}
                                   onClick={() => {
-                                    setControlValue(item);
+                                    setControlValue(item as string);
                                     popupState.close();
                                   }}
                                 >
@@ -750,7 +757,7 @@ const DeviceCard: React.FC<DeviceCardProps> = (props) => {
 
   return (
     <Card
-      sx={{ minWidth: 500, boxShadow: 3, textAlign: "left", margin: "20px" }}
+      sx={{ minWidth: 512, boxShadow: 3, textAlign: "left", margin: "20px" }}
     >
       <CardHeader
         action={deviceWarning}
@@ -779,7 +786,7 @@ const DeviceCard: React.FC<DeviceCardProps> = (props) => {
               helperText='Device Nickname'
               placeholder='Device Nickname'
               variant='standard'
-              defaultValue={""}
+              defaultValue={props.device.info.nickname}
             ></TextField>
           </>
         }

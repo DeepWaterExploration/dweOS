@@ -63,7 +63,7 @@ export interface ControlFlags {
 }
 
 export interface CameraInfo {
-  /* Differenciator between cameras (device path) */
+  /* Differentiator between cameras (device path) */
   name: string;
   path: string;
   pid: string;
@@ -71,6 +71,7 @@ export interface CameraInfo {
   vid: string;
   manufacturer: string;
   model: string;
+  nickname: string;
 }
 
 export interface StreamOptions {

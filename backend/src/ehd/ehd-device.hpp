@@ -27,6 +27,12 @@ class Device {
 
     v4l2::Device *get_v4l2_device();
 
+    inline void set_nickname(const std::string &nickname) {
+        _nickname = nickname;
+    }
+
+    inline std::string get_nickname() { return _nickname; }
+
     /**
      * @brief Get the bitrate of the camera
      *
@@ -87,6 +93,7 @@ class Device {
     Device(v4l2::Device *device);
 
     v4l2::Device *_device;
+    std::string _nickname;
     std::string _bus_info;
     std::vector<std::string> _device_paths;
     std::map<std::string, xu::Option *> _options;

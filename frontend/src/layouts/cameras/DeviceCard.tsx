@@ -386,12 +386,12 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
         <>
           <div style={styles.cardContent.div}>
             <TextField
-              sx={{ width: "50%"}}
+              sx={{ width: "50%" }}
               select
               label='Resolution'
               variant='outlined'
               defaultValue='EUR'
-              size="small"
+              size='small'
             >
               {currencies.map((option) => (
                 <MenuItem key={option.value} value={option.value}>
@@ -409,12 +409,12 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
               ))} */}
             </TextField>
             <TextField
-              sx={{ width: "20%"}}
+              sx={{ width: "20%" }}
               select
               label='FPS'
               variant='outlined'
               defaultValue='EUR'
-              size="small"
+              size='small'
             >
               {currencies.map((option) => (
                 <MenuItem key={option.value} value={option.value}>
@@ -432,12 +432,12 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
               ))} */}
             </TextField>
             <TextField
-              sx={{ width: "30%"}}
+              sx={{ width: "30%" }}
               select
               label='Format'
               variant='outlined'
               defaultValue='EUR'
-              size="small"
+              size='small'
             >
               {currencies.map((option) => (
                 <MenuItem key={option.value} value={option.value}>

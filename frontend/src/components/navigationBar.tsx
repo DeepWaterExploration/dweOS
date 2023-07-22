@@ -32,7 +32,7 @@ import DWELogo_white from "../svg/DWELogo_white.svg";
 import { resetSettings } from "../utils/api";
 import NavigationItems from "../utils/getNavigationItems";
 import NavigationRoutes from "../utils/getRoutes";
-import { darkTheme, lightTheme } from "../utils/themes";
+import dweTheme from "../utils/themes";
 
 const drawerWidth = 240;
 
@@ -108,10 +108,10 @@ const Drawer = styled(MuiDrawer, {
 export default function NavigationBar() {
   const [open, setOpen] = useState(true);
   const [theme, setTheme] = useState(
-    localStorage.getItem("theme") == "dark" ? darkTheme : lightTheme
+    localStorage.getItem("theme") == "dark" ? dweTheme("dark") : dweTheme("light")
   );
   const toggleTheme = () => {
-    const newTheme = theme.palette.mode === "dark" ? lightTheme : darkTheme;
+    const newTheme = theme.palette.mode === "dark" ? dweTheme("light") : dweTheme("dark");
     setTheme(newTheme);
     localStorage.setItem("theme", newTheme.palette.mode);
   };

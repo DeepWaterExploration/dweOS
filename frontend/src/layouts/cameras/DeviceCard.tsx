@@ -39,6 +39,7 @@ import {
   StreamEndpoint,
   bitrateMode,
   controlType,
+  encodeType,
 } from "../../types/types";
 import { setUVCControl } from "../../utils/api";
 
@@ -322,9 +323,47 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
   const [ipError, setIpError] = useState("");
   const [portError, setPortError] = useState("");
 
+  /* Helper functions */
+  /* TODO: change API to not need these */
+
+  const findCameraWithFormat = (format: string) => {
+    for (let camera of props.device.cameras) {
+      if (camera.formats.find((fmt) => fmt.format === format)) {
+        return camera;
+      }
+    }
+    return undefined;
+  };
+
+  const findFormat = (format: string) => {
+    let camera = findCameraWithFormat(format);
+    if (!camera) return undefined;
+    return camera.formats.find((fmt) => fmt.format === format);
+  };
+
+  const removeDuplicates = (arr: any[] | undefined) =>
+    arr?.filter((item, index) => arr?.indexOf(item) === index);
+
+  const findSize = (
+    sizes: CameraFormatSize[] | undefined,
+    resolution: string
+  ) => {
+    let width = parseInt(resolution.split("x")[0]);
+    let height = parseInt(resolution.split("x")[1]);
+    return sizes?.find(
+      (size) => size.width === width && size.height === height
+    );
+  };
+
+  const [resolution, setResolution] = useState("1920x1080");
+  const [encodeFormat, setEncodeFormat] = useState(encodeType.H264);
+  const [fps, setFps] = useState("30");
+
   const [endpoints, setEndpoints] = useState<StreamEndpoint[]>(
     props.device.stream.endpoints ? props.device.stream.endpoints : []
   );
+
+  console.log(props.device.cameras);
 
   const handleAddEndpoint = () => {
     // Check if the IP is valid
@@ -403,69 +442,56 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
               select
               label='Resolution'
               variant='outlined'
-              defaultValue='EUR'
+              defaultValue='1920x1080'
+              onChange={(selected) => setResolution(selected.target.value)}
               size='small'
             >
-              {currencies.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
+              {findFormat(encodeFormat as string)?.sizes?.map((size) => (
+                <MenuItem
+                  key={`${size.width}x${size.height}`}
+                  value={`${size.width}x${size.height}`}
+                >
+                  {size.width}x{size.height}
                 </MenuItem>
               ))}
-              {/* {props.resolutions.map((option, index) => (
-                <MenuItem
-                  key={`${option.height}x${option.width}`}
-                  selected={index === selectedIndex}
-                  onClick={(event) => handleMenuItemClick(event, index, option)}
-                >
-                  {option.height}x{option.width}
-                </MenuItem>
-              ))} */}
             </TextField>
             <TextField
               sx={{ width: "20%" }}
               select
               label='FPS'
               variant='outlined'
-              defaultValue='EUR'
+              defaultValue='30'
+              onChange={(selected) => setFps(selected.target.value)}
               size='small'
             >
-              {currencies.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
+              {removeDuplicates(
+                findSize(findFormat(encodeFormat as string)?.sizes, resolution)
+                  ?.intervals
+              )?.map((interval) => (
+                <MenuItem
+                  key={interval.denominator}
+                  value={interval.denominator}
+                >
+                  {interval.denominator}
                 </MenuItem>
               ))}
-              {/* {props.resolutions.map((option, index) => (
-                <MenuItem
-                  key={`${option.height}x${option.width}`}
-                  selected={index === selectedIndex}
-                  onClick={(event) => handleMenuItemClick(event, index, option)}
-                >
-                  {option.height}x{option.width}
-                </MenuItem>
-              ))} */}
             </TextField>
             <TextField
               sx={{ width: "30%" }}
               select
               label='Format'
               variant='outlined'
-              defaultValue='EUR'
+              defaultValue={props.device.stream.encode_type}
+              onChange={(selected) =>
+                setEncodeFormat(selected.target.value as encodeType)
+              }
               size='small'
             >
-              {currencies.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
+              {["H264", "MJPG"].map((option) => (
+                <MenuItem key={option} value={option}>
+                  {option}
                 </MenuItem>
               ))}
-              {/* {props.resolutions.map((option, index) => (
-                <MenuItem
-                  key={`${option.height}x${option.width}`}
-                  selected={index === selectedIndex}
-                  onClick={(event) => handleMenuItemClick(event, index, option)}
-                >
-                  {option.height}x{option.width}
-                </MenuItem>
-              ))} */}
             </TextField>
           </div>
           <Accordion

@@ -3,52 +3,52 @@ name: CI/CD Pipeline for Backend
 # Controls when the workflow will run
 on: [push, pull_request, workflow_dispatch]
 # The sequence of runs in this workflow:
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        target: [zero_raspbian, zero_raspios, zero_dietpi, zero2_raspios, zero2_dietpi, zero2_64_raspios, zero2_64_dietpi]
-        include:
-        - target: zero_raspbian
-          cpu: arm1176
-          cpu_info: cpuinfo/raspberrypi_zero_w
-          base_image: raspbian_lite:latest
-        - target: zero_raspios
-          cpu: arm1176
-          cpu_info: cpuinfo/raspberrypi_zero_w
-          base_image: raspios_lite:latest
-        - target: zero_dietpi
-          cpu: arm1176
-          cpu_info: cpuinfo/raspberrypi_zero_w
-          base_image: dietpi:rpi_armv6_bullseye
-        - target: zero2_raspios
-          cpu: cortex-a7
-          cpu_info: cpuinfo/raspberrypi_zero2_w
-          base_image: raspios_lite:latest
-        - target: zero2_dietpi
-          cpu: cortex-a7
-          cpu_info: cpuinfo/raspberrypi_zero2_w
-          base_image: dietpi:rpi_armv7_bullseye
-        - target: zero2_64_raspios
-          cpu: cortex-a53
-          cpu_info: cpuinfo/raspberrypi_zero2_w_arm64
-          base_image: raspios_lite_arm64:latest
-        - target: zero2_64_dietpi
-          cpu: cortex-a53
-          cpu_info: cpuinfo/raspberrypi_zero2_w_arm64
-          base_image: dietpi:rpi_armv8_bullseye
-    steps:
-    - name: Check out Repository Code
-      uses: actions/checkout@v3
-      with:
-        submodules: recursive
-    - uses: pguyot/arm-runner-action@v2
-      with:
-        image_additional_mb: 1024
-        base_image: ${{ matrix.base_image }}
-        cpu: ${{ matrix.cpu }}
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         target: [zero_raspbian, zero_raspios, zero_dietpi, zero2_raspios, zero2_dietpi, zero2_64_raspios, zero2_64_dietpi]
+#         include:
+#         - target: zero_raspbian
+#           cpu: arm1176
+#           cpu_info: cpuinfo/raspberrypi_zero_w
+#           base_image: raspbian_lite:latest
+#         - target: zero_raspios
+#           cpu: arm1176
+#           cpu_info: cpuinfo/raspberrypi_zero_w
+#           base_image: raspios_lite:latest
+#         - target: zero_dietpi
+#           cpu: arm1176
+#           cpu_info: cpuinfo/raspberrypi_zero_w
+#           base_image: dietpi:rpi_armv6_bullseye
+#         - target: zero2_raspios
+#           cpu: cortex-a7
+#           cpu_info: cpuinfo/raspberrypi_zero2_w
+#           base_image: raspios_lite:latest
+#         - target: zero2_dietpi
+#           cpu: cortex-a7
+#           cpu_info: cpuinfo/raspberrypi_zero2_w
+#           base_image: dietpi:rpi_armv7_bullseye
+#         - target: zero2_64_raspios
+#           cpu: cortex-a53
+#           cpu_info: cpuinfo/raspberrypi_zero2_w_arm64
+#           base_image: raspios_lite_arm64:latest
+#         - target: zero2_64_dietpi
+#           cpu: cortex-a53
+#           cpu_info: cpuinfo/raspberrypi_zero2_w_arm64
+#           base_image: dietpi:rpi_armv8_bullseye
+#     steps:
+#     - name: Check out Repository Code
+#       uses: actions/checkout@v3
+#       with:
+#         submodules: recursive
+#     - uses: pguyot/arm-runner-action@v2
+#       with:
+#         image_additional_mb: 1024
+#         base_image: ${{ matrix.base_image }}
+#         cpu: ${{ matrix.cpu }}
         # commands: |
         #   sudo apt-cache search libglib2.0-dev
         #   sudo apt-get install -y libgtk2.0-dev

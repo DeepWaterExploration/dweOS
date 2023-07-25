@@ -40,8 +40,9 @@ import {
   bitrateMode,
   controlType,
   encodeType,
+  optionType,
 } from "../../types/types";
-import { setUVCControl } from "../../utils/api";
+import { setExploreHDOption, setUVCControl } from "../../utils/api";
 
 const RESOLUTIONS = [
   "1920x1080",
@@ -209,12 +210,34 @@ interface DeviceOptionsProps {
 const DeviceOptions: React.FC<DeviceOptionsProps> = (props) => {
   // const device = props.device.stream.device_path;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [bitrate, setBitrate] = useState(props.device.options.bitrate);
+  const [bitrate, setBitrate] = useState(
+    props.device.options.bitrate / 1000000
+  );
   const [bitrateSlider, setBitrateSlider] = useState(
     props.device.options.bitrate / 1000000
   );
-  const [h264, setH264] = useState(props.device.options.h264);
+  const [gop, setGOP] = useState(props.device.options.gop);
+  const [gopSlider, setGOPSlider] = useState(props.device.options.gop);
   const [mode, setMode] = useState(props.device.options.mode);
+
+  useDidMountEffect(() => {
+    setExploreHDOption(
+      props.device.info.usbInfo,
+      optionType.BITRATE,
+      bitrate * 1000000
+    );
+  }, [bitrate]);
+
+  useDidMountEffect(() => {
+    setExploreHDOption(props.device.info.usbInfo, optionType.MODE, mode);
+    if (mode === bitrateMode.VBR) {
+      setGOP(29);
+    }
+  }, [mode]);
+
+  useDidMountEffect(() => {
+    setExploreHDOption(props.device.info.usbInfo, optionType.GOP, gop);
+  }, [gop]);
 
   return (
     <>
@@ -237,7 +260,7 @@ const DeviceOptions: React.FC<DeviceOptionsProps> = (props) => {
             </Typography>
             <Slider
               name='bitrate'
-              defaultValue={bitrateSlider}
+              defaultValue={props.device.options.bitrate / 1000000}
               disabled={mode === bitrateMode.VBR}
               onChangeCommitted={(_, newValue) => {
                 setBitrate(newValue as number);
@@ -260,41 +283,31 @@ const DeviceOptions: React.FC<DeviceOptionsProps> = (props) => {
             width='50%'
           >
             <Typography fontWeight='800' style={{ width: "100%" }}>
-              Group of Pictures {bitrateSlider}
+              Group of Pictures {gopSlider}
             </Typography>
             <Slider
               name='bitrate'
-              defaultValue={bitrateSlider}
+              defaultValue={props.device.options.gop}
               disabled={mode === bitrateMode.VBR}
               onChangeCommitted={(_, newValue) => {
-                setBitrate(newValue as number);
+                setGOP(newValue as number);
               }}
               onChange={(_, newValue) => {
-                setBitrateSlider(newValue as number);
+                setGOPSlider(newValue as number);
               }}
               style={{ width: "calc(100% - 30px)" }}
               size='small'
-              max={15}
-              min={0.1}
-              step={0.1}
+              max={29}
+              min={0}
+              step={1}
             />
           </Grid>
         </Grid>
-        <DeviceSwitch
-          checked={h264}
-          name='h264Switch'
-          onChange={(e) => {
-            setH264(e.target.checked);
-            setMode(e.target.checked ? bitrateMode.CBR : mode);
-          }}
-          text='H.264'
-        />
         <DeviceSwitch
           checked={mode === bitrateMode.VBR}
           name='vbrSwitch'
           onChange={(e) => {
             setMode(e.target.checked ? bitrateMode.VBR : bitrateMode.CBR);
-            setH264(e.target.checked ? false : h264);
           }}
           text='VBR (Variable Bitrate)'
         />
@@ -311,7 +324,6 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
   const [stream, setStream] = useState(
     props.device.stream.device_path !== undefined
   );
-  const [endpointsCollapsed, setEndpointsCollapsed] = useState(false);
 
   const [host, setHost] = useState("192.168.2.1");
   const [port, setPort] = useState(5600);
@@ -576,7 +588,6 @@ interface CameraControlsProps {
 const CameraControls: React.FC<CameraControlsProps> = (props) => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { controls, usbInfo } = props;
-  const [controlsCollapsed, setControlsCollapsed] = useState(true);
   return (
     <Accordion
       style={{

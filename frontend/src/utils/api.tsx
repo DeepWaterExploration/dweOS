@@ -4,6 +4,8 @@ import {
   Device,
   StreamEndpoint,
   StreamFormat,
+  bitrateMode,
+  optionType,
 } from "../types/types";
 
 const DEVICE_API_URL = "http://localhost:8080";
@@ -261,16 +263,22 @@ export async function setUVCControl(
 
 /**
  * Configure exploreHD option on a device.
- * @param {number} index - The index of the connected camera.
+ * @param {number} usbInfo - The usb info of the connected camera.
  * @param {number} option - The option to set.
  * @param {number} value - The value to set the option to.
  * @returns {Promise<void>} - A promise that resolves when the option is successfully set.
  * @throws {Error} - If the index is invalid or the request fails.
  */
-export async function setExploreHDOption(index: number): Promise<void> {
-  const url = `${DEVICE_API_URL}/set_explorehd_option`;
+export async function setExploreHDOption(
+  usbInfo: string,
+  option: optionType,
+  value: number | bitrateMode
+): Promise<void> {
+  const url = `${DEVICE_API_URL}/devices/set_option`;
   const data = {
-    index,
+    usbInfo,
+    option,
+    value,
   };
   const config: RequestInit = {
     mode: "cors",

@@ -71,7 +71,7 @@ export interface CameraInfo {
 
 export interface StreamOptions {
   bitrate: number;
-  h264: boolean;
+  gop: number;
   mode: bitrateMode;
 }
 
@@ -104,6 +104,12 @@ export enum controlType {
 export enum bitrateMode {
   VBR = "VBR",
   CBR = "CBR",
+}
+
+export enum optionType {
+  BITRATE = "bitrate",
+  GOP = "gop",
+  MODE = "mode",
 }
 
 /* If we ever need to support more stream protocols, just add them here */

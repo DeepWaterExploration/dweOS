@@ -217,8 +217,6 @@ void DeviceList::enumerate() {
 void DeviceList::_load_device(libehd::Device *device,
     const settings::SerializedDevice *serialized_device) {
     v4l2::Device *v4l2_device = device->get_v4l2_device();
-    std::cout << "Stored device found: " << v4l2_device->get_usb_info()
-              << std::endl;
 
     /* Nickname */
     device->set_nickname(serialized_device->nickname);

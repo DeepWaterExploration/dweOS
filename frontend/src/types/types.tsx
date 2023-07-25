@@ -11,18 +11,13 @@ export interface Device {
 
 export interface Camera {
   device_path: string;
-  formats: CameraFormat[];
-}
-
-export interface CameraFormat {
-  format: string;
-  sizes: CameraFormatSize[];
+  formats: { [index: string]: CameraFormatSize[] };
 }
 
 export interface CameraFormatSize {
+  width: number;
   height: number;
   intervals: CameraInterval[];
-  width: number;
 }
 
 /**

@@ -141,14 +141,12 @@ json DeviceList::serialize_ehd(libehd::Device *ehd) {
     for (v4l2::Camera *camera : v4l2_device->get_cameras()) {
         json camera_object = json::object();
         camera_object["device_path"] = camera->get_path();
-        camera_object["formats"] = json::array();
+        camera_object["formats"] = json::object();
 
         // serialize formats into json data
         std::vector<v4l2::Format> formats = camera->get_formats();
         for (v4l2::Format format : formats) {
-            json format_object = json::object();
-            format_object["format"] = v4l2::fourcc2s(format.pixelformat);
-            format_object["sizes"] = json::array();
+            json format_object = json::array();
             for (v4l2::FormatSize size : format.sizes) {
                 json format_size = json::object();
                 format_size["width"] = size.width;
@@ -160,9 +158,10 @@ json DeviceList::serialize_ehd(libehd::Device *ehd) {
                     interval_object["denominator"] = interval.denominator;
                     format_size["intervals"].push_back(interval_object);
                 }
-                format_object["sizes"].push_back(format_size);
+                format_object.push_back(format_size);
             }
-            camera_object["formats"].push_back(format_object);
+            camera_object["formats"][v4l2::fourcc2s(format.pixelformat)] =
+                format_object;
         }
 
         device_object["cameras"].push_back(camera_object);

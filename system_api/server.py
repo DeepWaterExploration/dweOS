@@ -1,7 +1,7 @@
 import http.server
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import urllib.parse
-import cpuHandler
+import cpuHandler, memoryHandler, wifiHandler
 import json
 
 
@@ -25,18 +25,23 @@ class HTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             # when wifi is requested
             case "/getWifi":
                 self.send_response(200)
-                self.send_header("Content-type", "text/html")
+                self.send_header("Content-type", "application/json")
                 self.end_headers()
                 self.wfile.write(
-                    b"<html><body><h1>Simple GET Request Received!</h1></body></html>"
+                    json.dumps(wifiHandler.get_wifi_info()).encode("utf-8")
                 )
             case "/getCPU":
                 self.send_response(200)
                 self.send_header("Content-type", "application/json")
                 self.end_headers()
                 self.wfile.write(json.dumps(cpuHandler.get_cpu_info()).encode("utf-8"))
-            #     case pattern-3:
-            #         action-3
+            case "/getMemory":
+                self.send_response(200)
+                self.send_header("Content-type", "application/json")
+                self.end_headers()
+                self.wfile.write(
+                    json.dumps(cpuHandler.get_memory_info()).encode("utf-8")
+                )
             case _:
                 self.send_response(404)
                 self.send_header("Content-type", "text/html")

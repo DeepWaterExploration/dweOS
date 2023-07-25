@@ -1,4 +1,13 @@
-import { Control, Device, StreamEndpoint, StreamFormat } from "../types/types";
+import {
+  CPUInfo,
+  Control,
+  Device,
+  StreamEndpoint,
+  StreamFormat,
+} from "../types/types";
+
+const DEVICE_API_URL = "http://localhost:8080";
+const SYSTEM_API_URL = "http://localhost:5050";
 
 /**
  * Retrieves a list of devices connected to the system
@@ -6,7 +15,7 @@ import { Control, Device, StreamEndpoint, StreamFormat } from "../types/types";
  * @throws {Error} - If the request to retrieve the device list fails.
  */
 export async function getDevices(): Promise<Device[]> {
-  const url = "http://localhost:8080/devices";
+  const url = `${DEVICE_API_URL}/devices`;
   const config: RequestInit = {
     mode: "cors",
     method: "GET",
@@ -35,7 +44,7 @@ export async function getDevices(): Promise<Device[]> {
  * @throws {Error} - If the request to retrieve the device fails.
  */
 export async function getDevice(id: number): Promise<Device> {
-  const url = `http://localhost:8080/devices/${id}`;
+  const url = `${DEVICE_API_URL}/devices/${id}`;
   const config: RequestInit = {
     mode: "cors",
     method: "GET",
@@ -64,7 +73,7 @@ export async function getDevice(id: number): Promise<Device> {
  * @throws {Error} - If the request to configure the device fails.
  */
 export async function setDevice(id: number, format: StreamFormat) {
-  const url = `http://localhost:8080/devices${id}`;
+  const url = `${DEVICE_API_URL}/devices/${id}`;
   const config: RequestInit = {
     mode: "cors",
     method: "POST",
@@ -98,7 +107,7 @@ export async function addStreamEndpoint(
   index: number,
   endpoint: StreamEndpoint
 ): Promise<void> {
-  const url = "http://localhost:8080/add_stream_endpoint";
+  const url = `${DEVICE_API_URL}/add_stream_endpoint`;
   const data = {
     index,
     endpoint,
@@ -136,7 +145,7 @@ export async function addStreamEndpoint(
  * @throws {Error} - If the index is invalid or the request fails.
  */
 export async function startStream(index: number): Promise<void> {
-  const url = "http://localhost:8080/start_stream";
+  const url = `${DEVICE_API_URL}/start_stream`;
   const data = {
     index,
   };
@@ -173,7 +182,7 @@ export async function startStream(index: number): Promise<void> {
  * @throws {Error} - If the index is invalid or the request fails.
  */
 export async function stopStream(index: number): Promise<void> {
-  const url = "http://localhost:8080/stop_stream";
+  const url = `${DEVICE_API_URL}/stop_stream`;
   const data = {
     index,
   };
@@ -216,7 +225,7 @@ export async function setUVCControl(
   value: number,
   id: number
 ): Promise<void> {
-  const url = "http://localhost:8080/devices/set_uvc_control";
+  const url = `${DEVICE_API_URL}/devices/set_uvc_control`;
   const data = {
     usbInfo,
     control: {
@@ -259,7 +268,7 @@ export async function setUVCControl(
  * @throws {Error} - If the index is invalid or the request fails.
  */
 export async function setExploreHDOption(index: number): Promise<void> {
-  const url = "http://localhost:8080/set_explorehd_option";
+  const url = `${DEVICE_API_URL}/set_explorehd_option`;
   const data = {
     index,
   };
@@ -293,7 +302,7 @@ export async function setExploreHDOption(index: number): Promise<void> {
  * Restore a device to factory settings.
  */
 export async function resetSettings(): Promise<void> {
-  const url = "http://localhost:8080/reset_settings";
+  const url = `${DEVICE_API_URL}/reset_settings`;
   const config: RequestInit = {
     mode: "cors",
     method: "POST",
@@ -314,5 +323,32 @@ export async function resetSettings(): Promise<void> {
     .catch((error: Error) => {
       console.log("Failed to reset settings");
       console.error(error);
+    });
+}
+
+/**
+ * Retrieves information about the CPU and its usage from the system.
+ * @returns {Promise<CPUInfo>} - A promise that resolves to an array of Device objects.
+ * @throws {Error} - If the request to retrieve the device list fails.
+ */
+export async function getCPUInfo(): Promise<CPUInfo> {
+  const url = `${SYSTEM_API_URL}/getCPU`;
+  const config: RequestInit = {
+    mode: "cors",
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  };
+  return await fetch(url, config)
+    // Process the response data
+    .then((response: Response) => response.json())
+    .then((data: CPUInfo) => {
+      return data;
+    })
+    .catch((error: Error) => {
+      console.log("Failed to retrieve device list");
+      console.error(error);
+      return {} as CPUInfo;
     });
 }

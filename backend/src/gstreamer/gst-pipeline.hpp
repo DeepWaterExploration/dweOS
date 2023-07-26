@@ -117,6 +117,11 @@ class Pipeline : public RawPipeline {
 
     bool getIsConfigured() { return _isConfigured; }
 
+    inline void unconfigure() {
+        stop();
+        _isConfigured = false;  // TODO change streamInfo as well
+    }
+
     inline void addEndpoint(const StreamEndpoint &endpoint) {
         _streamInfo.endpoints.push_back(endpoint);
         setPipelineString(_constructPipeline());

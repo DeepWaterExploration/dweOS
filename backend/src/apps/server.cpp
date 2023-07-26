@@ -86,39 +86,65 @@ int main(int argc, char **argv) {
         res.set_header("Access-Control-Allow-Origin", "*");
     });
 
-    svr.Post("/configure_stream",
+    svr.Post("/unconfigure_stream",
         [](const httplib::Request &req, httplib::Response &res) {
             json requestBody = json::parse(req.body);
             std::string usbInfo = requestBody["usbInfo"];
             libehd::Device *ehd = devices.get_ehd(usbInfo);
-            json format = requestBody["format"];
             /* index is invalid */
             if (!ehd) {
                 res.status = 400; /* Status 400: Bad Request */
                 return;
             }
+
             v4l2::Device *device = ehd->get_v4l2_device();
-
-            uint32_t pixel_format;
-            if (format["format"] == "MJPG") {
-                pixel_format = V4L2_PIX_FMT_MJPEG;
-            } else if (format["format"] == "H264") {
-                pixel_format = V4L2_PIX_FMT_H264;
-            } else {
-                res.status = 400; /* Status 400: Bad Request */
-                return;
-            }
-
-            int width = format["width"];
-            int height = format["height"];
-            json interval_object = format["interval"];
-            int numerator = interval_object["numerator"];
-            int denominator = interval_object["denominator"];
-
-            device->configure_stream(pixel_format, width, height,
-                v4l2::Interval(numerator, denominator), gst::STREAM_TYPE_UDP);
-            res.set_header("Access-Control-Allow-Origin", "*");
+            device->get_pipeline()->unconfigure();
         });
+
+    svr.Post("/configure_stream", [](const httplib::Request &req,
+                                      httplib::Response &res) {
+        json requestBody = json::parse(req.body);
+        std::string usbInfo = requestBody["usbInfo"];
+        libehd::Device *ehd = devices.get_ehd(usbInfo);
+        json format = requestBody["format"];
+        std::string encode_type = requestBody["encode_type"];
+        json endpoints_object = requestBody["endpoints"];
+        /* index is invalid */
+        if (!ehd) {
+            res.status = 400; /* Status 400: Bad Request */
+            return;
+        }
+        v4l2::Device *device = ehd->get_v4l2_device();
+
+        std::vector<gst::StreamEndpoint> endpoints;
+        for (json endpoint : endpoints_object) {
+            endpoints.push_back(gst::StreamEndpoint{
+                .host = endpoint["host"], .port = endpoint["port"]});
+        }
+
+        uint32_t pixel_format;
+        if (encode_type == "MJPG") {
+            pixel_format = V4L2_PIX_FMT_MJPEG;
+        } else if (encode_type == "H264") {
+            pixel_format = V4L2_PIX_FMT_H264;
+        } else {
+            res.status = 400; /* Status 400: Bad Request */
+            return;
+        }
+
+        int width = format["width"];
+        int height = format["height"];
+        json interval_object = format["interval"];
+        int numerator = interval_object["numerator"];
+        int denominator = interval_object["denominator"];
+
+        device->configure_stream(pixel_format, width, height,
+            v4l2::Interval(numerator, denominator), gst::STREAM_TYPE_UDP,
+            endpoints);
+        device->start_stream();
+        res.body = devices.serialize_pipeline(device->get_pipeline()).dump();
+        res.set_header("Access-Control-Allow-Origin", "*");
+    });
 
     svr.Post("/add_stream_endpoint",
         [](const httplib::Request &req, httplib::Response &res) {

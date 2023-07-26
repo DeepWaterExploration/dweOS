@@ -100,7 +100,8 @@ class Device {
     inline std::string get_usb_info() { return _usbInfo; }
 
     void configure_stream(uint32_t pixel_format, uint32_t width,
-        uint32_t height, Interval interval, gst::StreamType streamType);
+        uint32_t height, Interval interval, gst::StreamType streamType,
+        std::vector<gst::StreamEndpoint> endpoints={});
     void start_stream();
     void stop_stream();
     void add_stream_endpoint(const std::string &host, uint32_t port);

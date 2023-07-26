@@ -42,8 +42,14 @@ import {
   controlType,
   encodeType,
   optionType,
+  Stream,
 } from "../../types/types";
-import { setExploreHDOption, setUVCControl } from "../../utils/api";
+import {
+  configureStream,
+  setExploreHDOption,
+  setUVCControl,
+  unconfigureStream,
+} from "../../utils/api";
 
 const RESOLUTIONS = [
   "1920x1080",
@@ -240,28 +246,69 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
   const [ipError, setIpError] = useState("");
   const [portError, setPortError] = useState("");
 
+  const { enqueueSnackbar } = useSnackbar();
+
   const [resolution, setResolution] = useState("1920x1080");
   const [encodeFormat, setEncodeFormat] = useState(encodeType.H264);
   const [fps, setFps] = useState("30");
-
   const [endpoints, setEndpoints] = useState<StreamEndpoint[]>(
     props.device.stream.endpoints ? props.device.stream.endpoints : []
   );
+
+  const [streamUpdatedTimeout, setStreamUpdatedTimeout] =
+    useState<NodeJS.Timeout>();
+
+  useDidMountEffect(() => {
+    if (!stream) {
+      setStreamUpdatedTimeout(
+        setTimeout(() => {
+          unconfigureStream(props.device.info.usbInfo);
+        }, 250)
+      );
+    } else {
+      streamUpdated();
+    }
+  }, [stream, endpoints, resolution, fps, encodeFormat]);
+
+  /**
+   * Update the stream
+   */
+  const streamUpdated = () => {
+    const [width, height] = resolution.split("x");
+    setStreamUpdatedTimeout(
+      setTimeout(() => {
+        configureStream(
+          props.device.info.usbInfo,
+          {
+            width: parseInt(width),
+            height: parseInt(height),
+            interval: {
+              numerator: 1,
+              denominator: parseInt(fps),
+            },
+          },
+          encodeFormat,
+          endpoints
+        ).then((value: Stream | undefined) => {
+          if (value !== undefined) {
+            props.device.stream = value;
+            if (streamUpdatedTimeout) clearTimeout(streamUpdatedTimeout);
+          }
+        });
+      }, 250)
+    );
+  };
 
   const handleAddEndpoint = () => {
     // Check if the IP is valid
     const validIP: boolean = IP_REGEX.test(host);
     if (!validIP) {
-      setIpError("Invalid IP address");
-    } else {
-      setIpError("");
+      enqueueSnackbar("Error: Invalid IP Address", { variant: "error" });
     }
     // Check if the port is valid
     const validPort: boolean = port >= 1024 && port <= 65535;
     if (!validPort) {
-      setPortError("Invalid port");
-    } else {
-      setPortError("");
+      enqueueSnackbar("Error: Invalid Port", { variant: "error" });
     }
     // Perform necessary actions with the valid IP and port values
     if (validIP && validPort) {
@@ -272,10 +319,9 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
           (endpoint) => endpoint.host === host && endpoint.port === port
         )
       ) {
-        setIpError(
-          "An endpoint with the specified ip and port pair already exists"
-        );
-        setPortError(" ");
+        enqueueSnackbar("Error: IP and Port Already In Use", {
+          variant: "error",
+        });
         return;
       } else {
         setEndpoints((prevEndpoints) =>
@@ -355,7 +401,11 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
               select
               label='Format'
               variant='outlined'
-              defaultValue={props.device.stream.encode_type}
+              defaultValue={
+                props.device.stream.encode_type
+                  ? props.device.stream.encode_type
+                  : encodeType.H264
+              }
               onChange={(selected) =>
                 setEncodeFormat(selected.target.value as encodeType)
               }
@@ -407,15 +457,15 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                             <IconButton
                               edge='end'
                               aria-label='delete'
-                              onClick={() =>
+                              onClick={() => {
                                 setEndpoints((prevEndpoints) =>
                                   prevEndpoints.filter(
                                     (e) =>
                                       `${e.host}:${e.port}` !==
                                       `${endpoint.host}:${endpoint.port}`
                                   )
-                                )
-                              }
+                                );
+                              }}
                             >
                               <DeleteIcon />
                             </IconButton>
@@ -479,7 +529,13 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
               <AddIcon />
             </IconButton>
           </div>
-          <Button color='primary' variant='contained'>
+          <Button
+            color='primary'
+            variant='contained'
+            onClick={() => {
+              enqueueSnackbar("Stream restarted", { variant: "info" });
+            }}
+          >
             Restart Stream
           </Button>
         </>
@@ -707,13 +763,13 @@ const DeviceCard: React.FC<DeviceCardProps> = (props) => {
         }
       />
       <CardContent>
-        {props.device.stream.device_path ? (
+        {/* {props.device.stream.device_path ? (
           <SupportingText>
             Device: {props.device.stream.device_path}
           </SupportingText>
         ) : (
           <></>
-        )}
+        )} */}
         {deviceOptions}
         <StreamOptions device={props.device} />
         {cameraControls}

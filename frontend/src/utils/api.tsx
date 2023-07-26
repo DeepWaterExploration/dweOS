@@ -2,9 +2,11 @@ import {
   CPUInfo,
   Control,
   Device,
+  Stream,
   StreamEndpoint,
   StreamFormat,
   bitrateMode,
+  encodeType,
   optionType,
 } from "../types/types";
 
@@ -70,12 +72,14 @@ export async function getDevice(id: number): Promise<Device> {
 
 /**
  * Configures a device stream with the provided settings.
- * @param {number} index - The index of the connected camera.
- * @param {StreamFormat} format - The format of the stream.
+ * @param {number} usbInfo - The usb info of the connected camera.
  * @throws {Error} - If the request to configure the device fails.
  */
-export async function setDevice(id: number, format: StreamFormat) {
-  const url = `${DEVICE_API_URL}/devices/${id}`;
+export async function unconfigureStream(usbInfo: string) {
+  const url = `${DEVICE_API_URL}/unconfigure_stream`;
+  const body = {
+    usbInfo,
+  };
   const config: RequestInit = {
     mode: "cors",
     method: "POST",
@@ -83,18 +87,60 @@ export async function setDevice(id: number, format: StreamFormat) {
       "Content-Type": "application/json",
     },
     // credentials: "include",
-    body: JSON.stringify(format),
+    body: JSON.stringify(body),
   };
   return await fetch(url, config)
     // Process the response data
     .then((response: Response) => response.json())
-    .then((data: Device) => {
+    .then(() => {
+      return;
+    })
+    .catch((error: Error) => {
+      console.log(`Failed to configure device ${usbInfo}`);
+      console.error(error);
+      return;
+    });
+}
+
+/**
+ * Configures a device stream with the provided settings.
+ * @param {number} usbInfo - The usb info of the connected camera.
+ * @param {StreamFormat} format - The format of the stream.
+ * @param {encodeType} encode_type - The encode type of the stream.
+ * @throws {Error} - If the request to configure the device fails.
+ */
+export async function configureStream(
+  usbInfo: string,
+  format: StreamFormat,
+  encode_type: encodeType,
+  endpoints: StreamEndpoint[]
+) {
+  const url = `${DEVICE_API_URL}/configure_stream`;
+  const body = {
+    usbInfo,
+    format,
+    encode_type,
+    endpoints,
+  };
+  const config: RequestInit = {
+    mode: "cors",
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    // credentials: "include",
+    body: JSON.stringify(body),
+  };
+  return await fetch(url, config)
+    // Process the response data
+    .then((response: Response) => response.json())
+    .then((data: Stream) => {
       return data;
     })
     .catch((error: Error) => {
-      console.log(`Failed to configure device ${id}`);
+      console.log(`Failed to configure device ${usbInfo}`);
       console.error(error);
-      return {} as Device;
+      return undefined;
     });
 }
 

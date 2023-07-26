@@ -11,7 +11,7 @@ import NavigationBar from "./components/navigationBar";
 
 function App() {
   return (
-    <SnackbarProvider autoHideDuration={4000} maxSnack={6}>
+    <SnackbarProvider autoHideDuration={3000} maxSnack={4}>
       <Box sx={{ display: "flex" }}>
         <CssBaseline />
         <NavigationBar />

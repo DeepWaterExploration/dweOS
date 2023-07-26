@@ -274,7 +274,8 @@ Camera *Device::find_camera_with_format(uint32_t pixel_format) {
 
 void Device::configure_stream(uint32_t pixel_format, uint32_t width,
     uint32_t height, Interval interval,
-    gst::StreamType streamType = gst::STREAM_TYPE_UDP) {
+    gst::StreamType streamType = gst::STREAM_TYPE_UDP,
+    std::vector<gst::StreamEndpoint> endpoints) {
     /* Make sure if a pipeline has already been configured, it is not running */
     if (_pipeline->getIsConfigured()) {
         _pipeline->stop();
@@ -309,6 +310,8 @@ void Device::configure_stream(uint32_t pixel_format, uint32_t width,
     streamInfo.height = height;
     streamInfo.stream_type = streamType;
     streamInfo.interval = interval;
+
+    streamInfo.endpoints = endpoints;
 
     _pipeline->setStreamInformation(streamInfo);
 }

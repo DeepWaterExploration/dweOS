@@ -15,25 +15,25 @@ const CamerasPage: React.FC = () => {
   const [devices, setDevices] = useState<Device[]>([]);
 
   useEffect(() => {
-    // if (!(window.__webSocketClient instanceof WebSocket)) {
-    window.__webSocketClient = new WebSocket("ws://localhost:9002");
-    // Listen for messages
-    window.__webSocketClient.addEventListener("message", (event) => {
-      let lines = event.data.split("\n");
-      let event_name = lines[0];
-      let msg = JSON.parse(lines[1]);
-      console.log("Event: ", event_name);
-      console.log(msg);
+    if (!(window.__webSocketClient instanceof WebSocket)) {
+      window.__webSocketClient = new WebSocket("ws://localhost:9002");
+      // Listen for messages
+      window.__webSocketClient.addEventListener("message", (event) => {
+        let lines = event.data.split("\n");
+        let event_name = lines[0];
+        let msg = JSON.parse(lines[1]);
+        console.log("Event: ", event_name);
+        console.log(msg);
 
-      if (event_name === "removed_devices") {
-        for (let device of msg as Device[]) {
-          removeDevice(device.info.usbInfo);
+        if (event_name === "removed_devices") {
+          for (let device of msg as Device[]) {
+            removeDevice(device.info.usbInfo);
+          }
+        } else if (event_name === "added_devices") {
+          addDevices(msg as Device[]);
         }
-      } else if (event_name === "added_devices") {
-        addDevices(msg as Device[]);
-      }
-    });
-    // }
+      });
+    }
   });
 
   const addDevices = (newDevices: Device[]) => {

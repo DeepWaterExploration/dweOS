@@ -1,5 +1,5 @@
-import psutil
-from wifi import Cell, Scheme
+from typing import List
+import pywifi
 
 
 class WiFiNetwork:
@@ -27,50 +27,86 @@ class WiFiNetwork:
         return f"SSID: {self.ssid}, Security: {self.security}, Frequency: {self.frequency} GHz, Signal Strength: {self.signal_strength} dBm"
 
 
-def get_all_interfaces():
+def print_attrs(obj: object) -> None:
+    """
+    Prints all attributes of the given object.
+
+    Parameters:
+
+    - obj (object): The object whose attributes will be printed.
+    """
+    # print attributes of the network profile
+    for attr in dir(obj):
+        print(f"{obj.__class__.__name__}.{attr} = {getattr(obj, attr)}")
+    print()
+
+
+def get_all_interfaces(wifi_manager: pywifi.PyWiFi):
     """
     Returns a list of all network interfaces on the system.
+
+    Parameters:
+    - wifi_manager (pywifi.PyWiFi): A PyWiFi object used to manage Wi-Fi operations.
 
     Returns:
     - interfaces (list): A list of all network interfaces on the system.
     """
-    interfaces = psutil.net_if_stats().keys()
-    return list(interfaces)
+    return list(wifi_manager.interfaces())
 
 
-def scan_wifi_networks(interface):
+def scan_wifi_networks(
+    interface: pywifi.iface.Interface,
+) -> List[pywifi.profile.Profile]:
     """
     Returns a list of WiFiNetwork objects representing the WiFi networks available on the given interface.
 
     Parameters:
-    - interface (str): The name of the network interface to scan for WiFi networks.
+    - interface (pywifi.Interface): A PyWiFi network interface object used to scan for WiFi networks.
 
     Returns:
     - wifi_networks (list): A list of WiFi networks available on the given interface.
     """
-    return Cell.all(interface)
+    interface.scan()
+    return interface.scan_results()
 
 
 def get_wifi_info():
-    wifi_info = {"interfaces": [], "wifi_networks": []}
-    interfaces = get_all_interfaces()
-    print(interfaces)
+    wifi = pywifi.PyWiFi()
+    wifi_info = {
+        "interfaces": [],
+    }
+    interfaces = get_all_interfaces(wifi)
     for interface in interfaces:
+        if interface.name().startswith("p2p"):
+            continue
         try:
-            for network in scan_wifi_networks(interface):
-                if network.ssid == "" or network.ssid is None:
+            network_profiles = scan_wifi_networks(interface)
+            wifi_info["interfaces"].append(
+                {
+                    interface.name(): {
+                        "status": interface.status(),
+                        "wifi_networks": [],
+                    }
+                }
+            )
+            # network_profiles = interface.network_profiles()
+            for network_profile in network_profiles:
+                if network_profile.ssid == "" or network_profile.ssid is None:
                     continue
-                wifi_info["wifi_networks"].append(
+                wifi_info["interfaces"][-1][interface.name()]["wifi_networks"].append(
                     {
-                        "ssid": network.ssid,
-                        "security": network.encryption_type,
-                        "frequency": network.frequency,
-                        "signal_strength": int(network.signal),
+                        "ssid": network_profile.ssid,  # Access the ssid directly
+                        "bssid": network_profile.bssid,  # Access the bssid directly
+                        "security": network_profile.auth,  # Access the auth (security) directly
+                        "frequency": network_profile.freq,  # Access the frequency directly
+                        "signal_strength": int(
+                            network_profile.signal
+                        ),  # Access the signal directly
                     }
                 )
-            wifi_info["interfaces"].append(interface)
-        except:
-            # Skip interfaces that don't support scanning for WiFi networks
+
+        except Exception as e:
+            print(f"Exception: {e}")
             pass
     return wifi_info
 

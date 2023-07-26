@@ -582,7 +582,7 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                 const { menu } = control.flags;
                 if (!menu) break;
 
-                const menuObject: { [name: string]: number } = {};
+                let menuObject: { [name: string]: number } = {};
                 for (let menuItem of menu) {
                   menuObject[menuItem] = (menu as string[]).indexOf(
                     menuItem as string
@@ -591,7 +591,10 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
 
                 // Hacky fix for auto exposure bug in camera firmware
                 if (name.includes("Auto Exposure") && menu.length === 2) {
-                  menuObject["Automatic"] = 3;
+                  menuObject = {
+                    Automatic: 3,
+                    "Manual Mode": 1,
+                  };
                 }
 
                 const defaultValue = Object.keys(menuObject).find(

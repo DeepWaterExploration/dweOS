@@ -571,7 +571,7 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                       onChange={(_, checked) => {
                         setControlValue(checked);
                       }}
-                      name={`setDeviceNamecontrol-${id}`}
+                      name={`control-${id}`}
                       defaultChecked={defaultValue}
                     />
                   </>

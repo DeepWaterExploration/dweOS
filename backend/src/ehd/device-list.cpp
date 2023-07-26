@@ -321,11 +321,6 @@ void DeviceList::_monitor_devices() {
                 v4l2_device->get_device_attr("idProduct") == "6366") {
                 libehd::Device *ehd =
                     libehd::Device::construct_device(v4l2_device);
-                json device_object = serialize_ehd(ehd);
-                added_device_objects.push_back(device_object);
-                _devices_array.push_back(device_object);
-                ehd_devices.push_back(ehd);
-
                 settings::SerializedDevice *serialized_device =
                     _settingsManager.find_device_with_id(
                         v4l2_device->get_usb_info());
@@ -334,6 +329,12 @@ void DeviceList::_monitor_devices() {
                               << serialized_device->usbInfo << std::endl;
                     _load_device(ehd, serialized_device);
                 }
+
+                json device_object = serialize_ehd(ehd);
+                added_device_objects.push_back(device_object);
+                _devices_array.push_back(device_object);
+                ehd_devices.push_back(ehd);
+
             } else {
                 delete v4l2_device;
             }

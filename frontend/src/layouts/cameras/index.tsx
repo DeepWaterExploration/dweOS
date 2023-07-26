@@ -1,74 +1,59 @@
 import Grid from "@mui/material/Grid";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import DeviceCard from "./DeviceCard";
-import { Device, getDevices } from "../../utils/api";
+import { getDevices } from "../../utils/api";
+import { Device } from "src/types/types";
+
+declare global {
+  interface Window {
+    __webSocketClient: WebSocket;
+  }
+}
 
 const CamerasPage: React.FC = () => {
-  const [exploreHD_cards, setExploreHD_cards] = useState<JSX.Element[]>([]);
-  const addCard = useCallback(
-    (device: Device): void => {
-      let newKey: string;
-      let isUnique: boolean;
-      do {
-        // Generate a random key
-        newKey = Math.random().toString(36).substring(7);
-        // Check if key is unique
-        isUnique = !exploreHD_cards.some((card: React.ReactNode) => {
-          const cardWithKey = card as React.ReactElement<{
-            keyForClosing: string;
-          }>;
-          return cardWithKey.props.keyForClosing === newKey;
-        });
-      } while (!isUnique);
-      // takes the prevState, and using the `spread` operator
-      // appends the new Card to the new array
-      // to update the state
-      setExploreHD_cards((prevCards) => {
-        return [
-          ...prevCards,
-          <DeviceCard key={exploreHD_cards.length} device={device} />,
-        ];
-      });
-    },
-    [exploreHD_cards.length]
-  );
+  const [devices, setDevices] = useState<Device[]>([]);
 
-  const addDevices = useCallback(
-    (devices: Device[]): void => {
-      for (const device of devices) {
-        addCard(device);
+  useEffect(() => {
+    // if (!(window.__webSocketClient instanceof WebSocket)) {
+    window.__webSocketClient = new WebSocket("ws://localhost:9002");
+    // Listen for messages
+    window.__webSocketClient.addEventListener("message", (event) => {
+      let lines = event.data.split("\n");
+      let event_name = lines[0];
+      let msg = JSON.parse(lines[1]);
+      console.log("Event: ", event_name);
+      console.log(msg);
+
+      if (event_name === "removed_devices") {
+        for (let device of msg as Device[]) {
+          removeDevice(device.info.usbInfo);
+        }
+      } else if (event_name === "added_devices") {
+        addDevices(msg as Device[]);
       }
-    },
-    [addCard]
-  );
+    });
+    // }
+  });
 
-  const removeDevice = (device: Device): void => {
-    const devicePath = device.info.path;
+  const addDevices = (newDevices: Device[]) => {
+    setDevices([...devices, ...newDevices]);
+  };
+
+  const removeDevice = (usbInfo: string): void => {
     // modifies state using the "previous state"
     // rather than directly modifying current state variable
-    setExploreHD_cards((prevCards) => {
-      return prevCards.filter((card) => {
-        return card.props.device.info.path != devicePath;
-      });
-    });
+    console.log(devices);
+    setDevices(devices.filter((device) => device.info.usbInfo !== usbInfo));
   };
 
   useEffect(() => {
     // Code to run once when the component is defined
-    getDevices().then((devices) => {
-      addDevices(devices);
+    getDevices().then((found_devices) => {
+      setDevices(found_devices);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // useEffect(() => {
-  //   // get the devices from the backend
-  //   getDevices().then((devices) => {
-  //     console.log("Devices: ", devices);
-  //     addDevices(devices);
-  //   });
-  // }, [addDevices]);
 
   return (
     <Grid
@@ -80,7 +65,10 @@ const CamerasPage: React.FC = () => {
         justifyContent: "space-evenly",
       }}
     >
-      {exploreHD_cards}
+      {devices.map((device, index) => {
+        console.log(device);
+        return <DeviceCard device={device} key={index}></DeviceCard>;
+      })}
     </Grid>
   );
 };

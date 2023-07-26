@@ -27,4 +27,4 @@ sudo make -j 4 # Adjust the number based on the number of CPU cores for faster c
 sudo make altinstall
 
 # Set Python 3.10 as the default Python version
-sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/$python_version_short 1
+sudo update-alternatives --install /usr/bin/python3 python3 $(which python3.10) 1

@@ -5,52 +5,70 @@ import DeviceCard from "./DeviceCard";
 import { getDevices } from "../../utils/api";
 import { Device } from "src/types/types";
 
-declare global {
-  interface Window {
-    __webSocketClient: WebSocket;
+const hash = function (str: string) {
+  var hash = 0,
+    i,
+    chr;
+  if (str.length === 0) return hash;
+  for (i = 0; i < str.length; i++) {
+    chr = str.charCodeAt(i);
+    hash = (hash << 5) - hash + chr;
+    hash |= 0;
   }
-}
+  return hash;
+};
 
 const CamerasPage: React.FC = () => {
-  const [devices, setDevices] = useState<Device[]>([]);
+  const [exploreHD_cards, setExploreHD_cards] = useState<JSX.Element[]>([]);
 
-  useEffect(() => {
-    if (!(window.__webSocketClient instanceof WebSocket)) {
-      window.__webSocketClient = new WebSocket("ws://localhost:9002");
-      // Listen for messages
-      window.__webSocketClient.addEventListener("message", (event) => {
-        let lines = event.data.split("\n");
-        let event_name = lines[0];
-        let msg = JSON.parse(lines[1]);
-        console.log("Event: ", event_name);
-        console.log(msg);
-
-        if (event_name === "removed_devices") {
-          for (let device of msg as Device[]) {
-            removeDevice(device.info.usbInfo);
-          }
-        } else if (event_name === "added_devices") {
-          addDevices(msg as Device[]);
-        }
-      });
-    }
-  });
-
-  const addDevices = (newDevices: Device[]) => {
-    setDevices([...devices, ...newDevices]);
+  const addDevices = (devices: Device[]) => {
+    setExploreHD_cards((prevCards) => {
+      return [
+        ...prevCards,
+        ...devices.map((device) => (
+          <DeviceCard key={hash(device.info.usbInfo)} device={device} />
+        )),
+      ];
+    });
   };
 
-  const removeDevice = (usbInfo: string): void => {
-    // modifies state using the "previous state"
-    // rather than directly modifying current state variable
-    console.log(devices);
-    setDevices(devices.filter((device) => device.info.usbInfo !== usbInfo));
+  const removeDevice = (device: Device): void => {
+    setExploreHD_cards((prevCards) => {
+      return prevCards.filter((card) => {
+        return card.props.device.info.usbInfo != device.info.usbInfo;
+      });
+    });
+  };
+
+  const removeDevices = (devices: Device[]) => {
+    for (let device of devices) {
+      removeDevice(device);
+    }
   };
 
   useEffect(() => {
     // Code to run once when the component is defined
-    getDevices().then((found_devices) => {
-      setDevices(found_devices);
+    getDevices().then((devices) => {
+      console.log("Devices: ", devices);
+      addDevices(devices);
+    });
+
+    // Create WebSocket connection.
+    const socket = new WebSocket("ws://localhost:9002");
+
+    // Listen for messages
+    socket.addEventListener("message", (event) => {
+      let lines = event.data.split("\n");
+      let event_name = lines[0];
+      let msg = JSON.parse(lines[1]);
+      console.log("Event: ", event_name);
+      console.log(msg);
+
+      if (event_name === "added_devices") {
+        addDevices(msg as Device[]);
+      } else if (event_name === "removed_devices") {
+        removeDevices(msg as Device[]);
+      }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -65,10 +83,7 @@ const CamerasPage: React.FC = () => {
         justifyContent: "space-evenly",
       }}
     >
-      {devices.map((device, index) => {
-        console.log(device);
-        return <DeviceCard device={device} key={index}></DeviceCard>;
-      })}
+      {exploreHD_cards}
     </Grid>
   );
 };

@@ -30,6 +30,7 @@ import {
 } from "@mui/material";
 import PopupState, { bindMenu, bindTrigger } from "material-ui-popup-state";
 import React, { useEffect, useRef, useState } from "react";
+import { useSnackbar } from "notistack";
 
 import { styles } from "./style";
 import {
@@ -109,97 +110,6 @@ const DeviceSwitch: React.FC<DeviceSwitchProps> = (props) => {
       }
       label={<Typography color='text.secondary'>{props.text}</Typography>}
     />
-  );
-};
-
-interface ResolutionMenuProps {
-  defaultResolution: string;
-  resolutions: CameraFormatSize[];
-  onResolutionChange: (res: string) => void;
-}
-
-const ResolutionMenu: React.FC<ResolutionMenuProps> = (props) => {
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const [selectedIndex, setSelectedIndex] = React.useState(0);
-  const open = Boolean(anchorEl);
-  // const primaryText = props.resolutions[selectedIndex].width + "x" + props.resolutions[selectedIndex].height;
-  const [currentResolution, setCurrentResolution] = useState<string>(
-    props.defaultResolution
-  );
-  const primaryText = `Resolution: ${currentResolution}`;
-
-  const handleClickListItem = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuItemClick = (
-    event: React.MouseEvent<HTMLElement>,
-    index: number,
-    item: CameraFormatSize
-  ) => {
-    setCurrentResolution(`${item.height}x${item.width}`);
-    setSelectedIndex(index);
-    setAnchorEl(null);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  useEffect(() => {
-    props.onResolutionChange(currentResolution);
-  }, [currentResolution, props]);
-  return (
-    <div>
-      <List
-        component='nav'
-        aria-label='Device settings'
-        sx={{
-          bgcolor: "background",
-          display: "inline-block",
-          width: "auto",
-          boxShadow:
-            "rgba(0, 0, 0, 0.2) 0px 3px 1px -2px, rgba(0, 0, 0, 0.14) 0px 2px 2px 0px, rgba(0, 0, 0, 0.12) 0px 1px 5px 0px",
-          padding: "0px",
-          margin: "0px",
-        }}
-      >
-        <ListItem
-          id='lock-button'
-          aria-haspopup='listbox'
-          aria-controls='lock-menu'
-          aria-label='when device is locked'
-          aria-expanded={open ? "true" : undefined}
-          onClick={handleClickListItem}
-          sx={{
-            margin: "0px",
-            padding: "6px 16px",
-          }}
-        >
-          <ListItemText primary={primaryText} />
-        </ListItem>
-      </List>
-      <Menu
-        id='lock-menu'
-        anchorEl={anchorEl}
-        open={open}
-        onClose={handleClose}
-        MenuListProps={{
-          "aria-labelledby": "lock-button",
-          role: "listbox",
-        }}
-      >
-        {props.resolutions.map((option, index) => (
-          <MenuItem
-            key={`${option.height}x${option.width}`}
-            selected={index === selectedIndex}
-            onClick={(event) => handleMenuItemClick(event, index, option)}
-          >
-            {option.height}x{option.width}
-          </MenuItem>
-        ))}
-      </Menu>
-    </div>
   );
 };
 
@@ -337,8 +247,6 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
   const [endpoints, setEndpoints] = useState<StreamEndpoint[]>(
     props.device.stream.endpoints ? props.device.stream.endpoints : []
   );
-
-  console.log(props.device.cameras);
 
   const handleAddEndpoint = () => {
     // Check if the IP is valid
@@ -588,6 +496,7 @@ interface CameraControlsProps {
 const CameraControls: React.FC<CameraControlsProps> = (props) => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { controls, usbInfo } = props;
+
   return (
     <Accordion
       style={{
@@ -672,16 +581,28 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                 let { name, id } = control;
                 const { menu } = control.flags;
                 if (!menu) break;
-                const defaultValue = menu[control.value as number] as string;
-                const [controlValue, setControlValue] =
-                  useState<string>(defaultValue);
+
+                const menuObject: { [name: string]: number } = {};
+                for (let menuItem of menu) {
+                  menuObject[menuItem] = (menu as string[]).indexOf(
+                    menuItem as string
+                  );
+                }
+
+                // Hacky fix for auto exposure bug in camera firmware
+                if (name.includes("Auto Exposure") && menu.length === 2) {
+                  menuObject["Automatic"] = 3;
+                }
+
+                const defaultValue = Object.keys(menuObject).find(
+                  (key) => menuObject[key] === control.value
+                );
+                const [controlValue, setControlValue] = useState<string>(
+                  defaultValue!
+                );
 
                 useDidMountEffect(() => {
-                  setUVCControl(
-                    usbInfo,
-                    menu.findIndex((value) => value === controlValue),
-                    id
-                  );
+                  setUVCControl(usbInfo, menuObject[controlValue], id);
                 }, [controlValue]);
 
                 return (
@@ -698,7 +619,7 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                             </IconButton>
                           </div>
                           <Menu {...bindMenu(popupState)}>
-                            {menu.map((item) => {
+                            {Object.keys(menuObject).map((item) => {
                               return (
                                 <MenuItem
                                   key={item}

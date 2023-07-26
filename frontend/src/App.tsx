@@ -1,18 +1,22 @@
 // theme components
-import { Box, CssBaseline } from "@mui/material";
+import { Alert, AlertColor, Box, CssBaseline, Snackbar } from "@mui/material";
 // import React, { useEffect, useState } from 'react';
 import "./App.css";
 
 import "./main.css";
 
+import { SnackbarProvider } from "notistack";
+
 import NavigationBar from "./components/navigationBar";
 
 function App() {
   return (
-    <Box sx={{ display: "flex" }}>
-      <CssBaseline />
-      <NavigationBar />
-    </Box>
+    <SnackbarProvider autoHideDuration={4000} maxSnack={6}>
+      <Box sx={{ display: "flex" }}>
+        <CssBaseline />
+        <NavigationBar />
+      </Box>
+    </SnackbarProvider>
   );
 }
 

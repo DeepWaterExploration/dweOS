@@ -5,11 +5,46 @@
 # top-most EditorConfig file
 root = true
 
-# defaults
+# Default settings:
+# Use UTF-8 as the default encoding
+# A newline ending every file
+# Use 2 spaces as indentation
 [*]
+insert_final_newline = true
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
 charset = utf-8
 end_of_line = lf
-insert_final_newline = true
-trim_trailing_whitespace = true
+
+# C/C++ files
+[*.{cpp,hpp,c,h,in}]
+indent_size = 4
+curly_bracket_next_line = true
+indent_brace_style = stroustrup
+
+# XML files
+[*.xml]
+indent_size = 2
+
+# Python files
+[*.py]
+indent_size = 4
+
+# Shell scripts
+[*.sh]
+indent_size = 2
+
+# Markdown files
+[*.md]
+insert_final_newline = false
+trim_trailing_whitespace = false
+
+# YAML config files
+[*.yml,yaml]
+indent_size = 2
+
+# Web dev files
+[*.{html,js,jsx,ts,tsx,mts,json,ts,mts}]
 indent_size = 2
 indent_style = space

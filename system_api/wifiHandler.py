@@ -1,5 +1,5 @@
 from typing import List
-import pywifi, netifaces as ni
+import pywifi, platform, netifaces as ni, subprocess, base64
 
 
 class WiFiNetwork:
@@ -74,6 +74,21 @@ def get_interface_mac_address(interface_name: str) -> str:
         print(f"Error: {e}")
 
 
+def is_connected(interface: pywifi.iface.Interface, ssid):
+    """
+    Checks if the interface is connected to the given SSID.
+
+    Parameters:
+    - interface (pywifi.Interface): A PyWiFi network interface object.
+    - ssid (str): The SSID of the network to check.
+
+    Returns:
+    - connected (bool): True if the interface is connected to the given SSID, False otherwise.
+    """
+    connected_ssid = interface.status().ssid
+    return connected_ssid == ssid
+
+
 def scan_wifi_networks(
     interface: pywifi.iface.Interface,
 ) -> List[pywifi.profile.Profile]:
@@ -136,40 +151,72 @@ def get_wifi_info():
                         ),  # Access the signal directly
                     }
                 )
-
         except Exception as e:
             print(f"Exception: {e}")
             pass
     return wifi_info
 
 
-def connect_to_wifi(ssid: str, password: str):
-    wifi = pywifi.PyWiFi()
-    interfaces = get_all_interfaces(wifi)
+def base64Decode(encoded_string: str) -> int:
+    """
+    Returns the decoded string.
 
-    network_found = False
-    for cell in scan_results:
-        if cell.ssid == ssid:
-            network_found = True
-            profile = pywifi.Profile()
-            profile.ssid = ssid
-            profile.auth = pywifi.const.AUTH_ALG_OPEN
-            profile.akm.append(pywifi.const.AKM_TYPE_WPA2PSK)
-            profile.cipher = pywifi.const.CIPHER_TYPE_CCMP
-            profile.key = password
+    Parameters:
+    - encoded_string (str): The encoded string.
 
-            iface.remove_all_network_profiles()
-            tmp_profile = iface.add_network_profile(profile)
+    Returns:
+    - decoded_string (str): The decoded string.
+    """
+    # Convert the Base64 encoded string to bytes
+    encoded_bytes = encoded_string.encode("utf-8")
 
-            iface.connect(tmp_profile)
-            time.sleep(5)  # Allow some time for the connection to be established
+    # Decode the bytes using Base64
+    decoded_bytes = base64.b64decode(encoded_bytes)
 
-            if iface.status() == pywifi.const.IFACE_CONNECTED:
-                print(f"Connected to {ssid} successfully!")
-            else:
-                print(f"Failed to connect to {ssid}.")
+    # Convert the decoded bytes back to a string
+    decoded_string = decoded_bytes.decode("utf-8")
 
-            break
+    return decoded_string
 
-    if not network_found:
-        print(f"Network '{ssid}' not found.")
+
+def connect_to_wifi(ssid: str, password: str) -> int:
+    # Decode the ssid and password
+    ssid = base64Decode(ssid)
+    password = base64Decode(password)
+    # Get the current operating system
+    current_os = platform.system()
+    match current_os:
+        case "Windows":
+            cmd = f'netsh wlan connect ssid="{ssid}" name="{ssid}" key="{password}"'
+        case "Linux":
+            cmd = f"nmcli dev wifi connect '{ssid}' password '{password}'"
+        case "Darwin":  # macOS
+            cmd = f"/usr/sbin/networksetup -setairportnetwork en0 '{ssid}' '{password}'"
+        case _:
+            return -1  # Unsupported platform
+    try:
+        # Run the command and capture the output and errors
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode == 0:
+            return {
+                "status": "success",
+                "message": "Successfully connected to the network",
+            }
+        elif current_os == "Windows" and "is not in the range" in result.stderr:
+            return {
+                "status": "error",
+                "message": "WiFi network not found",
+            }
+        elif current_os == "Windows" and "is not allowed" in result.stderr:
+            return {
+                "status": "error",
+                "message": "Invalid password",
+            }
+        else:
+            return {
+                "status": "error",
+                "message": "Failed to connect to WiFi network",
+            }
+    except Exception as e:
+        print("Error: An unexpected error occurred.")
+        print("Error message:", str(e))

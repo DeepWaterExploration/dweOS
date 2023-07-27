@@ -45,6 +45,8 @@ class SettingsManager {
     public:
     SettingsManager();
 
+    void init_settings_file();
+
     /**
      * @brief Get list of serialized devices
      *
@@ -52,11 +54,15 @@ class SettingsManager {
      */
     inline std::vector<SerializedDevice*> get_devices() { return _devices; }
 
+    void save_device(libehd::Device* ehd);
+
     /**
      * @brief Find a serialized device with a specified ID
      *
      */
     SerializedDevice* find_device_with_id(std::string usbInfo);
+
+    SerializedDevice* construct_device(pugi::xml_node device_node);
 
     private:
     /* Devices */
@@ -64,6 +70,8 @@ class SettingsManager {
 
     /* XML */
     pugi::xml_document _doc;
+
+    pugi::xml_node _devices_node;
 };
 
 }  // namespace settings

@@ -24,6 +24,8 @@ class DeviceList {
 
     libehd::Device *find_device_with_id(std::string usbID);
 
+    void save_device(libehd::Device *ehd);
+
     void enumerate();
 
     void start_monitoring();

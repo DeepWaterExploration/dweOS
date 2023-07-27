@@ -187,6 +187,10 @@ libehd::Device *DeviceList::find_device_with_id(std::string usbID) {
     return nullptr;
 }
 
+void DeviceList::save_device(libehd::Device *ehd) {
+    _settingsManager.save_device(ehd);
+}
+
 void DeviceList::enumerate() {
     _devices_array = json::array();
     _devices.clear();

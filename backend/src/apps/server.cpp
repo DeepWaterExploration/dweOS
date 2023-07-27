@@ -99,6 +99,7 @@ int main(int argc, char **argv) {
 
             v4l2::Device *device = ehd->get_v4l2_device();
             device->get_pipeline()->unconfigure();
+            devices.save_device(ehd);
         });
 
     svr.Post("/configure_stream", [](const httplib::Request &req,
@@ -142,6 +143,7 @@ int main(int argc, char **argv) {
             v4l2::Interval(numerator, denominator), gst::STREAM_TYPE_UDP,
             endpoints);
         device->start_stream();
+        devices.save_device(ehd);
         res.body = devices.serialize_pipeline(device->get_pipeline()).dump();
         res.set_header("Access-Control-Allow-Origin", "*");
     });
@@ -241,6 +243,7 @@ int main(int argc, char **argv) {
             int value = control["value"];
             v4l2::Device *device = ehd->get_v4l2_device();
             device->set_pu(id, value);
+            devices.save_device(ehd);
             res.set_header("Access-Control-Allow-Origin", "*");
         });
 
@@ -274,6 +277,7 @@ int main(int argc, char **argv) {
                 }
                 ehd->set_h264_mode(mode);
             }
+            devices.save_device(ehd);
             res.set_header("Access-Control-Allow-Origin", "*");
         });
 

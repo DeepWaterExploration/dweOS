@@ -9,7 +9,7 @@
 # bash < <(curl -s https://raw.githubusercontent.com/DeepwaterExploration/DWE_OS/main/system_api/raspberry_python.sh)
 
 python_version_short="3.10"
-python_version="$python_version_short.2"
+python_version="$python_version_short.7"
 
 sudo apt update -y && sudo apt upgrade -y
 sudo apt install -y build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libsqlite3-dev libreadline-dev libffi-dev wget
@@ -27,4 +27,4 @@ sudo make -j 4 # Adjust the number based on the number of CPU cores for faster c
 sudo make altinstall
 
 # Set Python 3.10 as the default Python version
-sudo update-alternatives --install /usr/bin/python3 python3 $(which python3.10) 1
+sudo update-alternatives --install /usr/bin/python3 python3 $(which $python_version_short) 1

@@ -1,5 +1,5 @@
 from typing import List
-import pywifi, platform, netifaces as ni, subprocess, time
+import pywifi, platform, netifaces as ni, subprocess, base64
 
 
 class WiFiNetwork:
@@ -157,7 +157,33 @@ def get_wifi_info():
     return wifi_info
 
 
+def base64Decode(encoded_string: str) -> int:
+    """
+    Returns the decoded string.
+
+    Parameters:
+    - encoded_string (str): The encoded string.
+
+    Returns:
+    - decoded_string (str): The decoded string.
+    """
+    # Convert the Base64 encoded string to bytes
+    encoded_bytes = encoded_string.encode("utf-8")
+
+    # Decode the bytes using Base64
+    decoded_bytes = base64.b64decode(encoded_bytes)
+
+    # Convert the decoded bytes back to a string
+    decoded_string = decoded_bytes.decode("utf-8")
+
+    return decoded_string
+
+
 def connect_to_wifi(ssid: str, password: str) -> int:
+    # Decode the ssid and password
+    ssid = base64Decode(ssid)
+    password = base64Decode(password)
+    # Get the current operating system
     current_os = platform.system()
     match current_os:
         case "Windows":

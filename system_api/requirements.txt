@@ -1,6 +1,6 @@
 psutil==5.9.5
 py-cpuinfo==9.0.0
-urllib3==1.26.5
+urllib3==2.0.4
 WMI==1.4.9
 pywifi==1.1.12
 netifaces==0.11.0

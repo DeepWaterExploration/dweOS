@@ -581,6 +581,8 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                 const [controlValue, setControlValue] = useState<number>(
                   defaultValue as number
                 );
+                const [controlValueSlider, setControlValueSlider] =
+                  useState<number>(defaultValue as number);
 
                 useDidMountEffect(() => {
                   setUVCControl(usbInfo, controlValue, id);
@@ -588,10 +590,15 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
 
                 return (
                   <>
-                    <span>{name}</span>
+                    <span>
+                      {name}: {controlValueSlider}
+                    </span>
                     <Slider
                       onChangeCommitted={(_, newValue) => {
                         setControlValue(newValue as number);
+                      }}
+                      onChange={(_, newValue) => {
+                        setControlValueSlider(newValue as number);
                       }}
                       name={`control-${id}`}
                       min={min}

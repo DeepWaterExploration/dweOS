@@ -145,6 +145,40 @@ export async function configureStream(
 }
 
 /**
+ * Set a device nickname
+ * @param {string} usbInfo - The usb info of the connected camera.
+ * @param {string} nickname
+ * @throws {Error} - If the request to configure the device fails.
+ */
+export async function setDeviceNickname(usbInfo: string, nickname: string) {
+  const url = `${DEVICE_API_URL}/devices/setNickname`;
+  const body = {
+    usbInfo,
+    nickname,
+  };
+  const config: RequestInit = {
+    mode: "cors",
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    // credentials: "include",
+    body: JSON.stringify(body),
+  };
+  return await fetch(url, config)
+    // Process the response data
+    .then((response: Response) => response.json())
+    .then((data: Stream) => {
+      return data;
+    })
+    .catch((error: Error) => {
+      console.log(`Failed to configure device ${usbInfo}`);
+      console.error(error);
+      return undefined;
+    });
+}
+
+/**
  * Add a stream endpoint to a device.
  * @param {number} index - The index of the connected camera.
  * @param {Endpoint} endpoint - The stream endpoint object.

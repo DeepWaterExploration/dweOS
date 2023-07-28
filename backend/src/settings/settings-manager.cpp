@@ -42,89 +42,62 @@ void SettingsManager::save_device(libehd::Device* ehd) {
 
     if (!device_node) {
         device_node = _devices_node.append_child("Device");
+    } else {
+        device_node.remove_children();
+        device_node.remove_attributes();
     }
 
     /* Device*/
-    (device_node.attribute("usbInfo") ? device_node.attribute("usbInfo")
-                                      : device_node.append_attribute("usbInfo"))
-        .set_value(device->get_usb_info().c_str());
-    (device_node.attribute("nickname")
-            ? device_node.attribute("nickname")
-            : device_node.append_attribute("nickname"))
+    device_node.append_attribute("usbInfo").set_value(
+        device->get_usb_info().c_str());
+    device_node.append_attribute("nickname")
         .set_value(ehd->get_nickname().c_str());
 
     /* Options */
-    pugi::xml_node options_node = device_node.child("Options")
-                                      ? device_node.child("Options")
-                                      : device_node.append_child("Options");
-    (options_node.attribute("bitrate")
-            ? options_node.attribute("bitrate")
-            : options_node.append_attribute("bitrate"))
-        .set_value(ehd->get_bitrate());
-    (options_node.attribute("mode") ? options_node.attribute("mode")
-                                    : options_node.append_attribute("mode"))
-        .set_value(ehd->get_h264_mode());
-    (options_node.attribute("gop") ? options_node.attribute("gop")
-                                   : options_node.append_attribute("gop"))
-        .set_value(ehd->get_gop());
+    pugi::xml_node options_node = device_node.append_child("Options");
+    options_node.append_attribute("bitrate").set_value(ehd->get_bitrate());
+    options_node.append_attribute("mode").set_value(ehd->get_h264_mode());
+    options_node.append_attribute("gop").set_value(ehd->get_gop());
 
     /* Controls */
-    pugi::xml_node controls_node = device_node.child("Controls")
-                                       ? device_node.child("Controls")
-                                       : device_node.append_child("Controls");
+    pugi::xml_node controls_node = device_node.append_child("Controls");
     controls_node.remove_children();
     for (auto control : device->get_uvc_controls()) {
         pugi::xml_node control_node = controls_node.append_child("Control");
         int32_t value;
         device->get_pu(control.id, value);
-        (control_node.attribute("id") ? control_node.attribute("id")
-                                      : control_node.append_attribute("id"))
-            .set_value(control.id);
-        (control_node.attribute("value")
-                ? control_node.attribute("value")
-                : control_node.append_attribute("value"))
-            .set_value(value);
+        control_node.append_attribute("id").set_value(control.id);
+        control_node.append_attribute("value").set_value(value);
     }
 
     /* Stream */
-    pugi::xml_node stream_node = device_node.child("Stream")
-                                     ? device_node.child("Stream")
-                                     : device_node.append_child("Stream");
-    gst::StreamInformation stream_info =
-        device->get_pipeline()->getStreamInfo();
-    (stream_node.attribute("encodeType")
-            ? stream_node.attribute("encodeType")
-            : stream_node.append_attribute("encodeType"))
-        .set_value(stream_info.encode_type == gst::ENCODE_TYPE_H264
-                       ? "H264"
-                       : "MJPG");  // TODO: change to integer for consistency
-    (stream_node.attribute("streamType")
-            ? stream_node.attribute("streamType")
-            : stream_node.append_attribute("streamType"))
-        .set_value(stream_info.stream_type);
-    (stream_node.attribute("width") ? stream_node.attribute("width")
-                                    : stream_node.append_attribute("width"))
-        .set_value(stream_info.width);
-    (stream_node.attribute("height") ? stream_node.attribute("height")
-                                     : stream_node.append_attribute("height"))
-        .set_value(stream_info.height);
-    (stream_node.attribute("numerator")
-            ? stream_node.attribute("numerator")
-            : stream_node.append_attribute("numerator"))
-        .set_value(stream_info.interval.numerator);
-    (stream_node.attribute("denominator")
-            ? stream_node.attribute("denominator")
-            : stream_node.append_attribute("denominator"))
-        .set_value(stream_info.interval.denominator);
+    if (device->is_stream_configured()) {
+        pugi::xml_node stream_node = device_node.append_child("Stream");
+        gst::StreamInformation stream_info =
+            device->get_pipeline()->getStreamInfo();
+        stream_node.append_attribute("encodeType")
+            .set_value(
+                stream_info.encode_type == gst::ENCODE_TYPE_H264
+                    ? "H264"
+                    : "MJPG");  // TODO: change to integer for consistency
+        stream_node.append_attribute("streamType")
+            .set_value(stream_info.stream_type);
+        stream_node.append_attribute("width").set_value(stream_info.width);
+        stream_node.append_attribute("height").set_value(stream_info.height);
+        stream_node.append_attribute("numerator")
+            .set_value(stream_info.interval.numerator);
+        stream_node.append_attribute("denominator")
+            .set_value(stream_info.interval.denominator);
 
-    pugi::xml_node endpoints_node = stream_node.child("Endpoints")
-                                        ? stream_node.child("Endpoints")
-                                        : stream_node.append_child("Endpoints");
-    endpoints_node.remove_children();
-    for (gst::StreamEndpoint endpoint : stream_info.endpoints) {
-        pugi::xml_node endpoint_node = endpoints_node.append_child("Endpoint");
-        endpoint_node.append_attribute("host").set_value(endpoint.host.c_str());
-        endpoint_node.append_attribute("port").set_value(endpoint.port);
+        pugi::xml_node endpoints_node = stream_node.append_child("Endpoints");
+        endpoints_node.remove_children();
+        for (gst::StreamEndpoint endpoint : stream_info.endpoints) {
+            pugi::xml_node endpoint_node =
+                endpoints_node.append_child("Endpoint");
+            endpoint_node.append_attribute("host").set_value(
+                endpoint.host.c_str());
+            endpoint_node.append_attribute("port").set_value(endpoint.port);
+        }
     }
 
     if (!find_device_with_id(device->get_usb_info())) {

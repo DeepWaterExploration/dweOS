@@ -188,7 +188,10 @@ libehd::Device *DeviceList::find_device_with_id(std::string usbID) {
 }
 
 void DeviceList::save_device(libehd::Device *ehd) {
+    while (_isSaving) usleep(250000);
+    _isSaving = true;
     _settingsManager.save_device(ehd);
+    _isSaving = false;
 }
 
 void DeviceList::enumerate() {
@@ -252,12 +255,18 @@ void DeviceList::_load_device(libehd::Device *device,
 }
 
 void DeviceList::_load_devices() {
+    // Load all the devices
     for (settings::SerializedDevice *serialized_device :
         _settingsManager.get_devices()) {
         libehd::Device *device =
             find_device_with_id(serialized_device->usbInfo);
         if (!device) continue;
         _load_device(device, serialized_device);
+    }
+
+    // Make sure every device has an entry
+    for (libehd::Device *device : ehd_devices) {
+        save_device(device);
     }
 }
 

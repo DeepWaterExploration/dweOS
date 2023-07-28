@@ -46,6 +46,7 @@ import {
 } from "../../types/types";
 import {
   configureStream,
+  setDeviceNickname,
   setExploreHDOption,
   setUVCControl,
   unconfigureStream,
@@ -751,15 +752,8 @@ const DeviceCard: React.FC<DeviceCardProps> = (props) => {
             <TextField
               sx={{ top: 10 }}
               onChange={(e) => {
-                props.device.info.name = e.target.value;
-                // setDevice(
-                //   props.device.stream.device_path,
-                //   props.device.info.name
-                // );
-                // makePostRequest("/setDeviceName", {
-                //   devicePath: props.device.stream.device_path,
-                //   name: e.target.value,
-                // });
+                props.device.info.nickname = e.target.value;
+                setDeviceNickname(props.device.info.usbInfo, e.target.value);
               }}
               helperText='Device Nickname'
               placeholder='Device Nickname'

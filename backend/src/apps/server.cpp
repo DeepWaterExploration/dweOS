@@ -247,6 +247,23 @@ int main(int argc, char **argv) {
             res.set_header("Access-Control-Allow-Origin", "*");
         });
 
+    svr.Post("/devices/setNickname",
+        [](const httplib::Request &req, httplib::Response &res) {
+            json requestBody = json::parse(req.body);
+            std::string usbInfo = requestBody["usbInfo"];
+            libehd::Device *ehd = devices.get_ehd(usbInfo);
+            /* index is invalid */
+            if (!ehd) {
+                res.status = 400; /* Status 400: Bad Request */
+                return;
+            }
+
+            std::string nickname = requestBody["nickname"];
+            ehd->set_nickname(nickname);
+            devices.save_device(ehd);
+            res.set_header("Access-Control-Allow-Origin", "*");
+        });
+
     svr.Post("/devices/set_option",
         [](const httplib::Request &req, httplib::Response &res) {
             json requestBody = json::parse(req.body);

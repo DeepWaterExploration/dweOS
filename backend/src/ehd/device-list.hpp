@@ -50,6 +50,7 @@ class DeviceList {
     std::vector<v4l2::devices::DEVICE_INFO> _devices;
     BroadcastServer _broadcast_server;
     settings::SettingsManager _settingsManager;
+    bool _isSaving = false;
 
     json _devices_array;
 };

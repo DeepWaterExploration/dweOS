@@ -1,6 +1,5 @@
 import {
   CPUInfo,
-  Control,
   Device,
   Stream,
   StreamEndpoint,
@@ -10,8 +9,8 @@ import {
   optionType,
 } from "../types/types";
 
-const DEVICE_API_URL = "http://localhost:8080";
-const SYSTEM_API_URL = "http://localhost:5050";
+export const DEVICE_API_URL = "http://localhost:8080";
+export const SYSTEM_API_URL = "http://localhost:5050";
 
 /**
  * Retrieves a list of devices connected to the system

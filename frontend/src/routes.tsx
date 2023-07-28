@@ -14,7 +14,8 @@ import {
 import { Box } from "@mui/material";
 
 import CamerasPage from "./layouts/cameras";
-import Wired from "./layouts/wired";
+import WifiPage from "./layouts/wifi";
+import WiredPage from "./layouts/wired";
 import { RouteItem, routeType } from "./types/types";
 
 export const routes: RouteItem[] = [
@@ -52,7 +53,7 @@ export const routes: RouteItem[] = [
   },
   {
     route: "/communications/wifi",
-    component: <Box />,
+    component: <WifiPage />,
     //  <WiFi />,
     exact: true,
     icon: <SignalWifi0BarOutlinedIcon />,
@@ -63,7 +64,7 @@ export const routes: RouteItem[] = [
   },
   {
     route: "/communications/wired",
-    component: <Wired />,
+    component: <WiredPage />,
     exact: true,
     icon: <StorageOutlinedIcon />,
     category: "Communications",

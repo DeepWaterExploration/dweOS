@@ -38,10 +38,10 @@ export function result(format: string, key = ".00") {
 
 export function base64Encode(inputString: string): string {
   // Convert the string to a Buffer (bytes)
-  const buffer = Buffer.from(inputString, 'utf-8');
+  const buffer = Buffer.from(inputString, "utf-8");
 
   // Encode the buffer to Base64
-  const encodedString = buffer.toString('base64');
+  const encodedString = buffer.toString("base64");
 
   return encodedString;
 }

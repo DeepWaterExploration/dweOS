@@ -8,7 +8,6 @@ import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import {
   Box,
   Divider,
-  Grid,
   IconButton,
   List,
   ListItem,
@@ -154,9 +153,7 @@ export default function NavigationBar() {
                   />
                 </Box>
               </Box>
-              <Grid justifyContent='flex-end'>{/* <WifiMenu /> */}</Grid>
               <PowerSettingsNewIcon />
-              {/* {props.children} */}
             </Toolbar>
           </AppBar>
           <Drawer variant='permanent' open={open}>

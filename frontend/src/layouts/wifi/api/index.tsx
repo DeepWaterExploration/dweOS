@@ -1,6 +1,13 @@
 import { SYSTEM_API_URL } from "../../../utils/api";
 import { base64Encode } from "../../../utils/formatNumber";
-import { ConnectToWifiResponse, GetWifiStatusResponse } from "../types";
+import {
+  ConnectToWifiResponse,
+  GetAvailabkeWifiResponse,
+  GetWifiStatusResponse,
+  WiFiInterface,
+  WiFiInterfaces,
+  WiFiNetwork,
+} from "../types";
 
 /**
  * Gets whether wifi is enabled on the device.
@@ -99,5 +106,43 @@ export async function connectToWifi(
       console.log("Failed to connect to wifi");
       console.error(error);
       return {} as ConnectToWifiResponse;
+    });
+}
+
+export async function getAvailabkeWifi(): Promise<WiFiNetwork[]> {
+  const url = `${SYSTEM_API_URL}/getAvailabkeWifi`;
+  const config: RequestInit = {
+    mode: "cors",
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    // credentials: "include",
+  };
+  return await fetch(url, config)
+    // Process the response data
+    .then((response: Response) => response.json())
+    .then((data: GetAvailabkeWifiResponse) => {
+      const uniqueNetworksSet = new Set<string>();
+      const uniqueWiFiNetworks: WiFiNetwork[] = [];
+
+      data.interfaces.forEach((wifiInterface: WiFiInterfaces) => {
+        Object.values(wifiInterface).forEach(
+          (wifiInterfaceData: WiFiInterface) => {
+            wifiInterfaceData.wifi_networks.forEach((network: WiFiNetwork) => {
+              if (!uniqueNetworksSet.has(network.ssid)) {
+                uniqueNetworksSet.add(network.ssid);
+                uniqueWiFiNetworks.push(network);
+              }
+            });
+          }
+        );
+      });
+      return uniqueWiFiNetworks;
+    })
+    .catch((error: Error) => {
+      console.log("Failed to get wifi capability status");
+      console.error(error);
+      return {} as WiFiNetwork[];
     });
 }

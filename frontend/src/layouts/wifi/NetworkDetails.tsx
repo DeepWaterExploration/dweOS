@@ -1,5 +1,13 @@
-import SignalWifi4BarIcon from "@mui/icons-material/SignalWifi4Bar";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import SignalWifi0BarIcon from "@mui/icons-material/SignalWifi0Bar";
+import SignalWifi1BarIcon from "@mui/icons-material/SignalWifi1Bar";
+import SignalWifi1BarLockIcon from "@mui/icons-material/SignalWifi1BarLock";
+import SignalWifi2BarIcon from "@mui/icons-material/SignalWifi2Bar";
+import SignalWifi2BarLockIcon from "@mui/icons-material/SignalWifi2BarLock";
+import SignalWifi3BarIcon from "@mui/icons-material/SignalWifi3Bar";
+import SignalWifi3BarLockIcon from "@mui/icons-material/SignalWifi3BarLock";
+import SignalWifi4BarIcon from "@mui/icons-material/SignalWifi4Bar";
+import SignalWifi4BarLockIcon from "@mui/icons-material/SignalWifi4BarLock";
 import {
   Accordion,
   AccordionDetails,
@@ -12,7 +20,6 @@ import {
   CardHeader,
   FormControlLabel,
   FormGroup,
-  IconButton,
   List,
   ListItem,
   ListItemAvatar,
@@ -23,14 +30,57 @@ import {
 import { useState } from "react";
 
 import { toggleWifiStatus } from "./api";
+import { WiFiNetwork } from "./types";
 
-// import { WiFiNetwork } from "./types"
+export interface DBMToSignalIconProps {
+  /* the signal strength in dBm */
+  signalStrength: number;
+  secure: boolean;
+}
+
+const DBMToSignalIcon: React.FC<DBMToSignalIconProps> = (props) => {
+  console.log(props.secure);
+  const signalStrength = props.signalStrength;
+
+  if (signalStrength >= -50) {
+    // wifi signal is excellent
+    return props.secure ? (
+      <SignalWifi4BarLockIcon sx={{ fontSize: 22.5, mx: 0.5 }} />
+    ) : (
+      <SignalWifi4BarIcon sx={{ fontSize: 22.5, mx: 0.5 }} />
+    );
+  } else if (signalStrength >= -60) {
+    // wifi signal is great
+    return props.secure ? (
+      <SignalWifi3BarLockIcon sx={{ fontSize: 22.5, mx: 0.5 }} />
+    ) : (
+      <SignalWifi3BarIcon sx={{ fontSize: 22.5, mx: 0.5 }} />
+    );
+  } else if (signalStrength >= -70) {
+    // wifi signal is okay
+    return props.secure ? (
+      <SignalWifi2BarLockIcon sx={{ fontSize: 22.5, mx: 0.5 }} />
+    ) : (
+      <SignalWifi2BarIcon sx={{ fontSize: 22.5, mx: 0.5 }} />
+    );
+  } else if (signalStrength >= -80) {
+    // wifi signal is weak
+    return props.secure ? (
+      <SignalWifi1BarLockIcon sx={{ fontSize: 22.5, mx: 0.5 }} />
+    ) : (
+      <SignalWifi1BarIcon sx={{ fontSize: 22.5, mx: 0.5 }} />
+    );
+  } else {
+    // wifi signal is unusuable
+    return <SignalWifi0BarIcon sx={{ fontSize: 22.5, mx: 0.5 }} />;
+  }
+};
 
 export interface NetworkDetailsCardProps {
   wifiStatus: boolean;
   setWifiStatus: (newValue: boolean | null) => void;
   // connectedNetwork?: WiFiNetwork;
-  // networks?: WiFiNetwork[];
+  networks?: WiFiNetwork[];
 }
 
 const NetworkDetailsCard: React.FC<NetworkDetailsCardProps> = (props) => {
@@ -114,7 +164,9 @@ const NetworkDetailsCard: React.FC<NetworkDetailsCardProps> = (props) => {
                 aria-controls='panel2a-content'
                 id='panel2a-header'
               >
-                <Typography fontWeight='800'>Stream Endpoints</Typography>
+                <Typography fontWeight='800'>
+                  Show available networks
+                </Typography>
               </AccordionSummary>
               <AccordionDetails>
                 <Box
@@ -122,7 +174,7 @@ const NetworkDetailsCard: React.FC<NetworkDetailsCardProps> = (props) => {
                     backgroundColor: "background.paper",
                   }}
                 >
-                  {/* {endpoints.length === 0 ? (
+                  {!props.wifiStatus ? (
                     <Typography
                       fontWeight='500'
                       style={{
@@ -135,42 +187,45 @@ const NetworkDetailsCard: React.FC<NetworkDetailsCardProps> = (props) => {
                     </Typography>
                   ) : (
                     <List dense={true}>
-                      {endpoints.map((endpoint) => {
-                        return (
-                          <ListItem
-                            key={`${endpoint.host}:${endpoint.port}`}
-                            secondaryAction={
-                              <IconButton
-                                edge='end'
-                                aria-label='delete'
-                                onClick={() => {
-                                  setEndpoints((prevEndpoints) =>
-                                    prevEndpoints.filter(
-                                      (e) =>
-                                        `${e.host}:${e.port}` !==
-                                        `${endpoint.host}:${endpoint.port}`
-                                    )
-                                  );
-                                }}
-                              >
-                                <DeleteIcon />
-                              </IconButton>
-                            }
-                          >
-                            <ListItemAvatar>
-                              <Avatar>
-                                <LinkedCameraIcon />
-                              </Avatar>
-                            </ListItemAvatar>
-                            <ListItemText
-                              primary={`IP Address: ${endpoint.host}`}
-                              secondary={`Port: ${endpoint.port}`}
-                            />
-                          </ListItem>
-                        );
-                      })}
+                      {props.networks !== undefined &&
+                        props.networks.map((network: WiFiNetwork) => {
+                          console.log(network.secure);
+                          return (
+                            <ListItem
+                              style={{
+                                margin: "10px 0px",
+                              }}
+                              key={`${network.ssid}`}
+                              secondaryAction={
+                                <Button
+                                  variant='contained'
+                                  style={{
+                                    color: "white",
+                                    marginRight: "20px",
+                                    fontWeight: "bold",
+                                  }}
+                                >
+                                  Connect
+                                </Button>
+                              }
+                            >
+                              <ListItemAvatar>
+                                <Avatar>
+                                  <DBMToSignalIcon
+                                    signalStrength={network.signal_strength}
+                                    secure={network.secure}
+                                  />
+                                </Avatar>
+                              </ListItemAvatar>
+                              <ListItemText
+                                primary={network.ssid}
+                                secondary={network.secure ? "Secured" : "Unsecured"}
+                              />
+                            </ListItem>
+                          );
+                        })}
                     </List>
-                  )} */}
+                  )}
                 </Box>
               </AccordionDetails>
             </Accordion>

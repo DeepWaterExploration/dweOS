@@ -4,12 +4,23 @@
 export interface WiFiNetwork {
   /* The network's SSID (Service Set Identifier) */
   ssid: string;
-  /* The security protocol used by the network */
-  security: string;
+  /* Whether the network is secure */
+  secure: boolean;
+  /* The security protocol used by the network if secure */
+  security_type?: string;
   /* The operating frequency of the network in GHz */
   frequency: string;
   /* The network's signal strength in dBm */
-  signal_strength: string;
+  signal_strength: number;
+}
+
+/**
+ * Represents a WiFi interface
+ */
+export interface WiFiInterface {
+  mac_address: string;
+  status: number;
+  wifi_networks: WiFiNetwork[];
 }
 
 /**
@@ -26,7 +37,7 @@ export interface GetWifiStatusResponse {
 export interface ToggleWifiResponse {
   /* Whether wifi is enabled */
   enabled: boolean;
-  // /* Whether the network connection was successful */
+  /* Whether the network connection was successful */
   // success: boolean;
   // /* Elaboration on the status of the connection */
   // error?: string;
@@ -40,4 +51,15 @@ export interface ConnectToWifiResponse {
   status: boolean;
   /* Elaboration on the status of the connection */
   error?: string;
+}
+
+/**
+ * Represents the response from the backend when connecting to a network
+ */
+export interface GetAvailabkeWifiResponse {
+  interfaces: WiFiInterfaces[];
+}
+
+export interface WiFiInterfaces {
+  [key: string]: WiFiInterface;
 }

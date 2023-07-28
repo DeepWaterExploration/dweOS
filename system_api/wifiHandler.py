@@ -216,17 +216,38 @@ def get_wifi_info():
             )
             # network_profiles = interface.network_profiles()
             for network_profile in network_profiles:
-                wifi_info["interfaces"][-1][interface.name()]["wifi_networks"].append(
-                    {
-                        "ssid": network_profile.ssid,  # Access the ssid directly
-                        "bssid": network_profile.bssid,  # Access the bssid directly
-                        "security": network_profile.auth,  # Access the auth (security) directly
-                        "frequency": network_profile.freq,  # Access the frequency directly
-                        "signal_strength": int(
-                            network_profile.signal
-                        ),  # Access the signal directly
-                    }
-                )
+                if (
+                    network_profile.akm
+                    and network_profile.akm[0] != pywifi.const.AKM_TYPE_NONE
+                ):
+                    wifi_info["interfaces"][-1][interface.name()][
+                        "wifi_networks"
+                    ].append(
+                        {
+                            "ssid": network_profile.ssid,  # Access the ssid directly
+                            "bssid": network_profile.bssid,  # Access the bssid directly
+                            "secure": True,  # Access the auth (security) directly
+                            "security_type": network_profile.akm,  # Access the akm (security details) directly
+                            "frequency": network_profile.freq,  # Access the frequency directly
+                            "signal_strength": int(
+                                network_profile.signal
+                            ),  # Access the signal directly
+                        }
+                    )
+                else:
+                    wifi_info["interfaces"][-1][interface.name()][
+                        "wifi_networks"
+                    ].append(
+                        {
+                            "ssid": network_profile.ssid,  # Access the ssid directly
+                            "bssid": network_profile.bssid,  # Access the bssid directly
+                            "secure": False,  # Access the auth (security) directly
+                            "frequency": network_profile.freq,  # Access the frequency directly
+                            "signal_strength": int(
+                                network_profile.signal
+                            ),  # Access the signal directly
+                        }
+                    )
         except Exception as e:
             print(f"Exception: {e}")
             pass

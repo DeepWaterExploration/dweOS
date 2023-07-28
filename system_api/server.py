@@ -1,5 +1,4 @@
 import http.server
-import asyncio
 from http.server import HTTPServer
 import urllib.parse
 import cpuHandler, memoryHandler, wifiHandler
@@ -53,7 +52,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         self.send_response(200, "ok")
         self.end_headers()
 
-    async def async_do_GET(self):
+    def do_GET(self):
         # Handling GET requests asynchronously
         # Parse the request path and query parameters from the request
         parsed_url = urllib.parse.urlparse(self.path)
@@ -74,7 +73,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
                 # Send the response content encoded in utf-8
                 self.wfile.write((response_content).encode("utf-8"))
-            case "/getAvailableWifi":
+            case "/getAvailabkeWifi":
                 # Set the response status code
                 self.send_response(200)
 
@@ -157,7 +156,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 # Send the response content encoded in utf-8
                 self.wfile.write((response_content).encode("utf-8"))
 
-    async def async_do_POST(self):
+    def do_POST(self):
         # Handling POST requests asynchronously
         # Parse the
         parsed_url = urllib.parse.urlparse(self.path)
@@ -241,11 +240,11 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b"Internal Server Error.")
 
-    def do_GET(self):
-        asyncio.run(self.async_do_GET())
+    # def do_GET(self):
+    #     asyncio.run(self.async_do_GET())
 
-    def do_POST(self):
-        asyncio.run(self.async_do_POST())
+    # def do_POST(self):
+    #     asyncio.run(self.async_do_POST())
 
 
 # Main function to run the server

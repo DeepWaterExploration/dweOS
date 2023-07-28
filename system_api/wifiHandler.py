@@ -67,7 +67,7 @@ def get_is_wifi_on():
             return {"enabled": not ("ESSID:off/any" in result)}
     except Exception as e:
         print("Error: An unexpected error occurred.")
-        print("Error message:", str(e))
+        print("Error message: ", str(e))
         return {"Enabled": False}
 
 
@@ -113,8 +113,34 @@ def toggle_wifi_status(
         return {"enabled": wifi_on}
     except Exception as e:
         print("Error: An unexpected error occurred.")
-        print("Error message:", str(e))
+        print("Error message: ", str(e))
         return {"Enabled": False}
+
+
+def get_connected_network():
+    """"""
+
+    current_os = platform.system()
+    match current_os:
+        case "Windows":
+            cmd = f'netsh wlan show interfaces | findstr /r "^....SSID"'
+        case "Linux":
+            cmd = f"iwgetid -r"
+        case "Darwin":  # macOS
+            cmd = f"/usr/sbin/networksetup -setairportnetwork en0 '{ssid}' '{password}'"
+        case _:
+            return -1  # Unsupported platform
+    try:
+        # Run the command and capture the output and errors
+        result = subprocess.check_output(cmd, shell=True).decode("utf-8")
+        if current_os == "Windows":
+            ssid = result.split(":")[1].strip()
+            return {"network": ssid}
+        elif current_os == "Linux" or current_os == "Darwin":
+            return {"network": result.strip()}
+    except Exception as e:
+        print("Error: An unexpected error occurred.")
+        print("Error message: ", str(e))
 
 
 def get_all_interfaces(wifi_manager: pywifi.PyWiFi):
@@ -316,4 +342,4 @@ def connect_to_wifi(ssid: str, password: str) -> int:
             }
     except Exception as e:
         print("Error: An unexpected error occurred.")
-        print("Error message:", str(e))
+        print("Error message: ", str(e))

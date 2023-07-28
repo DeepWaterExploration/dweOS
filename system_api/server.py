@@ -73,7 +73,21 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
                 # Send the response content encoded in utf-8
                 self.wfile.write((response_content).encode("utf-8"))
-            case "/getAvailabkeWifi":
+            case "/getConnectedNetwork":
+                # Set the response status code
+                self.send_response(200)
+
+                # Set the response headers
+                self.send_header("Content-type", "application/json")
+                self.end_headers()
+
+                # Build the response content as a dictionary and convert to JSON format
+                response_content = json.dumps(wifiHandler.get_connected_network())
+
+                # Send the response content encoded in utf-8
+                self.wfile.write((response_content).encode("utf-8"))
+
+            case "/getAvailableWifi":
                 # Set the response status code
                 self.send_response(200)
 
@@ -86,28 +100,6 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
                 # Send the response content encoded in utf-8
                 self.wfile.write((response_content).encode("utf-8"))
-            # connect to wifi with parameters
-            # ?wifi_ssid=EvoNexusSD&wifi_password=S@nD1ego!
-            case "/connectToWifi":
-                # Set the response status code
-                self.send_response(200)
-
-                # Set the response headers
-                self.send_header("Content-type", "application/json")
-                self.end_headers()
-
-                # Extract wifi_ssid and wifi_password from the query parameters
-                wifi_ssid = query_params.get("wifi_ssid", [None])[0]
-                wifi_password = query_params.get("wifi_password", [None])[0]
-
-                # Build the response content as a dictionary and convert to JSON format
-                response_content = json.dumps(
-                    wifiHandler.connect_to_wifi(wifi_ssid, wifi_password)
-                )
-
-                # Send the response content encoded in utf-8
-                self.wfile.write((response_content).encode("utf-8"))
-
             case "/getCPU":
                 # Set the response status code
                 self.send_response(200)
@@ -179,6 +171,27 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 # Build the response content as a dictionary and convert to JSON format
                 response_content = json.dumps(
                     wifiHandler.toggle_wifi_status(wifi_status)
+                )
+
+                # Send the response content encoded in utf-8
+                self.wfile.write((response_content).encode("utf-8"))
+
+            # connect to wifi with parameters
+            case "/connectToWifi":
+                # Extract wifi ssid and password from query parameters
+                wifi_ssid = parsed_data["wifi_ssid"]
+                wifi_password = parsed_data["wifi_password"]
+
+                # Set the response status code
+                self.send_response(200)
+
+                # Set the response headers
+                self.send_header("Content-type", "application/json")
+                self.end_headers()
+
+                # Build the response content as a dictionary and convert to JSON format
+                response_content = json.dumps(
+                    wifiHandler.connect_to_wifi(wifi_ssid, wifi_password)
                 )
 
                 # Send the response content encoded in utf-8

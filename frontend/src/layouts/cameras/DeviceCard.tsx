@@ -419,6 +419,7 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
             </TextField>
           </div>
           <Accordion
+            defaultExpanded={true}
             style={{
               width: "100%",
             }}
@@ -519,7 +520,7 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
               sx={{
                 width: "40px",
                 height: "40px",
-                color: "white",
+                color: "text.secondary",
                 marginLeft: "-10px",
               }}
               onClick={() => {

@@ -41,6 +41,108 @@ def print_attrs(obj: object) -> None:
     print()
 
 
+def get_is_wifi_on():
+    """
+    Returns True if Wi-Fi is enabled, False otherwise.
+
+    Returns:
+    - wifi_on (bool): True if Wi-Fi is enabled, False otherwise.
+    """
+    current_os = platform.system()
+    match current_os:
+        case "Windows":
+            cmd = ["netsh", "interface", "show", "interface"]
+        case "Linux":
+            cmd = ["iwconfig"]
+        case "Darwin":  # macOS
+            cmd = ["iwconfig"]
+        case _:
+            return {"enabled": False}
+    try:
+        # Run the command and capture the output and errors
+        result = subprocess.check_output(cmd, shell=True).decode("utf-8")
+        if current_os == "Windows":
+            return {"enabled": "Wireless" in result}
+        elif current_os == "Linux" or current_os == "Darwin":
+            return {"enabled": not ("ESSID:off/any" in result)}
+    except Exception as e:
+        print("Error: An unexpected error occurred.")
+        print("Error message: ", str(e))
+        return {"Enabled": False}
+
+
+def toggle_wifi_status(
+    wifi_on: bool,
+):
+    """
+    Toggles WiFi based on current state.
+
+    Parameters:
+    - wifi_on (bool): True if Wi-Fi is enabled, False otherwise.
+
+    Returns:
+    - wifi_on (bool): True if Wi-Fi is enabled, False otherwise.
+    """
+    current_os = platform.system()
+    match current_os:
+        case "Windows":
+            cmd = (
+                [
+                    "netsh",
+                    "interface",
+                    "set",
+                    "interface",
+                    "Wi-Fi",
+                    f"admin={'enable' if wifi_on else 'disable'}",
+                ],
+            )
+        case "Linux":
+            cmd = ["nmcli", "radio", "wifi", f"{'on' if wifi_on else 'off'}"]
+        case "Darwin":  # macOS
+            cmd = [
+                "networksetup",
+                "-setairportpower",
+                "en0",
+                f"{'on' if wifi_on else 'off'}",
+            ]
+        case _:
+            return {"enabled": False}
+    try:
+        # Run the command and capture the output and errors
+        subprocess.run(cmd, check=True)
+        return {"enabled": wifi_on}
+    except Exception as e:
+        print("Error: An unexpected error occurred.")
+        print("Error message: ", str(e))
+        return {"Enabled": False}
+
+
+def get_connected_network():
+    """"""
+
+    current_os = platform.system()
+    match current_os:
+        case "Windows":
+            cmd = f'netsh wlan show interfaces | findstr /r "^....SSID"'
+        case "Linux":
+            cmd = f"iwgetid -r"
+        case "Darwin":  # macOS
+            cmd = f"/usr/sbin/networksetup -setairportnetwork en0 '{ssid}' '{password}'"
+        case _:
+            return -1  # Unsupported platform
+    try:
+        # Run the command and capture the output and errors
+        result = subprocess.check_output(cmd, shell=True).decode("utf-8")
+        if current_os == "Windows":
+            ssid = result.split(":")[1].strip()
+            return {"network": ssid}
+        elif current_os == "Linux" or current_os == "Darwin":
+            return {"network": result.strip()}
+    except Exception as e:
+        print("Error: An unexpected error occurred.")
+        print("Error message: ", str(e))
+
+
 def get_all_interfaces(wifi_manager: pywifi.PyWiFi):
     """
     Returns a list of all network interfaces on the system.
@@ -140,17 +242,38 @@ def get_wifi_info():
             )
             # network_profiles = interface.network_profiles()
             for network_profile in network_profiles:
-                wifi_info["interfaces"][-1][interface.name()]["wifi_networks"].append(
-                    {
-                        "ssid": network_profile.ssid,  # Access the ssid directly
-                        "bssid": network_profile.bssid,  # Access the bssid directly
-                        "security": network_profile.auth,  # Access the auth (security) directly
-                        "frequency": network_profile.freq,  # Access the frequency directly
-                        "signal_strength": int(
-                            network_profile.signal
-                        ),  # Access the signal directly
-                    }
-                )
+                if (
+                    network_profile.akm
+                    and network_profile.akm[0] != pywifi.const.AKM_TYPE_NONE
+                ):
+                    wifi_info["interfaces"][-1][interface.name()][
+                        "wifi_networks"
+                    ].append(
+                        {
+                            "ssid": network_profile.ssid,  # Access the ssid directly
+                            "bssid": network_profile.bssid,  # Access the bssid directly
+                            "secure": True,  # Access the auth (security) directly
+                            "security_type": network_profile.akm,  # Access the akm (security details) directly
+                            "frequency": network_profile.freq,  # Access the frequency directly
+                            "signal_strength": int(
+                                network_profile.signal
+                            ),  # Access the signal directly
+                        }
+                    )
+                else:
+                    wifi_info["interfaces"][-1][interface.name()][
+                        "wifi_networks"
+                    ].append(
+                        {
+                            "ssid": network_profile.ssid,  # Access the ssid directly
+                            "bssid": network_profile.bssid,  # Access the bssid directly
+                            "secure": False,  # Access the auth (security) directly
+                            "frequency": network_profile.freq,  # Access the frequency directly
+                            "signal_strength": int(
+                                network_profile.signal
+                            ),  # Access the signal directly
+                        }
+                    )
         except Exception as e:
             print(f"Exception: {e}")
             pass
@@ -219,4 +342,4 @@ def connect_to_wifi(ssid: str, password: str) -> int:
             }
     except Exception as e:
         print("Error: An unexpected error occurred.")
-        print("Error message:", str(e))
+        print("Error message: ", str(e))

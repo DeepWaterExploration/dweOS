@@ -158,79 +158,77 @@ const DeviceOptions: React.FC<DeviceOptionsProps> = (props) => {
   }, [gop]);
 
   return (
-    <>
-      <FormGroup>
+    <FormGroup>
+      <Grid
+        container
+        direction='row'
+        justifyContent='space-between'
+        alignItems='center'
+      >
         <Grid
           container
-          direction='row'
-          justifyContent='space-between'
+          direction='column'
+          justifyContent='center'
           alignItems='center'
+          width='50%'
         >
-          <Grid
-            container
-            direction='column'
-            justifyContent='center'
-            alignItems='center'
-            width='50%'
-          >
-            <Typography fontWeight='800' style={{ width: "100%" }}>
-              Bitrate: {bitrateSlider} Mbps
-            </Typography>
-            <Slider
-              name='bitrate'
-              defaultValue={props.device.options.bitrate / 1000000}
-              disabled={mode === bitrateMode.VBR}
-              onChangeCommitted={(_, newValue) => {
-                setBitrate(newValue as number);
-              }}
-              onChange={(_, newValue) => {
-                setBitrateSlider(newValue as number);
-              }}
-              style={{ width: "calc(100% - 30px)" }}
-              size='small'
-              max={15}
-              min={0.1}
-              step={0.1}
-            />
-          </Grid>
-          <Grid
-            container
-            direction='column'
-            justifyContent='center'
-            alignItems='center'
-            width='50%'
-          >
-            <Typography fontWeight='800' style={{ width: "100%" }}>
-              Group of Pictures {gopSlider}
-            </Typography>
-            <Slider
-              name='bitrate'
-              defaultValue={props.device.options.gop}
-              disabled={mode === bitrateMode.VBR}
-              onChangeCommitted={(_, newValue) => {
-                setGOP(newValue as number);
-              }}
-              onChange={(_, newValue) => {
-                setGOPSlider(newValue as number);
-              }}
-              style={{ width: "calc(100% - 30px)" }}
-              size='small'
-              max={29}
-              min={0}
-              step={1}
-            />
-          </Grid>
+          <Typography fontWeight='800' style={{ width: "100%" }}>
+            Bitrate: {bitrateSlider} Mbps
+          </Typography>
+          <Slider
+            name='bitrate'
+            defaultValue={props.device.options.bitrate / 1000000}
+            disabled={mode === bitrateMode.VBR}
+            onChangeCommitted={(_, newValue) => {
+              setBitrate(newValue as number);
+            }}
+            onChange={(_, newValue) => {
+              setBitrateSlider(newValue as number);
+            }}
+            style={{ width: "calc(100% - 30px)" }}
+            size='small'
+            max={15}
+            min={0.1}
+            step={0.1}
+          />
         </Grid>
-        <DeviceSwitch
-          checked={mode === bitrateMode.VBR}
-          name='vbrSwitch'
-          onChange={(e) => {
-            setMode(e.target.checked ? bitrateMode.VBR : bitrateMode.CBR);
-          }}
-          text='VBR (Variable Bitrate)'
-        />
-      </FormGroup>
-    </>
+        <Grid
+          container
+          direction='column'
+          justifyContent='center'
+          alignItems='center'
+          width='50%'
+        >
+          <Typography fontWeight='800' style={{ width: "100%" }}>
+            Group of Pictures {gopSlider}
+          </Typography>
+          <Slider
+            name='bitrate'
+            defaultValue={props.device.options.gop}
+            disabled={mode === bitrateMode.VBR}
+            onChangeCommitted={(_, newValue) => {
+              setGOP(newValue as number);
+            }}
+            onChange={(_, newValue) => {
+              setGOPSlider(newValue as number);
+            }}
+            style={{ width: "calc(100% - 30px)" }}
+            size='small'
+            max={29}
+            min={0}
+            step={1}
+          />
+        </Grid>
+      </Grid>
+      <DeviceSwitch
+        checked={mode === bitrateMode.VBR}
+        name='vbrSwitch'
+        onChange={(e) => {
+          setMode(e.target.checked ? bitrateMode.VBR : bitrateMode.CBR);
+        }}
+        text='VBR (Variable Bitrate)'
+      />
+    </FormGroup>
   );
 };
 

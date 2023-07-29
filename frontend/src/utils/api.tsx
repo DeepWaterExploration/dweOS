@@ -387,6 +387,40 @@ export async function setExploreHDOption(
 }
 
 /**
+ * Restart a stream
+ * @param {number} usbInfo - The usb info of the connected camera.
+ * @returns {Promise<void>} - A promise that resolves when the option is successfully set.
+ * @throws {Error} - If the index is invalid or the request fails.
+ */
+export async function restartStream(usbInfo: string): Promise<void> {
+  const url = `${DEVICE_API_URL}/restart_stream`;
+  const data = {
+    usbInfo,
+  };
+  const config: RequestInit = {
+    mode: "cors",
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+    // credentials: "include",
+  };
+
+  return await fetch(url, config)
+    // Process the response data
+    .then((response: Response) => {
+      if (!response.ok) {
+        throw new Error("Failed to restart stream");
+      }
+    })
+    .catch((error: Error) => {
+      console.log("Failed to restart stream");
+      console.error(error);
+    });
+}
+
+/**
  * Restore a device to factory settings.
  */
 export async function resetSettings(): Promise<void> {

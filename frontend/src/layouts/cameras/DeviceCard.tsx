@@ -46,6 +46,7 @@ import {
 } from "../../types/types";
 import {
   configureStream,
+  restartStream,
   setDeviceNickname,
   setExploreHDOption,
   setUVCControl,
@@ -534,7 +535,9 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
             color='primary'
             variant='contained'
             onClick={() => {
-              enqueueSnackbar("Stream restarted", { variant: "info" });
+              restartStream(props.device.info.usbInfo).then(() => {
+                enqueueSnackbar("Stream restarted", { variant: "info" });
+              });
             }}
           >
             Restart Stream

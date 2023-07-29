@@ -12,6 +12,16 @@ namespace libehd {
 enum H264Mode { MODE_CONSTANT_BITRATE = 1, MODE_VARIABLE_BITRATE = 2 };
 
 /**
+ * @brief exploreHD device options
+ *
+ */
+struct DeviceOptions {
+    uint32_t bitrate;
+    uint16_t gop;
+    H264Mode mode;
+};
+
+/**
  * @brief exploreHD UVC device
  *
  */
@@ -38,7 +48,7 @@ class Device {
      *
      * @return uint32_t bitrate of the camera (in kb/s)
      */
-    uint32_t get_bitrate();
+    inline uint32_t get_bitrate() { return _device_option_values.bitrate; }
 
     /**
      * @brief Set the bitrate of the camera
@@ -53,7 +63,7 @@ class Device {
      *
      * @return uint16_t camera GOP value
      */
-    uint16_t get_gop();
+    inline uint16_t get_gop() { return _device_option_values.gop; }
 
     /**
      * @brief Set the camera GOP (Group of Pictures) - A GOP of zero corresponds
@@ -69,7 +79,7 @@ class Device {
      *
      * @return uvc_ehd_h264_mode current H.264 mode
      */
-    H264Mode get_h264_mode();
+    inline H264Mode get_h264_mode() { return _device_option_values.mode; }
 
     /**
      * @brief Set the H.264 mode of the camera
@@ -92,11 +102,35 @@ class Device {
      */
     Device(v4l2::Device *device);
 
+    /**
+     * @brief Get the camera GOP (Group of Pictures)
+     *
+     * @return uint16_t camera GOP value
+     */
+    uint16_t _get_gop_raw();
+
+    /**
+     * @brief Get the bitrate of the camera
+     *
+     * @return uint32_t camera bitrate value
+     */
+    uint32_t _get_bitrate_raw();
+
+    /**
+     * @brief Get the camera GOP (Group of Pictures)
+     *
+     * @return uint16_t camera GOP value
+     */
+    H264Mode _get_h264_mode_raw();
+
     v4l2::Device *_device;
     std::string _nickname;
     std::string _bus_info;
     std::vector<std::string> _device_paths;
     std::map<std::string, xu::Option *> _options;
+
+    /* Stored device option values */
+    DeviceOptions _device_option_values;
 };
 
 }  // namespace libehd

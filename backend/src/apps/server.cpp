@@ -227,6 +227,27 @@ int main(int argc, char **argv) {
             res.set_header("Access-Control-Allow-Origin", "*");
         });
 
+    // Same exact thing as start stream
+    svr.Post("/restart_stream",
+        [](const httplib::Request &req, httplib::Response &res) {
+            json requestBody = json::parse(req.body);
+            std::string usbInfo = requestBody["usbInfo"];
+            libehd::Device *ehd = devices.get_ehd(usbInfo);
+            /* index is invalid */
+            if (!ehd) {
+                res.status = 400; /* Status 400: Bad Request */
+                return;
+            }
+
+            v4l2::Device *device = ehd->get_v4l2_device();
+            if (device->is_stream_configured()) {
+                std::cout << "Stopping stream for device at port: " << usbInfo
+                          << "\n";
+                device->start_stream();
+            }
+            res.set_header("Access-Control-Allow-Origin", "*");
+        });
+
     svr.Post("/devices/set_uvc_control",
         [](const httplib::Request &req, httplib::Response &res) {
             json requestBody = json::parse(req.body);

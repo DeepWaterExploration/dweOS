@@ -103,6 +103,13 @@ void SettingsManager::save_device(libehd::Device* ehd) {
     if (!find_device_with_id(device->get_usb_info())) {
         _devices.push_back(construct_device(device_node));
     }
+
+    SerializedDevice* serialized_device =
+        find_device_with_id(device->get_usb_info());
+    if (serialized_device) {
+        free(serialized_device);
+        serialized_device = construct_device(device_node);
+    }
     _doc.save_file("device_settings.xml");
 }
 

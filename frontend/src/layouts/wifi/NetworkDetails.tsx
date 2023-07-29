@@ -1,3 +1,4 @@
+/* eslint-disable import/order */
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import SignalWifi0BarIcon from "@mui/icons-material/SignalWifi0Bar";
 import SignalWifi1BarIcon from "@mui/icons-material/SignalWifi1Bar";
@@ -25,12 +26,17 @@ import {
   ListItemAvatar,
   ListItemText,
   Switch,
+  TextField,
   Typography,
 } from "@mui/material";
-import { useState } from "react";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 
-import { toggleWifiStatus } from "./api";
-import { WiFiNetwork } from "./types";
+import { connectToWifi, toggleWifiStatus } from "./api";
+import { ConnectToWifiResponse, WiFiNetwork } from "./types";
+import { useState } from "react";
 
 export interface DBMToSignalIconProps {
   /* the signal strength in dBm */
@@ -39,9 +45,7 @@ export interface DBMToSignalIconProps {
 }
 
 const DBMToSignalIcon: React.FC<DBMToSignalIconProps> = (props) => {
-  console.log(props.secure);
   const signalStrength = props.signalStrength;
-
   if (signalStrength >= -50) {
     // wifi signal is excellent
     return props.secure ? (
@@ -78,20 +82,51 @@ const DBMToSignalIcon: React.FC<DBMToSignalIconProps> = (props) => {
 
 export interface NetworkDetailsCardProps {
   wifiStatus: boolean;
-  setWifiStatus: (newValue: boolean | null) => void;
-  // connectedNetwork?: WiFiNetwork;
-  networks?: WiFiNetwork[];
+  setWifiStatus: (newValue: boolean) => void;
+  connectedNetwork: WiFiNetwork | null;
+  setConnectedNetwork: (newValue: WiFiNetwork) => void;
+  networks: WiFiNetwork[];
+  setNetworks: (newValue: WiFiNetwork[]) => void;
 }
 
 const NetworkDetailsCard: React.FC<NetworkDetailsCardProps> = (props) => {
-  // Set the initial state of the Switch
-  // console.log(props.wifiStatus);
-  const [checked, setChecked] = useState(props.wifiStatus);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [connectingSSID, setConnectingSSID] = useState<string>("");
+  const [connectingPassword, setConnectingPassword] = useState<string>("");
+  const [selectedNetwork, setSelectedNetwork] = useState<WiFiNetwork | null>(
+    null
+  );
+  const [wifiConnectionError, setWifiConnectionError] = useState<string>("");
+  const handleOpenDialogue = () => {
+    setDialogOpen(true);
+  };
+
+  const handleCloseDialogue = () => {
+    setConnectingPassword("");
+    setDialogOpen(false);
+  };
 
   // Handler function to toggle the Switch value
   const handleChange = async () => {
     props.setWifiStatus(await toggleWifiStatus(!props.wifiStatus));
-    setChecked(!props.wifiStatus);
+  };
+
+  const handleConnect = async () => {
+    if (connectingPassword !== "") {
+      setWifiConnectionError("");
+      const result: ConnectToWifiResponse = await connectToWifi(
+        connectingSSID!,
+        connectingPassword
+      );
+      if (result.status === "success") {
+        setDialogOpen(false);
+        props.setConnectedNetwork(selectedNetwork);
+      } else {
+        setWifiConnectionError(result.message);
+      }
+    } else {
+      setWifiConnectionError("Password cannot be empty");
+    }
   };
 
   return (
@@ -104,6 +139,27 @@ const NetworkDetailsCard: React.FC<NetworkDetailsCardProps> = (props) => {
         padding: "15px",
       }}
     >
+      <Dialog open={dialogOpen} onClose={handleCloseDialogue}>
+        <DialogTitle>{connectingSSID}</DialogTitle>
+        <DialogContent>
+          {/* Wifi Password Input */}
+          <TextField
+            label='Enter password'
+            variant='outlined'
+            margin='dense'
+            fullWidth
+            value={connectingPassword}
+            onChange={(e) => setConnectingPassword(e.target.value)}
+            error={!!wifiConnectionError}
+            helperText={wifiConnectionError}
+            type='password'
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialogue}>Cancel</Button>
+          <Button onClick={handleConnect}>Connect</Button>
+        </DialogActions>
+      </Dialog>
       <CardHeader
         // action={deviceWarning}
         title={"Network Settings"}
@@ -114,7 +170,7 @@ const NetworkDetailsCard: React.FC<NetworkDetailsCardProps> = (props) => {
           <FormControlLabel
             control={
               <Switch
-                checked={checked}
+                checked={props.wifiStatus}
                 onChange={handleChange}
                 color='primary' // Set the color you want for the Switch
               />
@@ -174,7 +230,7 @@ const NetworkDetailsCard: React.FC<NetworkDetailsCardProps> = (props) => {
                     backgroundColor: "background.paper",
                   }}
                 >
-                  {!props.wifiStatus ? (
+                  {!props.wifiStatus || props.networks == undefined ? (
                     <Typography
                       fontWeight='500'
                       style={{
@@ -189,7 +245,6 @@ const NetworkDetailsCard: React.FC<NetworkDetailsCardProps> = (props) => {
                     <List dense={true}>
                       {props.networks !== undefined &&
                         props.networks.map((network: WiFiNetwork) => {
-                          console.log(network.secure);
                           return (
                             <ListItem
                               style={{
@@ -203,6 +258,12 @@ const NetworkDetailsCard: React.FC<NetworkDetailsCardProps> = (props) => {
                                     color: "white",
                                     marginRight: "20px",
                                     fontWeight: "bold",
+                                  }}
+                                  onClick={() => {
+                                    setConnectingSSID(network.ssid);
+                                    setSelectedNetwork(network);
+                                    setWifiConnectionError("");
+                                    handleOpenDialogue();
                                   }}
                                 >
                                   Connect
@@ -219,7 +280,9 @@ const NetworkDetailsCard: React.FC<NetworkDetailsCardProps> = (props) => {
                               </ListItemAvatar>
                               <ListItemText
                                 primary={network.ssid}
-                                secondary={network.secure ? "Secured" : "Unsecured"}
+                                secondary={
+                                  network.secure ? "Secured" : "Unsecured"
+                                }
                               />
                             </ListItem>
                           );

@@ -48,16 +48,23 @@ export interface ToggleWifiResponse {
  */
 export interface ConnectToWifiResponse {
   /* Whether the network connection was successful */
-  status: boolean;
+  status: string;
   /* Elaboration on the status of the connection */
-  error?: string;
+  message: string;
 }
 
 /**
  * Represents the response from the backend when connecting to a network
  */
-export interface GetAvailabkeWifiResponse {
+export interface GetAvailableWifiResponse {
   interfaces: WiFiInterfaces[];
+}
+
+/**
+ * Represents the response from the backend when requesting the currently connected network
+ */
+export interface GetConnectedNetworkResponse {
+  network: string;
 }
 
 export interface WiFiInterfaces {

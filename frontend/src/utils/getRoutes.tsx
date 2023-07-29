@@ -49,8 +49,7 @@ const NavigationRoutes: React.FC<NavigationRoutesProps> = () => {
     >
       {/* <Toolbar /> */}
       {/* DeviceCards */}
-      <div style={{ minHeight: "14px" }} />
-      <div style={{ height: "calc(100vh - 14px)" }}>
+      <div style={{ height: "calc(100vh - 7.5em)" }}>
         <GetRoutes routes={routes} />
       </div>
     </Box>

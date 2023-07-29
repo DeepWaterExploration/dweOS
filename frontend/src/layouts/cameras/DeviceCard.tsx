@@ -419,7 +419,7 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
             </TextField>
           </div>
           <Accordion
-            defaultExpanded={true}
+            defaultExpanded={false}
             style={{
               width: "100%",
             }}

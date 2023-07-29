@@ -324,6 +324,10 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
         });
         return;
       } else {
+        // Tell the user an endpoint as been added
+        enqueueSnackbar(`Endpoint added: ${host}:${port}`, {
+          variant: "info",
+        });
         setEndpoints((prevEndpoints) =>
           [
             ...prevEndpoints,

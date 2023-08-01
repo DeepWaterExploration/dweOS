@@ -140,24 +140,55 @@ const NetworkDetailsCard: React.FC<NetworkDetailsCardProps> = (props) => {
       }}
     >
       <Dialog open={dialogOpen} onClose={handleCloseDialogue}>
-        <DialogTitle>{connectingSSID}</DialogTitle>
-        <DialogContent>
+        <DialogTitle sx={{ backgroundColor: "background.paper" }}>
+          {connectingSSID}
+        </DialogTitle>
+        <DialogContent
+          sx={{ backgroundColor: "background.paper", paddingBottom: "0px" }}
+        >
           {/* Wifi Password Input */}
           <TextField
             label='Enter password'
             variant='outlined'
-            margin='dense'
             fullWidth
             value={connectingPassword}
             onChange={(e) => setConnectingPassword(e.target.value)}
             error={!!wifiConnectionError}
             helperText={wifiConnectionError}
             type='password'
+            sx={{ width: "300px", marginBottom: "16px"}}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialogue}>Cancel</Button>
-          <Button onClick={handleConnect}>Connect</Button>
+        <DialogActions
+          sx={{
+            backgroundColor: "background.paper",
+            display: "flex",
+            justifyContent: "left",
+            padding : "0px 24px 24px 24px",
+            paddingBottom: "24px",
+          }}
+        >
+          <Button
+            variant='contained'
+            style={{
+              color: "white",
+              marginRight: "10px",
+              fontWeight: "bold",
+            }}
+            onClick={handleCloseDialogue}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant='contained'
+            style={{
+              color: "white",
+              fontWeight: "bold",
+            }}
+            onClick={handleConnect}
+          >
+            Connect
+          </Button>
         </DialogActions>
       </Dialog>
       <CardHeader
@@ -180,49 +211,58 @@ const NetworkDetailsCard: React.FC<NetworkDetailsCardProps> = (props) => {
         </FormGroup>
         {props.wifiStatus == true ? (
           <>
-            <List dense={true}>
-              <ListItem>
-                {props.connectedNetwork !== null ? (
-                  <ListItemAvatar>
-                    <Avatar>
-                      <DBMToSignalIcon
-                        signalStrength={props.connectedNetwork.signal_strength}
-                        secure={props.connectedNetwork.secure}
-                      />
-                    </Avatar>
-                  </ListItemAvatar>
-                ) : (
-                  <ListItemAvatar>
-                    <Avatar>
-                      <SignalWifi0BarIcon sx={{ fontSize: 22.5, mx: 0.5 }} />
-                    </Avatar>
-                  </ListItemAvatar>
-                )}
-                <ListItemText
-                  primary={props.connectedNetwork?.ssid ?? "Not Connected"}
-                  secondary={
-                    `${props.connectedNetwork?.signal_strength} dBm` ?? "N/A"
-                  }
-                  style={{ width: "200px" }}
-                />
-                <Button
-                  variant='contained'
-                  style={{
-                    color: "white",
-                    marginRight: "20px",
-                    fontWeight: "bold",
-                  }}
-                >
-                  Forget
-                </Button>
-                <Button
-                  variant='contained'
-                  style={{ color: "white", fontWeight: "bold" }}
-                >
-                  Disconnect
-                </Button>
-              </ListItem>
-            </List>
+            <Box
+              sx={{
+                backgroundColor: "background.paper",
+                margin: "16px",
+              }}
+            >
+              <List dense={true}>
+                <ListItem>
+                  {props.connectedNetwork !== null ? (
+                    <ListItemAvatar>
+                      <Avatar>
+                        <DBMToSignalIcon
+                          signalStrength={
+                            props.connectedNetwork.signal_strength
+                          }
+                          secure={props.connectedNetwork.secure}
+                        />
+                      </Avatar>
+                    </ListItemAvatar>
+                  ) : (
+                    <ListItemAvatar>
+                      <Avatar>
+                        <SignalWifi0BarIcon sx={{ fontSize: 22.5, mx: 0.5 }} />
+                      </Avatar>
+                    </ListItemAvatar>
+                  )}
+                  <ListItemText
+                    primary={props.connectedNetwork?.ssid ?? "Not Connected"}
+                    secondary={
+                      `${props.connectedNetwork?.signal_strength} dBm` ?? "N/A"
+                    }
+                    style={{ width: "200px" }}
+                  />
+                  <Button
+                    variant='contained'
+                    style={{
+                      color: "white",
+                      marginRight: "20px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Forget
+                  </Button>
+                  <Button
+                    variant='contained'
+                    style={{ color: "white", fontWeight: "bold" }}
+                  >
+                    Disconnect
+                  </Button>
+                </ListItem>
+              </List>
+            </Box>
             <Accordion
               style={{
                 width: "100%",
@@ -255,7 +295,7 @@ const NetworkDetailsCard: React.FC<NetworkDetailsCardProps> = (props) => {
                       No stream endpoint added
                     </Typography>
                   ) : (
-                    <List dense={true}>
+                    <List dense={true} style={{ maxHeight: 300, overflow: "auto" }}>
                       {props.networks !== undefined &&
                         props.networks.map((network: WiFiNetwork) => {
                           if (network.ssid === props.connectedNetwork?.ssid) {
@@ -272,7 +312,7 @@ const NetworkDetailsCard: React.FC<NetworkDetailsCardProps> = (props) => {
                                     variant='contained'
                                     style={{
                                       color: "white",
-                                      marginRight: "20px",
+                                      marginRight: "16px",
                                       fontWeight: "bold",
                                     }}
                                     onClick={() => {
@@ -311,7 +351,7 @@ const NetworkDetailsCard: React.FC<NetworkDetailsCardProps> = (props) => {
             </Accordion>
           </>
         ) : (
-          <div></div>
+          <></>
         )}
       </CardContent>
     </Card>

@@ -115,8 +115,9 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 self.wfile.write((response_content).encode("utf-8"))
 
                 self.wfile.write(
-                    json.dumps(wifiHandler.get_wifi_status()).encode("utf-8")
+                    json.dumps(wifiHandler.get_memory_info()).encode("utf-8")
                 )
+
             case "/getMemory":
                 # Set the response status code
                 self.send_response(200)

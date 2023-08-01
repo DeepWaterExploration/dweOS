@@ -1,7 +1,12 @@
 import { Grid } from "@mui/material";
 import React, { useEffect, useState } from "react";
 
-import { getAvailableWifi, getConnectedNetwork, toggleWifiStatus } from "./api";
+import {
+  getAvailableWifi,
+  getConnectedNetwork,
+  // getWifiStatus,
+  toggleWifiStatus,
+} from "./api";
 import NetworkDetailsCard from "./NetworkDetails";
 // import NetworkHistory from "./NetworkHistory";
 // import NetworkSettings from "./NetworkSettings";
@@ -13,6 +18,7 @@ const Wifi: React.FC = () => {
     null
   );
   const [availableNetworks, setAvailableNetworks] = useState<WiFiNetwork[]>([]);
+  const [savedNetworks, setSavedNetworks] = useState<WiFiNetwork[]>([]);
 
   useEffect(() => {
     const turnOnWifi = async () => {
@@ -20,16 +26,41 @@ const Wifi: React.FC = () => {
       const newWifiStatus = await toggleWifiStatus(true);
       setWifiStatus(newWifiStatus); // Update state using the temporary variable
       console.log("wifi: ", newWifiStatus);
-      const networks = await getAvailableWifi();
-      setAvailableNetworks(networks);
-      console.log("available networks: ", networks);
-      const connectedNetwork = await getConnectedNetwork(networks);
-      setConnectedNetwork(connectedNetwork);
-      console.log("connected network: ", connectedNetwork);
     };
+
+    // const updateWifiStatus = async () => {
+    //   const newWifiStatus = await toggleWifiStatus(true);
+    //   setWifiStatus(newWifiStatus);
+    // };
+
+    const updateNetworks = async () => {
+      if (wifiStatus) {
+        const networks = await getAvailableWifi();
+        setAvailableNetworks(networks);
+        // console.log("available networks: ", networks);
+        const connectedNetwork = await getConnectedNetwork(networks);
+        setConnectedNetwork(connectedNetwork);
+        // console.log("connected network: ", connectedNetwork);
+      } else {
+        setConnectedNetwork(null);
+        setAvailableNetworks([]);
+      }
+    };
+
+    const interval = setInterval(() => {
+      updateNetworks();
+    }, 5000);
+
+    // Initial updates
     turnOnWifi();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // updateWifiStatus();
+    updateNetworks();
+
+    // Clean up the interval on component unmount to avoid memory leaks
+    return () => {
+      clearInterval(interval);
+    };
+  }, [wifiStatus]);
 
   return (
     <Grid
@@ -51,6 +82,8 @@ const Wifi: React.FC = () => {
           networks={availableNetworks}
           setNetworks={setAvailableNetworks}
         />
+        // <NetworkHistory networks={savedNetworks} setNetworks={setSavedNetworks} />
+        // <NetworkSettings />
       )}
     </Grid>
   );

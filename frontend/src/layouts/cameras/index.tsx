@@ -83,7 +83,22 @@ const CamerasPage: React.FC = () => {
         justifyContent: "space-evenly",
       }}
     >
-      {exploreHD_cards}
+      {/* Sort devices */}
+      {exploreHD_cards.sort((a, b) => {
+        let usbInfoA = a.props.device.info.usbInfo.split(".");
+        let usbInfoB = b.props.device.info.usbInfo.split(".");
+        for (let i = 0; i < usbInfoA.length; i++) {
+          if (i > usbInfoB.length - 1) return 1;
+          if (parseInt(usbInfoA[i]) > parseInt(usbInfoB[i])) {
+            return 1;
+          } else if (parseInt(usbInfoA[i]) < parseInt(usbInfoB[i])) {
+            return -1;
+          } else {
+            continue;
+          }
+        }
+        return 1;
+      })}
     </Grid>
   );
 };

@@ -22,8 +22,6 @@ include_directories(
     thirdparty/websocketpp
 )
 
-configure_file(src/apps/test.xml test.xml COPYONLY)
-
 add_subdirectory(thirdparty/cwalk)
 add_subdirectory(thirdparty/fmt)
 add_subdirectory(thirdparty/json)

@@ -556,9 +556,22 @@ interface CameraControlsProps {
   usbInfo: string;
 }
 
+interface ControlState {
+  id: number;
+  name: string;
+  setControlValue:
+    | ((value: number) => void)
+    | ((value: boolean) => void)
+    | ((value: string) => void);
+  defaultValue: number | string | boolean;
+  type: controlType;
+}
+
 const CameraControls: React.FC<CameraControlsProps> = (props) => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { controls, usbInfo } = props;
+
+  const setStatesList: ControlState[] = [];
 
   return (
     <Accordion
@@ -584,15 +597,23 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
               case controlType.INTEGER: {
                 const { name, id } = control;
                 const { min, max, step } = control.flags;
-                const defaultValue = control.value;
+                const defaultValue = control.flags.default_value;
                 const [controlValue, setControlValue] = useState<number>(
                   defaultValue as number
                 );
                 const [controlValueSlider, setControlValueSlider] =
                   useState<number>(defaultValue as number);
+                setStatesList.push({
+                  id,
+                  name,
+                  setControlValue,
+                  defaultValue,
+                  type: control.flags.type,
+                } as ControlState);
 
                 useDidMountEffect(() => {
                   setUVCControl(usbInfo, controlValue, id);
+                  setControlValueSlider(controlValue);
                 }, [controlValue]);
 
                 return (
@@ -611,6 +632,7 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                       min={min}
                       max={max}
                       step={step}
+                      value={controlValueSlider}
                       defaultValue={defaultValue as number}
                       style={{
                         marginLeft: "20px",
@@ -622,13 +644,22 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
               }
               case controlType.BOOLEAN: {
                 let { name, id } = control;
-                const defaultValue = control.value === 1 ? true : false;
+                const defaultValue =
+                  control.flags.default_value === 1 ? true : false;
                 if (name.includes("White Balance")) {
                   name = "AI TrueColor Technology™";
                 }
                 const [controlValue, setControlValue] = useState<boolean>(
                   defaultValue as boolean
                 );
+
+                setStatesList.push({
+                  id,
+                  name,
+                  setControlValue,
+                  defaultValue,
+                  type: control.flags.type,
+                });
 
                 useDidMountEffect(() => {
                   setUVCControl(usbInfo, controlValue ? 1 : 0, id);
@@ -638,8 +669,9 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                   <>
                     <span>{name}</span>
                     <Switch
+                      checked={controlValue}
                       onChange={(_, checked) => {
-                        setControlValue(checked);
+                        setControlValue(!controlValue);
                       }}
                       name={`control-${id}`}
                       defaultChecked={defaultValue}
@@ -668,11 +700,21 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                 }
 
                 const defaultValue = Object.keys(menuObject).find(
-                  (key) => menuObject[key] === control.value
+                  (key) => menuObject[key] === control.flags.default_value
                 );
                 const [controlValue, setControlValue] = useState<string>(
                   defaultValue!
                 );
+
+                if (defaultValue) {
+                  setStatesList.push({
+                    id,
+                    name,
+                    setControlValue,
+                    defaultValue,
+                    type: control.flags.type,
+                  });
+                }
 
                 useDidMountEffect(() => {
                   setUVCControl(usbInfo, menuObject[controlValue], id);
@@ -715,6 +757,34 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
             }
           })}
         </FormGroup>
+        <LineBreak />
+        <Button
+          sx={{ width: "100%" }}
+          variant='outlined'
+          onClick={() => {
+            for (let control of setStatesList) {
+              switch (control.type) {
+                case controlType.INTEGER:
+                  (control.setControlValue as (value: number) => void)(
+                    control.defaultValue as number
+                  );
+                  break;
+                case controlType.BOOLEAN:
+                  (control.setControlValue as (value: boolean) => void)(
+                    control.defaultValue as boolean
+                  );
+                  break;
+                case controlType.MENU:
+                  (control.setControlValue as (value: string) => void)(
+                    control.defaultValue as string
+                  );
+                  break;
+              }
+            }
+          }}
+        >
+          Reset Controls
+        </Button>
       </AccordionDetails>
     </Accordion>
   );

@@ -9,29 +9,26 @@ import { WiFiNetwork } from "./types";
 
 const Wifi: React.FC = () => {
   const [wifiStatus, setWifiStatus] = useState<boolean | null>(null);
-  const [connectedNetwork, setconnectedNetwork] = useState<WiFiNetwork | null>(
+  const [connectedNetwork, setConnectedNetwork] = useState<WiFiNetwork | null>(
     null
   );
-  const [networks, setNetworks] = useState<WiFiNetwork[]>([]);
+  const [availableNetworks, setAvailableNetworks] = useState<WiFiNetwork[]>([]);
+
   useEffect(() => {
     const turnOnWifi = async () => {
-      setWifiStatus(await toggleWifiStatus(true));
-      setconnectedNetwork(await getConnectedNetwork(networks));
-      setNetworks(await getAvailableWifi());
+      console.log("turning on wifi", wifiStatus);
+      const newWifiStatus = await toggleWifiStatus(true);
+      setWifiStatus(newWifiStatus); // Update state using the temporary variable
+      console.log("wifi: ", newWifiStatus);
+      const networks = await getAvailableWifi();
+      setAvailableNetworks(networks);
+      console.log("available networks: ", networks);
+      const connectedNetwork = await getConnectedNetwork(networks);
+      setConnectedNetwork(connectedNetwork);
+      console.log("connected network: ", connectedNetwork);
     };
     turnOnWifi();
-
-    const interval = setInterval(async () => {
-      if (wifiStatus) {
-        setconnectedNetwork(await getConnectedNetwork(networks));
-        setNetworks(await getAvailableWifi());
-      }
-    }, 1000);
-
-    // Clean up the interval on component unmount to avoid memory leaks
-    return () => {
-      clearInterval(interval);
-    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -45,17 +42,15 @@ const Wifi: React.FC = () => {
         padding: "0 3em",
       }}
     >
-      {wifiStatus !== null ? (
+      {wifiStatus !== null && (
         <NetworkDetailsCard
           wifiStatus={wifiStatus}
           setWifiStatus={setWifiStatus}
           connectedNetwork={connectedNetwork}
-          setConnectedNetwork={setconnectedNetwork}
-          networks={networks}
-          setNetworks={setNetworks}
+          setConnectedNetwork={setConnectedNetwork}
+          networks={availableNetworks}
+          setNetworks={setAvailableNetworks}
         />
-      ) : (
-        <div></div>
       )}
     </Grid>
   );

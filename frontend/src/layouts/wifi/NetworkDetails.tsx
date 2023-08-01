@@ -118,7 +118,7 @@ const NetworkDetailsCard: React.FC<NetworkDetailsCardProps> = (props) => {
         connectingSSID!,
         connectingPassword
       );
-      if (result.status === "success") {
+      if (result.status === "success" && selectedNetwork !== null) {
         setDialogOpen(false);
         props.setConnectedNetwork(selectedNetwork);
       } else {
@@ -182,14 +182,27 @@ const NetworkDetailsCard: React.FC<NetworkDetailsCardProps> = (props) => {
           <>
             <List dense={true}>
               <ListItem>
-                <ListItemAvatar>
-                  <Avatar>
-                    <SignalWifi4BarIcon sx={{ fontSize: 22.5, mx: 0.5 }} />
-                  </Avatar>
-                </ListItemAvatar>
+                {props.connectedNetwork !== null ? (
+                  <ListItemAvatar>
+                    <Avatar>
+                      <DBMToSignalIcon
+                        signalStrength={props.connectedNetwork.signal_strength}
+                        secure={props.connectedNetwork.secure}
+                      />
+                    </Avatar>
+                  </ListItemAvatar>
+                ) : (
+                  <ListItemAvatar>
+                    <Avatar>
+                      <SignalWifi0BarIcon sx={{ fontSize: 22.5, mx: 0.5 }} />
+                    </Avatar>
+                  </ListItemAvatar>
+                )}
                 <ListItemText
-                  primary={"Network Name"}
-                  secondary={"Network Strength"}
+                  primary={props.connectedNetwork?.ssid ?? "Not Connected"}
+                  secondary={
+                    `${props.connectedNetwork?.signal_strength} dBm` ?? "N/A"
+                  }
                   style={{ width: "200px" }}
                 />
                 <Button
@@ -245,47 +258,51 @@ const NetworkDetailsCard: React.FC<NetworkDetailsCardProps> = (props) => {
                     <List dense={true}>
                       {props.networks !== undefined &&
                         props.networks.map((network: WiFiNetwork) => {
-                          return (
-                            <ListItem
-                              style={{
-                                margin: "10px 0px",
-                              }}
-                              key={`${network.ssid}`}
-                              secondaryAction={
-                                <Button
-                                  variant='contained'
-                                  style={{
-                                    color: "white",
-                                    marginRight: "20px",
-                                    fontWeight: "bold",
-                                  }}
-                                  onClick={() => {
-                                    setConnectingSSID(network.ssid);
-                                    setSelectedNetwork(network);
-                                    setWifiConnectionError("");
-                                    handleOpenDialogue();
-                                  }}
-                                >
-                                  Connect
-                                </Button>
-                              }
-                            >
-                              <ListItemAvatar>
-                                <Avatar>
-                                  <DBMToSignalIcon
-                                    signalStrength={network.signal_strength}
-                                    secure={network.secure}
-                                  />
-                                </Avatar>
-                              </ListItemAvatar>
-                              <ListItemText
-                                primary={network.ssid}
-                                secondary={
-                                  network.secure ? "Secured" : "Unsecured"
+                          if (network.ssid === props.connectedNetwork?.ssid) {
+                            return null;
+                          } else {
+                            return (
+                              <ListItem
+                                style={{
+                                  margin: "10px 0px",
+                                }}
+                                key={`${network.ssid}`}
+                                secondaryAction={
+                                  <Button
+                                    variant='contained'
+                                    style={{
+                                      color: "white",
+                                      marginRight: "20px",
+                                      fontWeight: "bold",
+                                    }}
+                                    onClick={() => {
+                                      setConnectingSSID(network.ssid);
+                                      setSelectedNetwork(network);
+                                      setWifiConnectionError("");
+                                      handleOpenDialogue();
+                                    }}
+                                  >
+                                    Connect
+                                  </Button>
                                 }
-                              />
-                            </ListItem>
-                          );
+                              >
+                                <ListItemAvatar>
+                                  <Avatar>
+                                    <DBMToSignalIcon
+                                      signalStrength={network.signal_strength}
+                                      secure={network.secure}
+                                    />
+                                  </Avatar>
+                                </ListItemAvatar>
+                                <ListItemText
+                                  primary={network.ssid}
+                                  secondary={
+                                    network.secure ? "Secured" : "Unsecured"
+                                  }
+                                />
+                              </ListItem>
+                            );
+                          }
                         })}
                     </List>
                   )}

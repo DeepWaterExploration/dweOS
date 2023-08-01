@@ -55,14 +55,10 @@ export async function getConnectedNetwork(
     .then((response: Response) => response.json())
     .then((data: GetConnectedNetworkResponse) => {
       if (!(data.network === "")) {
-        console.log(`Connected to network: "${data.network}"`);
-        console.log("Available networks: ", networks);
         const connectedNetwork = networks.find((network: WiFiNetwork) => {
-          console.log(`Checking if ${network.ssid} === ${data.network}`);
           return network.ssid === data.network;
         });
         if (connectedNetwork) {
-          console.log("Connected to network: ", connectedNetwork);
           return connectedNetwork;
         }
       }

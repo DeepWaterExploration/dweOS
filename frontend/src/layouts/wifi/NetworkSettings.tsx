@@ -41,6 +41,7 @@ import { ConnectToWifiResponse, WiFiNetwork } from "./types";
 export interface DBMToSignalIconProps {
   /* the signal strength in dBm */
   signalStrength: number;
+  /* whether the network is secure or not */
   secure: boolean;
 }
 
@@ -140,7 +141,7 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
       }}
     >
       <Dialog open={dialogOpen} onClose={handleCloseDialogue}>
-        <DialogTitle sx={{ backgroundColor: "background.paper" }}>
+        <DialogTitle sx={{ backgroundColor: "background.paper", paddingBottom: "0px" }}>
           {connectingSSID}
         </DialogTitle>
         <DialogContent
@@ -156,7 +157,7 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
             error={!!wifiConnectionError}
             helperText={wifiConnectionError}
             type='password'
-            sx={{ width: "300px", marginBottom: "16px"}}
+            sx={{ width: "300px", margin: "16px 0px" }}
           />
         </DialogContent>
         <DialogActions
@@ -164,7 +165,7 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
             backgroundColor: "background.paper",
             display: "flex",
             justifyContent: "left",
-            padding : "0px 24px 24px 24px",
+            padding: "0px 24px 24px 24px",
             paddingBottom: "24px",
           }}
         >
@@ -201,6 +202,7 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
           <FormControlLabel
             control={
               <Switch
+                disabled={true}
                 checked={props.wifiStatus}
                 onChange={handleChange}
                 color='primary' // Set the color you want for the Switch
@@ -283,7 +285,7 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
                     backgroundColor: "background.paper",
                   }}
                 >
-                  {!props.wifiStatus || props.networks == undefined ? (
+                  {!props.wifiStatus || props.availableNetworks == null ? (
                     <Typography
                       fontWeight='500'
                       style={{
@@ -296,8 +298,8 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
                     </Typography>
                   ) : (
                     <List dense={true} style={{ maxHeight: 300, overflow: "auto" }}>
-                      {props.networks !== undefined &&
-                        props.networks.map((network: WiFiNetwork) => {
+                      {props.availableNetworks !== null &&
+                        props.availableNetworks.map((network: WiFiNetwork) => {
                           if (network.ssid === props.connectedNetwork?.ssid) {
                             return null;
                           } else {

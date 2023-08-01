@@ -7,9 +7,9 @@ import {
   // getWifiStatus,
   toggleWifiStatus,
 } from "./api";
-import NetworkDetailsCard from "./NetworkDetails";
-// import NetworkHistory from "./NetworkHistory";
-// import NetworkSettings from "./NetworkSettings";
+// import NetworkDetailsCard from "./NetworkDetails";
+// import NetworkHistoryCard from "./NetworkHistory";
+import NetworkSettingsCard from "./NetworkSettings";
 import { WiFiNetwork } from "./types";
 
 const Wifi: React.FC = () => {
@@ -74,7 +74,7 @@ const Wifi: React.FC = () => {
       }}
     >
       {wifiStatus !== null && (
-        <NetworkDetailsCard
+        <NetworkSettingsCard
           wifiStatus={wifiStatus}
           setWifiStatus={setWifiStatus}
           connectedNetwork={connectedNetwork}
@@ -82,8 +82,8 @@ const Wifi: React.FC = () => {
           networks={availableNetworks}
           setNetworks={setAvailableNetworks}
         />
-        // <NetworkHistory networks={savedNetworks} setNetworks={setSavedNetworks} />
-        // <NetworkSettings />
+        // <NetworkHistoryCard networks={savedNetworks} setNetworks={setSavedNetworks} />
+        // <NetworkDetailsCard />
       )}
     </Grid>
   );

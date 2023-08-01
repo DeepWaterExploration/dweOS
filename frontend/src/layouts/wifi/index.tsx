@@ -79,8 +79,8 @@ const Wifi: React.FC = () => {
           setWifiStatus={setWifiStatus}
           connectedNetwork={connectedNetwork}
           setConnectedNetwork={setConnectedNetwork}
-          networks={availableNetworks}
-          setNetworks={setAvailableNetworks}
+          availableNetworks={availableNetworks}
+          setAvailableNetworks={setAvailableNetworks}
         />
         // <NetworkHistoryCard networks={savedNetworks} setNetworks={setSavedNetworks} />
         // <NetworkDetailsCard />

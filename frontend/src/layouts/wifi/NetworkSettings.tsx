@@ -86,8 +86,8 @@ export interface NetworkSettingsCardProps {
   setWifiStatus: (newValue: boolean) => void;
   connectedNetwork: WiFiNetwork | null;
   setConnectedNetwork: (newValue: WiFiNetwork) => void;
-  networks: WiFiNetwork[];
-  setNetworks: (newValue: WiFiNetwork[]) => void;
+  availableNetworks: WiFiNetwork[];
+  setAvailableNetworks: (newValue: WiFiNetwork[]) => void;
 }
 
 const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {

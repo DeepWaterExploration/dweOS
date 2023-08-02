@@ -1,7 +1,6 @@
 import {
   Avatar,
   Card,
-  Divider,
   Grid,
   IconButton,
   List,

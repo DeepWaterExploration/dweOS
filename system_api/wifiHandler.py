@@ -221,6 +221,38 @@ def forget_wifi(ssid: str):
         return {"success": False}
 
 
+def disconnect_wifi(ssid: str):
+    """
+    Disconnects from a Wi-Fi network.
+
+    Parameters:
+
+    - ssid (str): The SSID of the network to disconnect from.
+
+    Returns:
+    - success (bool): True if the network was successfully disconnected from, False otherwise.
+    """
+
+    current_os = platform.system()
+    match current_os:
+        case "Windows":
+            cmd = ["netsh", "wlan", "disconnect"]
+        case "Linux":
+            cmd = ["nmcli", "connection", "down", f"{ssid}"]
+        case "Darwin":  # macOS
+            cmd = ["networksetup", "-setairportpower", "en0", "off"]
+        case _:
+            return {"success": False}
+    try:
+        # Run the command and capture the output and errors
+        subprocess.run(cmd, check=True)
+        return {"success": True}
+    except Exception as e:
+        print("Error: An unexpected error occurred.")
+        print("Error message: ", str(e))
+        return {"success": False}
+
+
 def toggle_wifi_status(
     wifi_on: bool,
 ):

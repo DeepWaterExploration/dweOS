@@ -34,7 +34,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import { useState } from "react";
 
-import { connectToWifi, toggleWifiStatus } from "./api";
+import { connectToWifi, forgetNetwork, disconnectNetwork, toggleWifiStatus } from "./api";
 import { ConnectToWifiResponse, WiFiNetwork } from "./types";
 
 export interface DBMToSignalIconProps {
@@ -84,31 +84,54 @@ export interface NetworkSettingsCardProps {
   wifiStatus: boolean;
   setWifiStatus: (newValue: boolean) => void;
   connectedNetwork: WiFiNetwork | null;
-  setConnectedNetwork: (newValue: WiFiNetwork) => void;
+  setConnectedNetwork: (newValue: WiFiNetwork | null) => void;
   availableNetworks: WiFiNetwork[] | null;
   setAvailableNetworks: (newValue: WiFiNetwork[]) => void;
 }
 
 const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [connectingSSID, setConnectingSSID] = useState<string>("");
   const [connectingPassword, setConnectingPassword] = useState<string>("");
   const [selectedNetwork, setSelectedNetwork] = useState<WiFiNetwork | null>(
     null
   );
   const [wifiConnectionError, setWifiConnectionError] = useState<string>("");
-  const handleOpenDialogue = () => {
-    setDialogOpen(true);
-  };
-
-  const handleCloseDialogue = () => {
-    setConnectingPassword("");
-    setDialogOpen(false);
-  };
 
   // Handler function to toggle the Switch value
   const handleChange = async () => {
     props.setWifiStatus(await toggleWifiStatus(!props.wifiStatus));
+  };
+
+  // Dialog state functions
+  const [dialogOpenForget, setDialogOpenForget] = useState(false);
+  const [dialogOpenDisconnect, setDialogOpenDisconnect] = useState(false);
+  const [dialogOpenConnect, setDialogOpenConnect] = useState(false);
+
+  const handleOpenDialogueForget = () => {
+    setDialogOpenForget(true);
+  };
+
+  const handleCloseDialogueForget = () => {
+    setDialogOpenForget(false);
+  };
+
+  const handleOpenDialogueDisconnect = () => {
+    setDialogOpenDisconnect(true);
+  };
+
+  const handleCloseDialogueDisconnect = () => {
+    setConnectingPassword("");
+    setDialogOpenDisconnect(false);
+  };
+
+  const handleOpenDialogueConnect = () => {
+    setWifiConnectionError("");
+    setDialogOpenConnect(true);
+  };
+
+  const handleCloseDialogueConnect = () => {
+    setConnectingPassword("");
+    setDialogOpenConnect(false);
   };
 
   const handleConnect = async () => {
@@ -119,13 +142,29 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
         connectingPassword
       );
       if (result.status === "success" && selectedNetwork !== null) {
-        setDialogOpen(false);
         props.setConnectedNetwork(selectedNetwork);
+        handleCloseDialogueConnect();
       } else {
         setWifiConnectionError(result.message);
       }
     } else {
       setWifiConnectionError("Password cannot be empty");
+    }
+  };
+
+  const handleForget = async () => {
+    if (selectedNetwork !== null) {
+      await forgetNetwork(selectedNetwork.ssid);
+      handleCloseDialogueForget();
+      props.setConnectedNetwork(null);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    if (selectedNetwork !== null) {
+      await disconnectNetwork(props.connectedNetwork!.ssid);
+      handleCloseDialogueDisconnect();
+      props.setConnectedNetwork(null);
     }
   };
 
@@ -139,14 +178,21 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
         padding: "15px",
       }}
     >
-      <Dialog open={dialogOpen} onClose={handleCloseDialogue}>
+      {/* Connect to a WiFi network */}
+      <Dialog open={dialogOpenConnect} onClose={handleCloseDialogueConnect}>
         <DialogTitle
-          sx={{ backgroundColor: "background.paper", paddingBottom: "0px" }}
+          sx={{
+            backgroundColor: "background.paper",
+            paddingBottom: "0px",
+          }}
         >
-          {connectingSSID}
+          Connect to {selectedNetwork?.ssid}
         </DialogTitle>
         <DialogContent
-          sx={{ backgroundColor: "background.paper", paddingBottom: "0px" }}
+          sx={{
+            backgroundColor: "background.paper",
+            paddingBottom: "0px",
+          }}
         >
           {/* Wifi Password Input */}
           <TextField
@@ -158,7 +204,10 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
             error={!!wifiConnectionError}
             helperText={wifiConnectionError}
             type='password'
-            sx={{ width: "300px", margin: "16px 0px" }}
+            sx={{
+              width: "300px",
+              margin: "16px 0px",
+            }}
           />
         </DialogContent>
         <DialogActions
@@ -177,7 +226,7 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
               marginRight: "10px",
               fontWeight: "bold",
             }}
-            onClick={handleCloseDialogue}
+            onClick={handleCloseDialogueConnect}
           >
             Cancel
           </Button>
@@ -187,9 +236,114 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
               color: "white",
               fontWeight: "bold",
             }}
-            onClick={handleConnect}
+            onClick={() => {
+              handleConnect();
+            }}
           >
             Connect
+          </Button>
+        </DialogActions>
+      </Dialog>
+      {/* Disconnect from a network */}
+      <Dialog
+        open={dialogOpenDisconnect}
+        onClose={handleCloseDialogueDisconnect}
+      >
+        <DialogTitle
+          sx={{
+            backgroundColor: "background.paper",
+          }}
+        >
+          Disconnect from {selectedNetwork?.ssid}
+        </DialogTitle>
+        <DialogContent
+          sx={{
+            backgroundColor: "background.paper",
+          }}
+        >
+          Are you sure you want to disconnect from this network?
+        </DialogContent>
+        <DialogActions
+          sx={{
+            backgroundColor: "background.paper",
+            display: "flex",
+            justifyContent: "left",
+            padding: "0px 24px 24px 24px",
+            paddingBottom: "24px",
+          }}
+        >
+          <Button
+            variant='contained'
+            style={{
+              color: "white",
+              marginRight: "10px",
+              fontWeight: "bold",
+            }}
+            onClick={handleCloseDialogueForget}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant='contained'
+            style={{
+              color: "white",
+              fontWeight: "bold",
+            }}
+            onClick={() => {
+              handleDisconnect();
+            }}
+          >
+            Disconnect
+          </Button>
+        </DialogActions>
+      </Dialog>
+      {/* Forget a network */}
+      <Dialog open={dialogOpenForget} onClose={handleCloseDialogueForget}>
+        <DialogTitle
+          sx={{
+            backgroundColor: "background.paper",
+          }}
+        >
+          Forget {selectedNetwork?.ssid}
+        </DialogTitle>
+        <DialogContent
+          sx={{
+            backgroundColor: "background.paper",
+          }}
+        >
+          Are you sure you want to forget this network?
+        </DialogContent>
+        <DialogActions
+          sx={{
+            backgroundColor: "background.paper",
+            display: "flex",
+            justifyContent: "left",
+            padding: "0px 24px 24px 24px",
+            paddingBottom: "24px",
+          }}
+        >
+          <Button
+            variant='contained'
+            style={{
+              color: "white",
+              marginRight: "10px",
+              fontWeight: "bold",
+            }}
+            onClick={handleCloseDialogueForget}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant='contained'
+            style={{
+              color: "white",
+              fontWeight: "bold",
+            }}
+            onClick={() => {
+              handleForget();
+            }}
+          >
+            Forget
           </Button>
         </DialogActions>
       </Dialog>
@@ -254,12 +408,20 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
                       marginRight: "20px",
                       fontWeight: "bold",
                     }}
+                    onClick={() => {
+                      setSelectedNetwork(props.connectedNetwork);
+                      handleOpenDialogueForget();
+                    }}
                   >
                     Forget
                   </Button>
                   <Button
                     variant='contained'
                     style={{ color: "white", fontWeight: "bold" }}
+                    onClick={() => {
+                      setSelectedNetwork(props.connectedNetwork);
+                      handleOpenDialogueDisconnect();
+                    }}
                   >
                     Disconnect
                   </Button>
@@ -325,8 +487,7 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
                                     onClick={() => {
                                       setConnectingSSID(network.ssid);
                                       setSelectedNetwork(network);
-                                      setWifiConnectionError("");
-                                      handleOpenDialogue();
+                                      handleOpenDialogueConnect();
                                     }}
                                   >
                                     Connect

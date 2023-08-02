@@ -246,3 +246,36 @@ export async function forgetNetwork(wifi_ssid: string): Promise<boolean> {
       return false;
     });
 }
+
+
+/**
+ * Toggles the wifi capability of the device.
+ * @returns {Promise<GetWifiStatusResponse>} - A promise that resolves to the result of the request.
+ * @throws {Error} - If the request to toggle the wifi fails.
+ */
+export async function disconnectNetwork(wifi_ssid: string): Promise<boolean> {
+  const url = `${SYSTEM_API_URL}/disconnectNetwork`;
+  const data = {
+    wifi_ssid: wifi_ssid,
+  };
+  const config: RequestInit = {
+    mode: "cors",
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    // credentials: "include",
+    body: JSON.stringify(data),
+  };
+  return await fetch(url, config)
+    // Process the response data
+    .then((response: Response) => response.json())
+    .then((data: GetWifiStatusResponse) => {
+      return data.enabled;
+    })
+    .catch((error: Error) => {
+      console.log(`Failed to forget ${wifi_ssid}`);
+      console.error(error);
+      return false;
+    });
+}

@@ -225,6 +225,22 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
                 # Send the response content encoded in utf-8
                 self.wfile.write((response_content).encode("utf-8"))
+            case "/disconnectNetwork":
+                # Extract wifi ssid from query parameters
+                wifi_ssid = parsed_data["wifi_ssid"]
+
+                # Set the response status code
+                self.send_response(200)
+
+                # Set the response headers
+                self.send_header("Content-type", "application/json")
+                self.end_headers()
+
+                # Build the response content as a dictionary and convert to JSON format
+                response_content = json.dumps(wifiHandler.disconnect_wifi(wifi_ssid))
+
+                # Send the response content encoded in utf-8
+                self.wfile.write((response_content).encode("utf-8"))
             case _:
                 # Set the response status code
                 self.send_response(404)

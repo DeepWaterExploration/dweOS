@@ -37,7 +37,6 @@ import { useState } from "react";
 import { connectToWifi, toggleWifiStatus } from "./api";
 import { ConnectToWifiResponse, WiFiNetwork } from "./types";
 
-
 export interface DBMToSignalIconProps {
   /* the signal strength in dBm */
   signalStrength: number;
@@ -86,7 +85,7 @@ export interface NetworkSettingsCardProps {
   setWifiStatus: (newValue: boolean) => void;
   connectedNetwork: WiFiNetwork | null;
   setConnectedNetwork: (newValue: WiFiNetwork) => void;
-  availableNetworks: WiFiNetwork[];
+  availableNetworks: WiFiNetwork[] | null;
   setAvailableNetworks: (newValue: WiFiNetwork[]) => void;
 }
 
@@ -141,7 +140,9 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
       }}
     >
       <Dialog open={dialogOpen} onClose={handleCloseDialogue}>
-        <DialogTitle sx={{ backgroundColor: "background.paper", paddingBottom: "0px" }}>
+        <DialogTitle
+          sx={{ backgroundColor: "background.paper", paddingBottom: "0px" }}
+        >
           {connectingSSID}
         </DialogTitle>
         <DialogContent
@@ -283,6 +284,7 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
                 <Box
                   sx={{
                     backgroundColor: "background.paper",
+                    margin: "0",
                   }}
                 >
                   {!props.wifiStatus || props.availableNetworks == null ? (
@@ -297,7 +299,10 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
                       No stream endpoint added
                     </Typography>
                   ) : (
-                    <List dense={true} style={{ maxHeight: 300, overflow: "auto" }}>
+                    <List
+                      dense={true}
+                      style={{ maxHeight: 300, overflow: "auto" }}
+                    >
                       {props.availableNetworks !== null &&
                         props.availableNetworks.map((network: WiFiNetwork) => {
                           if (network.ssid === props.connectedNetwork?.ssid) {

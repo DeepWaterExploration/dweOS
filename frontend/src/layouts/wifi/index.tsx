@@ -4,11 +4,12 @@ import React, { useEffect, useState } from "react";
 import {
   getAvailableWifi,
   getConnectedNetwork,
+  getSavedWifi,
   // getWifiStatus,
   toggleWifiStatus,
 } from "./api";
 // import NetworkDetailsCard from "./NetworkDetails";
-// import NetworkHistoryCard from "./NetworkHistory";
+import NetworkHistoryCard from "./NetworkHistory";
 import NetworkSettingsCard from "./NetworkSettings";
 import { WiFiNetwork } from "./types";
 
@@ -17,8 +18,12 @@ const Wifi: React.FC = () => {
   const [connectedNetwork, setConnectedNetwork] = useState<WiFiNetwork | null>(
     null
   );
-  const [availableNetworks, setAvailableNetworks] = useState<WiFiNetwork[]>([]);
-  const [savedNetworks, setSavedNetworks] = useState<WiFiNetwork[]>([]);
+  const [availableNetworks, setAvailableNetworks] = useState<
+    WiFiNetwork[] | null
+  >(null);
+  const [savedNetworks, setSavedNetworks] = useState<WiFiNetwork[] | null>(
+    null
+  );
 
   useEffect(() => {
     const turnOnWifi = async () => {
@@ -41,9 +46,13 @@ const Wifi: React.FC = () => {
         const connectedNetwork = await getConnectedNetwork(networks);
         setConnectedNetwork(connectedNetwork);
         // console.log("connected network: ", connectedNetwork);
+        const savedNetworks = await getSavedWifi();
+        console.log("saved networks: ", savedNetworks);
+        setSavedNetworks(savedNetworks);
       } else {
         setConnectedNetwork(null);
-        setAvailableNetworks([]);
+        setAvailableNetworks(null);
+        setSavedNetworks(null);
       }
     };
 
@@ -74,16 +83,21 @@ const Wifi: React.FC = () => {
       }}
     >
       {wifiStatus !== null && (
-        <NetworkSettingsCard
-          wifiStatus={wifiStatus}
-          setWifiStatus={setWifiStatus}
-          connectedNetwork={connectedNetwork}
-          setConnectedNetwork={setConnectedNetwork}
-          availableNetworks={availableNetworks}
-          setAvailableNetworks={setAvailableNetworks}
-        />
-        // <NetworkHistoryCard networks={savedNetworks} setNetworks={setSavedNetworks} />
-        // <NetworkDetailsCard />
+        <>
+          <NetworkSettingsCard
+            wifiStatus={wifiStatus}
+            setWifiStatus={setWifiStatus}
+            connectedNetwork={connectedNetwork}
+            setConnectedNetwork={setConnectedNetwork}
+            availableNetworks={availableNetworks}
+            setAvailableNetworks={setAvailableNetworks}
+          />
+          <NetworkHistoryCard
+            savedNetworks={savedNetworks}
+            setNetworks={setSavedNetworks}
+          />
+          {/* <NetworkDetailsCard /> */}
+        </>
       )}
     </Grid>
   );

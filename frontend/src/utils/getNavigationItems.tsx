@@ -28,6 +28,7 @@ const NavigationItems: React.FC<NavigationItemsProps> = ({
   const communicationsRoutes = routes.filter(
     (route) => route.category === "Communications"
   );
+  const optionsRoutes = routes.filter((route) => route.category === "Options");
   const locationName = useLocation().pathname;
   return (
     <React.Fragment>
@@ -122,6 +123,74 @@ const NavigationItems: React.FC<NavigationItemsProps> = ({
         </Typography>
       </ListSubheader>
       {communicationsRoutes.map((route) => {
+        if (route.route && route.component) {
+          return (
+            <ListItem
+              disablePadding
+              key={route.key}
+              component={Link}
+              to={route.route}
+              sx={{ display: "block" }}
+            >
+              <ListItemButton
+                sx={{
+                  minHeight: 48,
+                  justifyContent: open ? "initial" : "center",
+                  px: 2.5,
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 0,
+                    mr: open ? 3 : "auto",
+                    justifyContent: "center",
+                    color: `${
+                      locationName === route.route
+                        ? theme.palette.primary.main
+                        : "inherit"
+                    } !important`,
+                  }}
+                >
+                  {route.icon}
+                </ListItemIcon>
+                <ListItemText
+                  primary={route.name}
+                  sx={{
+                    opacity: open ? 1 : 0,
+                    color: `${
+                      locationName === route.route
+                        ? theme.palette.primary.main
+                        : "inherit"
+                    } !important`,
+                  }}
+                />
+              </ListItemButton>
+            </ListItem>
+          );
+        }
+      })}
+      <Divider sx={{ my: 1 }} />
+      <ListSubheader
+        component='div'
+        inset
+        sx={{ background: "inherit !important" }}
+      >
+        <Typography
+          variant='inherit'
+          fontWeight='bold'
+          sx={{
+            opacity: open ? 1 : 0,
+            color: `${
+              locationName.includes("options")
+                ? theme.palette.primary.main
+                : "inherit"
+            } !important`,
+          }}
+        >
+          Options
+        </Typography>
+      </ListSubheader>
+      {optionsRoutes.map((route) => {
         if (route.route && route.component) {
           return (
             <ListItem

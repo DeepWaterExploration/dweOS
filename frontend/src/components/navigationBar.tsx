@@ -178,21 +178,7 @@ export default function NavigationBar() {
             <Divider />
             <List component='nav'>
               <NavigationItems routes={routes} open={open} theme={theme} />
-              <Divider sx={{ my: 1 }} />
               <React.Fragment>
-                <ListSubheader
-                  component='div'
-                  inset
-                  sx={{ background: "inherit !important" }}
-                >
-                  <Typography
-                    variant='inherit'
-                    fontWeight='bold'
-                    sx={{ opacity: open ? 1 : 0 }}
-                  >
-                    Options
-                  </Typography>
-                </ListSubheader>
                 <ListItem disablePadding sx={{ display: "block" }}>
                   <ListItemButton
                     onClick={toggleTheme}

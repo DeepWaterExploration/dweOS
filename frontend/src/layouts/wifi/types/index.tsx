@@ -61,6 +61,13 @@ export interface GetAvailableWifiResponse {
 }
 
 /**
+ * Represents the response from the backend when requesting the saved networks
+ */
+export interface GetSavedWifiResponse {
+  saved_networks: WiFiNetwork[];
+}
+
+/**
  * Represents the response from the backend when requesting the currently connected network
  */
 export interface GetConnectedNetworkResponse {
@@ -76,8 +83,4 @@ export interface WiFiInterfaces {
  */
 export interface ForgetWifiResponse {
   enabled: boolean;
-}
-
-export interface GetSavedWifiResponse {
-  saved_networks: string[];
 }

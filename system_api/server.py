@@ -5,7 +5,6 @@ import cpuHandler, memoryHandler, wifiHandler
 import json
 import os
 
-
 # ANSI escape codes for text colors
 class TextColors:
     RESET = "\033[0m"
@@ -222,9 +221,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 self.end_headers()
 
                 # Build the response content as a dictionary and convert to JSON format
-                response_content = json.dumps(
-                    wifiHandler.forget_wifi(wifi_ssid)
-                )
+                response_content = json.dumps(wifiHandler.forget_wifi(wifi_ssid))
 
                 # Send the response content encoded in utf-8
                 self.wfile.write((response_content).encode("utf-8"))

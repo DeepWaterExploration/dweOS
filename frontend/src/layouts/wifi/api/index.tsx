@@ -3,6 +3,7 @@ import {
   ConnectToWifiResponse,
   GetAvailableWifiResponse,
   GetConnectedNetworkResponse,
+  GetSavedWifiResponse,
   GetWifiStatusResponse,
   WiFiInterface,
   WiFiInterfaces,
@@ -114,6 +115,34 @@ export async function getAvailableWifi(): Promise<WiFiNetwork[]> {
     });
 }
 
+/**
+ * Gets the list of wifi networks saved on the device.
+ * @returns {Promise<WiFiNetwork[]>} - A promise that resolves to the result of the request.
+ * @throws {Error} - If the request to get the list of saved wifi networks fails.
+ */
+export async function getSavedWifi(): Promise<WiFiNetwork[]> {
+  const url = `${SYSTEM_API_URL}/getSavedWifi`;
+  const config: RequestInit = {
+    mode: "cors",
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    // credentials: "include",
+  };
+  return await fetch(url, config)
+    // Process the response data
+    .then((response: Response) => response.json())
+    .then((data: GetSavedWifiResponse) => {
+      return data.saved_networks as WiFiNetwork[];
+    })
+    .catch((error: Error) => {
+      console.log("Failed to get wifi capability status");
+      console.error(error);
+      return {} as WiFiNetwork[];
+    });
+}
+
 // Begin POST Requests
 /**
  * Connect to a wifi network.
@@ -181,6 +210,38 @@ export async function toggleWifiStatus(wifiStatus: boolean): Promise<boolean> {
     })
     .catch((error: Error) => {
       console.log("Failed to toggle wifi");
+      console.error(error);
+      return false;
+    });
+}
+
+/**
+ * Toggles the wifi capability of the device.
+ * @returns {Promise<GetWifiStatusResponse>} - A promise that resolves to the result of the request.
+ * @throws {Error} - If the request to toggle the wifi fails.
+ */
+export async function forgetNetwork(wifi_ssid: string): Promise<boolean> {
+  const url = `${SYSTEM_API_URL}/forgetNetwork`;
+  const data = {
+    wifi_ssid: wifi_ssid,
+  };
+  const config: RequestInit = {
+    mode: "cors",
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    // credentials: "include",
+    body: JSON.stringify(data),
+  };
+  return await fetch(url, config)
+    // Process the response data
+    .then((response: Response) => response.json())
+    .then((data: GetWifiStatusResponse) => {
+      return data.enabled;
+    })
+    .catch((error: Error) => {
+      console.log(`Failed to forget ${wifi_ssid}`);
       console.error(error);
       return false;
     });

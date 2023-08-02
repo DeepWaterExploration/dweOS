@@ -1,5 +1,5 @@
 from typing import List
-import pywifi, platform, netifaces as ni, subprocess, base64
+import pywifi, platform, netifaces as ni, subprocess, base64, os, plistlib, sys
 
 
 class WiFiNetwork:
@@ -71,6 +71,68 @@ def get_is_wifi_on():
         return {"Enabled": False}
 
 
+def is_network_secured(ssid):
+    current_os = platform.system()
+    match current_os:
+        case "Windows":
+            cmdfolder = os.path.join(
+                os.environ["ProgramData"],
+                "Microsoft",
+                "Wlansvc",
+                "Profiles",
+                "Interfaces",
+            )
+            for interface_file in os.listdir(folder):
+                file_path = os.path.join(folder, interface_file)
+                with open(file_path, "r") as file:
+                    content = file.read()
+                    if ssid in content and "authentication=" in content:
+                        return True
+            return False
+        case "Linux":
+            try:
+                # Run the nmcli command and capture the output
+                cmd = ["nmcli", "connection", "show", ssid]
+                result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+
+                # Check if the SSID is present in the output
+                if ssid in result.stdout:
+                    # Check if the key-mgmt field is present
+                    if "802-11-wireless-security.key-mgmt" in result.stdout:
+                        return True  # Network is secured
+                    else:
+                        return False  # Network is not secured
+                else:
+                    return None  # Network not found in saved connections
+
+            except subprocess.CalledProcessError:
+                print("Error: Unable to run the nmcli command.")
+                return None
+
+        case "Darwin":  # macOS
+            folder = "/Library/Preferences/SystemConfiguration/"
+            for filename in os.listdir(folder):
+                if filename.startswith("com.apple.airport.preferences"):
+                    file_path = os.path.join(folder, filename)
+                    with open(file_path, "rb") as file:
+                        content = plistlib.load(file)
+                        networks = content.get("KnownNetworks", {})
+                        for network in networks.values():
+                            if (
+                                "SSIDString" in network
+                                and network["SSIDString"] == ssid
+                            ):
+                                if (
+                                    "SecurityType" in network
+                                    and network["SecurityType"] != "None"
+                                ):
+                                    return True
+            return False
+        case _:
+            print("Unsupported operating system.")
+            return False
+
+
 def get_saved_wifi():
     """
     Returns a list of saved Wi-Fi networks.
@@ -83,13 +145,13 @@ def get_saved_wifi():
         case "Windows":
             cmd = ["netsh", "wlan", "show", "profiles"]
         case "Linux":
-            cmd = "nmcli connection show | awk -F '[[:space:]][[:space:]]+' '/wifi/ && !/^UUID:/ {print $1}''"
+            cmd = "nmcli connection show | awk -F '[[:space:]][[:space:]]+' '/wifi/ && !/^UUID:/ {print $1}'"
         case "Darwin":  # macOS
             cmd = ["networksetup", "-listpreferredwirelessnetworks", "Wi-Fi"]
     try:
         # Run the command and capture the output and errors
         result = subprocess.check_output(cmd, shell=True, text=True)
-        gif current_os == "Windows":
+        if current_os == "Windows":
             profiles = result.stdout.split("\n")[
                 4:
             ]  # Skip the first 4 lines containing headers
@@ -100,8 +162,19 @@ def get_saved_wifi():
             ]
             return {"saved_networks": saved_networks}
         elif current_os == "Linux":
+            networks = {"saved_networks": []}
             saved_networks = result.split("\n")
-            return {"saved_networks": saved_networks}
+            for network_ssid in saved_networks:
+                if network_ssid != "":
+                    networks["saved_networks"].append(
+                        {
+                            "ssid": network_ssid,
+                            "secure": is_network_secured(network_ssid),
+                            "frequency": "unknown",
+                            "signal_strength": "unknown",
+                        }
+                    )
+            return networks
         elif current_os == "Darwin":
             saved_networks = result.stdout.strip().split("\n")[
                 1:
@@ -111,9 +184,6 @@ def get_saved_wifi():
         print("Error: An unexpected error occurred.")
         print("Error message: ", str(e))
         return {"saved_networks": []}
-
-
-print(get_saved_wifi())
 
 
 def forget_wifi(ssid: str):
@@ -131,7 +201,7 @@ def forget_wifi(ssid: str):
         case "Windows":
             cmd = ["netsh", "wlan", "delete", "profile", f"name={ssid}"]
         case "Linux":
-            cmd = ["nmcli", "connection", "delete", f"id={ssid}"]
+            cmd = ["nmcli", "connection", "delete", f"{ssid}"]
         case "Darwin":  # macOS
             cmd = [
                 "networksetup",

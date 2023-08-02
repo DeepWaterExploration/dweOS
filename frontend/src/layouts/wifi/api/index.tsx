@@ -65,7 +65,7 @@ export async function getConnectedNetwork(
       return null;
     })
     .catch((error: Error) => {
-      console.log("Failed to get wifi capability status");
+      console.log("Failed to get connected networks");
       console.error(error);
       return {} as WiFiNetwork;
     });
@@ -108,7 +108,7 @@ export async function getAvailableWifi(): Promise<WiFiNetwork[]> {
       return uniqueWiFiNetworks;
     })
     .catch((error: Error) => {
-      console.log("Failed to get wifi capability status");
+      console.log("Failed to get available wifi networks");
       console.error(error);
       return {} as WiFiNetwork[];
     });

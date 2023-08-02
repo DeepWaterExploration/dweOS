@@ -70,3 +70,14 @@ export interface GetConnectedNetworkResponse {
 export interface WiFiInterfaces {
   [key: string]: WiFiInterface;
 }
+
+/**
+ * Represents the response from the backend when requesting to forget a network
+ */
+export interface ForgetWifiResponse {
+  enabled: boolean;
+}
+
+export interface GetSavedWifiResponse {
+  saved_networks: string[];
+}

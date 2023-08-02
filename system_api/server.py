@@ -100,6 +100,19 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
                 # Send the response content encoded in utf-8
                 self.wfile.write((response_content).encode("utf-8"))
+            case "/getSavedWifi":
+                # Set the response status code
+                self.send_response(200)
+
+                # Set the response headers
+                self.send_header("Content-type", "application/json")
+                self.end_headers()
+
+                # Build the response content as a dictionary and convert to JSON format
+                response_content = json.dumps(wifiHandler.get_saved_wifi())
+
+                # Send the response content encoded in utf-8
+                self.wfile.write((response_content).encode("utf-8"))
             case "/getCPU":
                 # Set the response status code
                 self.send_response(200)
@@ -193,6 +206,24 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 # Build the response content as a dictionary and convert to JSON format
                 response_content = json.dumps(
                     wifiHandler.connect_to_wifi(wifi_ssid, wifi_password)
+                )
+
+                # Send the response content encoded in utf-8
+                self.wfile.write((response_content).encode("utf-8"))
+            case "/forgetNetwork":
+                # Extract wifi ssid from query parameters
+                wifi_ssid = parsed_data["wifi_ssid"]
+
+                # Set the response status code
+                self.send_response(200)
+
+                # Set the response headers
+                self.send_header("Content-type", "application/json")
+                self.end_headers()
+
+                # Build the response content as a dictionary and convert to JSON format
+                response_content = json.dumps(
+                    wifiHandler.forget_wifi(wifi_ssid)
                 )
 
                 # Send the response content encoded in utf-8

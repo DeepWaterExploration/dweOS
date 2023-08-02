@@ -71,6 +71,86 @@ def get_is_wifi_on():
         return {"Enabled": False}
 
 
+def get_saved_wifi():
+    """
+    Returns a list of saved Wi-Fi networks.
+
+    Returns:
+    - saved_networks (List[str]): A list of saved Wi-Fi networks.
+    """
+    current_os = platform.system()
+    match current_os:
+        case "Windows":
+            cmd = ["netsh", "wlan", "show", "profiles"]
+        case "Linux":
+            cmd = "nmcli connection show | awk -F '[[:space:]][[:space:]]+' '/wifi/ && !/^UUID:/ {print $1}''"
+        case "Darwin":  # macOS
+            cmd = ["networksetup", "-listpreferredwirelessnetworks", "Wi-Fi"]
+    try:
+        # Run the command and capture the output and errors
+        result = subprocess.check_output(cmd, shell=True, text=True)
+        gif current_os == "Windows":
+            profiles = result.stdout.split("\n")[
+                4:
+            ]  # Skip the first 4 lines containing headers
+            saved_networks = [
+                profile.strip().split(":")[1].strip()
+                for profile in profiles
+                if "All User Profile" in profile
+            ]
+            return {"saved_networks": saved_networks}
+        elif current_os == "Linux":
+            saved_networks = result.split("\n")
+            return {"saved_networks": saved_networks}
+        elif current_os == "Darwin":
+            saved_networks = result.stdout.strip().split("\n")[
+                1:
+            ]  # Skip the first line containing interface name
+            return {"saved_networks": saved_networks}
+    except Exception as e:
+        print("Error: An unexpected error occurred.")
+        print("Error message: ", str(e))
+        return {"saved_networks": []}
+
+
+print(get_saved_wifi())
+
+
+def forget_wifi(ssid: str):
+    """
+    Forgets a saved Wi-Fi network.
+
+    Parameters:
+    - ssid (str): The SSID of the network to forget.
+
+    Returns:
+    - success (bool): True if the network was successfully forgotten, False otherwise.
+    """
+    current_os = platform.system()
+    match current_os:
+        case "Windows":
+            cmd = ["netsh", "wlan", "delete", "profile", f"name={ssid}"]
+        case "Linux":
+            cmd = ["nmcli", "connection", "delete", f"id={ssid}"]
+        case "Darwin":  # macOS
+            cmd = [
+                "networksetup",
+                "-removepreferredwirelessnetwork",
+                "en0",
+                f"{ssid}",
+            ]
+        case _:
+            return {"success": False}
+    try:
+        # Run the command and capture the output and errors
+        subprocess.run(cmd, check=True)
+        return {"success": True}
+    except Exception as e:
+        print("Error: An unexpected error occurred.")
+        print("Error message: ", str(e))
+        return {"success": False}
+
+
 def toggle_wifi_status(
     wifi_on: bool,
 ):
@@ -119,7 +199,6 @@ def toggle_wifi_status(
 
 def get_connected_network():
     """"""
-
     current_os = platform.system()
     match current_os:
         case "Windows":

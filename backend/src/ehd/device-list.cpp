@@ -265,9 +265,9 @@ void DeviceList::_load_devices() {
     }
 
     // Make sure every device has an entry
-    for (libehd::Device *device : ehd_devices) {
-        save_device(device);
-    }
+    // for (libehd::Device *device : ehd_devices) {
+    //     save_device(device);
+    // }
 }
 
 void DeviceList::stop_monitoring() {

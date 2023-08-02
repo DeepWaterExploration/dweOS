@@ -100,12 +100,12 @@ void SettingsManager::save_device(libehd::Device* ehd) {
         }
     }
 
-    if (!find_device_with_id(device->get_usb_info())) {
+    SerializedDevice* serialized_device =
+        find_device_with_id(device->get_usb_info());
+    if (!serialized_device) {
         _devices.push_back(construct_device(device_node));
     }
 
-    SerializedDevice* serialized_device =
-        find_device_with_id(device->get_usb_info());
     if (serialized_device) {
         free(serialized_device);
         serialized_device = construct_device(device_node);
@@ -115,6 +115,7 @@ void SettingsManager::save_device(libehd::Device* ehd) {
 
 SerializedDevice* SettingsManager::find_device_with_id(std::string usbInfo) {
     for (SerializedDevice* device : _devices) {
+        std::cout << usbInfo << " " << device->usbInfo << std::endl;
         if (device->usbInfo == usbInfo) return device;
     }
     return nullptr;
@@ -125,7 +126,7 @@ SerializedDevice* SettingsManager::construct_device(
     /* Initial device setup */
     pugi::xml_node options_node = device_node.child("Options");
     SerializedDevice* serialized_device = new SerializedDevice{
-        .usbInfo = device_node.attribute("usbInfo").value(),
+        .usbInfo = device_node.attribute("usbInfo").as_string(),
         .nickname = device_node.attribute("nickname").value(),
         .bitrate = options_node.attribute("bitrate").as_uint(),
         .mode = (libehd::H264Mode)options_node.attribute("mode").as_uint(),

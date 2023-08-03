@@ -36,8 +36,8 @@ import { useState } from "react";
 
 import {
   connectToWifi,
-  forgetNetwork,
   disconnectNetwork,
+  forgetNetwork,
   toggleWifiStatus,
 } from "./api";
 import { ConnectToWifiResponse, WiFiNetwork } from "./types";
@@ -140,10 +140,10 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
   };
 
   const handleConnect = async () => {
-    if (connectingPassword !== "") {
+    if (connectingSSID && connectingPassword) {
       setWifiConnectionError("");
       const result: ConnectToWifiResponse = await connectToWifi(
-        connectingSSID!,
+        connectingSSID,
         connectingPassword
       );
       if (result.status === "success" && selectedNetwork !== null) {
@@ -153,7 +153,7 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
         setWifiConnectionError(result.message);
       }
     } else {
-      setWifiConnectionError("Password cannot be empty");
+      setWifiConnectionError("SSID and password cannot be empty");
     }
   };
 
@@ -166,8 +166,8 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
   };
 
   const handleDisconnect = async () => {
-    if (selectedNetwork !== null) {
-      await disconnectNetwork(props.connectedNetwork!.ssid);
+    if (selectedNetwork && props.connectedNetwork) {
+      await disconnectNetwork(props.connectedNetwork.ssid);
       handleCloseDialogueDisconnect();
       props.setConnectedNetwork(null);
     }

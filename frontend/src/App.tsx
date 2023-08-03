@@ -1,10 +1,6 @@
-// theme components
-import { Alert, AlertColor, Box, CssBaseline, Snackbar } from "@mui/material";
-// import React, { useEffect, useState } from 'react';
+import { Box, CssBaseline } from "@mui/material";
 import "./App.css";
-
 import "./main.css";
-
 import { SnackbarProvider } from "notistack";
 
 import NavigationBar from "./components/navigationBar";

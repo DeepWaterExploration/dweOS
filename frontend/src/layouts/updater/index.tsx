@@ -1,3 +1,4 @@
+import BrowserUpdatedSharpIcon from "@mui/icons-material/BrowserUpdatedSharp";
 import {
   Avatar,
   Button,
@@ -5,7 +6,6 @@ import {
   CardContent,
   CardHeader,
   Grid,
-  IconButton,
   List,
   ListItem,
   ListItemAvatar,
@@ -13,8 +13,7 @@ import {
   Paper,
   Typography,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
-import BrowserUpdatedSharpIcon from "@mui/icons-material/BrowserUpdatedSharp";
+import React from "react";
 
 export interface VersionItemProps {
   isInstallable: boolean;
@@ -24,8 +23,8 @@ export interface VersionItemProps {
 }
 
 const VersionItem: React.FC<VersionItemProps> = (props) => {
-  let currentDate = new Date();
-  let daysSince = Math.floor(
+  const currentDate = new Date();
+  const daysSince = Math.floor(
     (currentDate.getTime() - props.dateReleased.getTime()) / (1000 * 3600 * 24)
   );
   return (

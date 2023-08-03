@@ -21,6 +21,7 @@ interface SensorCardProps {
   deviceStats: number[];
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function chunkArray<T extends any[]>(arr: T, size: number): T[] {
   return arr.reduce(
     (acc, _, i) => (i % size ? acc : [...acc, arr.slice(i, i + size)]),

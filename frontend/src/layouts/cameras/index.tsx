@@ -1,12 +1,12 @@
 import Grid from "@mui/material/Grid";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import DeviceCard from "./DeviceCard";
+import { Device } from "../../types/types";
 import { getDevices } from "../../utils/api";
-import { Device } from "src/types/types";
 
 const hash = function (str: string) {
-  var hash = 0,
+  let hash = 0,
     i,
     chr;
   if (str.length === 0) return hash;
@@ -41,7 +41,7 @@ const CamerasPage: React.FC = () => {
   };
 
   const removeDevices = (devices: Device[]) => {
-    for (let device of devices) {
+    for (const device of devices) {
       removeDevice(device);
     }
   };
@@ -58,9 +58,9 @@ const CamerasPage: React.FC = () => {
 
     // Listen for messages
     socket.addEventListener("message", (event) => {
-      let lines = event.data.split("\n");
-      let event_name = lines[0];
-      let msg = JSON.parse(lines[1]);
+      const lines = event.data.split("\n");
+      const event_name = lines[0];
+      const msg = JSON.parse(lines[1]);
       console.log("Event: ", event_name);
       console.log(msg);
 
@@ -85,8 +85,8 @@ const CamerasPage: React.FC = () => {
     >
       {/* Sort devices */}
       {exploreHD_cards.sort((a, b) => {
-        let usbInfoA = a.props.device.info.usbInfo.split(".");
-        let usbInfoB = b.props.device.info.usbInfo.split(".");
+        const usbInfoA = a.props.device.info.usbInfo.split(".");
+        const usbInfoB = b.props.device.info.usbInfo.split(".");
         for (let i = 0; i < usbInfoA.length; i++) {
           if (i > usbInfoB.length - 1) return 1;
           if (parseInt(usbInfoA[i]) > parseInt(usbInfoB[i])) {

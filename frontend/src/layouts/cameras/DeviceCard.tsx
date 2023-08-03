@@ -29,20 +29,20 @@ import {
   Typography,
 } from "@mui/material";
 import PopupState, { bindMenu, bindTrigger } from "material-ui-popup-state";
-import React, { useEffect, useRef, useState } from "react";
 import { useSnackbar } from "notistack";
+import React, { useEffect, useRef, useState } from "react";
 
 import { styles } from "./style";
 import {
   CameraFormatSize,
   Control,
   Device,
+  Stream,
   StreamEndpoint,
   bitrateMode,
   controlType,
   encodeType,
   optionType,
-  Stream,
 } from "../../types/types";
 import {
   configureStream,
@@ -127,7 +127,7 @@ interface DeviceOptionsProps {
 
 const DeviceOptions: React.FC<DeviceOptionsProps> = (props) => {
   // const device = props.device.stream.device_path;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   const [bitrate, setBitrate] = useState(
     props.device.options.bitrate / 1000000
   );
@@ -568,7 +568,7 @@ interface ControlState {
 }
 
 const CameraControls: React.FC<CameraControlsProps> = (props) => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   const { controls, usbInfo } = props;
 
   const setStatesList: ControlState[] = [];
@@ -680,12 +680,12 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                 );
               }
               case controlType.MENU: {
-                let { name, id } = control;
+                const { name, id } = control;
                 const { menu } = control.flags;
                 if (!menu) break;
 
                 let menuObject: { [name: string]: number } = {};
-                for (let menuItem of menu) {
+                for (const menuItem of menu) {
                   menuObject[menuItem] = (menu as string[]).indexOf(
                     menuItem as string
                   );
@@ -762,7 +762,7 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
           sx={{ width: "100%" }}
           variant='outlined'
           onClick={() => {
-            for (let control of setStatesList) {
+            for (const control of setStatesList) {
               switch (control.type) {
                 case controlType.INTEGER:
                   (control.setControlValue as (value: number) => void)(

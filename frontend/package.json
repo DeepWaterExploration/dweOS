@@ -19,7 +19,7 @@
     "build": "chmod +x ./build_frontend.sh && ./build_frontend.sh",
     "preview": "vite preview",
     "format": "npx prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",
-    "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\" --report-unused-disable-directives --max-warnings 0",
+    "lint": "npx eslint \"src/**/*.{js,jsx,ts,tsx}\" --report-unused-disable-directives --max-warnings 0",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "DeepWater Exploration Inc.",
@@ -32,6 +32,7 @@
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.14.3",
     "@mui/material": "^5.14.3",
+    "date-fns": "^2.30.0",
     "material-ui-popup-state": "^5.0.9",
     "notistack": "^3.0.1",
     "numeral": "^2.0.6",

@@ -34,7 +34,12 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import { useState } from "react";
 
-import { connectToWifi, forgetNetwork, disconnectNetwork, toggleWifiStatus } from "./api";
+import {
+  connectToWifi,
+  forgetNetwork,
+  disconnectNetwork,
+  toggleWifiStatus,
+} from "./api";
 import { ConnectToWifiResponse, WiFiNetwork } from "./types";
 
 export interface DBMToSignalIconProps {

@@ -1,7 +1,7 @@
 import http.server
 from http.server import HTTPServer
 import urllib.parse
-import cpuHandler, memoryHandler, wifiHandler
+import cpuHandler, memoryHandler, wifiHandler, systemHandler
 import json
 import os
 
@@ -147,6 +147,16 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 self.wfile.write(
                     json.dumps(wifiHandler.get_memory_info()).encode("utf-8")
                 )
+            case "/shutDownMachine":
+                # Set the response status code
+                self.send_response(200)
+
+                systemHandler.shut_down()
+            case "/restartMachine":
+                # Set the response status code
+                self.send_response(200)
+
+                systemHandler.restart_machine()
             case _:
                 # Set the response status code
                 self.send_response(404)

@@ -473,3 +473,49 @@ export async function getCPUInfo(): Promise<CPUInfo> {
       return {} as CPUInfo;
     });
 }
+
+
+/**
+ * Request to shut down the machine.
+ * @throws {Error} - If the request to shut down the machine fails.
+ */
+export async function shutDownMachine(): Promise<null> {
+  const url = `${SYSTEM_API_URL}/shutDownMachine`;
+  const config: RequestInit = {
+    mode: "cors",
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  };
+  await fetch(url, config)
+    .catch((error: Error) => {
+      console.log("Failed to restart device");
+      console.error(error);
+      throw error;
+    });
+  return null;
+}
+
+/**
+ * Request to restart the machine.
+ * @returns {Promise<null>} - A promise that resolves when the machine is successfully restarted.
+ * @throws {Error} - If the request to restart the machine fails.
+ */
+export async function restartMachine(): Promise<null> {
+  const url = `${SYSTEM_API_URL}/restartMachine`;
+  const config: RequestInit = {
+    mode: "cors",
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  };
+  await fetch(url, config)
+    .catch((error: Error) => {
+      console.log("Failed to restart device");
+      console.error(error);
+      throw error;
+    });
+  return null;
+}

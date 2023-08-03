@@ -1,4 +1,3 @@
-import { amber, deepOrange, grey } from "@mui/material/colors";
 import "../main.css";
 import { createTheme } from "@mui/material/styles";
 

@@ -247,7 +247,6 @@ export async function forgetNetwork(wifi_ssid: string): Promise<boolean> {
     });
 }
 
-
 /**
  * Toggles the wifi capability of the device.
  * @returns {Promise<GetWifiStatusResponse>} - A promise that resolves to the result of the request.

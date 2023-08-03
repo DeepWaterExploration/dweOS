@@ -14,9 +14,9 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  ListSubheader,
+  Menu,
+  MenuItem,
   Toolbar,
-  Typography,
 } from "@mui/material";
 // eslint-disable-next-line import/named
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from "@mui/material/AppBar";
@@ -28,7 +28,7 @@ import { BrowserRouter as Router } from "react-router-dom";
 
 import { routes } from "../routes";
 import DWELogo_white from "../svg/DWELogo_white.svg";
-import { resetSettings } from "../utils/api";
+import { resetSettings, restartMachine, shutDownMachine } from "../utils/api";
 import NavigationItems from "../utils/getNavigationItems";
 import NavigationRoutes from "../utils/getRoutes";
 import dweTheme from "../utils/themes";
@@ -106,20 +106,33 @@ const Drawer = styled(MuiDrawer, {
 
 export default function NavigationBar() {
   const [open, setOpen] = useState(true);
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const menuOpen = Boolean(anchorEl);
   const [theme, setTheme] = useState(
     localStorage.getItem("theme") == "dark"
       ? dweTheme("dark")
       : dweTheme("light")
   );
+
   const toggleTheme = () => {
     const newTheme =
       theme.palette.mode === "dark" ? dweTheme("light") : dweTheme("dark");
     setTheme(newTheme);
     localStorage.setItem("theme", newTheme.palette.mode);
   };
+
   const toggleDrawer = () => {
     setOpen(!open);
   };
+
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <Router>
@@ -153,7 +166,56 @@ export default function NavigationBar() {
                   />
                 </Box>
               </Box>
-              <PowerSettingsNewIcon />
+              <IconButton
+                aria-controls={menuOpen ? "basic-menu" : undefined}
+                aria-haspopup='true'
+                aria-expanded={menuOpen ? "true" : undefined}
+                onClick={handleClick}
+              >
+                <PowerSettingsNewIcon
+                  sx={{
+                    color: "white",
+                  }}
+                />
+              </IconButton>
+              <Menu
+                anchorEl={anchorEl}
+                open={menuOpen}
+                onClose={handleClose}
+                sx={{
+                  "& .MuiMenu-paper": {
+                    backgroundColor:
+                      theme.palette.mode === "dark"
+                        ? "black"
+                        : theme.palette.primary.main,
+                  },
+                }}
+              >
+                <MenuItem
+                  onClick={() =>
+                    {
+                      handleClose();
+                      shutDownMachine();
+                    }}
+                  sx={{
+                    color: "white",
+                  }}
+                >
+                  Shut Down
+                </MenuItem>
+                <MenuItem
+                  onClick={() =>
+                    {
+                      handleClose();
+                      restartMachine();
+                    }}
+                  sx={{
+                    color: "white",
+                  }}
+                >
+                  Restart
+                </MenuItem>
+              </Menu>
             </Toolbar>
           </AppBar>
           <Drawer variant='permanent' open={open}>

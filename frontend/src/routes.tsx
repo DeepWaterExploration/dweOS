@@ -9,16 +9,16 @@ import {
   SettingsOutlined as SettingsOutlinedIcon,
   SignalWifi0BarOutlined as SignalWifi0BarOutlinedIcon,
   StorageOutlined as StorageOutlinedIcon,
-  VideoCameraBackOutlined as VideoCameraBackOutlinedIcon,
   SystemUpdateAlt as SystemUpdateAltIcon,
+  VideoCameraBackOutlined as VideoCameraBackOutlinedIcon,
 } from "@mui/icons-material";
 import { Box } from "@mui/material";
 
 import CamerasPage from "./layouts/cameras";
+import Updater from "./layouts/updater";
 import WifiPage from "./layouts/wifi";
 import WiredPage from "./layouts/wired";
 import { RouteItem, routeType } from "./types/types";
-import Updater from "./layouts/updater";
 
 export const routes: RouteItem[] = [
   {

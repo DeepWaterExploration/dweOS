@@ -1,9 +1,14 @@
+import install_requirements
+
+install_requirements.install_missing_packages()
+
 import http.server
 from http.server import HTTPServer
 import urllib.parse
 import cpuHandler, memoryHandler, wifiHandler, systemHandler
 import json
 import os
+
 
 # ANSI escape codes for text colors
 class TextColors:
@@ -125,10 +130,6 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
                 # Send the response content encoded in utf-8
                 self.wfile.write((response_content).encode("utf-8"))
-
-                self.wfile.write(
-                    json.dumps(wifiHandler.get_memory_info()).encode("utf-8")
-                )
 
             case "/getMemory":
                 # Set the response status code

@@ -1,6 +1,8 @@
+import MemoryIcon from "@mui/icons-material/Memory";
 import {
   Avatar,
   Card,
+  Divider,
   Grid,
   IconButton,
   List,
@@ -13,10 +15,8 @@ import React from "react";
 
 import { fPercent } from "../../utils/formatNumber";
 
-interface SensorCardProps {
-  icon: React.ElementType;
-  cardTitle: string;
-  cardSubtitle: number;
+interface DiskCardProps {
+  currentDiskUsagePercent: number;
   deviceName: string;
   deviceStats: number[];
 }
@@ -29,7 +29,7 @@ function chunkArray<T extends any[]>(arr: T, size: number): T[] {
   );
 }
 
-const SensorCard: React.FC<SensorCardProps> = (props) => {
+const DiskCard: React.FC<DiskCardProps> = (props) => {
   const rowLimit = 4;
   return (
     <Card
@@ -54,12 +54,12 @@ const SensorCard: React.FC<SensorCardProps> = (props) => {
         >
           <ListItemAvatar>
             <Avatar>
-              <props.icon sx={{ fontSize: 30, mx: 0.5 }} />
+              <MemoryIcon sx={{ fontSize: 30, mx: 0.5 }} />
             </Avatar>
           </ListItemAvatar>
           <ListItemText
-            primary={props.cardTitle}
-            secondary={fPercent(props.cardSubtitle)}
+            primary='Current Disk Usage'
+            secondary={fPercent(props.currentDiskUsagePercent)}
           />
         </ListItem>
         <ListItem>
@@ -120,8 +120,16 @@ const SensorCard: React.FC<SensorCardProps> = (props) => {
           </Grid>
         </ListItem>
       </List>
+      <Divider
+        variant='middle'
+        sx={{
+          marginTop: 2,
+          marginBottom: 2,
+          borderBottomWidth: 3,
+        }}
+      />
     </Card>
   );
 };
 
-export default SensorCard;
+export default DiskCard;

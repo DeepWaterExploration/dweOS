@@ -1,4 +1,4 @@
-import DeviceThermostatIcon from '@mui/icons-material/DeviceThermostat';
+import DeviceThermostatIcon from "@mui/icons-material/DeviceThermostat";
 import {
   Avatar,
   Card,
@@ -11,12 +11,12 @@ import {
   ListItemText,
   Typography,
 } from "@mui/material";
-import React from "react";
-
-import { fPercent } from "../../utils/formatNumber";
+import React, { useState } from "react";
 
 interface TemperatureCardProps {
-  temperature: number;
+  cpuTemp: number;
+  minTemp: number;
+  maxTemp: number;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -28,6 +28,7 @@ function chunkArray<T extends any[]>(arr: T, size: number): T[] {
 }
 
 const TemperatureCard: React.FC<TemperatureCardProps> = (props) => {
+  console.log("maxTemp in TemperatureCard:", props.maxTemp);
   return (
     <Card
       sx={{
@@ -55,7 +56,7 @@ const TemperatureCard: React.FC<TemperatureCardProps> = (props) => {
           </ListItemAvatar>
           <ListItemText
             primary='Temperature'
-            secondary={`Total Usage: ${fPercent(props.temperature)} °C`}
+            secondary={`Total Temperature: ${props.cpuTemp}°C`}
           />
         </ListItem>
         <ListItem>
@@ -64,6 +65,73 @@ const TemperatureCard: React.FC<TemperatureCardProps> = (props) => {
           </Typography>
         </ListItem>
       </List>
+      <ListItem>
+        <Grid
+          container
+          item
+          xs={12}
+          spacing={3}
+          justifyContent='space-evenly'
+          alignItems='center'
+        >
+          <Grid item xs={12} sm={6} md={3} justifyContent='space-evenly'>
+            <Grid
+              flexDirection={"column"}
+              justifyContent='center'
+              alignItems='center'
+            >
+              <Typography variant='body1' color='text.primary'>
+                CPU
+              </Typography>
+              <Typography variant='body1' color='text.primary'>
+                {props.cpuTemp}°C
+              </Typography>
+            </Grid>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3} justifyContent='space-evenly'>
+            <Grid
+              flexDirection={"column"}
+              justifyContent='center'
+              alignItems='center'
+            >
+              <Typography variant='body1' color='text.primary'>
+                Minimum
+              </Typography>
+              <Typography variant='body1' color='text.primary'>
+                {props.minTemp}°C
+              </Typography>
+            </Grid>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3} justifyContent='space-evenly'>
+            <Grid
+              flexDirection={"column"}
+              justifyContent='center'
+              alignItems='center'
+            >
+              <Typography variant='body1' color='text.primary'>
+                Maximum
+              </Typography>
+              <Typography variant='body1' color='text.primary'>
+                {props.maxTemp}°C
+              </Typography>
+            </Grid>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3} justifyContent='space-evenly'>
+            <Grid
+              flexDirection={"column"}
+              justifyContent='center'
+              alignItems='center'
+            >
+              <Typography variant='body1' color='text.primary'>
+                Critical
+              </Typography>
+              <Typography variant='body1' color='text.primary'>
+                {props.cpuTemp}°C
+              </Typography>
+            </Grid>
+          </Grid>
+        </Grid>
+      </ListItem>
       <Divider
         variant='middle'
         sx={{

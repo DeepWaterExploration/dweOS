@@ -5,7 +5,7 @@ install_requirements.install_missing_packages()
 import http.server
 from http.server import HTTPServer
 import urllib.parse
-import cpuHandler, memoryHandler, wifiHandler, systemHandler
+import cpuHandler, memoryHandler, wifiHandler, systemHandler, temperatureHandler
 import json
 import os
 
@@ -130,7 +130,6 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
                 # Send the response content encoded in utf-8
                 self.wfile.write((response_content).encode("utf-8"))
-
             case "/getMemory":
                 # Set the response status code
                 self.send_response(200)
@@ -144,10 +143,19 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
                 # Send the response content encoded in utf-8
                 self.wfile.write((response_content).encode("utf-8"))
+            case "/getTemperature":
+                # Set the response status code
+                self.send_response(200)
 
-                self.wfile.write(
-                    json.dumps(wifiHandler.get_memory_info()).encode("utf-8")
-                )
+                # Set the response headers
+                self.send_header("Content-type", "application/json")
+                self.end_headers()
+
+                # Build the response content as a dictionary and convert to JSON format
+                response_content = json.dumps(temperatureHandler.get_temperature())
+
+                # Send the response content encoded in utf-8
+                self.wfile.write((response_content).encode("utf-8"))
             case "/shutDownMachine":
                 # Set the response status code
                 self.send_response(200)

@@ -32,6 +32,8 @@ class DeviceList {
 
     void stop_monitoring();
 
+    void reset_settings();
+
     json serialize();
 
     public:

@@ -66,6 +66,12 @@ int main(int argc, char **argv) {
         res.set_header("Connection", "close");
     });
 
+    svr.Post("/reset_settings",
+        [](const httplib::Request &, httplib::Response &res) {
+            devices.reset_settings();
+            res.set_header("Access-Control-Allow-Origin", "*");
+        });
+
     svr.Get("/devices", [](const httplib::Request &, httplib::Response &res) {
         /* re-enumerate */
         json devices_array = devices.serialize();

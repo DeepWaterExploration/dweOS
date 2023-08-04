@@ -64,6 +64,8 @@ class SettingsManager {
 
     SerializedDevice* construct_device(pugi::xml_node device_node);
 
+    void reset_settings();
+
     private:
     /* Devices */
     std::vector<SerializedDevice*> _devices;

@@ -382,3 +382,5 @@ void DeviceList::_monitor_devices() {
         _devices = devices;
     }
 }
+
+void DeviceList::reset_settings() { _settingsManager.reset_settings(); }

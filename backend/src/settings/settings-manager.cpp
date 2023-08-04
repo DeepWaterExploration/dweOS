@@ -168,3 +168,13 @@ SerializedDevice* SettingsManager::construct_device(
     serialized_device->stream = serialized_stream;
     return serialized_device;
 }
+
+void SettingsManager::reset_settings() {
+    for (SerializedDevice* device : _devices) {
+        delete device;
+    }
+    _devices.clear();
+    _doc.reset();
+    std::remove("device_settings.xml");
+    init_settings_file();
+}

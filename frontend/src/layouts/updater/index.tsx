@@ -41,7 +41,7 @@ const VersionItem: React.FC<VersionItemProps> = (props) => {
         </Avatar>
       </ListItemAvatar>
       <ListItemText
-        primary={`DWE OS 1.2.1`}
+        primary={`DWE OS ${props.version}`}
         secondary={
           (props.isMostRecent ? "Most Recent - " : "") +
           daysSince +

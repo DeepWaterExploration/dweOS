@@ -1,5 +1,5 @@
 from typing import List
-import pywifi, platform, netifaces as ni, subprocess, base64, os, plistlib, sys
+import pywifi, platform, netifaces as ni, subprocess, base64, os
 
 
 class WiFiNetwork:
@@ -110,6 +110,7 @@ def is_network_secured(ssid):
                 return None
 
         case "Darwin":  # macOS
+            import plistlib
             folder = "/Library/Preferences/SystemConfiguration/"
             for filename in os.listdir(folder):
                 if filename.startswith("com.apple.airport.preferences"):

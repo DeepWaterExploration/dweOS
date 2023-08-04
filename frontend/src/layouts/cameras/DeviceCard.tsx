@@ -568,7 +568,6 @@ interface ControlState {
 }
 
 const CameraControls: React.FC<CameraControlsProps> = (props) => {
-
   const { controls, usbInfo } = props;
 
   const setStatesList: ControlState[] = [];

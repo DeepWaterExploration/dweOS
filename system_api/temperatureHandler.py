@@ -20,8 +20,9 @@ def get_linux_temperature():
         if (
             "Core 0" in line
         ):  # Replace 'Core 0' with the sensor label relevant to your system
-            temperature = float(line.split()[2][1:])
+            temperature = float(line.split()[2][1:][:-2])
             break
+    return temperature
 
 
 def get_mac_temperature():

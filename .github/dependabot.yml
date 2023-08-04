@@ -33,12 +33,3 @@ updates:
       - "npm"
       - "dependencies"
     versioning-strategy: "increase"
-
-    # Maintain dependencies for pipenv
-  - package-ecosystem: "pip" # See documentation for possible values
-    directory: "/system_api/" # Location of package manifests
-    schedule:
-      interval: "daily"
-    ignore:
-      - dependency-name: "python"
-        update-types: ["version-update:semver-major"]

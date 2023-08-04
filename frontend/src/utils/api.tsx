@@ -1,5 +1,4 @@
 import {
-  CPUInfo,
   Device,
   Stream,
   StreamEndpoint,
@@ -448,34 +447,6 @@ export async function resetSettings(): Promise<void> {
 }
 
 /**
- * Retrieves information about the CPU and its usage from the system.
- * @returns {Promise<CPUInfo>} - A promise that resolves to an array of Device objects.
- * @throws {Error} - If the request to retrieve the device list fails.
- */
-export async function getCPUInfo(): Promise<CPUInfo> {
-  const url = `${SYSTEM_API_URL}/getCPU`;
-  const config: RequestInit = {
-    mode: "cors",
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  };
-  return await fetch(url, config)
-    // Process the response data
-    .then((response: Response) => response.json())
-    .then((data: CPUInfo) => {
-      return data;
-    })
-    .catch((error: Error) => {
-      console.log("Failed to retrieve device list");
-      console.error(error);
-      return {} as CPUInfo;
-    });
-}
-
-
-/**
  * Request to shut down the machine.
  * @throws {Error} - If the request to shut down the machine fails.
  */
@@ -488,12 +459,11 @@ export async function shutDownMachine(): Promise<null> {
       "Content-Type": "application/json",
     },
   };
-  await fetch(url, config)
-    .catch((error: Error) => {
-      console.log("Failed to restart device");
-      console.error(error);
-      throw error;
-    });
+  await fetch(url, config).catch((error: Error) => {
+    console.log("Failed to restart device");
+    console.error(error);
+    throw error;
+  });
   return null;
 }
 
@@ -511,11 +481,10 @@ export async function restartMachine(): Promise<null> {
       "Content-Type": "application/json",
     },
   };
-  await fetch(url, config)
-    .catch((error: Error) => {
-      console.log("Failed to restart device");
-      console.error(error);
-      throw error;
-    });
+  await fetch(url, config).catch((error: Error) => {
+    console.log("Failed to restart device");
+    console.error(error);
+    throw error;
+  });
   return null;
 }

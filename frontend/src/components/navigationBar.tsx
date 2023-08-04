@@ -192,11 +192,10 @@ export default function NavigationBar() {
                 }}
               >
                 <MenuItem
-                  onClick={() =>
-                    {
-                      handleClose();
-                      shutDownMachine();
-                    }}
+                  onClick={() => {
+                    handleClose();
+                    shutDownMachine();
+                  }}
                   sx={{
                     color: "white",
                   }}
@@ -204,11 +203,10 @@ export default function NavigationBar() {
                   Shut Down
                 </MenuItem>
                 <MenuItem
-                  onClick={() =>
-                    {
-                      handleClose();
-                      restartMachine();
-                    }}
+                  onClick={() => {
+                    handleClose();
+                    restartMachine();
+                  }}
                   sx={{
                     color: "white",
                   }}

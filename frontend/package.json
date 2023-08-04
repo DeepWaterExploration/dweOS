@@ -68,7 +68,7 @@
     "eslint-plugin-react": "^7.33.1",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.3",
-    "happy-dom": "^10.7.0",
+    "happy-dom": "^10.8.0",
     "postcss": "^8.4.27",
     "prettier": "^3.0.1",
     "typescript": "^5.1.3",

@@ -34,14 +34,14 @@ def get_mac_temperature():
 
 def get_temperature():
     cpu_temperature = None
-    match platform.system():
-        case "Windows":
-            cpu_temperature = get_windows_temperature()
-        case "Linux":
-            cpu_temperature = get_linux_temperature()
-        case "Darwin":
-            cpu_temperature = get_mac_temperature()
-        case _:
-            raise NotImplementedError("Unsupported platform")
+    current_os = platform.system()
+    if current_os == "Windows":
+        cpu_temperature = get_windows_temperature()
+    elif current_os == "Linux":
+        cpu_temperature = get_linux_temperature()
+    elif current_os == "Darwin":
+        cpu_temperature = get_mac_temperature()
+    else:
+        raise NotImplementedError("Unsupported platform")
     temp_info = {"processor_temp": cpu_temperature}
     return temp_info

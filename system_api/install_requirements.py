@@ -23,26 +23,24 @@ def install_missing_packages():
             "pip_name": "pywifi",
         },
     ]
-
-    match current_os:
-        case "Windows":
-            pip_command = ["runas /user:Administrator", "python", "-m", "pip" "install"]
-            required_packages.append(
-                {
-                    "module_name": "wmi",
-                    "pip_name": "wmi",
-                },
-            )
-        case "Linux":
-            pip_command = ["sudo", "python3", "-m", "pip", "install"]
-        case "Darwin":
-            pip_command = ["sudo", "python3", "-m", "pip", "install"]
-            required_packages.append(
-                {
-                    "module_name": "plistlib",
-                    "pip_name": "plistlib",
-                },
-            )
+    if current_os == "Windows":
+        pip_command = ["runas /user:Administrator", "python", "-m", "pip" "install"]
+        required_packages.append(
+            {
+                "module_name": "wmi",
+                "pip_name": "wmi",
+            },
+        )
+    elif current_os == "Linux":
+        pip_command = ["sudo", "python3", "-m", "pip", "install"]
+    elif current_os == "Darwin":
+        pip_command = ["sudo", "python3", "-m", "pip", "install"]
+        required_packages.append(
+            {
+                "module_name": "plistlib",
+                "pip_name": "plistlib",
+            },
+        )
 
     missing_packages = []
     for package in required_packages:

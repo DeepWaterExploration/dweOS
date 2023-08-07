@@ -62,123 +62,123 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         parsed_url = urllib.parse.urlparse(self.path)
         query_params = urllib.parse.parse_qs(parsed_url.query)
         print_with_color(f"GET request path: {parsed_url.path}", TextColors.YELLOW)
-        match parsed_url.path:
-            # when wifi is requested
-            case "/getWifiStatus":
-                # Set the response status code
-                self.send_response(200)
+        url_path = parsed_url.path
+        # when wifi is requested
+        if url_path == "/getWifiStatus":
+            # Set the response status code
+            self.send_response(200)
 
-                # Set the response headers
-                self.send_header("Content-type", "application/json")
-                self.end_headers()
+            # Set the response headers
+            self.send_header("Content-type", "application/json")
+            self.end_headers()
 
-                # Build the response content as a dictionary and convert to JSON format
-                response_content = json.dumps(wifiHandler.get_is_wifi_on())
+            # Build the response content as a dictionary and convert to JSON format
+            response_content = json.dumps(wifiHandler.get_is_wifi_on())
 
-                # Send the response content encoded in utf-8
-                self.wfile.write((response_content).encode("utf-8"))
-            case "/getConnectedNetwork":
-                # Set the response status code
-                self.send_response(200)
+            # Send the response content encoded in utf-8
+            self.wfile.write((response_content).encode("utf-8"))
+        elif url_path == "/getConnectedNetwork":
+            # Set the response status code
+            self.send_response(200)
 
-                # Set the response headers
-                self.send_header("Content-type", "application/json")
-                self.end_headers()
+            # Set the response headers
+            self.send_header("Content-type", "application/json")
+            self.end_headers()
 
-                # Build the response content as a dictionary and convert to JSON format
-                response_content = json.dumps(wifiHandler.get_connected_network())
+            # Build the response content as a dictionary and convert to JSON format
+            response_content = json.dumps(wifiHandler.get_connected_network())
 
-                # Send the response content encoded in utf-8
-                self.wfile.write((response_content).encode("utf-8"))
+            # Send the response content encoded in utf-8
+            self.wfile.write((response_content).encode("utf-8"))
 
-            case "/getAvailableWifi":
-                # Set the response status code
-                self.send_response(200)
+        elif url_path == "/getAvailableWifi":
+            # Set the response status code
+            self.send_response(200)
 
-                # Set the response headers
-                self.send_header("Content-type", "application/json")
-                self.end_headers()
+            # Set the response headers
+            self.send_header("Content-type", "application/json")
+            self.end_headers()
 
-                # Build the response content as a dictionary and convert to JSON format
-                response_content = json.dumps(wifiHandler.get_wifi_info())
+            # Build the response content as a dictionary and convert to JSON format
+            response_content = json.dumps(wifiHandler.get_wifi_info())
 
-                # Send the response content encoded in utf-8
-                self.wfile.write((response_content).encode("utf-8"))
-            case "/getSavedWifi":
-                # Set the response status code
-                self.send_response(200)
+            # Send the response content encoded in utf-8
+            self.wfile.write((response_content).encode("utf-8"))
+        elif url_path == "/getSavedWifi":
+            # Set the response status code
+            self.send_response(200)
 
-                # Set the response headers
-                self.send_header("Content-type", "application/json")
-                self.end_headers()
+            # Set the response headers
+            self.send_header("Content-type", "application/json")
+            self.end_headers()
 
-                # Build the response content as a dictionary and convert to JSON format
-                response_content = json.dumps(wifiHandler.get_saved_wifi())
+            # Build the response content as a dictionary and convert to JSON format
+            response_content = json.dumps(wifiHandler.get_saved_wifi())
 
-                # Send the response content encoded in utf-8
-                self.wfile.write((response_content).encode("utf-8"))
-            case "/getCPU":
-                # Set the response status code
-                self.send_response(200)
+            # Send the response content encoded in utf-8
+            self.wfile.write((response_content).encode("utf-8"))
+        elif url_path == "/getCPU":
+            # Set the response status code
+            self.send_response(200)
 
-                # Set the response headers
-                self.send_header("Content-type", "application/json")
-                self.end_headers()
+            # Set the response headers
+            self.send_header("Content-type", "application/json")
+            self.end_headers()
 
-                # Build the response content as a dictionary and convert to JSON format
-                response_content = json.dumps(cpuHandler.get_cpu_info())
+            # Build the response content as a dictionary and convert to JSON format
+            response_content = json.dumps(cpuHandler.get_cpu_info())
 
-                # Send the response content encoded in utf-8
-                self.wfile.write((response_content).encode("utf-8"))
-            case "/getMemory":
-                # Set the response status code
-                self.send_response(200)
+            # Send the response content encoded in utf-8
+            self.wfile.write((response_content).encode("utf-8"))
+        elif url_path == "/getMemory":
+            # Set the response status code
+            self.send_response(200)
 
-                # Set the response headers
-                self.send_header("Content-type", "application/json")
-                self.end_headers()
+            # Set the response headers
+            self.send_header("Content-type", "application/json")
+            self.end_headers()
 
-                # Build the response content as a dictionary and convert to JSON format
-                response_content = json.dumps(cpuHandler.get_cpu_info())
+            # Build the response content as a dictionary and convert to JSON format
+            response_content = json.dumps(cpuHandler.get_cpu_info())
 
-                # Send the response content encoded in utf-8
-                self.wfile.write((response_content).encode("utf-8"))
-            case "/getTemperature":
-                # Set the response status code
-                self.send_response(200)
+            # Send the response content encoded in utf-8
+            self.wfile.write((response_content).encode("utf-8"))
+        elif url_path == "/getTemperature":
+            # Set the response status code
+            self.send_response(200)
 
-                # Set the response headers
-                self.send_header("Content-type", "application/json")
-                self.end_headers()
+            # Set the response headers
+            self.send_header("Content-type", "application/json")
+            self.end_headers()
 
-                # Build the response content as a dictionary and convert to JSON format
-                response_content = json.dumps(temperatureHandler.get_temperature())
+            # Build the response content as a dictionary and convert to JSON format
+            response_content = json.dumps(temperatureHandler.get_temperature())
 
-                # Send the response content encoded in utf-8
-                self.wfile.write((response_content).encode("utf-8"))
-            case "/shutDownMachine":
-                # Set the response status code
-                self.send_response(200)
+            # Send the response content encoded in utf-8
+            self.wfile.write((response_content).encode("utf-8"))
+        elif url_path == "/shutDownMachine":
+            # Set the response status code
+            self.send_response(200)
 
-                systemHandler.shut_down()
-            case "/restartMachine":
-                # Set the response status code
-                self.send_response(200)
+            systemHandler.shut_down()
+        elif url_path == "/restartMachine":
+            # Set the response status code
+            self.send_response(200)
 
-                systemHandler.restart_machine()
-            case _:
-                # Set the response status code
-                self.send_response(404)
+            systemHandler.restart_machine()
+        else:
+            # Set the response status code
+            self.send_response(404)
 
-                # Set the response headers
-                self.send_header("Content-type", "text/html")
-                self.end_headers()
+            # Set the response headers
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
 
-                # Build the response content in HTML format
-                response_content = "<html><body><h1>404 Not Found</h1></body></html>"
+            # Build the response content in HTML format
+            response_content = "<html><body><h1>404 Not Found</h1></body></html>"
 
-                # Send the response content encoded in utf-8
-                self.wfile.write((response_content).encode("utf-8"))
+            # Send the response content encoded in utf-8
+            self.wfile.write((response_content).encode("utf-8"))
 
     def do_POST(self):
         # Handling POST requests asynchronously
@@ -188,91 +188,91 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         content_length = int(self.headers["Content-Length"])
         post_data = self.rfile.read(content_length).decode("utf-8")
         parsed_data = json.loads(post_data)
-        match parsed_url.path:
-            case "/toggleWifiStatus":
-                # Extract wifi_status from the query parameters
-                wifi_status = parsed_data["wifi_status"]
+        url_path = parsed_url.path
+        if url_path == "/toggleWifiStatus":
+            # Extract wifi_status from the query parameters
+            wifi_status = parsed_data["wifi_status"]
 
-                # Set the response status code
-                self.send_response(200)
+            # Set the response status code
+            self.send_response(200)
 
-                # Set the response headers
-                self.send_header("Content-type", "application/json")
-                self.end_headers()
+            # Set the response headers
+            self.send_header("Content-type", "application/json")
+            self.end_headers()
 
-                # Build the response content as a dictionary and convert to JSON format
-                response_content = json.dumps(
-                    wifiHandler.toggle_wifi_status(wifi_status)
-                )
+            # Build the response content as a dictionary and convert to JSON format
+            response_content = json.dumps(
+                wifiHandler.toggle_wifi_status(wifi_status)
+            )
 
-                # Send the response content encoded in utf-8
-                self.wfile.write((response_content).encode("utf-8"))
+            # Send the response content encoded in utf-8
+            self.wfile.write((response_content).encode("utf-8"))
 
-            # connect to wifi with parameters
-            case "/connectToWifi":
-                # Extract wifi ssid and password from query parameters
-                wifi_ssid = parsed_data["wifi_ssid"]
-                wifi_password = parsed_data["wifi_password"]
+        # connect to wifi with parameters
+        elif url_path == "/connectToWifi":
+            # Extract wifi ssid and password from query parameters
+            wifi_ssid = parsed_data["wifi_ssid"]
+            wifi_password = parsed_data["wifi_password"]
 
-                # Set the response status code
-                self.send_response(200)
+            # Set the response status code
+            self.send_response(200)
 
-                # Set the response headers
-                self.send_header("Content-type", "application/json")
-                self.end_headers()
+            # Set the response headers
+            self.send_header("Content-type", "application/json")
+            self.end_headers()
 
-                # Build the response content as a dictionary and convert to JSON format
-                response_content = json.dumps(
-                    wifiHandler.connect_to_wifi(wifi_ssid, wifi_password)
-                )
+            # Build the response content as a dictionary and convert to JSON format
+            response_content = json.dumps(
+                wifiHandler.connect_to_wifi(wifi_ssid, wifi_password)
+            )
 
-                # Send the response content encoded in utf-8
-                self.wfile.write((response_content).encode("utf-8"))
-            case "/forgetNetwork":
-                # Extract wifi ssid from query parameters
-                wifi_ssid = parsed_data["wifi_ssid"]
+            # Send the response content encoded in utf-8
+            self.wfile.write((response_content).encode("utf-8"))
+        elif url_path == "/forgetNetwork":
+            # Extract wifi ssid from query parameters
+            wifi_ssid = parsed_data["wifi_ssid"]
 
-                # Set the response status code
-                self.send_response(200)
+            # Set the response status code
+            self.send_response(200)
 
-                # Set the response headers
-                self.send_header("Content-type", "application/json")
-                self.end_headers()
+            # Set the response headers
+            self.send_header("Content-type", "application/json")
+            self.end_headers()
 
-                # Build the response content as a dictionary and convert to JSON format
-                response_content = json.dumps(wifiHandler.forget_wifi(wifi_ssid))
+            # Build the response content as a dictionary and convert to JSON format
+            response_content = json.dumps(wifiHandler.forget_wifi(wifi_ssid))
 
-                # Send the response content encoded in utf-8
-                self.wfile.write((response_content).encode("utf-8"))
-            case "/disconnectNetwork":
-                # Extract wifi ssid from query parameters
-                wifi_ssid = parsed_data["wifi_ssid"]
+            # Send the response content encoded in utf-8
+            self.wfile.write((response_content).encode("utf-8"))
+        elif url_path == "/disconnectNetwork":
+            # Extract wifi ssid from query parameters
+            wifi_ssid = parsed_data["wifi_ssid"]
 
-                # Set the response status code
-                self.send_response(200)
+            # Set the response status code
+            self.send_response(200)
 
-                # Set the response headers
-                self.send_header("Content-type", "application/json")
-                self.end_headers()
+            # Set the response headers
+            self.send_header("Content-type", "application/json")
+            self.end_headers()
 
-                # Build the response content as a dictionary and convert to JSON format
-                response_content = json.dumps(wifiHandler.disconnect_wifi(wifi_ssid))
+            # Build the response content as a dictionary and convert to JSON format
+            response_content = json.dumps(wifiHandler.disconnect_wifi(wifi_ssid))
 
-                # Send the response content encoded in utf-8
-                self.wfile.write((response_content).encode("utf-8"))
-            case _:
-                # Set the response status code
-                self.send_response(404)
+            # Send the response content encoded in utf-8
+            self.wfile.write((response_content).encode("utf-8"))
+        else:
+            # Set the response status code
+            self.send_response(404)
 
-                # Set the response headers
-                self.send_header("Content-type", "text/html")
-                self.end_headers()
+            # Set the response headers
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
 
-                # Build the response content in HTML format
-                response_content = "<html><body><h1>404 Not Found</h1></body></html>"
+            # Build the response content in HTML format
+            response_content = "<html><body><h1>404 Not Found</h1></body></html>"
 
-                # Send the response content encoded in utf-8
-                self.wfile.write((response_content).encode("utf-8"))
+            # Send the response content encoded in utf-8
+            self.wfile.write((response_content).encode("utf-8"))
 
     async def handle_staticFiles(self):
         # Extract the file path from the request URL

@@ -4,6 +4,7 @@ import importlib
 
 
 def install_missing_packages():
+    current_os = platform.system()
     required_packages = [
         {
             "module_name": "psutil",
@@ -23,9 +24,9 @@ def install_missing_packages():
         },
     ]
 
-    match platform.system():
+    match current_os:
         case "Windows":
-            pip_command = "pip"
+            pip_command = ["runas /user:Administrator", "python", "-m", "pip" "install"]
             required_packages.append(
                 {
                     "module_name": "wmi",
@@ -33,9 +34,9 @@ def install_missing_packages():
                 },
             )
         case "Linux":
-            pip_command = "pip3"
+            pip_command = ["sudo", "python3", "-m", "pip", "install"]
         case "Darwin":
-            pip_command = "pip3"
+            pip_command = ["sudo", "python3", "-m", "pip", "install"]
             required_packages.append(
                 {
                     "module_name": "plistlib",
@@ -50,20 +51,40 @@ def install_missing_packages():
         except ImportError:
             missing_packages.append(package["pip_name"])
     if missing_packages:
-        print(f"Installing missing packages using {pip_command}:")
+        print("Installing missing packages:")
         for package in missing_packages:
-            print(f" - {package}")
-            if platform.system().lower() == "windows":
+            print(f"{package} - {' '.join(pip_command + [package])}:")
+            if current_os.lower() == "windows":
                 subprocess.check_call(
                     [
-                        "runas /user:Administrator",
                         pip_command,
-                        "install",
                         package,
+                        # "--trusted-host",
                     ]
                 )
             else:
-                subprocess.check_call(["sudo", pip_command, "install", package])
+                try:
+                    subprocess.check_call(pip_command + [package])
+                # pip is not installed
+                except FileNotFoundError:
+                    subprocess.run(
+                        [
+                            "sudo",
+                            "apt",
+                            "update",
+                            "-y",
+                            "&&",
+                            "sudo",
+                            "apt",
+                            "install",
+                            "python3-pip",
+                            "-y",
+                        ]
+                    )
+                except subprocess.CalledProcessError:
+                    print(
+                        f"Failed to install {package}. Please try to install it manually."
+                    )
         print("All missing packages have been installed.")
     else:
         print("All required packages are already installed.")

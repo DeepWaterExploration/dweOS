@@ -8,11 +8,16 @@ on:
       - main
       - master
       - "[0-9]+.[0-9]+.x"
+    paths:
+      - "frontend/src/**"
   pull_request:
     branches:
       - development
       - main
       - master
+      - "[0-9]+.[0-9]+.x"
+    paths:
+      - "frontend/src/**"
   workflow_dispatch:
 
 # The sequence of runs in this workflow:

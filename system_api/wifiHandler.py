@@ -197,6 +197,9 @@ def forget_wifi(ssid: str):
     current_os = platform.system()
     if current_os == "Windows":
         cmd = ["netsh", "wlan", "delete", "profile", f"name={ssid}"]
+    elif current_os == "Linux" and "raspbian" in platform.uname().release.lower():
+        # sudo wpa_cli -i wlan0 list_networks | grep "Your_SSID" | awk '{print $1}' | xargs -I {} sudo wpa_cli -i wlan0 remove_network {}
+        cmd = ["sudo", "wpa_cli", "-i", "wlan0", "remove_network", f"{ssid}"]
     elif current_os == "Linux":
         cmd = ["nmcli", "connection", "delete", f"{ssid}"]
     elif current_os == "Darwin":  # macOS

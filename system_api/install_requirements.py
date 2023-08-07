@@ -32,6 +32,30 @@ def install_missing_packages():
             },
         )
     elif current_os == "Linux":
+        try:
+            subprocess.run(
+                [
+                    "sudo",
+                    "systemctl",
+                    "start",
+                    "NetworkManager",
+                ]
+            )
+        # Command not found
+        except FileNotFoundError:
+            subprocess.run(
+                [
+                    "sudo",
+                    "apt",
+                    "update",
+                    "&&",
+                    "sudo",
+                    "apt",
+                    "install",
+                    "network-manager",
+                ]
+            )
+
         pip_command = ["sudo", "python3", "-m", "pip", "install"]
     elif current_os == "Darwin":
         pip_command = ["sudo", "python3", "-m", "pip", "install"]

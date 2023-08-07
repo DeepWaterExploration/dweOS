@@ -15,7 +15,7 @@
   },
   "homepage": "https://github.com/DeepwaterExploration/DWE_OS#readme",
   "scripts": {
-    "dev": "vite",
+    "dev": "npx vite --host",
     "build": "chmod +x ./build_frontend.sh && ./build_frontend.sh",
     "preview": "vite preview",
     "format": "npx prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",

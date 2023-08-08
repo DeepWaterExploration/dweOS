@@ -170,3 +170,18 @@ export enum routeType {
   /* A single route item */
   ITEM = "item",
 }
+
+/* Updater */
+
+export interface Release {
+  body: string;
+  name: string;
+  prerelease: boolean;
+  published_at: string;
+  tag_name: string;
+  url: string;
+}
+
+export interface ReleaseList {
+  releases: Release[];
+}

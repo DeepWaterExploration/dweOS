@@ -13,7 +13,9 @@ import {
   Paper,
   Typography,
 } from "@mui/material";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { Release } from "../../types/types";
+import { getReleases } from "../../utils/api";
 
 export interface VersionItemProps {
   isInstallable: boolean;
@@ -27,6 +29,7 @@ const VersionItem: React.FC<VersionItemProps> = (props) => {
   const daysSince = Math.floor(
     (currentDate.getTime() - props.dateReleased.getTime()) / (1000 * 3600 * 24)
   );
+
   return (
     <ListItem
       secondaryAction={
@@ -53,6 +56,18 @@ const VersionItem: React.FC<VersionItemProps> = (props) => {
 };
 
 const Updater: React.FC = () => {
+  const [releases, setReleases] = useState<Release[]>([]);
+
+  useEffect(() => {
+    getReleases().then((r) => {
+      setReleases(r.releases);
+    });
+  }, []);
+
+  useEffect(() => {
+    console.log(releases);
+  }, [releases]);
+
   return (
     <Grid
       container
@@ -78,12 +93,12 @@ const Updater: React.FC = () => {
           <Typography sx={{ fontSize: "1rem" }} color='text.secondary'>
             Current Version
           </Typography>
-          <VersionItem
+          {/* <VersionItem
             isInstallable={false}
             isMostRecent={true}
             version='1.2.1'
             dateReleased={new Date("07/31/2023")}
-          />
+          /> */}
           <Typography
             sx={{ fontSize: "1rem" }}
             color='text.secondary'
@@ -100,12 +115,22 @@ const Updater: React.FC = () => {
             elevation={4}
           >
             <List>
-              <VersionItem
+              {/* <VersionItem
                 isInstallable={true}
                 isMostRecent={false}
                 version='1.2.0'
                 dateReleased={new Date("07/26/2023")}
-              />
+              /> */}
+              {releases?.map((release: Release, index) => {
+                return (
+                  <VersionItem
+                    isInstallable={true}
+                    isMostRecent={index === 0}
+                    version={release.tag_name}
+                    dateReleased={new Date(release.published_at)}
+                  />
+                );
+              })}
             </List>
           </Paper>
         </CardContent>

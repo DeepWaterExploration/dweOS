@@ -1,4 +1,5 @@
 import subprocess
+import os
 import platform
 import importlib
 
@@ -24,7 +25,8 @@ def install_missing_packages():
         },
     ]
     if current_os == "Windows":
-        pip_command = ["runas /user:Administrator", "python", "-m", "pip" "install"]
+        pip_command = ["runas /user:Administrator",
+                       "python", "-m", "pip" "install"]
         required_packages.append(
             {
                 "module_name": "wmi",
@@ -32,6 +34,7 @@ def install_missing_packages():
             },
         )
     elif current_os == "Linux":
+
         try:
             subprocess.run(
                 [
@@ -39,20 +42,17 @@ def install_missing_packages():
                     "systemctl",
                     "start",
                     "NetworkManager",
-                ]
+                ], check=True
             )
         # Command not found
-        except FileNotFoundError:
+        except subprocess.CalledProcessError:
             subprocess.run(
                 [
                     "sudo",
                     "apt",
-                    "update",
-                    "&&",
-                    "sudo",
-                    "apt",
                     "install",
                     "network-manager",
+                    "-y"
                 ]
             )
 
@@ -74,6 +74,22 @@ def install_missing_packages():
             missing_packages.append(package["pip_name"])
     if missing_packages:
         print("Installing missing packages:")
+        subprocess.run(
+            [
+                "sudo",
+                "apt",
+                "update",
+            ]
+        )
+        subprocess.run(
+            [
+                "sudo",
+                "apt",
+                "install",
+                "python3-pip",
+                "-y",
+            ]
+        )
         for package in missing_packages:
             print(f"{package} - {' '.join(pip_command + [package])}:")
             if current_os.lower() == "windows":
@@ -107,6 +123,8 @@ def install_missing_packages():
                     print(
                         f"Failed to install {package}. Please try to install it manually."
                     )
+        subprocess.run('clear' if os.name == 'posix' else 'cls', shell=True)
         print("All missing packages have been installed.")
     else:
+        subprocess.run('clear' if os.name == 'posix' else 'cls', shell=True)
         print("All required packages are already installed.")

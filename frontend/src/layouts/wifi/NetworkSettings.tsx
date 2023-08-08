@@ -152,8 +152,9 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
       } else {
         setWifiConnectionError(result.message);
       }
-    } else {
-      setWifiConnectionError("SSID and password cannot be empty");
+    }
+    else {
+      setWifiConnectionError("Password cannot be empty");
     }
   };
 

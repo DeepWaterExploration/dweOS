@@ -1,7 +1,4 @@
-import subprocess
-import os
-import platform
-import importlib
+import subprocess, os, platform, importlib
 
 
 def install_missing_packages():
@@ -25,8 +22,7 @@ def install_missing_packages():
         },
     ]
     if current_os == "Windows":
-        pip_command = ["runas /user:Administrator",
-                       "python", "-m", "pip" "install"]
+        pip_command = ["runas /user:Administrator", "python", "-m", "pip" "install"]
         required_packages.append(
             {
                 "module_name": "wmi",
@@ -75,21 +71,21 @@ def install_missing_packages():
     if missing_packages:
         print("Installing missing packages:")
         subprocess.run(
-            [
-                "sudo",
-                "apt",
-                "update",
-            ]
-        )
+                        [
+                            "sudo",
+                            "apt",
+                            "update",
+                        ]
+                    )
         subprocess.run(
-            [
-                "sudo",
-                "apt",
-                "install",
-                "python3-pip",
-                "-y",
-            ]
-        )
+                        [
+                            "sudo",
+                            "apt",
+                            "install",
+                            "python3-pip",
+                            "-y",
+                        ]
+                    )
         for package in missing_packages:
             print(f"{package} - {' '.join(pip_command + [package])}:")
             if current_os.lower() == "windows":

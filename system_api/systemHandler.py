@@ -1,24 +1,24 @@
 import platform, subprocess
 
 def shut_down():
-    match platform.system():
-        case "Windows":
-            cmd = "shutdown /s /t 1"
-        case "Linux":
-            cmd = "sudo shutdown -h now"
-        case "Darwin":
-            cmd = "sudo shutdown -h now"
-        case _:
-            raise NotImplementedError("Unsupported platform")
+    current_os = platform.system()
+    if current_os == "Windows":
+        cmd = "shutdown /s /t 1"
+    if current_os == "Linux":
+        cmd = "sudo shutdown -h now"
+    if current_os == "Darwin":
+        cmd = "sudo shutdown -h now"
+    else:
+        raise NotImplementedError("Unsupported platform")
     subprocess.call(cmd, shell=True)
 def restart_machine():
-    match platform.system():
-        case "Windows":
-            cmd = "shutdown /r /t 0"
-        case "Linux":
-            cmd = "sudo reboot"
-        case "Darwin":
-            cmd = "sudo reboot"
-        case _:
-            raise NotImplementedError("Unsupported platform")
+    current_os = platform.system()
+    if current_os ==  "Windows":
+        cmd = "shutdown /r /t 0"
+    if current_os ==  "Linux":
+        cmd = "sudo reboot"
+    if current_os ==  "Darwin":
+        cmd = "sudo reboot"
+    else:
+        raise NotImplementedError("Unsupported platform")
     subprocess.call(cmd, shell=True)

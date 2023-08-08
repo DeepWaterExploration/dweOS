@@ -49,15 +49,14 @@ def get_is_wifi_on():
     - wifi_on (bool): True if Wi-Fi is enabled, False otherwise.
     """
     current_os = platform.system()
-    match current_os:
-        case "Windows":
-            cmd = ["netsh", "interface", "show", "interface"]
-        case "Linux":
-            cmd = ["iwconfig"]
-        case "Darwin":  # macOS
-            cmd = ["iwconfig"]
-        case _:
-            return {"enabled": False}
+    if current_os == "Windows":
+        cmd = ["netsh", "interface", "show", "interface"]
+    elif current_os == "Linux":
+        cmd = ["iwconfig"]
+    elif current_os == "Darwin":  # macOS
+        cmd = ["iwconfig"]
+    else:
+        return {"enabled": False}
     try:
         # Run the command and capture the output and errors
         result = subprocess.check_output(cmd, shell=True).decode("utf-8")
@@ -73,65 +72,64 @@ def get_is_wifi_on():
 
 def is_network_secured(ssid):
     current_os = platform.system()
-    match current_os:
-        case "Windows":
-            cmdfolder = os.path.join(
-                os.environ["ProgramData"],
-                "Microsoft",
-                "Wlansvc",
-                "Profiles",
-                "Interfaces",
-            )
-            for interface_file in os.listdir(folder):
-                file_path = os.path.join(folder, interface_file)
-                with open(file_path, "r") as file:
-                    content = file.read()
-                    if ssid in content and "authentication=" in content:
-                        return True
-            return False
-        case "Linux":
-            try:
-                # Run the nmcli command and capture the output
-                cmd = ["nmcli", "connection", "show", ssid]
-                result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+    if current_os == "Windows":
+        cmdfolder = os.path.join(
+            os.environ["ProgramData"],
+            "Microsoft",
+            "Wlansvc",
+            "Profiles",
+            "Interfaces",
+        )
+        for interface_file in os.listdir(folder):
+            file_path = os.path.join(folder, interface_file)
+            with open(file_path, "r") as file:
+                content = file.read()
+                if ssid in content and "authentication=" in content:
+                    return True
+        return False
+    elif current_os == "Linux":
+        try:
+            # Run the nmcli command and capture the output
+            cmd = ["nmcli", "connection", "show", ssid]
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
 
-                # Check if the SSID is present in the output
-                if ssid in result.stdout:
-                    # Check if the key-mgmt field is present
-                    if "802-11-wireless-security.key-mgmt" in result.stdout:
-                        return True  # Network is secured
-                    else:
-                        return False  # Network is not secured
+            # Check if the SSID is present in the output
+            if ssid in result.stdout:
+                # Check if the key-mgmt field is present
+                if "802-11-wireless-security.key-mgmt" in result.stdout:
+                    return True  # Network is secured
                 else:
-                    return None  # Network not found in saved connections
+                    return False  # Network is not secured
+            else:
+                return None  # Network not found in saved connections
 
-            except subprocess.CalledProcessError:
-                print("Error: Unable to run the nmcli command.")
-                return None
+        except subprocess.CalledProcessError:
+            print("Error: Unable to run the nmcli command.")
+            return None
 
-        case "Darwin":  # macOS
-            import plistlib
-            folder = "/Library/Preferences/SystemConfiguration/"
-            for filename in os.listdir(folder):
-                if filename.startswith("com.apple.airport.preferences"):
-                    file_path = os.path.join(folder, filename)
-                    with open(file_path, "rb") as file:
-                        content = plistlib.load(file)
-                        networks = content.get("KnownNetworks", {})
-                        for network in networks.values():
+    elif current_os == "Darwin":  # macOS
+        import plistlib
+        folder = "/Library/Preferences/SystemConfiguration/"
+        for filename in os.listdir(folder):
+            if filename.startswith("com.apple.airport.preferences"):
+                file_path = os.path.join(folder, filename)
+                with open(file_path, "rb") as file:
+                    content = plistlib.load(file)
+                    networks = content.get("KnownNetworks", {})
+                    for network in networks.values():
+                        if (
+                            "SSIDString" in network
+                            and network["SSIDString"] == ssid
+                        ):
                             if (
-                                "SSIDString" in network
-                                and network["SSIDString"] == ssid
+                                "SecurityType" in network
+                                and network["SecurityType"] != "None"
                             ):
-                                if (
-                                    "SecurityType" in network
-                                    and network["SecurityType"] != "None"
-                                ):
-                                    return True
-            return False
-        case _:
-            print("Unsupported operating system.")
-            return False
+                                return True
+        return False
+    else:
+        print("Unsupported operating system.")
+        return False
 
 
 def get_saved_wifi():
@@ -142,13 +140,12 @@ def get_saved_wifi():
     - saved_networks (List[str]): A list of saved Wi-Fi networks.
     """
     current_os = platform.system()
-    match current_os:
-        case "Windows":
-            cmd = ["netsh", "wlan", "show", "profiles"]
-        case "Linux":
-            cmd = "nmcli connection show | awk -F '[[:space:]][[:space:]]+' '/wifi/ && !/^UUID:/ {print $1}'"
-        case "Darwin":  # macOS
-            cmd = ["networksetup", "-listpreferredwirelessnetworks", "Wi-Fi"]
+    if current_os == "Windows":
+        cmd = ["netsh", "wlan", "show", "profiles"]
+    elif current_os == "Linux":
+        cmd = "nmcli connection show | awk -F '[[:space:]][[:space:]]+' '/wifi/ && !/^UUID:/ {print $1}'"
+    elif current_os == "Darwin":  # macOS
+        cmd = ["networksetup", "-listpreferredwirelessnetworks", "Wi-Fi"]
     try:
         # Run the command and capture the output and errors
         result = subprocess.check_output(cmd, shell=True, text=True)
@@ -198,20 +195,22 @@ def forget_wifi(ssid: str):
     - success (bool): True if the network was successfully forgotten, False otherwise.
     """
     current_os = platform.system()
-    match current_os:
-        case "Windows":
-            cmd = ["netsh", "wlan", "delete", "profile", f"name={ssid}"]
-        case "Linux":
-            cmd = ["nmcli", "connection", "delete", f"{ssid}"]
-        case "Darwin":  # macOS
-            cmd = [
-                "networksetup",
-                "-removepreferredwirelessnetwork",
-                "en0",
-                f"{ssid}",
-            ]
-        case _:
-            return {"success": False}
+    if current_os == "Windows":
+        cmd = ["netsh", "wlan", "delete", "profile", f"name={ssid}"]
+    elif current_os == "Linux" and "raspbian" in platform.uname().release.lower():
+        # sudo wpa_cli -i wlan0 list_networks | grep "Your_SSID" | awk '{print $1}' | xargs -I {} sudo wpa_cli -i wlan0 remove_network {}
+        cmd = ["sudo", "wpa_cli", "-i", "wlan0", "remove_network", f"{ssid}"]
+    elif current_os == "Linux":
+        cmd = ["nmcli", "connection", "delete", f"{ssid}"]
+    elif current_os == "Darwin":  # macOS
+        cmd = [
+            "networksetup",
+            "-removepreferredwirelessnetwork",
+            "en0",
+            f"{ssid}",
+        ]
+    else:
+        return {"success": False}
     try:
         # Run the command and capture the output and errors
         subprocess.run(cmd, check=True)
@@ -235,15 +234,14 @@ def disconnect_wifi(ssid: str):
     """
 
     current_os = platform.system()
-    match current_os:
-        case "Windows":
-            cmd = ["netsh", "wlan", "disconnect"]
-        case "Linux":
-            cmd = ["nmcli", "connection", "down", f"{ssid}"]
-        case "Darwin":  # macOS
-            cmd = ["networksetup", "-setairportpower", "en0", "off"]
-        case _:
-            return {"success": False}
+    if current_os == "Windows":
+        cmd = ["netsh", "wlan", "disconnect"]
+    elif current_os == "Linux":
+        cmd = ["nmcli", "connection", "down", f"{ssid}"]
+    elif current_os == "Darwin":  # macOS
+        cmd = ["networksetup", "-setairportpower", "en0", "off"]
+    else:
+        return {"success": False}
     try:
         # Run the command and capture the output and errors
         subprocess.run(cmd, check=True)
@@ -267,29 +265,28 @@ def toggle_wifi_status(
     - wifi_on (bool): True if Wi-Fi is enabled, False otherwise.
     """
     current_os = platform.system()
-    match current_os:
-        case "Windows":
-            cmd = (
-                [
-                    "netsh",
-                    "interface",
-                    "set",
-                    "interface",
-                    "Wi-Fi",
-                    f"admin={'enable' if wifi_on else 'disable'}",
-                ],
-            )
-        case "Linux":
-            cmd = ["nmcli", "radio", "wifi", f"{'on' if wifi_on else 'off'}"]
-        case "Darwin":  # macOS
-            cmd = [
-                "networksetup",
-                "-setairportpower",
-                "en0",
-                f"{'on' if wifi_on else 'off'}",
-            ]
-        case _:
-            return {"enabled": False}
+    if current_os == "Windows":
+        cmd = (
+            [
+                "netsh",
+                "interface",
+                "set",
+                "interface",
+                "Wi-Fi",
+                f"admin={'enable' if wifi_on else 'disable'}",
+            ],
+        )
+    elif current_os == "Linux":
+        cmd = ["nmcli", "radio", "wifi", f"{'on' if wifi_on else 'off'}"]
+    elif current_os == "Darwin":  # macOS
+        cmd = [
+            "networksetup",
+            "-setairportpower",
+            "en0",
+            f"{'on' if wifi_on else 'off'}",
+        ]
+    else:
+        return {"enabled": False}
     try:
         # Run the command and capture the output and errors
         subprocess.run(cmd, check=True)
@@ -303,15 +300,14 @@ def toggle_wifi_status(
 def get_connected_network():
     """"""
     current_os = platform.system()
-    match current_os:
-        case "Windows":
-            cmd = f'netsh wlan show interfaces | findstr /r "^....SSID"'
-        case "Linux":
-            cmd = f"iwgetid -r"
-        case "Darwin":  # macOS
-            cmd = f"/usr/sbin/networksetup -setairportnetwork en0 '{ssid}' '{password}'"
-        case _:
-            return -1  # Unsupported platform
+    if current_os == "Windows":
+        cmd = f'netsh wlan show interfaces | findstr /r "^....SSID"'
+    elif current_os == "Linux":
+        cmd = f"iwgetid -r"
+    elif current_os == "Darwin":  # macOS
+        cmd = f"/usr/sbin/networksetup -setairportnetwork en0 '{ssid}' '{password}'"
+    else:
+        return -1  # Unsupported platform
     try:
         # Run the command and capture the output and errors
         result = subprocess.check_output(cmd, shell=True).decode("utf-8")
@@ -490,15 +486,14 @@ def connect_to_wifi(ssid: str, password: str) -> int:
     password = base64Decode(password)
     # Get the current operating system
     current_os = platform.system()
-    match current_os:
-        case "Windows":
-            cmd = f'netsh wlan connect ssid="{ssid}" name="{ssid}" key="{password}"'
-        case "Linux":
-            cmd = f"nmcli dev wifi connect '{ssid}' password '{password}'"
-        case "Darwin":  # macOS
-            cmd = f"/usr/sbin/networksetup -setairportnetwork en0 '{ssid}' '{password}'"
-        case _:
-            return -1  # Unsupported platform
+    if current_os == "Windows":
+        cmd = f'netsh wlan connect ssid="{ssid}" name="{ssid}" key="{password}"'
+    elif current_os == "Linux":
+        cmd = f"nmcli dev wifi connect '{ssid}' password '{password}'"
+    elif current_os == "Darwin":  # macOS
+        cmd = f"/usr/sbin/networksetup -setairportnetwork en0 '{ssid}' '{password}'"
+    else:
+        return -1  # Unsupported platform
     try:
         # Run the command and capture the output and errors
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)

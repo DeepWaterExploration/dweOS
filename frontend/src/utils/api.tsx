@@ -1,5 +1,6 @@
 import {
   Device,
+  ReleaseList,
   Stream,
   StreamEndpoint,
   StreamFormat,
@@ -12,6 +13,7 @@ const hostAddress: string = window.location.hostname;
 console.log("Host address:", hostAddress);
 export const DEVICE_API_URL = `http://${hostAddress}:8080`;
 export const SYSTEM_API_URL = `http://${hostAddress}:5050`;
+export const UPDATER_API_URL = `http://${hostAddress}:5000`;
 
 /**
  * Retrieves a list of devices connected to the system
@@ -489,4 +491,46 @@ export async function restartMachine(): Promise<null> {
     throw error;
   });
   return null;
+}
+
+export async function installUpdate(tag_name: string): Promise<null> {
+  const url = `${UPDATER_API_URL}/install_update`;
+  const data = {
+    tag_name,
+  };
+  const config: RequestInit = {
+    mode: "cors",
+    method: "POST",
+    body: JSON.stringify(data),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  };
+  await fetch(url, config).catch((error: Error) => {
+    console.log("Failed to restart device");
+    console.error(error);
+    throw error;
+  });
+  return null;
+}
+
+export async function getReleases(): Promise<ReleaseList> {
+  const url = `${UPDATER_API_URL}/releases`;
+  const config: RequestInit = {
+    mode: "cors",
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  };
+  return await fetch(url, config)
+    .then((response: Response) => response.json())
+    .then((data: ReleaseList) => {
+      return data;
+    })
+    .catch((error: Error) => {
+      console.log("Failed to restart device");
+      console.error(error);
+      throw error;
+    });
 }

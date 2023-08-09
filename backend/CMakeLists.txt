@@ -39,6 +39,8 @@ set(SOURCE
     src/settings/settings-manager.cpp
 )
 
+set(CMAKE_EXECUTABLE_SUFFIX ".bin")
+
 add_executable(backend
     ${SOURCE}
     src/apps/server.cpp)

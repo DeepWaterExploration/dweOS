@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { Release } from "../../types/types";
-import { getReleases } from "../../utils/api";
+import { getReleases, installUpdate } from "../../utils/api";
 
 export interface VersionItemProps {
   isInstallable: boolean;
@@ -34,7 +34,14 @@ const VersionItem: React.FC<VersionItemProps> = (props) => {
     <ListItem
       secondaryAction={
         props.isInstallable ? (
-          <Button variant='contained'>Install</Button>
+          <Button
+            variant='contained'
+            onClick={() => {
+              installUpdate(props.version);
+            }}
+          >
+            Install
+          </Button>
         ) : undefined
       }
     >
@@ -57,16 +64,14 @@ const VersionItem: React.FC<VersionItemProps> = (props) => {
 
 const Updater: React.FC = () => {
   const [releases, setReleases] = useState<Release[]>([]);
+  const [currentRelease, setCurrentRelease] = useState<Release>();
 
   useEffect(() => {
     getReleases().then((r) => {
-      setReleases(r.releases);
+      setReleases(r.releases.filter((release) => !release.current));
+      setCurrentRelease(r.releases.find((release) => release.current));
     });
   }, []);
-
-  useEffect(() => {
-    console.log(releases);
-  }, [releases]);
 
   return (
     <Grid
@@ -93,12 +98,14 @@ const Updater: React.FC = () => {
           <Typography sx={{ fontSize: "1rem" }} color='text.secondary'>
             Current Version
           </Typography>
-          {/* <VersionItem
-            isInstallable={false}
-            isMostRecent={true}
-            version='1.2.1'
-            dateReleased={new Date("07/31/2023")}
-          /> */}
+          {currentRelease ? (
+            <VersionItem
+              isInstallable={false}
+              isMostRecent={currentRelease.mostRecent}
+              version={currentRelease.tag_name}
+              dateReleased={new Date(currentRelease.published_at)}
+            />
+          ) : undefined}
           <Typography
             sx={{ fontSize: "1rem" }}
             color='text.secondary'
@@ -115,17 +122,11 @@ const Updater: React.FC = () => {
             elevation={4}
           >
             <List>
-              {/* <VersionItem
-                isInstallable={true}
-                isMostRecent={false}
-                version='1.2.0'
-                dateReleased={new Date("07/26/2023")}
-              /> */}
-              {releases?.map((release: Release, index) => {
+              {releases?.map((release: Release) => {
                 return (
                   <VersionItem
                     isInstallable={true}
-                    isMostRecent={index === 0}
+                    isMostRecent={release.mostRecent}
                     version={release.tag_name}
                     dateReleased={new Date(release.published_at)}
                   />

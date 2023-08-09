@@ -1,6 +1,4 @@
-import subprocess
-import platform
-import importlib
+import subprocess, os, platform, importlib
 
 
 def install_missing_packages():
@@ -32,6 +30,7 @@ def install_missing_packages():
             },
         )
     elif current_os == "Linux":
+
         try:
             subprocess.run(
                 [
@@ -39,20 +38,17 @@ def install_missing_packages():
                     "systemctl",
                     "start",
                     "NetworkManager",
-                ]
+                ], check=True
             )
         # Command not found
-        except FileNotFoundError:
+        except subprocess.CalledProcessError:
             subprocess.run(
                 [
                     "sudo",
                     "apt",
-                    "update",
-                    "&&",
-                    "sudo",
-                    "apt",
                     "install",
                     "network-manager",
+                    "-y"
                 ]
             )
 
@@ -74,6 +70,22 @@ def install_missing_packages():
             missing_packages.append(package["pip_name"])
     if missing_packages:
         print("Installing missing packages:")
+        subprocess.run(
+                        [
+                            "sudo",
+                            "apt",
+                            "update",
+                        ]
+                    )
+        subprocess.run(
+                        [
+                            "sudo",
+                            "apt",
+                            "install",
+                            "python3-pip",
+                            "-y",
+                        ]
+                    )
         for package in missing_packages:
             print(f"{package} - {' '.join(pip_command + [package])}:")
             if current_os.lower() == "windows":
@@ -107,6 +119,8 @@ def install_missing_packages():
                     print(
                         f"Failed to install {package}. Please try to install it manually."
                     )
+        subprocess.run('clear' if os.name == 'posix' else 'cls', shell=True)
         print("All missing packages have been installed.")
     else:
+        subprocess.run('clear' if os.name == 'posix' else 'cls', shell=True)
         print("All required packages are already installed.")

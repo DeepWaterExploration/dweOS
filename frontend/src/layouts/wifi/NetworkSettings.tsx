@@ -152,8 +152,9 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
       } else {
         setWifiConnectionError(result.message);
       }
-    } else {
-      setWifiConnectionError("SSID and password cannot be empty");
+    }
+    else {
+      setWifiConnectionError("Password cannot be empty");
     }
   };
 
@@ -382,54 +383,65 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
               <List dense={true}>
                 <ListItem>
                   {props.connectedNetwork !== null ? (
-                    <ListItemAvatar>
-                      <Avatar>
-                        <DBMToSignalIcon
-                          signalStrength={
-                            props.connectedNetwork.signal_strength
-                          }
-                          secure={props.connectedNetwork.secure}
-                        />
-                      </Avatar>
-                    </ListItemAvatar>
+                    <>
+                      <ListItemAvatar>
+                        <Avatar>
+                          <DBMToSignalIcon
+                            signalStrength={
+                              props.connectedNetwork.signal_strength
+                            }
+                            secure={props.connectedNetwork.secure}
+                          />
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={
+                          props.connectedNetwork.ssid
+                        }
+                        secondary={
+                          `${props.connectedNetwork.signal_strength} dBm`
+                        }
+                        style={{ width: "200px" }}
+                      />
+                      <Button
+                        variant='contained'
+                        style={{
+                          color: "white",
+                          marginRight: "20px",
+                          fontWeight: "bold",
+                        }}
+                        onClick={() => {
+                          setSelectedNetwork(props.connectedNetwork);
+                          handleOpenDialogueForget();
+                        }}
+                      >
+                        Forget
+                      </Button>
+                      <Button
+                        variant='contained'
+                        style={{ color: "white", fontWeight: "bold" }}
+                        onClick={() => {
+                          setSelectedNetwork(props.connectedNetwork);
+                          handleOpenDialogueDisconnect();
+                        }}
+                      >
+                        Disconnect
+                      </Button>
+                    </>
                   ) : (
-                    <ListItemAvatar>
-                      <Avatar>
-                        <SignalWifi0BarIcon sx={{ fontSize: 22.5, mx: 0.5 }} />
-                      </Avatar>
-                    </ListItemAvatar>
+                    <>
+                      <ListItemAvatar>
+                        <Avatar>
+                          <SignalWifi0BarIcon sx={{ fontSize: 22.5, mx: 0.5 }} />
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary="Not Connected"
+                        secondary="Connect to a network"
+                        style={{ width: "200px" }}
+                      />
+                    </>
                   )}
-                  <ListItemText
-                    primary={props.connectedNetwork?.ssid ?? "Not Connected"}
-                    secondary={
-                      `${props.connectedNetwork?.signal_strength} dBm` ?? "N/A"
-                    }
-                    style={{ width: "200px" }}
-                  />
-                  <Button
-                    variant='contained'
-                    style={{
-                      color: "white",
-                      marginRight: "20px",
-                      fontWeight: "bold",
-                    }}
-                    onClick={() => {
-                      setSelectedNetwork(props.connectedNetwork);
-                      handleOpenDialogueForget();
-                    }}
-                  >
-                    Forget
-                  </Button>
-                  <Button
-                    variant='contained'
-                    style={{ color: "white", fontWeight: "bold" }}
-                    onClick={() => {
-                      setSelectedNetwork(props.connectedNetwork);
-                      handleOpenDialogueDisconnect();
-                    }}
-                  >
-                    Disconnect
-                  </Button>
                 </ListItem>
               </List>
             </Box>

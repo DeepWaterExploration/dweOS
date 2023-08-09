@@ -195,11 +195,9 @@ def forget_wifi(ssid: str):
     - success (bool): True if the network was successfully forgotten, False otherwise.
     """
     current_os = platform.system()
+    print("os", platform.uname())
     if current_os == "Windows":
         cmd = ["netsh", "wlan", "delete", "profile", f"name={ssid}"]
-    elif current_os == "Linux" and "raspbian" in platform.uname().release.lower():
-        # sudo wpa_cli -i wlan0 list_networks | grep "Your_SSID" | awk '{print $1}' | xargs -I {} sudo wpa_cli -i wlan0 remove_network {}
-        cmd = ["sudo", "wpa_cli", "-i", "wlan0", "remove_network", f"{ssid}"]
     elif current_os == "Linux":
         cmd = ["nmcli", "connection", "delete", f"{ssid}"]
     elif current_os == "Darwin":  # macOS
@@ -213,7 +211,18 @@ def forget_wifi(ssid: str):
         return {"success": False}
     try:
         # Run the command and capture the output and errors
-        subprocess.run(cmd, check=True)
+        if current_os == "Linux" and "raspbian" in platform.uname().release.lower() or platform.uname().node == "blueos":
+          wifi = pywifi.PyWiFi()
+          interfaces = get_all_interfaces(wifi)
+          for interface in interfaces:
+            if interface.name().startswith("p2p"):
+              continue
+            else:
+              cmd = f"wpa_cli -i {interface.name()} remove_network {ssid} && wpa_cli -i {interface.name()} save_config"
+              subprocess.run(cmd, check=True)
+              print(interface.name())
+        else:
+          subprocess.run(cmd, check=True)
         return {"success": True}
     except Exception as e:
         print("Error: An unexpected error occurred.")
@@ -319,6 +328,7 @@ def get_connected_network():
     except Exception as e:
         print("Error: An unexpected error occurred.")
         print("Error message: ", str(e))
+        return {"network": ""}
 
 
 def get_all_interfaces(wifi_manager: pywifi.PyWiFi):
@@ -488,35 +498,37 @@ def connect_to_wifi(ssid: str, password: str) -> int:
     current_os = platform.system()
     if current_os == "Windows":
         cmd = f'netsh wlan connect ssid="{ssid}" name="{ssid}" key="{password}"'
+    elif current_os == "Linux" and "raspbian" in platform.uname().release.lower() or platform.uname().node == "blueos":
+        cmd = f"wpa_passphrase '{ssid}' '{password}' | sudo tee /etc/wpa_supplicant/wpa_supplicant.conf > /dev/null && sudo wpa_supplicant -B -i wlan0 -c /etc/wpa_supplicant/wpa_supplicant.conf && sudo dhclient wlan0"
     elif current_os == "Linux":
-        cmd = f"nmcli dev wifi connect '{ssid}' password '{password}'"
+        cmd = f"sudo nmcli device wifi connect {ssid} password {password}"
+        print(cmd)
     elif current_os == "Darwin":  # macOS
         cmd = f"/usr/sbin/networksetup -setairportnetwork en0 '{ssid}' '{password}'"
     else:
         return -1  # Unsupported platform
     try:
-        # Run the command and capture the output and errors
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-        if result.returncode == 0:
-            return {
-                "status": "success",
-                "message": "Successfully connected to the network",
-            }
-        elif current_os == "Windows" and "is not in the range" in result.stderr:
-            return {
-                "status": "error",
-                "message": "WiFi network not found",
-            }
-        elif current_os == "Windows" and "is not allowed" in result.stderr:
-            return {
-                "status": "error",
-                "message": "Invalid password",
-            }
-        else:
-            return {
-                "status": "error",
-                "message": "Failed to connect to WiFi network",
-            }
+      result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+      if result.returncode == 0:
+          return {
+              "status": "success",
+              "message": "Successfully connected to the network",
+          }
+      elif current_os == "Windows" and "is not in the range" in result.stderr:
+          return {
+              "status": "error",
+              "message": "WiFi network not found",
+          }
+      elif current_os == "Windows" and "is not allowed" in result.stderr:
+          return {
+              "status": "error",
+              "message": "Invalid password",
+          }
+      else:
+          return {
+              "status": "error",
+              "message": "Failed to connect to WiFi network",
+          }
     except Exception as e:
         print("Error: An unexpected error occurred.")
         print("Error message: ", str(e))

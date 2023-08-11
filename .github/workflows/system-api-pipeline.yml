@@ -8,16 +8,12 @@ on:
       - main
       - master
       - "[0-9]+.[0-9]+.x"
-    paths:
-      - 'frontend/src/**'
   pull_request:
     branches:
       - development
       - main
       - master
       - "[0-9]+.[0-9]+.x"
-    paths:
-      - 'frontend/src/**'
   workflow_dispatch:
 
 # The sequence of runs in this workflow:
@@ -31,7 +27,7 @@ jobs:
       - run: uname -a
       - name: Check out Repository Code
         uses: actions/checkout@v3
-      - name : Format code with black
+      - name: Format code with black
         run: |
           pip install black
           black .

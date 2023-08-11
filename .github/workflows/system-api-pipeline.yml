@@ -1,0 +1,57 @@
+---
+name: CI/CD Pipeline for System API
+# Controls when the workflow will run
+on:
+  push:
+    branches:
+      - development
+      - main
+      - master
+      - "[0-9]+.[0-9]+.x"
+    paths:
+      - 'frontend/src/**'
+  pull_request:
+    branches:
+      - development
+      - main
+      - master
+      - "[0-9]+.[0-9]+.x"
+    paths:
+      - 'frontend/src/**'
+  workflow_dispatch:
+
+# The sequence of runs in this workflow:
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - run: lsb_release -a
+      - run: uname -a
+      - name: Check out Repository Code
+        uses: actions/checkout@v3
+      - name : Format code with black
+        run: |
+          pip install black
+          black .
+      - name: Sort imports with isort
+        run: |
+          pip install isort
+          isort .
+      - name: Remove unused imports with autoflake
+        run: |
+          pip install autoflake
+          autoflake --in-place --remove-all-unused-imports --remove-unused-variables --recursive .
+      - name: Upgrade code syntax with pyupgrade
+        run: |
+          pip install pyupgrade
+          find . -name '**/*.py' -exec pyupgrade --py39-plus --keep-runtime-typing {} \;
+      - name: Commit changes
+        uses: EndBug/add-and-commit@v9
+        with:
+          author_name: ${{ github.actor }}
+          author_email: ${{ github.actor }}@users.noreply.github.com
+          message: "Python code formatting"
+          add: "."
+          branch: ${{ github.ref }}

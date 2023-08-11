@@ -14,9 +14,9 @@ from http.server import HTTPServer
 import cpuHandler
 import systemHandler
 import temperatureHandler
+import wifiHandler
 from wifi.WifiManager import WifiManager
 from wifi.wpa_supplicant import find_valid_interfaces
-import wifiHandler
 
 wifi_manager = WifiManager()
 

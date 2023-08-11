@@ -1,5 +1,11 @@
+import base64
+import os
+import platform
+import subprocess
 from typing import List
-import pywifi, platform, netifaces as ni, subprocess, base64, os
+
+import netifaces as ni
+import pywifi
 
 
 def print_attrs(obj: object) -> None:
@@ -441,7 +447,6 @@ def get_wifi_info():
                     )
         except Exception as e:
             print(f"Exception: {e}")
-            pass
     return wifi_info
 
 

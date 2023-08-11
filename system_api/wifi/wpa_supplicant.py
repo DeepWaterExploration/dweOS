@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import List, Optional, Tuple, Union
 import subprocess
 
+from wifi.exceptions import BusyError, NetworkAddFail, SockCommError, WPAOperationFail
+
 def find_valid_interfaces() -> List[str]:
     """Returns a list of valid network interfaces."""
     try:
@@ -52,9 +54,7 @@ class WPASupplicant:
         for file in files:
             os.remove(file)
         socket_client = f"{self.SOCKET_RECV_PATH}/wpa_supplicant_service_{os.getpid()}"
-
-        print(f"Connecting to {self.SOCKET_SEND_PATH}")
-        #
+        # Bind the receiving socket
         self.sock.settimeout(10)
         # Bind the receiving socket
         self.sock.bind(socket_client)
@@ -235,24 +235,3 @@ class WPASupplicant:
         Save the current configuration.
         """
         return await self.send_command("SAVE_CONFIG", timeout)
-
-async def main() -> None:
-    wpa = WPASupplicant()
-    wpa.run(("localhost", 6664))
-    time.sleep(1)
-    await wpa.send_command_list_networks()
-    for i in range(5):
-        await wpa.send_command_remove_network(i)
-
-    await wpa.send_command_add_network()
-    await wpa.send_command_set_network(0, "EvoNexusSD", '"S@nD1ego!"')
-    await wpa.send_command_set_network(0, "psk", '"wifi_password"')
-    await wpa.send_command_enable_network(0)
-    await wpa.send_command_save_config()
-    await wpa.send_command_reconfigure()
-    while True:
-        time.sleep(1)
-        await wpa.send_command_ping()
-
-if __name__ == "__main__":
-    asyncio.run(main())

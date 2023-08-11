@@ -1,25 +1,32 @@
 from enum import Enum
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel
 
 class SecurityType(str, Enum):
     """Represents the security type of a Wifi network"""
-    OPEN = "OPEN" # No security
+    WPA = "WPA" # WPA security
     WEP = "WEP" # WEP security
-    WPA_PSK = "WPA_PSK" # WPA PSK security
-    WPA_EAP = "WPA_EAP" # WPA EAP security
-    IEEE8021X = "IEEE8021X" # IEEE 802.1X security
-    UNKNOWN = "UNKNOWN" # Unknown security type
+    WSN = "WSN" # WSN security
 
 class ScannedWifiNetwork(BaseModel):
     """Represents a Wifi network scanned from the network interface"""
     ssid: Optional[str] # Network SSID (can be hidden)
-    bssid: str # Network BSSID (always available)
-    secure: bool # Whether the network is secure
-    security_type: Optional[SecurityType] # Network security type
     frequency: int # Network frequency
+    mac_address: str # Network BSSID (always available)
+    secure: bool # Whether the network is secure
+    security_type: Optional[List[SecurityType]] # Network security type
     signal_strength: int # Network signal strength
+
+    def to_dict(self):
+        return {
+            "ssid": self.ssid,
+            "frequency": self.frequency,
+            "mac_address": self.mac_address,
+            "secure": self.secure,
+            "security_type": self.security_type,
+            "signal_strength": self.signal_strength
+        }
 
 class SavedWifiNetwork(BaseModel):
     """Represents a Wifi network saved in the network interface"""

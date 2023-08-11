@@ -16,6 +16,7 @@ import systemHandler
 import temperatureHandler
 from wifi.WifiManager import WifiManager
 from wifi.wpa_supplicant import find_valid_interfaces
+import wifiHandler
 
 wifi_manager = WifiManager()
 
@@ -25,12 +26,6 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         logger.info("HTTP request handler initialized.")
         # Initialize the parent class
         super().__init__(*args, **kwargs)
-
-    def __del__(self):
-        logger.info("HTTP request handler destroyed.")
-        # close server if it is the last instance
-        if sys.getrefcount(self) == 2:
-            self.server.close()
 
     def end_headers(self):
         # Set "Access-Control-Allow-Origin" header to the value of the "Origin" header
@@ -119,7 +114,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
 
             # Build the response content as a dictionary and convert to JSON format
-            response_content = json.dumps(self.wifiHandler.get_saved_wifi())
+            response_content = json.dumps(wifiHandler.get_saved_wifi())
 
             # Send the response content encoded in utf-8
             self.wfile.write((response_content).encode("utf-8"))

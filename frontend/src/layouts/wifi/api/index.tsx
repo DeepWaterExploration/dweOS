@@ -91,22 +91,8 @@ export async function getAvailableWifi(): Promise<WiFiNetwork[]> {
     // Process the response data
     .then((response: Response) => response.json())
     .then((data: GetAvailableWifiResponse) => {
-      const uniqueNetworksSet = new Set<string>();
-      const uniqueWiFiNetworks: WiFiNetwork[] = [];
-
-      data.interfaces.forEach((wifiInterface: WiFiInterfaces) => {
-        Object.values(wifiInterface).forEach(
-          (wifiInterfaceData: WiFiInterface) => {
-            wifiInterfaceData.wifi_networks.forEach((network: WiFiNetwork) => {
-              if (!uniqueNetworksSet.has(network.ssid)) {
-                uniqueNetworksSet.add(network.ssid);
-                uniqueWiFiNetworks.push(network);
-              }
-            });
-          }
-        );
-      });
-      return uniqueWiFiNetworks;
+      console.log(data);
+      return data.available_networks as WiFiNetwork[];
     })
     .catch((error: Error) => {
       console.log("Failed to get available wifi networks");

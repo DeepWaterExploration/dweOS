@@ -1,10 +1,15 @@
 import asyncio
 import time
 from typing import Any, Dict, List, Optional
+from loguru import logger
 
 from wifi.exceptions import FetchError, ParseError
-from wifi.network_types import (ConnectionStatus, SavedWifiNetwork,
-                                ScannedWifiNetwork, WifiCredentials)
+from wifi.network_types import (
+    ConnectionStatus,
+    SavedWifiNetwork,
+    ScannedWifiNetwork,
+    WifiCredentials,
+)
 from wifi.wpa_supplicant import WPASupplicant
 
 
@@ -113,10 +118,12 @@ class WifiManager:
                 data = await self.wpa.send_command_scan_results()
                 networks_list = WifiManager.__dict_from_table(data)
                 network_names = []
-                self._updated_scan_results = {"wifi_networks": []}
+                self._updated_scan_results = {"available_networks": []}
                 for network in networks_list:
                     if not (
-                        network.get("ssid") is None or network["ssid"] in network_names
+                        network.get("ssid") is None
+                        or network.get("ssid") == ""
+                        or network.get("ssid") in network_names
                     ):
                         flags = network["flags"]
                         security_types = []
@@ -126,7 +133,7 @@ class WifiManager:
                             security_types.append("WEP")
                         if "WSN" in flags:
                             security_types.append("WSN")
-                        self._updated_scan_results["wifi_networks"].append(
+                        self._updated_scan_results["available_networks"].append(
                             ScannedWifiNetwork(
                                 ssid=network.get("ssid"),
                                 frequency=int(network["frequency"]),
@@ -136,12 +143,13 @@ class WifiManager:
                                 signal_strength=int(network["signallevel"]),
                             ).to_dict()  # Convert the object to a dictionary
                         )
-                self._time_last_scan = time.time()
+                        network_names += [network.get("ssid")]
+                    self._time_last_scan = time.time()
             except Exception as error:
                 if self._scan_task is not None:
                     self._scan_task.cancel()
-                self._updated_scan_results["wifi_networks"] = None
-                raise FetchError("Failed to fetch wifi list.") from error
+                self._updated_scan_results["available_networks"] = None
+                raise FetchError(f"Failed to fetch wifi list: {error}")
 
         # Performs a new scan only if more than 30 seconds passed since last scan
         if time.time() - self._time_last_scan < self.WIFI_SCAN_INTERVAL:
@@ -159,7 +167,7 @@ class WifiManager:
                 logger.info(f"Waiting for {awaited_scan_task_name} results.")
                 await asyncio.sleep(0.5)
 
-        if self._updated_scan_results["wifi_networks"] is None:
+        if self._updated_scan_results["available_networks"] is None:
             raise FetchError("Failed to fetch wifi list.")
 
         return self._updated_scan_results

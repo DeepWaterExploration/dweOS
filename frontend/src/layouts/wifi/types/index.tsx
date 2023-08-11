@@ -57,7 +57,7 @@ export interface ConnectToWifiResponse {
  * Represents the response from the backend when connecting to a network
  */
 export interface GetAvailableWifiResponse {
-  interfaces: WiFiInterfaces[];
+  available_networks: WiFiNetwork[];
 }
 
 /**

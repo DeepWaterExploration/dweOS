@@ -10,7 +10,6 @@ import {
 } from "../types/types";
 
 const hostAddress: string = window.location.hostname;
-console.log("Host address:", hostAddress);
 export const DEVICE_API_URL = `http://${hostAddress}:8080`;
 export const SYSTEM_API_URL = `http://${hostAddress}:5050`;
 export const UPDATER_API_URL = `http://${hostAddress}:5000`;

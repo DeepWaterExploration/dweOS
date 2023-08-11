@@ -1,4 +1,5 @@
-import subprocess, platform
+import platform
+import subprocess
 
 
 def get_available_disks():

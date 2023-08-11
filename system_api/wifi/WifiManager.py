@@ -1,15 +1,10 @@
 import asyncio
 import time
-from ipaddress import IPv4Address
 from typing import Any, Dict, List, Optional
 
 from wifi.exceptions import FetchError, ParseError
-from wifi.network_types import (
-    ConnectionStatus,
-    SavedWifiNetwork,
-    ScannedWifiNetwork,
-    WifiCredentials,
-)
+from wifi.network_types import (ConnectionStatus, SavedWifiNetwork,
+                                ScannedWifiNetwork, WifiCredentials)
 from wifi.wpa_supplicant import WPASupplicant
 
 
@@ -68,9 +63,13 @@ class WifiManager:
             output += [{}]
             try:
                 for key, value in zip(header, line):
-                    output[-1][WifiManager.__decode_escaped(key)] = WifiManager.__decode_escaped(value)
+                    output[-1][
+                        WifiManager.__decode_escaped(key)
+                    ] = WifiManager.__decode_escaped(value)
             except Exception as error:
-                raise ParseError("Failed parsing dictionary data from table.") from error
+                raise ParseError(
+                    "Failed parsing dictionary data from table."
+                ) from error
 
         return output
 
@@ -90,7 +89,9 @@ class WifiManager:
         for line in raw_lines:
             try:
                 key, value = line.split(b"=")
-                output[WifiManager.__decode_escaped(key)] = WifiManager.__decode_escaped(value)
+                output[
+                    WifiManager.__decode_escaped(key)
+                ] = WifiManager.__decode_escaped(value)
             except Exception as error:
                 raise ParseError("Failed parsing dictionary data from list.") from error
 
@@ -105,16 +106,18 @@ class WifiManager:
                 # where this one is running can check when it has finished.
                 # Otherwise, it could happen that a new scan is initiated before the ones waiting know
                 # the previous one has finished, making them stay on the loop unnecessarily.
-                self._scan_task = asyncio.create_task(self.wpa.send_command_scan(timeout=30))
+                self._scan_task = asyncio.create_task(
+                    self.wpa.send_command_scan(timeout=30)
+                )
                 await self._scan_task
                 data = await self.wpa.send_command_scan_results()
                 networks_list = WifiManager.__dict_from_table(data)
                 network_names = []
-                self._updated_scan_results = {
-                    "wifi_networks" : []
-                }
+                self._updated_scan_results = {"wifi_networks": []}
                 for network in networks_list:
-                    if not(network.get('ssid') is None or network["ssid"] in network_names):
+                    if not (
+                        network.get("ssid") is None or network["ssid"] in network_names
+                    ):
                         flags = network["flags"]
                         security_types = []
                         if "WPA" in flags or "WPA2" in flags:
@@ -125,7 +128,7 @@ class WifiManager:
                             security_types.append("WSN")
                         self._updated_scan_results["wifi_networks"].append(
                             ScannedWifiNetwork(
-                                ssid=network.get('ssid'),
+                                ssid=network.get("ssid"),
                                 frequency=int(network["frequency"]),
                                 mac_address=network["bssid"],
                                 secure=security_types != [],
@@ -149,7 +152,10 @@ class WifiManager:
             await perform_new_scan()
         else:
             awaited_scan_task_name = self._scan_task.get_name()
-            while self._scan_task.get_name() == awaited_scan_task_name and not self._scan_task.done():
+            while (
+                self._scan_task.get_name() == awaited_scan_task_name
+                and not self._scan_task.done()
+            ):
                 logger.info(f"Waiting for {awaited_scan_task_name} results.")
                 await asyncio.sleep(0.5)
 
@@ -167,7 +173,9 @@ class WifiManager:
         except Exception as error:
             raise FetchError("Failed to fetch saved networks list.") from error
 
-    async def add_network(self, credentials: WifiCredentials, hidden: bool = False) -> int:
+    async def add_network(
+        self, credentials: WifiCredentials, hidden: bool = False
+    ) -> int:
         """Set network ssid and password
 
         Arguments:
@@ -178,13 +186,21 @@ class WifiManager:
         try:
             network_number = await self.wpa.send_command_add_network()
 
-            await self.wpa.send_command_set_network(network_number, "ssid", f'"{credentials.ssid}"')
+            await self.wpa.send_command_set_network(
+                network_number, "ssid", f'"{credentials.ssid}"'
+            )
             if not credentials.password:
-                await self.wpa.send_command_set_network(network_number, "key_mgmt", "NONE")
+                await self.wpa.send_command_set_network(
+                    network_number, "key_mgmt", "NONE"
+                )
             else:
-                await self.wpa.send_command_set_network(network_number, "psk", f'"{credentials.password}"')
+                await self.wpa.send_command_set_network(
+                    network_number, "psk", f'"{credentials.password}"'
+                )
             if hidden:
-                await self.wpa.send_command_set_network(network_number, "scan_ssid", "1")
+                await self.wpa.send_command_set_network(
+                    network_number, "scan_ssid", "1"
+                )
             await self.wpa.send_command_save_config()
             await self.wpa.send_command_reconfigure()
             return network_number
@@ -235,7 +251,10 @@ class WifiManager:
 
             # Remove network from ignored list if user deliberately connected
             current_network = await self.get_current_network()
-            if current_network and current_network.ssid in self._ignored_reconnection_networks:
+            if (
+                current_network
+                and current_network.ssid in self._ignored_reconnection_networks
+            ):
                 logger.debug(f"Removing '{current_network.ssid}' from ignored list.")
                 self._ignored_reconnection_networks.remove(current_network.ssid)
             self.connection_status = ConnectionStatus.JUST_CONNECTED
@@ -327,7 +346,10 @@ class WifiManager:
             await asyncio.sleep(2.5)
 
             # Disable watchdog checks while deliberately connecting or disconnecting
-            if self.connection_status in [ConnectionStatus.CONNECTING, ConnectionStatus.DISCONNECTING]:
+            if self.connection_status in [
+                ConnectionStatus.CONNECTING,
+                ConnectionStatus.DISCONNECTING,
+            ]:
                 continue
 
             is_connected = await self.get_current_network() is not None
@@ -340,7 +362,9 @@ class WifiManager:
             elif not was_connected and not is_connected:
                 self.connection_status = ConnectionStatus.STILL_DISCONNECTED
                 seconds_disconnected = time.time() - time_disconnection
-                logger.debug(f"{int(seconds_disconnected)} seconds passed since disconnection.")
+                logger.debug(
+                    f"{int(seconds_disconnected)} seconds passed since disconnection."
+                )
             elif not was_connected and is_connected:
                 self.connection_status = ConnectionStatus.JUST_CONNECTED
                 seconds_disconnected = 0
@@ -350,13 +374,19 @@ class WifiManager:
             else:
                 self.connection_status = ConnectionStatus.STILL_CONNECTED
 
-            if not networks_reenabled and seconds_disconnected >= seconds_before_reconnecting:
+            if (
+                not networks_reenabled
+                and seconds_disconnected >= seconds_before_reconnecting
+            ):
                 logger.debug("Watchdog activated.")
                 logger.debug("Trying to reconnect to available networks.")
                 await self.enable_saved_networks(self._ignored_reconnection_networks)
                 await self.wpa.send_command_reconnect()
                 try:
-                    if self._settings_manager.settings.smart_hotspot_enabled in [None, True]:
+                    if self._settings_manager.settings.smart_hotspot_enabled in [
+                        None,
+                        True,
+                    ]:
                         logger.debug("Starting smart-hotspot.")
                         self.enable_hotspot()
                 except Exception:

@@ -1,20 +1,24 @@
-from loguru import logger
 import install_requirements
+from loguru import logger
 
 install_requirements.install_missing_packages()
 
 import asyncio
-
 import http.server
+import json
+import os
+import sys
+import urllib.parse
 from http.server import HTTPServer
-import urllib.parse, json, os, sys
 
-from wifi.wpa_supplicant import find_valid_interfaces
+import cpuHandler
+import systemHandler
+import temperatureHandler
 from wifi.WifiManager import WifiManager
-
-import cpuHandler, memoryHandler, systemHandler, temperatureHandler
+from wifi.wpa_supplicant import find_valid_interfaces
 
 wifi_manager = WifiManager()
+
 
 class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -59,7 +63,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         # Handling GET requests asynchronously
         # Parse the request path and query parameters from the request URL sent by the client
         parsed_url = urllib.parse.urlparse(self.path)
-        query_params = urllib.parse.parse_qs(parsed_url.query)
+        urllib.parse.parse_qs(parsed_url.query)
         logger.info(f"GET request path: {parsed_url.path}")
         url_path = parsed_url.path
         # when wifi is requested

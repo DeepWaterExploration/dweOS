@@ -1,14 +1,18 @@
+from loguru import logger
 import install_requirements
-
 install_requirements.install_missing_packages()
+
+import asyncio
 
 import http.server
 from http.server import HTTPServer
-import urllib.parse
-import cpuHandler, memoryHandler, wifiHandler, systemHandler, temperatureHandler
-import json
-import os
+import urllib.parse, json, os, sys
 
+
+from wifi.wpa_supplicant import find_valid_interfaces
+from wifi.WifiManager import WifiManager
+
+import cpuHandler, memoryHandler, systemHandler, temperatureHandler
 
 # ANSI escape codes for text colors
 class TextColors:
@@ -29,6 +33,30 @@ def print_with_color(text, color):
 
 
 class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
+    def __init__(self, *args, **kwargs):
+
+        self.wifi_manager = WifiManager()
+        try:
+            WLAN_SOCKET = f"/run/wpa_supplicant/{find_valid_interfaces()[0]}"
+            self.wifi_manager.connect(WLAN_SOCKET)
+        except Exception as socket_connection_error:
+            logger.warning(f"Could not connect with wifi socket. {socket_connection_error}")
+            logger.info("Connecting via internet wifi socket.")
+            try:
+                self.wifi_manager.connect(("localhost", 6664))
+            except Exception as udp_connection_error:
+                logger.error(f"Could not connect with internet socket: {udp_connection_error}. Exiting.")
+                sys.exit(1)
+        super().__init__(*args, **kwargs)
+
+    # def __del__(self):
+    #     self.wifi_manager.disconnect_wifi()
+    #     # close server if it is the last instance
+    #     if sys.getrefcount(self) == 2:
+    #         print_with_color("Closing server", TextColors.RED)
+    #         self.server.shutdown()
+    #         self.server.server_close()
+
     def end_headers(self):
         # Set "Access-Control-Allow-Origin" header to the value of the "Origin" header
         # If "Origin" header is not present in the request, use "*" to allow requests from any origin
@@ -56,9 +84,9 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         self.send_response(200, "ok")
         self.end_headers()
 
-    def do_GET(self):
+    async def async_do_GET(self):
         # Handling GET requests asynchronously
-        # Parse the request path and query parameters from the request
+        # Parse the request path and query parameters from the request URL sent by the client
         parsed_url = urllib.parse.urlparse(self.path)
         query_params = urllib.parse.parse_qs(parsed_url.query)
         print_with_color(f"GET request path: {parsed_url.path}", TextColors.YELLOW)
@@ -73,7 +101,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
 
             # Build the response content as a dictionary and convert to JSON format
-            response_content = json.dumps(wifiHandler.get_is_wifi_on())
+            response_content = json.dumps(self.wifi_manager.get_saved_wifi_network())
 
             # Send the response content encoded in utf-8
             self.wfile.write((response_content).encode("utf-8"))
@@ -99,11 +127,14 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.send_header("Content-type", "application/json")
             self.end_headers()
 
-            # Build the response content as a dictionary and convert to JSON format
-            response_content = json.dumps(wifiHandler.get_wifi_info())
+            # Build the response content as a dictionary
+            response_content = await self.wifi_manager.get_wifi_available()
+
+            # Convert the response convert to JSON format
+            json_response = json.dumps(response_content)
 
             # Send the response content encoded in utf-8
-            self.wfile.write((response_content).encode("utf-8"))
+            self.wfile.write((json_response).encode("utf-8"))
         elif url_path == "/getSavedWifi":
             # Set the response status code
             self.send_response(200)
@@ -113,7 +144,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
 
             # Build the response content as a dictionary and convert to JSON format
-            response_content = json.dumps(wifiHandler.get_saved_wifi())
+            response_content = json.dumps(self.wifiHandler.get_saved_wifi())
 
             # Send the response content encoded in utf-8
             self.wfile.write((response_content).encode("utf-8"))
@@ -180,9 +211,9 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             # Send the response content encoded in utf-8
             self.wfile.write((response_content).encode("utf-8"))
 
-    def do_POST(self):
+    async def async_do_POST(self):
         # Handling POST requests asynchronously
-        # Parse the
+         # Parse the request path and query parameters from the request
         parsed_url = urllib.parse.urlparse(self.path)
         print_with_color(f"GET request path: {parsed_url.path}", TextColors.YELLOW)
         content_length = int(self.headers["Content-Length"])
@@ -317,11 +348,11 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b"Internal Server Error.")
 
-    # def do_GET(self):
-    #     asyncio.run(self.async_do_GET())
+    def do_GET(self):
+        asyncio.run(self.async_do_GET())
 
-    # def do_POST(self):
-    #     asyncio.run(self.async_do_POST())
+    def do_POST(self):
+        asyncio.run(self.async_do_POST())
 
 
 # Main function to run the server
@@ -344,6 +375,9 @@ def run_server():
         )
         server.server_close()
 
-
 if __name__ == "__main__":
-    run_server()
+    if os.geteuid() != 0:
+        logger.error("You need root privileges to run this script.\nPlease try again using **sudo**. Exiting.")
+        sys.exit(1)
+    else:
+        run_server()

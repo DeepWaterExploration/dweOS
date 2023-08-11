@@ -14,6 +14,7 @@ from wifi.wpa_supplicant import WPASupplicant
 
 
 class WifiManager:
+    WIFI_SCAN_INTERVAL = 5
     wpa = WPASupplicant()
 
     def connect(self, path: Any) -> None:
@@ -140,7 +141,7 @@ class WifiManager:
                 raise FetchError("Failed to fetch wifi list.") from error
 
         # Performs a new scan only if more than 30 seconds passed since last scan
-        if time.time() - self._time_last_scan < 30:
+        if time.time() - self._time_last_scan < self.WIFI_SCAN_INTERVAL:
             return self._updated_scan_results or []
         # Performs a new scan only if it's the first one or the last one is already done
         # In case there's one running already, wait for it to finish and use its result

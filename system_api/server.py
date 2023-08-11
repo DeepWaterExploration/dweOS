@@ -1,5 +1,6 @@
 from loguru import logger
 import install_requirements
+
 install_requirements.install_missing_packages()
 
 import asyncio
@@ -8,54 +9,24 @@ import http.server
 from http.server import HTTPServer
 import urllib.parse, json, os, sys
 
-
 from wifi.wpa_supplicant import find_valid_interfaces
 from wifi.WifiManager import WifiManager
 
 import cpuHandler, memoryHandler, systemHandler, temperatureHandler
 
-# ANSI escape codes for text colors
-class TextColors:
-    RESET = "\033[0m"
-    BLACK = "\033[30m"
-    RED = "\033[31m"
-    GREEN = "\033[32m"
-    YELLOW = "\033[33m"
-    BLUE = "\033[34m"
-    MAGENTA = "\033[35m"
-    CYAN = "\033[36m"
-    WHITE = "\033[37m"
-
-
-# Function to print with colors
-def print_with_color(text, color):
-    print(f"{color}{text}{TextColors.RESET}")
-
+wifi_manager = WifiManager()
 
 class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
-
-        self.wifi_manager = WifiManager()
-        try:
-            WLAN_SOCKET = f"/run/wpa_supplicant/{find_valid_interfaces()[0]}"
-            self.wifi_manager.connect(WLAN_SOCKET)
-        except Exception as socket_connection_error:
-            logger.warning(f"Could not connect with wifi socket. {socket_connection_error}")
-            logger.info("Connecting via internet wifi socket.")
-            try:
-                self.wifi_manager.connect(("localhost", 6664))
-            except Exception as udp_connection_error:
-                logger.error(f"Could not connect with internet socket: {udp_connection_error}. Exiting.")
-                sys.exit(1)
+        logger.info("HTTP request handler initialized.")
+        # Initialize the parent class
         super().__init__(*args, **kwargs)
 
-    # def __del__(self):
-    #     self.wifi_manager.disconnect_wifi()
-    #     # close server if it is the last instance
-    #     if sys.getrefcount(self) == 2:
-    #         print_with_color("Closing server", TextColors.RED)
-    #         self.server.shutdown()
-    #         self.server.server_close()
+    def __del__(self):
+        logger.info("HTTP request handler destroyed.")
+        # close server if it is the last instance
+        if sys.getrefcount(self) == 2:
+            self.server.close()
 
     def end_headers(self):
         # Set "Access-Control-Allow-Origin" header to the value of the "Origin" header
@@ -89,7 +60,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         # Parse the request path and query parameters from the request URL sent by the client
         parsed_url = urllib.parse.urlparse(self.path)
         query_params = urllib.parse.parse_qs(parsed_url.query)
-        print_with_color(f"GET request path: {parsed_url.path}", TextColors.YELLOW)
+        logger.info(f"GET request path: {parsed_url.path}")
         url_path = parsed_url.path
         # when wifi is requested
         if url_path == "/getWifiStatus":
@@ -101,7 +72,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
 
             # Build the response content as a dictionary and convert to JSON format
-            response_content = json.dumps(self.wifi_manager.get_saved_wifi_network())
+            response_content = json.dumps(wifi_manager.get_saved_wifi_network())
 
             # Send the response content encoded in utf-8
             self.wfile.write((response_content).encode("utf-8"))
@@ -128,7 +99,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
 
             # Build the response content as a dictionary
-            response_content = await self.wifi_manager.get_wifi_available()
+            response_content = await wifi_manager.get_wifi_available()
 
             # Convert the response convert to JSON format
             json_response = json.dumps(response_content)
@@ -213,9 +184,9 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
     async def async_do_POST(self):
         # Handling POST requests asynchronously
-         # Parse the request path and query parameters from the request
+        # Parse the request path and query parameters from the request
         parsed_url = urllib.parse.urlparse(self.path)
-        print_with_color(f"GET request path: {parsed_url.path}", TextColors.YELLOW)
+        logger.info(f"POST request path: {parsed_url.path}")
         content_length = int(self.headers["Content-Length"])
         post_data = self.rfile.read(content_length).decode("utf-8")
         parsed_data = json.loads(post_data)
@@ -232,9 +203,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
 
             # Build the response content as a dictionary and convert to JSON format
-            response_content = json.dumps(
-                wifiHandler.toggle_wifi_status(wifi_status)
-            )
+            response_content = json.dumps(wifiHandler.toggle_wifi_status(wifi_status))
 
             # Send the response content encoded in utf-8
             self.wfile.write((response_content).encode("utf-8"))
@@ -357,27 +326,42 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
 # Main function to run the server
 def run_server():
+    # Establish a socket connection with the wifi manager
+    try:
+        WLAN_SOCKET = f"/run/wpa_supplicant/{find_valid_interfaces()[0]}"
+        wifi_manager.connect(WLAN_SOCKET)
+    except Exception as socket_connection_error:
+        logger.warning(
+            f"Error establishing wifi socket connection: {socket_connection_error}"
+        )
+        logger.info("Connecting via internet wifi socket.")
+        try:
+            wifi_manager.connect(("localhost", 6664))
+        except Exception as udp_connection_error:
+            logger.error(
+                f"Error establishing internet socket connection: {udp_connection_error}. Exiting."
+            )
+            sys.exit(1)
+    logger.info("Socket connection established.")
     try:
         # Set up the server address and port
         PORT = 5050
         server = HTTPServer(("", PORT), HTTPRequestHandler)
-
         # Start the server
-        print_with_color(
-            f"Server started at http://localhost:{PORT}.", TextColors.GREEN
-        )
-
+        logger.info(f"Server started at http://localhost:{PORT}.")
         server.serve_forever()
     except KeyboardInterrupt:
+        print()
         # Stop the server on keyboard interrupt
-        print_with_color(
-            "\nKeyboard Interrupt received, shutting down the server.", TextColors.RED
-        )
+        logger.error("Keyboard Interrupt received, shutting down the server.")
         server.server_close()
+
 
 if __name__ == "__main__":
     if os.geteuid() != 0:
-        logger.error("You need root privileges to run this script.\nPlease try again using **sudo**. Exiting.")
+        logger.error(
+            "You need root privileges to run this script.\nPlease try again using **sudo**. Exiting."
+        )
         sys.exit(1)
     else:
         run_server()

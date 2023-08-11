@@ -10,7 +10,7 @@ import subprocess
 from wifi.exceptions import BusyError, NetworkAddFail, SockCommError, WPAOperationFail
 
 def find_valid_interfaces() -> List[str]:
-    """Returns a list of valid network interfaces."""
+    """Returns a list of valid WPA Supplicant socket interfaces. Usually 'wlan0' or 'wlp4s0'."""
     try:
         return (
             subprocess.check_output(
@@ -54,12 +54,18 @@ class WPASupplicant:
         for file in files:
             os.remove(file)
         socket_client = f"{self.SOCKET_RECV_PATH}/wpa_supplicant_service_{os.getpid()}"
+
         # Bind the receiving socket
         self.sock.settimeout(10)
+
         # Bind the receiving socket
         self.sock.bind(socket_client)
+
         # Connect to the sending socket
         self.sock.connect(self.SOCKET_SEND_PATH)
+
+        # Set the receiving socket to blocking
+        self.sock.setblocking(True)
 
     async def send_command(self, command: str, timeout: float) -> bytes:
         """Send a specific WPA Supplicant command. Raises an exception if the command fails to answer before the specified timeout.

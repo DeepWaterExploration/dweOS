@@ -115,7 +115,6 @@ void SettingsManager::save_device(libehd::Device* ehd) {
 
 SerializedDevice* SettingsManager::find_device_with_id(std::string usbInfo) {
     for (SerializedDevice* device : _devices) {
-        std::cout << usbInfo << " " << device->usbInfo << std::endl;
         if (device->usbInfo == usbInfo) return device;
     }
     return nullptr;

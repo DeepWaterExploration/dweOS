@@ -19,7 +19,6 @@ mkdir backend && mkdir frontend && mkdir system_api
 cp ../../backend/build/backend.bin ./backend
 cp ../../frontend/dist/** -r ./frontend
 cp ../../system_api/** -r ./system_api
-cd ..
-
 zip -r DWE_OS_2_x86_64_Linux DWE_OS_2_x86_64_Linux
 rm -rf DWE_OS_2_x86_64_Linux
+cd ..

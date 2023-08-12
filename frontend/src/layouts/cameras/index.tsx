@@ -84,7 +84,8 @@ const CamerasPage: React.FC = () => {
       }}
     >
       {/* Sort devices */}
-      {exploreHD_cards.sort((a, b) => {
+      {/* Sorting does not work with new backend changes */}
+      {/* {exploreHD_cards.sort((a, b) => {
         const usbInfoA = a.props.device.info.usbInfo.split(".");
         const usbInfoB = b.props.device.info.usbInfo.split(".");
         for (let i = 0; i < usbInfoA.length; i++) {
@@ -98,7 +99,8 @@ const CamerasPage: React.FC = () => {
           }
         }
         return 1;
-      })}
+      })} */}
+      {exploreHD_cards}
     </Grid>
   );
 };

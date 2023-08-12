@@ -228,15 +228,16 @@ Device::Device(v4l2::devices::DEVICE_INFO info) : _info(info) {
         _device_path = std::string(result);
     }
 
-    std::regex regex(R"((\d+)-([\d+\.?]+))");
-    std::smatch match;
-    std::filesystem::path device_path(_device_path);
-    std::string filename = device_path.filename().generic_string();
-    if (std::regex_search(filename, match, regex)) {
-        _usbInfo = match[1].str() + "." + match[2].str();
-    } else {
-        throw std::runtime_error("Invalid path format.");
-    }
+    // std::regex regex(R"((\d+)-([\d+\.?]+))");
+    // std::smatch match;
+    // std::filesystem::path device_path(_device_path);
+    // std::string filename = device_path.filename().generic_string();
+    // if (std::regex_search(filename, match, regex)) {
+    //     _usbInfo = match[1].str() + "." + match[2].str();
+    // } else {
+    //     throw std::runtime_error("Invalid path format.");
+    // }
+    _usbInfo = info.bus_info;
 
     std::cout << "Device found at port: " << _usbInfo << std::endl;
 

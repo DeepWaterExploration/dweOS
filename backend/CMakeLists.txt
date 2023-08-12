@@ -15,6 +15,7 @@ find_package(Threads REQUIRED)
 
 include_directories(
     /usr/lib/x86_64-linux-gnu/glib-2.0/include
+    /usr/lib/arm-linux-gnueabihf/glib-2.0/include
     /usr/include/glib-2.0
     /usr/include/gstreamer-1.0
     src

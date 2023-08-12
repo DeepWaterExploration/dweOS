@@ -20,11 +20,11 @@ import {
 import { useState } from "react";
 
 import { forgetNetwork } from "./api";
-import { WiFiNetwork } from "./types";
+import { SavedWifiNetwork, WiFiNetwork } from "./types";
 
 export interface NetworkHistoryCardProps {
-  savedNetworks: WiFiNetwork[] | null;
-  setNetworks: (network: WiFiNetwork[]) => void;
+  savedNetworks: SavedWifiNetwork[] | null;
+  setSavedNetworks: (network: SavedWifiNetwork[]) => void;
 }
 
 const NetworkHistoryCard: React.FC<NetworkHistoryCardProps> = (props) => {
@@ -89,7 +89,7 @@ const NetworkHistoryCard: React.FC<NetworkHistoryCardProps> = (props) => {
                 case "Forget": {
                   if (forgettingNetwork !== null) {
                     forgetNetwork(forgettingNetwork.ssid);
-                    props.setNetworks(
+                    props.setSavedNetworks(
                       props.savedNetworks?.filter(
                         (savedNetwork) =>
                           savedNetwork.ssid !== forgettingNetwork?.ssid
@@ -151,16 +151,15 @@ const NetworkHistoryCard: React.FC<NetworkHistoryCardProps> = (props) => {
                 >
                   <ListItemAvatar>
                     <Avatar>
-                      {network.secure ? (
-                        <SignalWifi4BarLockIcon />
-                      ) : (
                         <SignalWifi4BarIcon />
-                      )}
                     </Avatar>
                   </ListItemAvatar>
                   <ListItemText
                     primary={network.ssid}
-                    secondary={network.secure ? "Secured" : "Unsecured"}
+                    secondary={
+                      network.flags.includes("[CURRENT]")
+                       ? "Connected" : "Not Connected"
+                    }
                   />
                 </ListItem>
               ))

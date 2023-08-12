@@ -11,7 +11,7 @@ import {
 // import NetworkDetailsCard from "./NetworkDetails";
 import NetworkHistoryCard from "./NetworkHistory";
 import NetworkSettingsCard from "./NetworkSettings";
-import { WiFiNetwork } from "./types";
+import { SavedWifiNetwork, WiFiNetwork } from "./types";
 
 const Wifi: React.FC = () => {
   const [wifiStatus, setWifiStatus] = useState<boolean | null>(null);
@@ -21,7 +21,7 @@ const Wifi: React.FC = () => {
   const [availableNetworks, setAvailableNetworks] = useState<
     WiFiNetwork[] | null
   >(null);
-  const [savedNetworks, setSavedNetworks] = useState<WiFiNetwork[] | null>(
+  const [savedNetworks, setSavedNetworks] = useState<SavedWifiNetwork[] | null>(
     null
   );
 
@@ -94,7 +94,7 @@ const Wifi: React.FC = () => {
           />
           <NetworkHistoryCard
             savedNetworks={savedNetworks}
-            setNetworks={setSavedNetworks}
+            setSavedNetworks={setSavedNetworks}
           />
           {/* <NetworkDetailsCard /> */}
         </>

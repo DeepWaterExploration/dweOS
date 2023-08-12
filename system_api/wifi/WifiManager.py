@@ -4,8 +4,12 @@ from typing import Any, Dict, List, Optional
 
 from loguru import logger
 from wifi.exceptions import FetchError, ParseError
-from wifi.network_types import (ConnectionStatus, SavedWifiNetwork,
-                                ScannedWifiNetwork, WifiCredentials)
+from wifi.network_types import (
+    ConnectionStatus,
+    SavedWifiNetwork,
+    ScannedWifiNetwork,
+    WifiCredentials,
+)
 from wifi.wpa_supplicant import WPASupplicant
 
 
@@ -99,7 +103,7 @@ class WifiManager:
         return output
 
     async def get_wifi_available(self):
-        """Get a dict from the wifi signals available"""
+        """Retrieve available wifi networks."""
 
         async def perform_new_scan() -> None:
             try:
@@ -169,13 +173,24 @@ class WifiManager:
         return self._updated_scan_results
 
     async def get_saved_wifi_network(self) -> List[SavedWifiNetwork]:
-        """Get a list of saved wifi networks"""
+        """Retrieve saved wifi networks."""
         try:
             data = await self.wpa.send_command_list_networks()
             networks_list = WifiManager.__dict_from_table(data)
-            return [SavedWifiNetwork(**network) for network in networks_list]
+            saved_networks = {"saved_networks": []}
+            for network in networks_list:
+                if not (network.get("ssid") is None or network.get("ssid") == ""):
+                    saved_networks["saved_networks"].append(
+                        SavedWifiNetwork(
+                            network_id=int(network.get("networkid")),
+                            ssid=network.get("ssid"),
+                            bssid=network.get("bssid"),
+                            flags=[network.get("flags")],  # Convert flags to a list
+                        ).to_dict()  # Convert the object to a dictionary
+                    )
+            return saved_networks
         except Exception as error:
-            raise FetchError("Failed to fetch saved networks list.") from error
+            raise FetchError(f"Failed to fetch saved networks list: {error}")
 
     async def add_network(
         self, credentials: WifiCredentials, hidden: bool = False

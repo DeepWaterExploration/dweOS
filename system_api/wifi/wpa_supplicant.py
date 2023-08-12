@@ -7,8 +7,7 @@ import time
 from pathlib import Path
 from typing import List, Optional, Tuple, Union
 
-from wifi.exceptions import (BusyError, NetworkAddFail, SockCommError,
-                             WPAOperationFail)
+from wifi.exceptions import BusyError, NetworkAddFail, SockCommError, WPAOperationFail
 
 
 def find_valid_interfaces() -> List[str]:

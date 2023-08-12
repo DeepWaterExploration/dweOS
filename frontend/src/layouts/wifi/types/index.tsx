@@ -53,6 +53,17 @@ export interface ConnectToWifiResponse {
   message: string;
 }
 
+export interface SavedWifiNetwork {
+  /* Network ID (unique identifier) */
+  network_id: number;
+  /* The network's SSID (Service Set Identifier) */
+  ssid: string;
+  /* The network's BSSID */
+  bssid: string;
+  /* The network's flags */
+  flags: string[];
+}
+
 /**
  * Represents the response from the backend when connecting to a network
  */
@@ -64,7 +75,7 @@ export interface GetAvailableWifiResponse {
  * Represents the response from the backend when requesting the saved networks
  */
 export interface GetSavedWifiResponse {
-  saved_networks: WiFiNetwork[];
+  saved_networks: SavedWifiNetwork[];
 }
 
 /**

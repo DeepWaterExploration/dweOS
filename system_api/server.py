@@ -9,11 +9,33 @@ import json
 import os
 import sys
 import urllib.parse
+import platform
 from http.server import HTTPServer
 
 import cpuHandler
 import systemHandler
 import temperatureHandler
+
+current_os = platform.system()
+platform_name = platform.uname()
+
+if (
+    current_os == "Linux"
+    and "raspbian" in platform_name.release.lower()
+    or platform_name.uname().node == "blueos"
+):
+    import RPI_WifiHandler as WifiHandler
+    pass
+elif current_os == "Linux":
+    pass
+elif current_os == "Darwin":  # macOS
+    pass
+elif current_os == "Windows":
+    pass
+else:
+    logger.error("You are running an unsupported platform. Exiting.")
+    sys.exit(1)
+
 import wifiHandler
 from wifi.WifiManager import WifiManager
 from wifi.wpa_supplicant import find_valid_interfaces

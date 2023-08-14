@@ -7,9 +7,9 @@ import asyncio
 import http.server
 import json
 import os
+import platform
 import sys
 import urllib.parse
-import platform
 from http.server import HTTPServer
 
 import cpuHandler
@@ -24,8 +24,8 @@ if (
     and "raspbian" in platform_name.release.lower()
     or platform_name.uname().node == "blueos"
 ):
-    import RPI_WifiHandler as WifiHandler
     pass
+
 elif current_os == "Linux":
     pass
 elif current_os == "Darwin":  # macOS

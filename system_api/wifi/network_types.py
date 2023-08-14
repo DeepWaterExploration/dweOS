@@ -39,14 +39,14 @@ class SavedWifiNetwork(BaseModel):
     network_id: int  # Network ID (unique identifier)
     ssid: str  # Network SSID
     bssid: str  # Network BSSID
-    flags: List[str]  # Network flags
+    connected: bool  # Whether the network is connected
 
     def to_dict(self):
         return {
             "network_id": self.network_id,
             "ssid": self.ssid,
             "bssid": self.bssid,
-            "flags": self.flags,
+            "connected": self.connected,
         }
 
 

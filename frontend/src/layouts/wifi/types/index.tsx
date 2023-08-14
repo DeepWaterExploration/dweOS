@@ -60,8 +60,8 @@ export interface SavedWifiNetwork {
   ssid: string;
   /* The network's BSSID */
   bssid: string;
-  /* The network's flags */
-  flags: string[];
+  /* Whether the network is currently connected */
+  connected: boolean;
 }
 
 /**

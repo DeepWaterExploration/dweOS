@@ -1,6 +1,5 @@
 import SignalWifi0BarIcon from "@mui/icons-material/SignalWifi0Bar";
 import SignalWifi4BarIcon from "@mui/icons-material/SignalWifi4Bar";
-import SignalWifi4BarLockIcon from "@mui/icons-material/SignalWifi4BarLock";
 import {
   Avatar,
   Box,
@@ -30,7 +29,7 @@ export interface NetworkHistoryCardProps {
 const NetworkHistoryCard: React.FC<NetworkHistoryCardProps> = (props) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [forgettingNetwork, setForgettingNetwork] =
-    useState<WiFiNetwork | null>(null);
+    useState<WiFiNetwork | SavedWifiNetwork | null>(null);
   const [dialogTitle, setDialogTitle] = useState("");
   const [dialogButtonTitle, setDialogButtonTitle] = useState("");
   const handleOpenDialogue = () => {
@@ -157,7 +156,7 @@ const NetworkHistoryCard: React.FC<NetworkHistoryCardProps> = (props) => {
                   <ListItemText
                     primary={network.ssid}
                     secondary={
-                      network.flags.includes("[CURRENT]")
+                      network.connected
                        ? "Connected" : "Not Connected"
                     }
                   />

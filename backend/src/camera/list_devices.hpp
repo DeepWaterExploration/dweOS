@@ -62,21 +62,22 @@ inline void list(std::vector<DEVICE_INFO> &devices) {
                 device.device_name = trim(match[1]);
                 device.bus_info = trim(match[2]);
             } else {
-                if (trim(line) != "/dev/media0")
+                if (trim(line).find("/dev/media") == std::string::npos)
                     device.device_paths.push_back(trim(line));
             }
         } else {
-            devices.push_back(device);
+            if (device.device_name.find("bcm2835-codec-decode") == std::string::npos && device.device_name.find("bcm2835-isp") == std::string::npos)
+                devices.push_back(device);
             device.device_paths.clear();
         }
     }
 
-    for (DEVICE_INFO d : devices) {
-        std::cout << d.device_name << " " << d.bus_info << std::endl;
-        for (std::string path : d.device_paths) {
-            std::cout << path << std::endl;
-        }
-    }
+    // for (DEVICE_INFO d : devices) {
+    //     std::cout << d.device_name << " " << d.bus_info << std::endl;
+    //     for (std::string path : d.device_paths) {
+    //         std::cout << path << std::endl;
+    //     }
+    // }
 }
 
 }  // namespace devices

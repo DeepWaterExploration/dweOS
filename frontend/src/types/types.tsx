@@ -159,6 +159,8 @@ export interface RouteItem {
   name: string;
   /* A unique key to identify the route, used when rendering dynamic routes */
   key: string;
+  /* Whether the route is the default route */
+  default: boolean;
 }
 
 /**

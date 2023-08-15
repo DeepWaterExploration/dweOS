@@ -30,6 +30,7 @@ export const routes: RouteItem[] = [
     type: routeType.COLLAPSE,
     name: "Cameras",
     key: "cameras",
+    default: true,
   },
   {
     route: "/devices/lights",
@@ -41,6 +42,7 @@ export const routes: RouteItem[] = [
     type: routeType.COLLAPSE,
     name: "Lights",
     key: "lights",
+    default: false,
   },
   {
     route: "/devices/misc",
@@ -52,6 +54,7 @@ export const routes: RouteItem[] = [
     type: routeType.COLLAPSE,
     name: "Misc",
     key: "misc",
+    default: false,
   },
   {
     route: "/communications/wifi",
@@ -63,6 +66,7 @@ export const routes: RouteItem[] = [
     type: routeType.COLLAPSE,
     name: "WiFi",
     key: "wifi",
+    default: false,
   },
   {
     route: "/communications/wired",
@@ -73,6 +77,7 @@ export const routes: RouteItem[] = [
     type: routeType.COLLAPSE,
     name: "Wired",
     key: "wired",
+    default: false,
   },
   {
     route: "/options/updater",
@@ -83,5 +88,6 @@ export const routes: RouteItem[] = [
     type: routeType.COLLAPSE,
     name: "Updater",
     key: "updater",
+    default: false,
   },
 ];

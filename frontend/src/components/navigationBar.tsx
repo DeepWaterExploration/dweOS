@@ -7,7 +7,6 @@ import PowerSettingsNewIcon from "@mui/icons-material/PowerSettingsNew";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import {
   Box,
-  Divider,
   IconButton,
   List,
   ListItem,
@@ -235,7 +234,6 @@ export default function NavigationBar() {
                 )}
               </IconButton>
             </DrawerHeader>
-            <Divider />
             <List component='nav'>
               <NavigationItems routes={routes} open={open} theme={theme} />
               <React.Fragment>

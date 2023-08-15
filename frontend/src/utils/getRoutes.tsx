@@ -1,18 +1,23 @@
 import { Box } from "@mui/material";
+import { ReactNode } from "react";
 import { Route, Routes } from "react-router-dom";
 
 // routes to different pages
 import { routes } from "../routes";
-import { RouteItem } from "../types/types";
+import { RouteItem } from "../types/types.tsx";
 
 interface GetRoutesProps {
   routes: RouteItem[];
 }
 
-const GetRoutes = ({ routes }: GetRoutesProps): JSX.Element => {
+const GetRoutes: React.FC<GetRoutesProps> = (props): ReactNode => {
   return (
     <Routes>
-      {routes.map((route) => {
+      <Route
+        path='/'
+        element={props.routes.find((route) => route.default)?.component}
+      />
+      {props.routes.map((route) => {
         if (route.route && route.component) {
           return (
             <Route

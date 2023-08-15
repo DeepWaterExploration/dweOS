@@ -9,8 +9,9 @@ function App() {
   return (
     <SnackbarProvider autoHideDuration={3000} maxSnack={4}>
       <Box sx={{ display: "flex" }}>
-        <CssBaseline />
-        <NavigationBar />
+        <CssBaseline>
+          <NavigationBar />
+        </CssBaseline>
       </Box>
     </SnackbarProvider>
   );

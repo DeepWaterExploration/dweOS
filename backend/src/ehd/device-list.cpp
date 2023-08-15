@@ -312,7 +312,7 @@ void DeviceList::_monitor_devices() {
         }
 
         /* Ensure the devices have time to initialize */
-        usleep(100000);
+        usleep(500000);
 
         for (auto a : _devices) {
             bool foundDevice = false;

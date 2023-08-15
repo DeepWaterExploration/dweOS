@@ -22,7 +22,7 @@ platform_name = platform.uname()
 if (
     current_os == "Linux"
     and "raspbian" in platform_name.release.lower()
-    or platform_name.uname().node == "blueos"
+    or platform_name.node == "blueos"
 ):
     pass
 

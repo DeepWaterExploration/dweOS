@@ -6,9 +6,7 @@ from typing import List
 
 import netifaces as ni
 import pywifi
-
 from wifi.WifiManager import WifiManager
-from wifi.wpa_supplicant import find_valid_interfaces
 
 wifi_manager = WifiManager()
 

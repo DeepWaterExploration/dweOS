@@ -4,13 +4,9 @@ from typing import Any, Dict, List, Optional
 
 from loguru import logger
 from wifi.exceptions import FetchError, ParseError
-from wifi.network_types import (
-    ConnectedWifiNetwork,
-    ConnectionStatus,
-    SavedWifiNetwork,
-    ScannedWifiNetwork,
-    WifiCredentials,
-)
+from wifi.network_types import (ConnectedWifiNetwork, ConnectionStatus,
+                                SavedWifiNetwork, ScannedWifiNetwork,
+                                WifiCredentials)
 from wifi.wpa_supplicant import WPASupplicant
 
 

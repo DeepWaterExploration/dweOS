@@ -1,6 +1,6 @@
 import subprocess
 import sys
-from typing import List, Optional, Tuple, Union
+from typing import List
 
 from loguru import logger
 
@@ -41,5 +41,3 @@ class WifiHandler:
             )
         except subprocess.CalledProcessError:
             return []
-
-

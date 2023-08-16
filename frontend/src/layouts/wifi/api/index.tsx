@@ -2,6 +2,7 @@ import { SYSTEM_API_URL } from "../../../utils/api";
 import {
   ConnectToWifiResponse,
   ConnectedWifiNetwork,
+  ForgetWifiResponse,
   GetAvailableWifiResponse,
   GetConnectedNetworkResponse,
   GetSavedWifiResponse,
@@ -62,7 +63,7 @@ export async function getConnectedNetwork(
     .catch((error: Error) => {
       console.log("Failed to get connected networks");
       console.error(error);
-      return {} as ConnectedWifiNetwork;
+      return null;
     });
 }
 
@@ -201,7 +202,7 @@ export async function toggleWifiStatus(wifiStatus: boolean): Promise<boolean> {
  * @throws {Error} - If the request to toggle the wifi fails.
  */
 export async function forgetNetwork(wifi_ssid: string): Promise<boolean> {
-  const url = `${SYSTEM_API_URL}/forgetNetwork`;
+  const url = `${SYSTEM_API_URL}/wifiForget`;
   const data = {
     wifi_ssid: wifi_ssid,
   };
@@ -217,8 +218,8 @@ export async function forgetNetwork(wifi_ssid: string): Promise<boolean> {
   return await fetch(url, config)
     // Process the response data
     .then((response: Response) => response.json())
-    .then((data: GetWifiStatusResponse) => {
-      return data.enabled;
+    .then((data: ForgetWifiResponse) => {
+      return data.success;
     })
     .catch((error: Error) => {
       console.log(`Failed to forget ${wifi_ssid}`);

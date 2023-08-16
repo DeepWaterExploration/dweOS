@@ -4,9 +4,13 @@ from typing import Any, Dict, List, Optional
 
 from loguru import logger
 from wifi.exceptions import FetchError, ParseError
-from wifi.network_types import (ConnectedWifiNetwork, ConnectionStatus,
-                                SavedWifiNetwork, ScannedWifiNetwork,
-                                WifiCredentials)
+from wifi.network_types import (
+    ConnectedWifiNetwork,
+    ConnectionStatus,
+    SavedWifiNetwork,
+    ScannedWifiNetwork,
+    WifiCredentials,
+)
 from wifi.wpa_supplicant import WPASupplicant
 
 
@@ -333,7 +337,6 @@ class WifiManager:
             saved_networks = await self.get_saved_wifi_network()
             for network in saved_networks["saved_networks"]:
                 if network.get("connected"):
-                    print("Network connected")
                     for scan_result in self._updated_scan_results["available_networks"]:
                         if scan_result["ssid"] == network.get("ssid"):
                             return {

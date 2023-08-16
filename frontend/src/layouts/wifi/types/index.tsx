@@ -84,6 +84,14 @@ export interface GetWifiStatusResponse {
 }
 
 /**
+ * Represents the response when inquiring about the wifi connection status
+ */
+export interface ForgetWifiResponse {
+  /* Whether wifi is enabled */
+  enabled: boolean;
+}
+
+/**
  * Represents the response when requesting to toggle the wifi connection status
  */
 export interface ToggleWifiResponse {
@@ -134,5 +142,5 @@ export interface WiFiInterfaces {
  * Represents the response from the backend when requesting to forget a network
  */
 export interface ForgetWifiResponse {
-  enabled: boolean;
+  success: boolean;
 }

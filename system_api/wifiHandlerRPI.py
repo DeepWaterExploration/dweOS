@@ -98,3 +98,25 @@ class WifiHandler:
         except BusyError as error:
             logger.error(f"Error getting connected network: {error}")
             return
+
+    async def forget(self, ssid: str):
+        """Forgets the specified wifi network."""
+        try:
+            saved_networks = await self.wifi_manager.get_saved_wifi_network()
+            match_networks = sorted(
+                [
+                    network
+                    for network in saved_networks["saved_networks"]
+                    if network["ssid"] == ssid
+                ],
+                key=lambda network: network["network_id"],
+                reverse=True,
+            )
+            for network in match_networks:
+                print(f"Removing network: {network}")
+                print(f"Network ID: {network['network_id']}")
+                await self.wifi_manager.remove_network(network["network_id"])
+            return {"success": True}
+        except Exception as error:
+            logger.error(f"Error forgetting network: {error}")
+            return {"success": False}

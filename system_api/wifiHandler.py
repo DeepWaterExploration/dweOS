@@ -7,6 +7,11 @@ from typing import List
 import netifaces as ni
 import pywifi
 
+from wifi.WifiManager import WifiManager
+from wifi.wpa_supplicant import find_valid_interfaces
+
+wifi_manager = WifiManager()
+
 
 def print_attrs(obj: object) -> None:
     """
@@ -292,7 +297,14 @@ def toggle_wifi_status(
 def get_connected_network():
     """"""
     current_os = platform.system()
-    if current_os == "Windows":
+    platform_name = platform.uname()
+    if (
+        current_os == "Linux"
+        and "raspbian" in platform_name.release.lower()
+        or platform_name.node == "blueos"
+    ):
+        return wifi_manager.get_saved_wifi_network()
+    elif current_os == "Windows":
         cmd = f'netsh wlan show interfaces | findstr /r "^....SSID"'
     elif current_os == "Linux":
         cmd = f"iwgetid -r"

@@ -4,13 +4,18 @@ from typing import Any, Dict, List, Optional
 
 from loguru import logger
 from wifi.exceptions import FetchError, ParseError
-from wifi.network_types import (ConnectionStatus, SavedWifiNetwork,
-                                ScannedWifiNetwork, WifiCredentials)
+from wifi.network_types import (
+    ConnectedWifiNetwork,
+    ConnectionStatus,
+    SavedWifiNetwork,
+    ScannedWifiNetwork,
+    WifiCredentials,
+)
 from wifi.wpa_supplicant import WPASupplicant
 
 
 class WifiManager:
-    WIFI_SCAN_INTERVAL = 5
+    WIFI_SCAN_INTERVAL = 1
     wpa = WPASupplicant()
 
     def connect(self, path: Any) -> None:
@@ -154,6 +159,7 @@ class WifiManager:
         # In case there's one running already, wait for it to finish and use its result
         if self._scan_task is None or self._scan_task.done():
             await perform_new_scan()
+            return self._updated_scan_results
         else:
             awaited_scan_task_name = self._scan_task.get_name()
             while (
@@ -162,11 +168,6 @@ class WifiManager:
             ):
                 logger.info(f"Waiting for {awaited_scan_task_name} results.")
                 await asyncio.sleep(0.5)
-
-        if self._updated_scan_results["available_networks"] is None:
-            raise FetchError("Failed to fetch wifi list.")
-
-        return self._updated_scan_results
 
     async def get_saved_wifi_network(self) -> List[SavedWifiNetwork]:
         """Retrieve saved wifi networks."""
@@ -181,7 +182,8 @@ class WifiManager:
                             network_id=int(network.get("networkid")),
                             ssid=network.get("ssid"),
                             bssid=network.get("bssid"),
-                            flags=[network.get("flags")],  # Convert flags to a list
+                            connected="[CURRENT]"
+                            in network.get("flags"),  # Convert flags to a list
                         ).to_dict()  # Convert the object to a dictionary
                     )
             return saved_networks
@@ -333,11 +335,25 @@ class WifiManager:
         """Get current network, if connected."""
         try:
             saved_networks = await self.get_saved_wifi_network()
-            for network in saved_networks:
-                if network.flags is not None and "current" in network.flags.lower():
-                    return network
+            for network in saved_networks["saved_networks"]:
+                if network.get("connected"):
+                    print("Network connected")
+                    for scan_result in self._updated_scan_results["available_networks"]:
+                        if scan_result["ssid"] == network.get("ssid"):
+                            return {
+                                "connected_network": ConnectedWifiNetwork(
+                                    ssid=network.get("ssid"),
+                                    frequency=scan_result.get("frequency"),
+                                    mac_address=scan_result.get("mac_address"),
+                                    secure=scan_result.get("secure"),
+                                    security_type=scan_result.get("security_type"),
+                                    signal_strength=scan_result.get("signal_strength"),
+                                    network_id=network.get("network_id"),
+                                ).to_dict()  # Convert the object to a dictionary
+                            }
             return None
         except Exception as error:
+            print(error)
             raise RuntimeError("Failed to get current network.") from error
 
     async def auto_reconnect(self, seconds_before_reconnecting: float) -> None:

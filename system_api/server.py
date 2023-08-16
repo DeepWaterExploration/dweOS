@@ -106,7 +106,8 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
 
             # Build the response content as a dictionary
-            response_content = await wifi_handler.saved()
+            response_content = await wifi_handler.connected()
+            print(response_content)
 
             # Convert the response convert to JSON format
             json_response = json.dumps(response_content)
@@ -123,8 +124,6 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
             # Build the response content as a dictionary
             response_content = await wifi_handler.scan()
-            print("SAVED SHIT")
-            print(response_content)
 
             # Convert the response convert to JSON format
             json_response = json.dumps(response_content)

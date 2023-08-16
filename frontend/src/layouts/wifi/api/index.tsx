@@ -1,11 +1,13 @@
 import { SYSTEM_API_URL } from "../../../utils/api";
 import {
   ConnectToWifiResponse,
+  ConnectedWifiNetwork,
   GetAvailableWifiResponse,
   GetConnectedNetworkResponse,
   GetSavedWifiResponse,
   GetWifiStatusResponse,
   SavedWifiNetwork,
+  ScannedWifiNetwork,
   WiFiInterface,
   WiFiInterfaces,
   WiFiNetwork,
@@ -41,9 +43,8 @@ export async function getWifiStatus(): Promise<boolean> {
 }
 
 export async function getConnectedNetwork(
-  networks: WiFiNetwork[]
-): Promise<WiFiNetwork | null> {
-  const url = `${SYSTEM_API_URL}/getConnectedNetwork`;
+  ): Promise<ConnectedWifiNetwork | null> {
+  const url = `${SYSTEM_API_URL}/wifiConnected`;
   const config: RequestInit = {
     mode: "cors",
     method: "GET",
@@ -56,20 +57,12 @@ export async function getConnectedNetwork(
     // Process the response data
     .then((response: Response) => response.json())
     .then((data: GetConnectedNetworkResponse) => {
-      if (!(data.network === "")) {
-        const connectedNetwork = networks.find((network: WiFiNetwork) => {
-          return network.ssid === data.network;
-        });
-        if (connectedNetwork) {
-          return connectedNetwork;
-        }
-      }
-      return null;
+      return data.connected_network as ConnectedWifiNetwork;
     })
     .catch((error: Error) => {
       console.log("Failed to get connected networks");
       console.error(error);
-      return {} as WiFiNetwork;
+      return {} as ConnectedWifiNetwork;
     });
 }
 
@@ -78,8 +71,8 @@ export async function getConnectedNetwork(
  * @returns {Promise<WiFiNetwork[]>} - A promise that resolves to the result of the request.
  * @throws {Error} - If the request to get the list of available wifi networks fails.
  */
-export async function getAvailableWifi(): Promise<WiFiNetwork[]> {
-  const url = `${SYSTEM_API_URL}/getAvailableWifi`;
+export async function getAvailableWifi(): Promise<ScannedWifiNetwork[]> {
+  const url = `${SYSTEM_API_URL}/wifiScan`;
   const config: RequestInit = {
     mode: "cors",
     method: "GET",
@@ -92,13 +85,13 @@ export async function getAvailableWifi(): Promise<WiFiNetwork[]> {
     // Process the response data
     .then((response: Response) => response.json())
     .then((data: GetAvailableWifiResponse) => {
-      console.log(data);
-      return data.available_networks as WiFiNetwork[];
+      console.log(data.available_networks);
+      return data.available_networks as ScannedWifiNetwork[];
     })
     .catch((error: Error) => {
       console.log("Failed to get available wifi networks");
       console.error(error);
-      return {} as WiFiNetwork[];
+      return {} as ScannedWifiNetwork[];
     });
 }
 
@@ -108,7 +101,7 @@ export async function getAvailableWifi(): Promise<WiFiNetwork[]> {
  * @throws {Error} - If the request to get the list of saved wifi networks fails.
  */
 export async function getSavedWifi(): Promise<SavedWifiNetwork[]> {
-  const url = `${SYSTEM_API_URL}/getSavedWifi`;
+  const url = `${SYSTEM_API_URL}/wifiSaved`;
   const config: RequestInit = {
     mode: "cors",
     method: "GET",

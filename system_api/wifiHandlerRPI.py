@@ -89,3 +89,12 @@ class WifiHandler:
             print("Error: An unexpected error occurred.")
             print("Error message: ", str(e))
             return {"Enabled": False}
+
+    async def connected(self):
+        """Returns the connected wifi network."""
+        try:
+            connected_network = await self.wifi_manager.get_current_network()
+            return connected_network
+        except BusyError as error:
+            logger.error(f"Error getting connected network: {error}")
+            return

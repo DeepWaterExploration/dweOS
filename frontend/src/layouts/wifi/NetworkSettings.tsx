@@ -40,7 +40,7 @@ import {
   forgetNetwork,
   toggleWifiStatus,
 } from "./api";
-import { ConnectToWifiResponse, WiFiNetwork } from "./types";
+import { ConnectToWifiResponse, SavedWifiNetwork, WiFiNetwork } from "./types";
 
 export interface DBMToSignalIconProps {
   /* the signal strength in dBm */
@@ -88,8 +88,8 @@ const DBMToSignalIcon: React.FC<DBMToSignalIconProps> = (props) => {
 export interface NetworkSettingsCardProps {
   wifiStatus: boolean;
   setWifiStatus: (newValue: boolean) => void;
-  connectedNetwork: WiFiNetwork | null;
-  setConnectedNetwork: (newValue: WiFiNetwork | null) => void;
+  connectedNetwork: SavedWifiNetwork | null;
+  setConnectedNetwork: (newValue: SavedWifiNetwork | null) => void;
   availableNetworks: ScannedWifiNetwork[] | null;
   setAvailableNetworks: (newValue: ScannedWifiNetwork[]) => void;
 }

@@ -17,6 +17,40 @@ export interface ScannedWifiNetwork {
 }
 
 /**
+ * Represents a WiFi network saved on the device
+ */
+export interface SavedWifiNetwork {
+  /* The network's Network ID (unique identifier) */
+  network_id: number;
+  /* The network's SSID (Service Set Identifier) */
+  ssid: string;
+  /* The network's BSSID (Basic Service Set Identifier) */
+  mac_address: string;
+  /* Whether the network is currently connected */
+  connected: boolean;
+}
+
+/**
+ * Represents the Wifi network the device is currently connected to
+ */
+export interface ConnectedWifiNetwork {
+  /* The network's SSID (Service Set Identifier) */
+  ssid: string;
+  /* The operating frequency of the network in GHz */
+  frequency: string;
+  /* The network's BSSID (Basic Service Set Identifier) */
+  mac_address: string;
+  /* Whether the network is secure */
+  secure: boolean;
+  /* The security protocol used by the network if secure */
+  security_type?: string;
+  /* The network's signal strength in dBm */
+  signal_strength: number;
+  /* The network's Network ID (unique identifier) */
+  network_id: number;
+}
+
+/**
  * Represents a WiFi network
  */
 export interface WiFiNetwork {
@@ -71,17 +105,6 @@ export interface ConnectToWifiResponse {
   message: string;
 }
 
-export interface SavedWifiNetwork {
-  /* Network ID (unique identifier) */
-  network_id: number;
-  /* The network's SSID (Service Set Identifier) */
-  ssid: string;
-  /* The network's BSSID */
-  bssid: string;
-  /* Whether the network is currently connected */
-  connected: boolean;
-}
-
 /**
  * Represents the response from the backend when connecting to a network
  */
@@ -100,7 +123,7 @@ export interface GetSavedWifiResponse {
  * Represents the response from the backend when requesting the currently connected network
  */
 export interface GetConnectedNetworkResponse {
-  network: string;
+  connected_network: ConnectedWifiNetwork;
 }
 
 export interface WiFiInterfaces {

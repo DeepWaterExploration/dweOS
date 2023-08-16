@@ -90,8 +90,8 @@ export interface NetworkSettingsCardProps {
   setWifiStatus: (newValue: boolean) => void;
   connectedNetwork: WiFiNetwork | null;
   setConnectedNetwork: (newValue: WiFiNetwork | null) => void;
-  availableNetworks: WiFiNetwork[] | null;
-  setAvailableNetworks: (newValue: WiFiNetwork[]) => void;
+  availableNetworks: ScannedWifiNetwork[] | null;
+  setAvailableNetworks: (newValue: ScannedWifiNetwork[]) => void;
 }
 
 const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
@@ -152,8 +152,7 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
       } else {
         setWifiConnectionError(result.message);
       }
-    }
-    else {
+    } else {
       setWifiConnectionError("Password cannot be empty");
     }
   };
@@ -395,12 +394,8 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
                         </Avatar>
                       </ListItemAvatar>
                       <ListItemText
-                        primary={
-                          props.connectedNetwork.ssid
-                        }
-                        secondary={
-                          `${props.connectedNetwork.signal_strength} dBm`
-                        }
+                        primary={props.connectedNetwork.ssid}
+                        secondary={`${props.connectedNetwork.signal_strength} dBm`}
                         style={{ width: "200px" }}
                       />
                       <Button
@@ -432,12 +427,14 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
                     <>
                       <ListItemAvatar>
                         <Avatar>
-                          <SignalWifi0BarIcon sx={{ fontSize: 22.5, mx: 0.5 }} />
+                          <SignalWifi0BarIcon
+                            sx={{ fontSize: 22.5, mx: 0.5 }}
+                          />
                         </Avatar>
                       </ListItemAvatar>
                       <ListItemText
-                        primary="Not Connected"
-                        secondary="Connect to a network"
+                        primary='Not Connected'
+                        secondary='Connect to a network'
                         style={{ width: "200px" }}
                       />
                     </>
@@ -449,6 +446,7 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
               style={{
                 width: "100%",
               }}
+              defaultExpanded
             >
               <AccordionSummary
                 expandIcon={<ExpandMoreIcon />}
@@ -475,7 +473,7 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
                         padding: "25px",
                       }}
                     >
-                      No stream endpoint added
+                      No available networks
                     </Typography>
                   ) : (
                     <List
@@ -483,7 +481,7 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
                       style={{ maxHeight: 300, overflow: "auto" }}
                     >
                       {props.availableNetworks !== null &&
-                        props.availableNetworks.map((network: WiFiNetwork) => {
+                        props.availableNetworks?.map((network: WiFiNetwork) => {
                           if (network.ssid === props.connectedNetwork?.ssid) {
                             return null;
                           } else {

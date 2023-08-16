@@ -4,7 +4,8 @@ from typing import List
 
 from loguru import logger
 
-from system_api.wifi import WifiManager
+from wifi.WifiManager import WifiManager
+from wifi.exceptions import BusyError
 
 
 class WifiHandler:
@@ -41,3 +42,52 @@ class WifiHandler:
             )
         except subprocess.CalledProcessError:
             return []
+
+    async def network_status(self):
+        """Returns the status of the wifi connection."""
+        wifi_status = await self.wifi_manager.status()
+        return wifi_status
+
+    async def scan(self):
+        """Scans for available wifi networks."""
+        try:
+            available_networks = await self.wifi_manager.get_wifi_available()
+            return available_networks
+        except BusyError as error:
+            logger.error(f"Error scanning available networks: {error}")
+            return
+
+    async def saved(self):
+        """Returns the saved wifi networks."""
+        saved_networks = await self.wifi_manager.get_saved_wifi_network()
+        return saved_networks
+
+
+    async def connect(self, ssid: str, password: str) -> None:
+        """Connects to the specified wifi network."""
+        try:
+            available_networks = await self.wifi_manager.get_wifi_available()
+            return available_networks
+        except BusyError as error:
+            logger.error(f"Error getting available networks: {error}")
+            return
+
+    async def toggle_wifi_status(self, wifi_on: bool):
+        """
+        Toggles WiFi based on current state.
+
+        Parameters:
+        - wifi_on (bool): True if Wi-Fi is enabled, False otherwise.
+
+        Returns:
+        - wifi_on (bool): True if Wi-Fi is enabled, False otherwise.
+        """
+        try:
+            cmd = ["nmcli", "radio", "wifi", f"{'on' if wifi_on else 'off'}"]
+            # Run the command and capture the output and errors
+            subprocess.run(cmd, check=True)
+            return {"enabled": wifi_on}
+        except Exception as e:
+            print("Error: An unexpected error occurred.")
+            print("Error message: ", str(e))
+            return {"Enabled": False}

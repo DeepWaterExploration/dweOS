@@ -1,4 +1,22 @@
 /**
+ * Represents a scanned WiFi network
+ */
+export interface ScannedWifiNetwork {
+  /* The network's SSID (Service Set Identifier) */
+  ssid?: string;
+  /* The operating frequency of the network in GHz */
+  frequency: string;
+  /* The network's BSSID (Basic Service Set Identifier) */
+  mac_address: string;
+  /* Whether the network is secure */
+  secure: boolean;
+  /* The security protocol used by the network if secure */
+  security_type?: string;
+  /* The network's signal strength in dBm */
+  signal_strength: number;
+}
+
+/**
  * Represents a WiFi network
  */
 export interface WiFiNetwork {
@@ -68,7 +86,7 @@ export interface SavedWifiNetwork {
  * Represents the response from the backend when connecting to a network
  */
 export interface GetAvailableWifiResponse {
-  available_networks: WiFiNetwork[];
+  available_networks: ScannedWifiNetwork[];
 }
 
 /**

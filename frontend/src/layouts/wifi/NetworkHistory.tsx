@@ -28,8 +28,9 @@ export interface NetworkHistoryCardProps {
 
 const NetworkHistoryCard: React.FC<NetworkHistoryCardProps> = (props) => {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [forgettingNetwork, setForgettingNetwork] =
-    useState<WiFiNetwork | SavedWifiNetwork | null>(null);
+  const [forgettingNetwork, setForgettingNetwork] = useState<
+    WiFiNetwork | SavedWifiNetwork | null
+  >(null);
   const [dialogTitle, setDialogTitle] = useState("");
   const [dialogButtonTitle, setDialogButtonTitle] = useState("");
   const handleOpenDialogue = () => {
@@ -150,14 +151,13 @@ const NetworkHistoryCard: React.FC<NetworkHistoryCardProps> = (props) => {
                 >
                   <ListItemAvatar>
                     <Avatar>
-                        <SignalWifi4BarIcon />
+                      <SignalWifi4BarIcon />
                     </Avatar>
                   </ListItemAvatar>
                   <ListItemText
                     primary={network.ssid}
                     secondary={
-                      network.connected
-                       ? "Connected" : "Not Connected"
+                      network.connected ? "Connected" : "Not Connected"
                     }
                   />
                 </ListItem>

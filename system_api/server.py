@@ -19,13 +19,14 @@ import temperatureHandler
 current_os = platform.system()
 platform_name = platform.uname()
 
+from wifiHandlerRPI import WifiHandler
+
 if (
     current_os == "Linux"
     and "raspbian" in platform_name.release.lower()
     or platform_name.node == "blueos"
 ):
-    pass
-
+    from wifiHandlerRPI import WifiHandler
 elif current_os == "Linux":
     pass
 elif current_os == "Darwin":  # macOS
@@ -36,12 +37,7 @@ else:
     logger.error("You are running an unsupported platform. Exiting.")
     sys.exit(1)
 
-import wifiHandler
-from wifi.WifiManager import WifiManager
-from wifi.wpa_supplicant import find_valid_interfaces
-
-wifi_manager = WifiManager()
-
+wifi_handler = WifiHandler()
 
 class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -84,34 +80,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         logger.info(f"GET request path: {parsed_url.path}")
         url_path = parsed_url.path
         # when wifi is requested
-        if url_path == "/getWifiStatus":
-            # Set the response status code
-            self.send_response(200)
-
-            # Set the response headers
-            self.send_header("Content-type", "application/json")
-            self.end_headers()
-
-            # Build the response content as a dictionary and convert to JSON format
-            response_content = json.dumps(wifi_manager.get_saved_wifi_network())
-
-            # Send the response content encoded in utf-8
-            self.wfile.write((response_content).encode("utf-8"))
-        elif url_path == "/getConnectedNetwork":
-            # Set the response status code
-            self.send_response(200)
-
-            # Set the response headers
-            self.send_header("Content-type", "application/json")
-            self.end_headers()
-
-            # Build the response content as a dictionary and convert to JSON format
-            response_content = json.dumps(wifiHandler.get_connected_network())
-
-            # Send the response content encoded in utf-8
-            self.wfile.write((response_content).encode("utf-8"))
-
-        elif url_path == "/getAvailableWifi":
+        if url_path == "/wifiStatus":
             # Set the response status code
             self.send_response(200)
 
@@ -120,14 +89,14 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
 
             # Build the response content as a dictionary
-            response_content = await wifi_manager.get_wifi_available()
+            response_content = await wifi_handler.network_status()
 
             # Convert the response convert to JSON format
             json_response = json.dumps(response_content)
 
             # Send the response content encoded in utf-8
             self.wfile.write((json_response).encode("utf-8"))
-        elif url_path == "/getSavedWifi":
+        elif url_path == "/wifiConnected":
             # Set the response status code
             self.send_response(200)
 
@@ -136,7 +105,41 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
 
             # Build the response content as a dictionary
-            response_content = await wifi_manager.get_saved_wifi_network()
+            response_content = await wifi_handler.saved()
+
+            # Convert the response convert to JSON format
+            json_response = json.dumps(response_content)
+
+            # Send the response content encoded in utf-8
+            self.wfile.write((json_response).encode("utf-8"))
+        elif url_path == "/wifiScan":
+            # Set the response status code
+            self.send_response(200)
+
+            # Set the response headers
+            self.send_header("Content-type", "application/json")
+            self.end_headers()
+
+            # Build the response content as a dictionary
+            response_content = await wifi_handler.scan()
+            print("SAVED SHIT")
+            print(response_content)
+
+            # Convert the response convert to JSON format
+            json_response = json.dumps(response_content)
+
+            # Send the response content encoded in utf-8
+            self.wfile.write((json_response).encode("utf-8"))
+        elif url_path == "/wifiSaved":
+            # Set the response status code
+            self.send_response(200)
+
+            # Set the response headers
+            self.send_header("Content-type", "application/json")
+            self.end_headers()
+
+            # Build the response content as a dictionary
+            response_content = await wifi_handler.saved()
 
             # Convert the response convert to JSON format
             json_response = json.dumps(response_content)
@@ -226,14 +229,17 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.send_header("Content-type", "application/json")
             self.end_headers()
 
-            # Build the response content as a dictionary and convert to JSON format
-            response_content = json.dumps(wifiHandler.toggle_wifi_status(wifi_status))
+            # Build the response content as a dictionary
+            response_content = await wifi_handler.toggle_wifi_status(wifi_status)
+
+            # Convert the response convert to JSON format
+            json_response = json.dumps(response_content)
 
             # Send the response content encoded in utf-8
-            self.wfile.write((response_content).encode("utf-8"))
+            self.wfile.write((json_response).encode("utf-8"))
 
         # connect to wifi with parameters
-        elif url_path == "/connectToWifi":
+        elif url_path == "/wifiConnect":
             # Extract wifi ssid and password from query parameters
             wifi_ssid = parsed_data["wifi_ssid"]
             wifi_password = parsed_data["wifi_password"]
@@ -245,6 +251,15 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.send_header("Content-type", "application/json")
             self.end_headers()
 
+            # Build the response content as a dictionary
+            response_content = await wifi_handler.get_saved_wifi_network()
+
+            # Convert the response convert to JSON format
+            json_response = json.dumps(response_content)
+
+            # Send the response content encoded in utf-8
+            self.wfile.write((json_response).encode("utf-8"))
+
             # Build the response content as a dictionary and convert to JSON format
             response_content = json.dumps(
                 wifiHandler.connect_to_wifi(wifi_ssid, wifi_password)
@@ -252,7 +267,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
             # Send the response content encoded in utf-8
             self.wfile.write((response_content).encode("utf-8"))
-        elif url_path == "/forgetNetwork":
+        elif url_path == "/wifiForget":
             # Extract wifi ssid from query parameters
             wifi_ssid = parsed_data["wifi_ssid"]
 
@@ -268,7 +283,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
             # Send the response content encoded in utf-8
             self.wfile.write((response_content).encode("utf-8"))
-        elif url_path == "/disconnectNetwork":
+        elif url_path == "/wifiDisconnect":
             # Extract wifi ssid from query parameters
             wifi_ssid = parsed_data["wifi_ssid"]
 
@@ -350,23 +365,6 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
 # Main function to run the server
 def run_server():
-    # Establish a socket connection with the wifi manager
-    try:
-        WLAN_SOCKET = f"/run/wpa_supplicant/{find_valid_interfaces()[0]}"
-        wifi_manager.connect(WLAN_SOCKET)
-    except Exception as socket_connection_error:
-        logger.warning(
-            f"Error establishing wifi socket connection: {socket_connection_error}"
-        )
-        logger.info("Connecting via internet wifi socket.")
-        try:
-            wifi_manager.connect(("localhost", 6664))
-        except Exception as udp_connection_error:
-            logger.error(
-                f"Error establishing internet socket connection: {udp_connection_error}. Exiting."
-            )
-            sys.exit(1)
-    logger.info("Socket connection established.")
     try:
         # Set up the server address and port
         PORT = 5050

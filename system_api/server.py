@@ -39,6 +39,7 @@ else:
 
 wifi_handler = WifiHandler()
 
+
 class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         logger.info("HTTP request handler initialized.")

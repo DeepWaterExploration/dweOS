@@ -3,9 +3,8 @@ import sys
 from typing import List
 
 from loguru import logger
-
-from wifi.WifiManager import WifiManager
 from wifi.exceptions import BusyError
+from wifi.WifiManager import WifiManager
 
 
 class WifiHandler:
@@ -61,7 +60,6 @@ class WifiHandler:
         """Returns the saved wifi networks."""
         saved_networks = await self.wifi_manager.get_saved_wifi_network()
         return saved_networks
-
 
     async def connect(self, ssid: str, password: str) -> None:
         """Connects to the specified wifi network."""

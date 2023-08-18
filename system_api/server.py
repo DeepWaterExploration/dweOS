@@ -2,7 +2,6 @@ import install_requirements
 
 install_requirements.install_missing_packages()
 
-from loguru import logger
 import asyncio
 import http.server
 import json
@@ -15,6 +14,7 @@ from http.server import HTTPServer
 import cpuHandler
 import systemHandler
 import temperatureHandler
+from loguru import logger
 
 current_os = platform.system()
 platform_name = platform.uname()

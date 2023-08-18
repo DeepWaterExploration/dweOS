@@ -27,9 +27,13 @@ def install_missing_packages():
             "module_name": "loguru",
             "pip_name": "loguru",
         },
+        {
+            "module_name": "pydantic",
+            "pip_name": "pydantic",
+        },
     ]
     if current_os == "Windows":
-        pip_command = ["runas /user:Administrator", "python", "-m", "pip" "install"]
+        pip_command = "runas /user:Administrator python -m pip install"
         required_packages.append(
             {
                 "module_name": "wmi",
@@ -54,9 +58,9 @@ def install_missing_packages():
                 text=True,
             )
 
-        pip_command = ["sudo", "python3", "-m", "pip", "install"]
+        pip_command = "sudo python3 -m pip install"
     elif current_os == "Darwin":
-        pip_command = ["sudo", "python3", "-m", "pip", "install"]
+        pip_command = "sudo python3 -m pip install"
         required_packages.append(
             {
                 "module_name": "plistlib",
@@ -74,21 +78,17 @@ def install_missing_packages():
         print("Installing missing packages:")
         for package in missing_packages:
             print(f"{package} - {' '.join(pip_command + [package])}:")
-            if current_os.lower() == "windows":
-                subprocess.check_call(
-                    [
-                        pip_command,
-                        package,
-                        # "--trusted-host",
-                    ]
+            try:
+                subprocess.run(
+                    f"{pip_command} {package}",
+                    shell=True,
+                    capture_output=True,
+                    text=True,
                 )
-            else:
-                try:
-                    subprocess.check_call(pip_command + [package])
-                except subprocess.CalledProcessError:
-                    print(
-                        f"Failed to install {package}. Please try to install it manually."
-                    )
+            except Exception:
+                print(
+                    f"Failed to install {package}. Please try to install it manually."
+                )
         subprocess.run("clear" if os.name == "posix" else "cls", shell=True)
         print("All missing packages have been installed.")
     else:

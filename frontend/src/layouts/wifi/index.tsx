@@ -15,11 +15,10 @@ import { SavedWifiNetwork, ScannedWifiNetwork, WiFiNetwork } from "./types";
 
 const Wifi: React.FC = () => {
   const [wifiStatus, setWifiStatus] = useState<boolean | null>(null);
-  const [connectedNetwork, setConnectedNetwork] = useState<SavedWifiNetwork | null>(
-    null
-  );
+  const [connectedNetwork, setConnectedNetwork] =
+    useState<SavedWifiNetwork | null>(null);
   const [availableNetworks, setAvailableNetworks] = useState<
-  ScannedWifiNetwork[] | null
+    ScannedWifiNetwork[] | null
   >(null);
   const [savedNetworks, setSavedNetworks] = useState<SavedWifiNetwork[] | null>(
     null

@@ -43,8 +43,7 @@ export async function getWifiStatus(): Promise<boolean> {
     });
 }
 
-export async function getConnectedNetwork(
-  ): Promise<ConnectedWifiNetwork | null> {
+export async function getConnectedNetwork(): Promise<ConnectedWifiNetwork | null> {
   const url = `${SYSTEM_API_URL}/wifiConnected`;
   const config: RequestInit = {
     mode: "cors",

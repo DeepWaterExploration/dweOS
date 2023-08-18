@@ -1,11 +1,6 @@
 {
   "compilerOptions": {
     /* Basic options */
-    "baseUrl": ".",
-    "paths": {
-      "src/*": ["src/*"],
-      "@svg/*": ["public/assets/svg/*"]
-    },
     "target": "ES2020",
     "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
@@ -26,7 +21,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "src/custom.d.ts"
-],
-  // "references": [{ "path": "./tsconfig.node.json" }]
+  "include": ["src"],
+  "references": [{ "path": "./tsconfig.node.json" }]
 }

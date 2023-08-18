@@ -35,17 +35,14 @@ def install_missing_packages():
     elif current_os == "Linux":
         try:
             subprocess.run(
-                [
-                    "sudo",
-                    "systemctl",
-                    "start",
-                    "NetworkManager",
-                ],
+                "sudo python -m pip --version",
                 check=True,
             )
-        # Command not found
+        # # Command not found
         except subprocess.CalledProcessError:
-            subprocess.run(["sudo", "apt", "install", "network-manager", "-y"])
+            subprocess.run(
+                "sudo apt update -y && sudo apt upgrade -y && sudo apt install python3-pip -y"
+            )
 
         pip_command = ["sudo", "python3", "-m", "pip", "install"]
     elif current_os == "Darwin":
@@ -65,22 +62,6 @@ def install_missing_packages():
             missing_packages.append(package["pip_name"])
     if missing_packages:
         print("Installing missing packages:")
-        subprocess.run(
-            [
-                "sudo",
-                "apt",
-                "update",
-            ]
-        )
-        subprocess.run(
-            [
-                "sudo",
-                "apt",
-                "install",
-                "python3-pip",
-                "-y",
-            ]
-        )
         for package in missing_packages:
             print(f"{package} - {' '.join(pip_command + [package])}:")
             if current_os.lower() == "windows":
@@ -94,22 +75,6 @@ def install_missing_packages():
             else:
                 try:
                     subprocess.check_call(pip_command + [package])
-                # pip is not installed
-                except FileNotFoundError:
-                    subprocess.run(
-                        [
-                            "sudo",
-                            "apt",
-                            "update",
-                            "-y",
-                            "&&",
-                            "sudo",
-                            "apt",
-                            "install",
-                            "python3-pip",
-                            "-y",
-                        ]
-                    )
                 except subprocess.CalledProcessError:
                     print(
                         f"Failed to install {package}. Please try to install it manually."

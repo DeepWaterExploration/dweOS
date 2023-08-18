@@ -17,7 +17,7 @@
   "scripts": {
     "dev": "npx vite --host",
     "build": "chmod +x ./build_frontend.sh && ./build_frontend.sh",
-    "preview": "vite preview",
+    "preview": "vite preview --host",
     "format": "npx prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint": "npx eslint \"src/**/*.{js,jsx,ts,tsx}\" --report-unused-disable-directives --max-warnings 0",
     "test": "echo \"Error: no test specified\" && exit 1"

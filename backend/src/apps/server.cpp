@@ -324,8 +324,13 @@ int main(int argc, char **argv) {
             devices.save_device(ehd);
             res.set_header("Access-Control-Allow-Origin", "*");
         });
+    /* Set up the server address and port */
+    int SERVER_PORT = 8080;
+    const char* SERVER_IP = "localhost";
 
     /* Start the server */
+    std::cout << "Server started at http://" << SERVER_IP << ":" << SERVER_PORT << "\n";
     devices.start_monitoring();
-    svr.listen("localhost", 8080);
+    svr.listen(SERVER_IP, SERVER_PORT);
+    return 0;
 }

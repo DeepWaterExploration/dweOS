@@ -1,8 +1,8 @@
 import install_requirements
-from loguru import logger
 
 install_requirements.install_missing_packages()
 
+from loguru import logger
 import asyncio
 import http.server
 import json

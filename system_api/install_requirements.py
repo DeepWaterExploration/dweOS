@@ -23,6 +23,10 @@ def install_missing_packages():
             "module_name": "pywifi",
             "pip_name": "pywifi",
         },
+        {
+            "module_name": "loguru",
+            "pip_name": "loguru",
+        },
     ]
     if current_os == "Windows":
         pip_command = ["runas /user:Administrator", "python", "-m", "pip" "install"]
@@ -37,11 +41,17 @@ def install_missing_packages():
             subprocess.run(
                 "sudo python -m pip --version",
                 check=True,
+                shell=True,
+                capture_output=True,
+                text=True,
             )
         # # Command not found
-        except subprocess.CalledProcessError:
+        except FileNotFoundError:
             subprocess.run(
-                "sudo apt update -y && sudo apt upgrade -y && sudo apt install python3-pip -y"
+                "sudo apt update -y && sudo apt upgrade -y && sudo apt install python3-pip -y",
+                shell=True,
+                capture_output=True,
+                text=True,
             )
 
         pip_command = ["sudo", "python3", "-m", "pip", "install"]

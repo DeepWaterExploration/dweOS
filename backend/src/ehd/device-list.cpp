@@ -328,6 +328,20 @@ void DeviceList::_monitor_devices() {
 
         for (const auto &device_info : added_devices) {
             v4l2::Device *v4l2_device = new v4l2::Device(device_info);
+            const int MAX_RETRIES = 25;
+            int num_retries = 0;
+            /* ensure device did not have an issue */
+            while (v4l2_device->has_error() && num_retries < MAX_RETRIES) {
+                delete v4l2_device;
+                usleep(100000);
+                v4l2_device = new v4l2::Device(device_info);
+                num_retries += 1;
+            }
+
+            if (v4l2_device->has_error()) {
+                delete v4l2_device;
+                continue;
+            }
 
             /* Check if device is an exploreHD */
             if (v4l2_device->get_device_attr("idVendor") == "0c45" &&

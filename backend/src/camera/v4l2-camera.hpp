@@ -108,6 +108,8 @@ class Device {
     void remove_stream_endpoint(int index);
     bool is_stream_configured();
 
+    inline bool has_error() { return _error; }
+
     inline gst::Pipeline *get_pipeline() { return _pipeline; }
 
     private:
@@ -118,6 +120,7 @@ class Device {
     std::vector<Control> _controls;
     gst::Pipeline *_pipeline;
     std::string _usbInfo;
+    bool _error = false;
 };
 
 }  // namespace v4l2

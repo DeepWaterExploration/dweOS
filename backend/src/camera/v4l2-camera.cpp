@@ -241,7 +241,11 @@ Device::Device(v4l2::devices::DEVICE_INFO info) : _info(info) {
 
     std::cout << "Device found at port: " << _usbInfo << std::endl;
 
-    query_uvc_controls();
+    if (_cameras.size() > 0) {
+        query_uvc_controls();
+    } else {
+        _error = true;
+    }
 }
 
 Device::~Device() {

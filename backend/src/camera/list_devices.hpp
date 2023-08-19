@@ -24,13 +24,13 @@ struct DEVICE_INFO {
 inline std::string exec(const std::string &cmd) {
     std::array<char, 128> buffer;
     std::string result;
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(
-        popen(cmd.c_str(), "r"), pclose);
+    auto pipe = popen(cmd.c_str(), "r");
     if (!pipe) {
         throw std::runtime_error("popen() failed!");
     }
-    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-        result += buffer.data();
+    while (!feof(pipe)) {
+        if (fgets(buffer.data(), buffer.size(), pipe) != nullptr)
+            result += buffer.data();
     }
     return result;
 }
@@ -66,7 +66,9 @@ inline void list(std::vector<DEVICE_INFO> &devices) {
                     device.device_paths.push_back(trim(line));
             }
         } else {
-            if (device.device_name.find("bcm2835-codec-decode") == std::string::npos && device.device_name.find("bcm2835-isp") == std::string::npos)
+            if (device.device_name.find("bcm2835-codec-decode") ==
+                    std::string::npos &&
+                device.device_name.find("bcm2835-isp") == std::string::npos)
                 devices.push_back(device);
             device.device_paths.clear();
         }

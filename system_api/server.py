@@ -240,8 +240,8 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         # connect to wifi with parameters
         elif url_path == "/wifiConnect":
             # Extract wifi ssid and password from query parameters
-            wifi_ssid = parsed_data["wifi_ssid"]
-            wifi_password = parsed_data["wifi_password"]
+            wifi_ssid = base64Decode(parsed_data["wifi_ssid"])
+            wifi_password = base64Decode(parsed_data["wifi_password"])
 
             # Set the response status code
             self.send_response(200)
@@ -250,18 +250,9 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.send_header("Content-type", "application/json")
             self.end_headers()
 
-            # Build the response content as a dictionary
-            response_content = await wifi_handler.get_saved_wifi_network()
-
-            # Convert the response convert to JSON format
-            json_response = json.dumps(response_content)
-
-            # Send the response content encoded in utf-8
-            self.wfile.write((json_response).encode("utf-8"))
-
             # Build the response content as a dictionary and convert to JSON format
             response_content = json.dumps(
-                wifiHandler.connect_to_wifi(wifi_ssid, wifi_password)
+                wifi_handler.connect(wifi_ssid, wifi_password)
             )
 
             # Send the response content encoded in utf-8
@@ -297,7 +288,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
 
             # Build the response content as a dictionary and convert to JSON format
-            response_content = json.dumps(wifiHandler.disconnect_wifi(wifi_ssid))
+            response_content = json.dumps(wifi_handler.disconnect_wifi(wifi_ssid))
 
             # Send the response content encoded in utf-8
             self.wfile.write((response_content).encode("utf-8"))

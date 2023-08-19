@@ -4,7 +4,32 @@ from typing import List
 
 from loguru import logger
 from wifi.exceptions import BusyError
+import base64
+
+from system_api.wifi.network_types import ConnectionStatus
 from wifi.WifiManager import WifiManager
+
+
+def base64Decode(encoded_string: str) -> int:
+    """
+    Returns the decoded string.
+
+    Parameters:
+    - encoded_string (str): The encoded string.
+
+    Returns:
+    - decoded_string (str): The decoded string.
+    """
+    # Convert the Base64 encoded string to bytes
+    encoded_bytes = encoded_string.encode("utf-8")
+
+    # Decode the bytes using Base64
+    decoded_bytes = base64.b64decode(encoded_bytes)
+
+    # Convert the decoded bytes back to a string
+    decoded_string = decoded_bytes.decode("utf-8")
+
+    return decoded_string
 
 
 class WifiHandler:
@@ -81,7 +106,7 @@ class WifiHandler:
         - wifi_on (bool): True if Wi-Fi is enabled, False otherwise.
         """
         try:
-            cmd = ["nmcli", "radio", "wifi", f"{'on' if wifi_on else 'off'}"]
+            cmd = f"nmcli radio wifi {'on' if wifi_on else 'off'}"
             # Run the command and capture the output and errors
             subprocess.run(cmd, check=True)
             return {"enabled": wifi_on}
@@ -98,6 +123,25 @@ class WifiHandler:
         except BusyError as error:
             logger.error(f"Error getting connected network: {error}")
             return
+
+    async def disconnect(self) -> None:
+        """Reconfigure wpa_supplicant
+        This will force the reevaluation of the conf file
+        """
+        self.connection_status = ConnectionStatus.DISCONNECTING
+        try:
+            # Save current network in ignored list so the watchdog doesn't auto-reconnect to it
+            current_network = await self.get_current_network()
+            if current_network:
+                logger.debug(f"Adding '{current_network.ssid}' to ignored list.")
+                self._ignored_reconnection_networks.append(current_network.ssid)
+                await self.wpa.send_command_disable_network(current_network.networkid)
+
+            await self.wpa.send_command_disconnect()
+            self.connection_status = ConnectionStatus.JUST_DISCONNECTED
+        except Exception as error:
+            self.connection_status = ConnectionStatus.UNKNOWN
+            raise ConnectionError("Failed to disconnect from wifi network.") from error
 
     async def forget(self, ssid: str):
         """Forgets the specified wifi network."""

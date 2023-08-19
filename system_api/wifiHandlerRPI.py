@@ -1,13 +1,13 @@
+import base64
 import subprocess
 import sys
 from typing import List
 
 from loguru import logger
 from wifi.exceptions import BusyError
-import base64
+from wifi.WifiManager import WifiManager
 
 from system_api.wifi.network_types import ConnectionStatus
-from wifi.WifiManager import WifiManager
 
 
 def base64Decode(encoded_string: str) -> int:

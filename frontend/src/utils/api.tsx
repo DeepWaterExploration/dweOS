@@ -11,6 +11,7 @@ import {
 
 const hostAddress: string = window.location.hostname;
 export const DEVICE_API_URL = `http://${hostAddress}:8080`;
+export const DEVICE_API_WS = `ws://${hostAddress}:9002`;
 export const SYSTEM_API_URL = `http://${hostAddress}:5050`;
 export const UPDATER_API_URL = `http://${hostAddress}:5000`;
 

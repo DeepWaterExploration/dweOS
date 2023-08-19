@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 
 import DeviceCard from "./DeviceCard";
 import { Device } from "../../types/types";
-import { getDevices } from "../../utils/api";
+import { getDevices, DEVICE_API_WS } from "../../utils/api";
 
 const hash = function (str: string) {
   let hash = 0,
@@ -54,7 +54,7 @@ const CamerasPage: React.FC = () => {
     });
 
     // Create WebSocket connection.
-    const socket = new WebSocket("ws://localhost:9002");
+    const socket = new WebSocket(DEVICE_API_WS);
 
     // Listen for messages
     socket.addEventListener("message", (event) => {

@@ -326,7 +326,7 @@ int main(int argc, char **argv) {
         });
     /* Set up the server address and port */
     int SERVER_PORT = 8080;
-    const char* SERVER_IP = "localhost";
+    const char* SERVER_IP = "0.0.0.0";
 
     /* Start the server */
     std::cout << "Server started at http://" << SERVER_IP << ":" << SERVER_PORT << "\n";

@@ -42,8 +42,9 @@ def install_missing_packages():
         )
     elif current_os == "Linux":
         try:
+            print("Trying to run pip3")
             subprocess.run(
-                "sudo python -m pip --version",
+                "sudo python3 -m pip --version",
                 check=True,
                 shell=True,
                 capture_output=True,
@@ -51,13 +52,13 @@ def install_missing_packages():
             )
         # Command not found
         except Exception:
+            print("Failed, trying to install pip3")
             subprocess.run(
                 "sudo apt update -y && sudo apt upgrade -y && sudo apt install python3-pip -y",
                 shell=True,
                 capture_output=True,
                 text=True,
             )
-
         pip_command = "sudo python3 -m pip install"
     elif current_os == "Darwin":
         pip_command = "sudo python3 -m pip install"
@@ -77,7 +78,7 @@ def install_missing_packages():
     if missing_packages:
         print("Installing missing packages:")
         for package in missing_packages:
-            print(f"{package} - {' '.join(pip_command + [package])}:")
+            print(f"{package} - {pip_command + package}:")
             try:
                 subprocess.run(
                     f"{pip_command} {package}",

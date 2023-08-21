@@ -7,7 +7,7 @@ from loguru import logger
 from wifi.exceptions import BusyError
 from wifi.WifiManager import WifiManager
 
-from system_api.wifi.network_types import ConnectionStatus
+from wifi.network_types import ConnectionStatus
 
 
 def base64Decode(encoded_string: str) -> int:

@@ -40,7 +40,7 @@ def install_missing_packages():
                 "pip_name": "wmi",
             },
         )
-    elif current_os == "Linux":
+    else:
         try:
             print("Trying to run pip3")
             subprocess.run(
@@ -59,9 +59,26 @@ def install_missing_packages():
                 capture_output=True,
                 text=True,
             )
+        try:
+            print("Trying to run nmcli")
+            subprocess.run(
+                "nmcli radio wifi",
+                check=True,
+                shell=True,
+                capture_output=True,
+                text=True,
+            )
+        # Command not found
+        except Exception:
+            subprocess.run(
+                "sudo apt-get install network-manager -y",
+                check=True,
+                shell=True,
+                capture_output=True,
+                text=True,
+            )
         pip_command = "sudo python3 -m pip install"
-    elif current_os == "Darwin":
-        pip_command = "sudo python3 -m pip install"
+    if current_os == "Darwin":
         required_packages.append(
             {
                 "module_name": "plistlib",

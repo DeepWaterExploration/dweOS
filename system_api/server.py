@@ -3,12 +3,12 @@ import install_requirements
 install_requirements.install_missing_packages()
 
 import asyncio
+import base64
 import http.server
 import json
 import os
 import platform
 import sys
-import base64
 import urllib.parse
 from http.server import HTTPServer
 
@@ -40,6 +40,7 @@ else:
 
 wifi_handler = WifiHandler()
 
+
 def base64Decode(encoded_string: str) -> int:
     """
     Returns the decoded string.
@@ -60,6 +61,7 @@ def base64Decode(encoded_string: str) -> int:
     decoded_string = decoded_bytes.decode("utf-8")
 
     return decoded_string
+
 
 class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     def __init__(self, *args, **kwargs):

@@ -8,6 +8,7 @@ import json
 import os
 import platform
 import sys
+import base64
 import urllib.parse
 from http.server import HTTPServer
 
@@ -39,6 +40,26 @@ else:
 
 wifi_handler = WifiHandler()
 
+def base64Decode(encoded_string: str) -> int:
+    """
+    Returns the decoded string.
+
+    Parameters:
+    - encoded_string (str): The encoded string.
+
+    Returns:
+    - decoded_string (str): The decoded string.
+    """
+    # Convert the Base64 encoded string to bytes
+    encoded_bytes = encoded_string.encode("utf-8")
+
+    # Decode the bytes using Base64
+    decoded_bytes = base64.b64decode(encoded_bytes)
+
+    # Convert the decoded bytes back to a string
+    decoded_string = decoded_bytes.decode("utf-8")
+
+    return decoded_string
 
 class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     def __init__(self, *args, **kwargs):

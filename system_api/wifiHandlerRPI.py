@@ -1,4 +1,3 @@
-import base64
 import subprocess
 import sys
 from typing import List
@@ -7,28 +6,6 @@ from loguru import logger
 from wifi.exceptions import BusyError
 from wifi.network_types import ConnectionStatus
 from wifi.WifiManager import WifiManager
-
-
-def base64Decode(encoded_string: str) -> int:
-    """
-    Returns the decoded string.
-
-    Parameters:
-    - encoded_string (str): The encoded string.
-
-    Returns:
-    - decoded_string (str): The decoded string.
-    """
-    # Convert the Base64 encoded string to bytes
-    encoded_bytes = encoded_string.encode("utf-8")
-
-    # Decode the bytes using Base64
-    decoded_bytes = base64.b64decode(encoded_bytes)
-
-    # Convert the decoded bytes back to a string
-    decoded_string = decoded_bytes.decode("utf-8")
-
-    return decoded_string
 
 
 class WifiHandler:
@@ -105,9 +82,15 @@ class WifiHandler:
         - wifi_on (bool): True if Wi-Fi is enabled, False otherwise.
         """
         try:
-            cmd = f"nmcli radio wifi {'on' if wifi_on else 'off'}"
+            cmd = f"sudo nmcli radio wifi {'on' if wifi_on else 'off'}"
             # Run the command and capture the output and errors
-            subprocess.run(cmd, check=True)
+            subprocess.run(
+                cmd,
+                check=True,
+                shell=True,
+                capture_output=True,
+                text=True,
+            )
             return {"enabled": wifi_on}
         except Exception as e:
             print("Error: An unexpected error occurred.")

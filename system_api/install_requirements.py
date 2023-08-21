@@ -49,8 +49,8 @@ def install_missing_packages():
                 capture_output=True,
                 text=True,
             )
-        # # Command not found
-        except FileNotFoundError:
+        # Command not found
+        except Exception:
             subprocess.run(
                 "sudo apt update -y && sudo apt upgrade -y && sudo apt install python3-pip -y",
                 shell=True,

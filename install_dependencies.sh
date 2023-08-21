@@ -17,6 +17,7 @@ install_dependencies_backend() {
   apt-get install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
   apt-get install -y libudev-dev
   apt-get install -y libboost-all-dev
+  apt-get install -y gstreamer1.0-tools gstreamer1.0-x gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-libav
 }
 
 

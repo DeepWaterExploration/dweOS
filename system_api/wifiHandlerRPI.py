@@ -5,9 +5,8 @@ from typing import List
 
 from loguru import logger
 from wifi.exceptions import BusyError
-from wifi.WifiManager import WifiManager
-
 from wifi.network_types import ConnectionStatus
+from wifi.WifiManager import WifiManager
 
 
 def base64Decode(encoded_string: str) -> int:

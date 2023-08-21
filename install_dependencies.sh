@@ -1,4 +1,5 @@
 #!/bin/bash
+# must be run with sudo
 
 install_dependencies_frontend() {
   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
@@ -10,13 +11,17 @@ install_dependencies_frontend() {
 }
 
 install_dependencies_backend() {
-  sudo apt install cmake bash
-  sudo apt-get install libglib2.0-dev
+  apt-get install -y cmake bash
+  apt-get install -y libglib2.0-dev
+  apt-get install -y libglib2.0-dev
+  apt-get install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+  apt-get install -y libudev-dev
+  apt-get install -y libboost-all-dev
 }
 
 
 install_dependencies() {
-  sudo apt update && sudo apt upgrade;
+  apt-get update && apt-get upgrade -y;
   install_dependencies_frontend;
   install_dependencies_backend;
 }

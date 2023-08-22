@@ -66,9 +66,7 @@ inline void list(std::vector<DEVICE_INFO> &devices) {
                     device.device_paths.push_back(trim(line));
             }
         } else {
-            if (device.device_name.find("bcm2835-codec-decode") ==
-                    std::string::npos &&
-                device.device_name.find("bcm2835-isp") == std::string::npos)
+            if (device.bus_info.find("platform") == std::string::npos)
                 devices.push_back(device);
             device.device_paths.clear();
         }

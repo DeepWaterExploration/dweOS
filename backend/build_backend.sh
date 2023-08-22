@@ -1,13 +1,6 @@
 #!/bin/bash
 
 build_backend() {
-  # Update submodules
-  git submodule update --init --recursive
-  # Install apt dependencies
-  apt-get install -y libglib2.0-dev
-  apt-get install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
-  apt-get install -y libudev-dev
-  apt-get install -y libboost-all-dev
   # Remove build folder if exists
   rm -rf build
   # Create build folder

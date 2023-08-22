@@ -14,11 +14,13 @@ cd ..
 if [ -d "release" ]; then rm -Rf release; fi
 mkdir release && cd release
 
-mkdir DWE_OS_2_x86_64_Linux && cd DWE_OS_2_x86_64_Linux
+ARCH=$(dpkg --print-architecture)
+echo ${ARCH}
+mkdir DWE_OS_2_${ARCH}_Linux && cd DWE_OS_2_${ARCH}_Linux
 mkdir backend && mkdir frontend && mkdir system_api
 cp ../../backend/build/backend.bin ./backend
 cp ../../frontend/dist/** -r ./frontend
 cp ../../system_api/** -r ./system_api
-zip -r DWE_OS_2_x86_64_Linux DWE_OS_2_x86_64_Linux
-rm -rf DWE_OS_2_x86_64_Linux
+zip -r DWE_OS_2_${ARCH} DWE_OS_2_${ARCH}
+rm -rf DWE_OS_2_${ARCH}
 cd ..

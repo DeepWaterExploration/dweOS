@@ -62,15 +62,6 @@ class WifiHandler:
         saved_networks = await self.wifi_manager.get_saved_wifi_network()
         return saved_networks
 
-    async def connect(self, ssid: str, password: str) -> None:
-        """Connects to the specified wifi network."""
-        try:
-            available_networks = await self.wifi_manager.get_wifi_available()
-            return available_networks
-        except BusyError as error:
-            logger.error(f"Error getting available networks: {error}")
-            return
-
     async def toggle_wifi_status(self, wifi_on: bool):
         """
         Toggles WiFi based on current state.
@@ -97,6 +88,21 @@ class WifiHandler:
             print("Error message: ", str(e))
             return {"Enabled": False}
 
+    async def connect(self, ssid: str, password: str) -> None:
+        """Connects to the specified wifi network."""
+        try:
+            subprocess.run(
+                f'nmcli device wifi connnect "{ssid}" password "{password}"',
+                check=True,
+                shell=True,
+                capture_output=True,
+                text=True,
+            )
+            return {"success": True}
+        # Command not found
+        except Exception:
+            return {"success": False}
+
     async def connected(self):
         """Returns the connected wifi network."""
         try:
@@ -106,43 +112,32 @@ class WifiHandler:
             logger.error(f"Error getting connected network: {error}")
             return
 
-    async def disconnect(self) -> None:
+    async def disconnect(self, ssid: str) -> None:
         """Reconfigure wpa_supplicant
         This will force the reevaluation of the conf file
         """
-        self.connection_status = ConnectionStatus.DISCONNECTING
         try:
-            # Save current network in ignored list so the watchdog doesn't auto-reconnect to it
-            current_network = await self.get_current_network()
-            if current_network:
-                logger.debug(f"Adding '{current_network.ssid}' to ignored list.")
-                self._ignored_reconnection_networks.append(current_network.ssid)
-                await self.wpa.send_command_disable_network(current_network.networkid)
-
-            await self.wpa.send_command_disconnect()
-            self.connection_status = ConnectionStatus.JUST_DISCONNECTED
+            subprocess.run(
+                f'nmcli device disconnect "{ssid}"',
+            )
+            return {"success": True}
+        # Command not found
         except Exception as error:
-            self.connection_status = ConnectionStatus.UNKNOWN
-            raise ConnectionError("Failed to disconnect from wifi network.") from error
+            logger.error(f"Error disconnecting from network: {error}")
+            return {"success": False}
 
     async def forget(self, ssid: str):
         """Forgets the specified wifi network."""
         try:
-            saved_networks = await self.wifi_manager.get_saved_wifi_network()
-            match_networks = sorted(
-                [
-                    network
-                    for network in saved_networks["saved_networks"]
-                    if network["ssid"] == ssid
-                ],
-                key=lambda network: network["network_id"],
-                reverse=True,
+            subprocess.run(
+                f'sudo nmcli connection delete "{ssid}"',
+                check=True,
+                shell=True,
+                capture_output=True,
+                text=True,
             )
-            for network in match_networks:
-                print(f"Removing network: {network}")
-                print(f"Network ID: {network['network_id']}")
-                await self.wifi_manager.remove_network(network["network_id"])
             return {"success": True}
+        # Command not found
         except Exception as error:
             logger.error(f"Error forgetting network: {error}")
             return {"success": False}

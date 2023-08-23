@@ -54,25 +54,7 @@ def install_missing_packages():
         except Exception:
             print("Failed, trying to install pip3")
             subprocess.run(
-                "sudo apt update -y && sudo apt upgrade -y && sudo apt install python3-pip -y",
-                shell=True,
-                capture_output=True,
-                text=True,
-            )
-        try:
-            print("Trying to run nmcli")
-            subprocess.run(
-                "nmcli device status",
-                check=True,
-                shell=True,
-                capture_output=True,
-                text=True,
-            )
-        # Command not found
-        except Exception:
-            subprocess.run(
-                "sudo apt-get install network-manager -y",
-                check=True,
+                "sudo apt install python3-pip -y",
                 shell=True,
                 capture_output=True,
                 text=True,
@@ -90,6 +72,7 @@ def install_missing_packages():
     for package in required_packages:
         try:
             importlib.import_module(package["module_name"])
+            # importlib.remove_module(package["module_name"])
         except ImportError:
             missing_packages.append(package["pip_name"])
     if missing_packages:
@@ -112,3 +95,22 @@ def install_missing_packages():
     else:
         subprocess.run("clear" if os.name == "posix" else "cls", shell=True)
         print("All required packages are already installed.")
+    if not(current_os == "Windows"):
+        try:
+            print("Trying to run nmcli")
+            subprocess.run(
+                "nmcli device status",
+                check=True,
+                shell=True,
+                capture_output=True,
+                text=True,
+            )
+        # Command not found
+        except Exception:
+            subprocess.run(
+                "sudo apt-get install network-manager -y",
+                check=True,
+                shell=True,
+                capture_output=True,
+                text=True,
+            )

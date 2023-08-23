@@ -1,7 +1,3 @@
-import install_requirements
-
-install_requirements.install_missing_packages()
-
 import asyncio
 import base64
 import http.server

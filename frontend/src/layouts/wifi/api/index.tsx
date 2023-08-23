@@ -169,7 +169,7 @@ export async function connectToWifi(
  * @throws {Error} - If the request to toggle the wifi fails.
  */
 export async function toggleWifiStatus(wifiStatus: boolean): Promise<boolean> {
-  const url = `${SYSTEM_API_URL}/toggleWifiStatus`;
+  const url = `${SYSTEM_API_URL}/wifiToggle`;
   const data = {
     wifi_status: wifiStatus,
   };

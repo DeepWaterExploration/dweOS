@@ -236,7 +236,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         post_data = self.rfile.read(content_length).decode("utf-8")
         parsed_data = json.loads(post_data)
         url_path = parsed_url.path
-        if url_path == "/toggleWifiStatus":
+        if url_path == "/wifiToggle":
             # Extract wifi_status from the query parameters
             wifi_status = parsed_data["wifi_status"]
 

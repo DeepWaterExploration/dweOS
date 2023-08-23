@@ -62,7 +62,7 @@ def install_missing_packages():
         try:
             print("Trying to run nmcli")
             subprocess.run(
-                "nmcli radio wifi",
+                "nmcli device status",
                 check=True,
                 shell=True,
                 capture_output=True,

@@ -95,7 +95,7 @@ def install_missing_packages():
     else:
         subprocess.run("clear" if os.name == "posix" else "cls", shell=True)
         print("All required packages are already installed.")
-    if not(current_os == "Windows"):
+    if not (current_os == "Windows"):
         try:
             print("Trying to run nmcli")
             subprocess.run(

@@ -4,7 +4,6 @@ from typing import List
 
 from loguru import logger
 from wifi.exceptions import BusyError
-from wifi.network_types import ConnectionStatus
 from wifi.WifiManager import WifiManager
 
 

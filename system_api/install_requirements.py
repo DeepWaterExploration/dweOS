@@ -114,3 +114,5 @@ def install_missing_packages():
                 capture_output=True,
                 text=True,
             )
+
+install_missing_packages()

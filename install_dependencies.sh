@@ -10,13 +10,7 @@ install_dependencies_frontend() {
 }
 
 install_dependencies_backend() {
-  apt-get install -y cmake bash
-  apt-get install -y libglib2.0-dev
-  apt-get install -y libglib2.0-dev
-  apt-get install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
-  apt-get install -y libudev-dev
-  apt-get install -y libboost-all-dev
-  apt-get install -y gstreamer1.0-tools gstreamer1.0-x gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-libav
+  apt-get install -y cmake bash libglib2.0-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libudev-dev libboost-all-dev gstreamer1.0-tools gstreamer1.0-x gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-libav
 }
 
 

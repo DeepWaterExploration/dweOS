@@ -233,7 +233,7 @@ export async function forgetNetwork(wifi_ssid: string): Promise<boolean> {
  * @throws {Error} - If the request to toggle the wifi fails.
  */
 export async function disconnectNetwork(wifi_ssid: string): Promise<boolean> {
-  const url = `${SYSTEM_API_URL}/disconnectNetwork`;
+  const url = `${SYSTEM_API_URL}/wifiDisconnect`;
   const data = {
     wifi_ssid: wifi_ssid,
   };

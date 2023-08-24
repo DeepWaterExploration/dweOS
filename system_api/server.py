@@ -269,13 +269,14 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.send_header("Content-type", "application/json")
             self.end_headers()
 
-            # Build the response content as a dictionary and convert to JSON format
-            response_content = json.dumps(
-                wifi_handler.connect(wifi_ssid, wifi_password)
-            )
+            # Build the response content as a dictionary
+            response_content = await wifi_handler.connect(wifi_ssid, wifi_password)
+
+            # Convert the response convert to JSON format
+            json_response = json.dumps(response_content)
 
             # Send the response content encoded in utf-8
-            self.wfile.write((response_content).encode("utf-8"))
+            self.wfile.write((json_response).encode("utf-8"))
         elif url_path == "/wifiForget":
             # Extract wifi ssid from query parameters
             wifi_ssid = parsed_data["wifi_ssid"]

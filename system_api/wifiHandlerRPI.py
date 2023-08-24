@@ -91,7 +91,7 @@ class WifiHandler:
         """Connects to the specified wifi network."""
         try:
             subprocess.run(
-                f'nmcli device wifi connnect "{ssid}" password "{password}"',
+                f'nmcli device wifi con "EvoNexusSD" password "S@nD1ego!"',
                 check=True,
                 shell=True,
                 capture_output=True,

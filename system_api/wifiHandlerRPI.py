@@ -118,8 +118,9 @@ class WifiHandler:
         """
         try:
             subprocess.run(
-                [f'sudo nmcli con down "{ssid}"',
-                f'nmcli connection modify "{ssid}" connection.autoconnect no'
+                [
+                    f'sudo nmcli con down "{ssid}"',
+                    f'nmcli connection modify "{ssid}" connection.autoconnect no',
                 ],
                 check=True,
                 shell=True,
@@ -131,7 +132,6 @@ class WifiHandler:
         except Exception as error:
             logger.error(f"Error disconnecting from network: {error}")
             return {"success": False}
-
 
     async def forget(self, ssid: str):
         """Forgets the specified wifi network."""

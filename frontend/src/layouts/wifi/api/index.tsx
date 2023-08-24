@@ -136,7 +136,7 @@ export async function connectToWifi(
   // encode wifi_ssid and wifi_password
   wifi_ssid = btoa(wifi_ssid);
   wifi_password = btoa(wifi_password);
-  const url = `${SYSTEM_API_URL}/connectToWifi`;
+  const url = `${SYSTEM_API_URL}/wifiConnect`;
   const data = {
     wifi_ssid,
     wifi_password,

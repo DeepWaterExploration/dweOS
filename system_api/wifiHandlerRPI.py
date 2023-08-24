@@ -99,7 +99,8 @@ class WifiHandler:
             )
             return {"success": True}
         # Command not found
-        except Exception:
+        except Exception as error:
+            logger.error(f"Error forgetting network: {error}")
             return {"success": False}
 
     async def connected(self):

@@ -27,13 +27,18 @@ indent_brace_style = stroustrup
 [*.xml]
 indent_size = 2
 
-# Python files
-[*.py]
+# Go files
+[*.go]
 indent_size = 4
+
 
 # Shell scripts
 [*.sh]
 indent_size = 2
+
+# Python files
+[*.py]
+indent_size = 4
 
 # Markdown files
 [*.md]

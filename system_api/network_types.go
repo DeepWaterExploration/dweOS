@@ -4,12 +4,9 @@ package main
 type SecurityType string
 
 const (
-	// WPA security
-	WPA SecurityType = "WPA"
-	// WEP security
-	WEP SecurityType = "WEP"
-	// WSN security
-	WSN SecurityType = "WSN"
+	WPA SecurityType = "WPA" // WPA security
+	WEP SecurityType = "WEP" // WEP security
+	WSN SecurityType = "WSN" // WSN security
 )
 
 // Represents a Wifi network scanned from the network interface
@@ -46,3 +43,23 @@ type WifiCredentials struct {
 	SSID     string `json:"ssid"`     // Network SSID
 	Password string `json:"password"` // Network password
 }
+
+// Represents the connection status of a Wifi network
+type ConnectionStatus string
+
+const (
+	// Disconnecting from a network
+	DISCONNECTING ConnectionStatus = "DISCONNECTING"
+	// Just disconnected from a network
+	JUST_DISCONNECTED ConnectionStatus = "JUST_DISCONNECTED"
+	// Still disconnected from a network
+	STILL_DISCONNECTED ConnectionStatus = "STILL_DISCONNECTED"
+	// Connecting to a network
+	CONNECTING ConnectionStatus = "CONNECTING"
+	// Just connected to a network
+	JUST_CONNECTED ConnectionStatus = "JUST_CONNECTED"
+	// Still connected to a network
+	STILL_CONNECTED ConnectionStatus = "STILL_CONNECTED"
+	// Unknown connection status
+	UNKNOWN ConnectionStatus = "UNKNOWN"
+)

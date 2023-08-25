@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -8,13 +9,35 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func main() {
+var wifiHandler *WifiHandler
 
+func handleWifiStatus(w http.ResponseWriter, r *http.Request) {
+	// Set the response status code
+	w.WriteHeader(http.StatusOK)
+
+	// Set the response headers to indicate the content type
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	// Build the response content as a JSON struct
+	responseContent, err := wifiHandler.NetworkStatus()
+
+	// Check if there was an error
+	if err != nil {
+		// Log the error
+		Log.Error(fmt.Sprintf("Error getting wifi status: %v", err))
+		return
+	} else {
+		// Send the response content convert encoded in utf-8
+		json.NewEncoder(w).Encode(responseContent)
+	}
+}
+
+func main() {
 	// Initialize the Wi-Fi handler
-	// wifiHandler = NewWifiHandler()
+	wifiHandler = NewWifiHandler()
 
 	r := mux.NewRouter()
-	// r.HandleFunc("/wifiStatus", handleWifiStatus).Methods("GET")
+	r.HandleFunc("/wifiStatus", handleWifiStatus).Methods("GET")
 	// r.HandleFunc("/wifiConnected", handleWifiConnected).Methods("GET")
 	// r.HandleFunc("/wifiScan", handleWifiScan).Methods("GET")
 	// r.HandleFunc("/wifiSaved", handleWifiSaved).Methods("GET")
@@ -40,8 +63,4 @@ func main() {
 	Log.Info(fmt.Sprintf("Server started at http://%s:%d.", host, port))
 	http.Handle("/", corsOptions(r))
 	http.ListenAndServe(fmt.Sprintf("%s:%d", host, port), nil)
-}
-
-func hello(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("hello!"))
 }

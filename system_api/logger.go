@@ -12,7 +12,7 @@ import (
 // Log is the central logger instance that can be used throughout the application.
 var Log *logrus.Logger
 
-func init() {
+func initalizeLogger() {
 	// Read the value of the APP_ENV environment variable
 	env := os.Getenv("APP_ENV")
 

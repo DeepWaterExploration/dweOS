@@ -11,7 +11,7 @@ const (
 
 // Represents a Wifi network scanned from the network interface
 type ScannedWifiNetwork struct {
-	SSID           *string        `json:"ssid,omitempty"`  // Network SSID (can be hidden)
+	SSID           string         `json:"ssid,omitempty"`  // Network SSID (can be hidden)
 	Frequency      int            `json:"frequency"`       // Network frequency
 	MacAddress     string         `json:"mac_address"`     // Network BSSID (always available)
 	Secure         bool           `json:"secure"`          // Whether the network is secure
@@ -21,10 +21,10 @@ type ScannedWifiNetwork struct {
 
 // Ra Wifi network saved in the network interface
 type SavedWifiNetwork struct {
-	NetworkID int    `json:"network_id"` // Network ID (unique identifier)
-	SSID      string `json:"ssid"`       // Network SSID
-	BSSID     string `json:"bssid"`      // Network BSSID
-	Connected bool   `json:"connected"`  // Whether the network is connected
+	NetworkID  string `json:"network_id"`  // Network ID (unique identifier)
+	SSID       string `json:"ssid"`        // Network SSID
+	MacAddress string `json:"mac_address"` // Network BSSID
+	Connected  bool   `json:"connected"`   // Whether the network is connected
 }
 
 // ConnectedWifiNetwork represents a Wifi network connected to the network interface

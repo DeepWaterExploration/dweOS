@@ -10,6 +10,20 @@ import (
 )
 
 var wifiHandler *WifiHandler
+var err error
+var errs []error
+
+func init() {
+	// Initialize the logger
+	initalizeLogger()
+
+	// Initialize the Wi-Fi handler
+	wifiHandler, err = NewWifiHandler()
+	if err != nil {
+		Log.Error(fmt.Sprintf("Error initializing wifi handler: %v", err))
+		return
+	}
+}
 
 func handleWifiStatus(w http.ResponseWriter, r *http.Request) {
 	// Set the response status code
@@ -32,14 +46,53 @@ func handleWifiStatus(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func main() {
-	// Initialize the Wi-Fi handler
-	wifiHandler = NewWifiHandler()
+func handleWifiConnected(w http.ResponseWriter, r *http.Request) {
+	// Set the response status code
+	w.WriteHeader(http.StatusOK)
 
+	// Set the response headers to indicate the content type
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	// Build the response content as a JSON struct
+	responseContent, err := wifiHandler.NetworkConnected()
+
+	// Check if there was an error
+	if err != nil {
+		// Log the error
+		Log.Error(fmt.Sprintf("Error getting the connected wifi network: %v", err))
+		return
+	} else {
+		// Send the response content convert encoded in utf-8
+		json.NewEncoder(w).Encode(responseContent)
+	}
+}
+
+func handleWifiScan(w http.ResponseWriter, r *http.Request) {
+	// Set the response status code
+	w.WriteHeader(http.StatusOK)
+
+	// Set the response headers to indicate the content type
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	// Build the response content as a JSON struct
+	responseContent, err := wifiHandler.NetworkScan()
+
+	// Check if there was an error
+	if err != nil {
+		// Log the error
+		Log.Error(fmt.Sprintf("Error getting the connected wifi network: %v", err))
+		return
+	} else {
+		// Send the response content convert encoded in utf-8
+		json.NewEncoder(w).Encode(responseContent)
+	}
+}
+
+func main() {
 	r := mux.NewRouter()
-	r.HandleFunc("/wifiStatus", handleWifiStatus).Methods("GET")
-	// r.HandleFunc("/wifiConnected", handleWifiConnected).Methods("GET")
-	// r.HandleFunc("/wifiScan", handleWifiScan).Methods("GET")
+	// r.HandleFunc("/wifiStatus", handleWifiStatus).Methods("GET")
+	r.HandleFunc("/wifiConnected", handleWifiConnected).Methods("GET")
+	r.HandleFunc("/wifiScan", handleWifiScan).Methods("GET")
 	// r.HandleFunc("/wifiSaved", handleWifiSaved).Methods("GET")
 	// r.HandleFunc("/wifiToggle", toggleWifiStatus).Methods("POST")
 	// r.HandleFunc("/wifiConnect", connectToWifi).Methods("POST")

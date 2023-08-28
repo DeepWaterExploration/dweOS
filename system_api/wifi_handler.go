@@ -68,25 +68,6 @@ func (wh *WifiHandler) NetworkStatus() (*WifiHandler, error) {
 	return wifiStatus, nil
 }
 
-func (wh *WifiHandler) NetworkConnected() ([]SavedWifiNetwork, error) {
-	savedResults, err := wh.WPASupplicant.ListNetworks()
-	if err != nil {
-		return nil, fmt.Errorf("Error listing connected networks: %v", err)
-	}
-
-	var savedNetworks []SavedWifiNetwork
-
-	for _, network := range savedResults {
-		savedNetworks = append(savedNetworks, SavedWifiNetwork{
-			NetworkID:  network.NetworkID(),
-			SSID:       network.SSID(),
-			MacAddress: network.BSSID(),
-			Connected:  strings.Contains(strings.Join(network.Flags(), ""), "[CURRENT]"),
-		})
-	}
-	return savedNetworks, nil
-}
-
 func (wh *WifiHandler) NetworkScan() ([]ScannedWifiNetwork, error) {
 	err := wh.WPASupplicant.Scan()
 	if err != nil {
@@ -127,4 +108,88 @@ func (wh *WifiHandler) NetworkScan() ([]ScannedWifiNetwork, error) {
 		})
 	}
 	return scannedNetworks, nil
+}
+
+func (wh *WifiHandler) NetworkSaved() ([]SavedWifiNetwork, error) {
+	savedResults, err := wh.WPASupplicant.ListNetworks()
+	if err != nil {
+		return nil, fmt.Errorf("Error listing connected networks: %v", err)
+	}
+
+	var savedNetworks []SavedWifiNetwork
+
+	for _, network := range savedResults {
+		savedNetworks = append(savedNetworks, SavedWifiNetwork{
+			NetworkID:  network.NetworkID(),
+			SSID:       network.SSID(),
+			MacAddress: network.BSSID(),
+			Connected:  strings.Contains(strings.Join(network.Flags(), ""), "CURRENT"),
+		})
+	}
+	return savedNetworks, nil
+}
+
+func (wh *WifiHandler) NetworkConnected() ([]SavedWifiNetwork, error) {
+	savedResults, err := wh.WPASupplicant.ListNetworks()
+	if err != nil {
+		return nil, fmt.Errorf("Error listing connected networks: %v", err)
+	}
+
+	var connectedNetworks []SavedWifiNetwork
+
+	for _, network := range savedResults {
+		if strings.Contains(strings.Join(network.Flags(), ""), "CURRENT") {
+			connectedNetworks = append(connectedNetworks, SavedWifiNetwork{
+				NetworkID:  network.NetworkID(),
+				SSID:       network.SSID(),
+				MacAddress: network.BSSID(),
+				Connected:  true,
+			})
+		}
+	}
+	return connectedNetworks, nil
+}
+
+func (wh *WifiHandler) NetworkToggle(wifiOn bool) (bool, error) {
+	var cmdArgs []string
+	if wifiOn {
+		cmdArgs = []string{"sudo", "nmcli", "radio", "wifi", "on"}
+	} else {
+		cmdArgs = []string{"sudo", "nmcli", "radio", "wifi", "off"}
+	}
+	output, err := exec.Command(cmdArgs[0], cmdArgs[1:]...).Output()
+
+	if err != nil || strings.Contains(string(output), "Error") {
+		return !wifiOn, err
+	}
+
+	return wifiOn, nil
+}
+
+func (wh *WifiHandler) NetworkConnect(WifiSSID string, WifiPassword string) (bool, error) {
+	_, err := exec.Command(fmt.Sprintf("nmcli device wifi con \"%s\" password \"%s\"", WifiSSID, WifiPassword)).Output()
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (wh *WifiHandler) NetworkDisconnect(WifiSSID string) (bool, error) {
+	_, err := exec.Command(fmt.Sprintf("nmcli con down \"%s\"", WifiSSID)).Output()
+	if err != nil {
+		return false, err
+	}
+	_, err = exec.Command(fmt.Sprintf("f'nmcli connection modify \"%s\" connection.autoconnect no", WifiSSID)).Output()
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (wh *WifiHandler) NetworkForget(WifiSSID string) (bool, error) {
+	_, err := exec.Command(fmt.Sprintf("nmcli connection delete \"%s\"", WifiSSID)).Output()
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }

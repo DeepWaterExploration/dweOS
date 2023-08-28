@@ -46,27 +46,6 @@ func handleWifiStatus(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleWifiConnected(w http.ResponseWriter, r *http.Request) {
-	// Set the response status code
-	w.WriteHeader(http.StatusOK)
-
-	// Set the response headers to indicate the content type
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-
-	// Build the response content as a JSON struct
-	responseContent, err := wifiHandler.NetworkConnected()
-
-	// Check if there was an error
-	if err != nil {
-		// Log the error
-		Log.Error(fmt.Sprintf("Error getting the connected wifi network: %v", err))
-		return
-	} else {
-		// Send the response content convert encoded in utf-8
-		json.NewEncoder(w).Encode(responseContent)
-	}
-}
-
 func handleWifiScan(w http.ResponseWriter, r *http.Request) {
 	// Set the response status code
 	w.WriteHeader(http.StatusOK)
@@ -88,18 +67,212 @@ func handleWifiScan(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func handleWifiSaved(w http.ResponseWriter, r *http.Request) {
+	// Set the response status code
+	w.WriteHeader(http.StatusOK)
+
+	// Set the response headers to indicate the content type
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	// Build the response content as a JSON struct
+	responseContent, err := wifiHandler.NetworkSaved()
+
+	// Check if there was an error
+	if err != nil {
+		// Log the error
+		Log.Error(fmt.Sprintf("Error getting the connected wifi network: %v", err))
+		return
+	} else {
+		// Send the response content convert encoded in utf-8
+		json.NewEncoder(w).Encode(responseContent)
+	}
+}
+
+func handleWifiConnected(w http.ResponseWriter, r *http.Request) {
+	// Set the response status code
+	w.WriteHeader(http.StatusOK)
+
+	// Set the response headers to indicate the content type
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	// Build the response content as a JSON struct
+	responseContent, err := wifiHandler.NetworkConnected()
+
+	// Check if there was an error
+	if err != nil {
+		// Log the error
+		Log.Error(fmt.Sprintf("Error getting the connected wifi network: %v", err))
+		return
+	} else {
+		// Send the response content convert encoded in utf-8
+		json.NewEncoder(w).Encode(responseContent)
+	}
+}
+
+func toggleWifiStatus(w http.ResponseWriter, r *http.Request) {
+	// Set the response status code
+	w.WriteHeader(http.StatusOK)
+
+	// Set the response headers to indicate the content type
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	// Parse the request body into a WifiToggleRequest struct
+	var request WifiToggleRequest
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to parse request body: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	// Build the response content as a JSON struct
+	responseContent, err := wifiHandler.NetworkToggle(request.WifiState)
+
+	// Check if there was an error
+	if err != nil {
+		// Log the error
+		Log.Error(fmt.Sprintf("Error toggling the WiFi network: %v", err))
+		return
+	} else {
+		// Send the response content convert encoded in utf-8
+		json.NewEncoder(w).Encode(responseContent)
+	}
+}
+
+func connectToWifi(w http.ResponseWriter, r *http.Request) {
+	// Set the response status code
+	w.WriteHeader(http.StatusOK)
+
+	// Set the response headers to indicate the content type
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	// Parse the request body into a WifiToggleRequest struct
+	var request WifiConnectRequest
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to parse request body: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	// Build the response content as a JSON struct
+	responseContent, err := wifiHandler.NetworkConnect(request.WifiSSID, request.WifiPassword)
+
+	// Check if there was an error
+	if err != nil {
+		// Log the error
+		Log.Error(fmt.Sprintf("Error connecting to the WiFi network: %v", err))
+		return
+	} else {
+		// Send the response content convert encoded in utf-8
+		json.NewEncoder(w).Encode(responseContent)
+	}
+}
+
+func disconnectWifi(w http.ResponseWriter, r *http.Request) {
+	// Set the response status code
+	w.WriteHeader(http.StatusOK)
+
+	// Set the response headers to indicate the content type
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	// Parse the request body into a WifiToggleRequest struct
+	var request WifiDisconnectRequest
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to parse request body: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	// Build the response content as a JSON struct
+	responseContent, err := wifiHandler.NetworkDisconnect(request.WifiSSID)
+
+	// Check if there was an error
+	if err != nil {
+		// Log the error
+		Log.Error(fmt.Sprintf("Error disconnecting from the WiFi network: %v", err))
+		return
+	} else {
+		// Send the response content convert encoded in utf-8
+		json.NewEncoder(w).Encode(responseContent)
+	}
+}
+
+func forgetWifi(w http.ResponseWriter, r *http.Request) {
+	// Set the response status code
+	w.WriteHeader(http.StatusOK)
+
+	// Set the response headers to indicate the content type
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	// Parse the request body into a WifiToggleRequest struct
+	var request WifiForgetRequest
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to parse request body: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	// Build the response content as a JSON struct
+	responseContent, err := wifiHandler.NetworkForget(request.WifiSSID)
+
+	// Check if there was an error
+	if err != nil {
+		// Log the error
+		Log.Error(fmt.Sprintf("Error forgetting the WiFi network: %v", err))
+		return
+	} else {
+		// Send the response content convert encoded in utf-8
+		json.NewEncoder(w).Encode(responseContent)
+	}
+}
+
+func shutdownMachine(w http.ResponseWriter, r *http.Request) {
+	// Set the response status code
+	w.WriteHeader(http.StatusOK)
+
+	// Set the response headers to indicate the content type
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	// Build the response content as a JSON struct
+	err := ShutDown()
+
+	// Check if there was an error
+	if err != nil {
+		// Log the error
+		Log.Error(fmt.Sprintf("Error forgetting the WiFi network: %v", err))
+		return
+	}
+}
+
+func restartMachine(w http.ResponseWriter, r *http.Request) {
+	// Set the response status code
+	w.WriteHeader(http.StatusOK)
+
+	// Set the response headers to indicate the content type
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	// Build the response content as a JSON struct
+	err := Restart()
+
+	// Check if there was an error
+	if err != nil {
+		// Log the error
+		Log.Error(fmt.Sprintf("Error forgetting the WiFi network: %v", err))
+		return
+	}
+}
+
 func main() {
 	r := mux.NewRouter()
 	// r.HandleFunc("/wifiStatus", handleWifiStatus).Methods("GET")
-	r.HandleFunc("/wifiConnected", handleWifiConnected).Methods("GET")
 	r.HandleFunc("/wifiScan", handleWifiScan).Methods("GET")
-	// r.HandleFunc("/wifiSaved", handleWifiSaved).Methods("GET")
-	// r.HandleFunc("/wifiToggle", toggleWifiStatus).Methods("POST")
-	// r.HandleFunc("/wifiConnect", connectToWifi).Methods("POST")
-	// r.HandleFunc("/wifiForget", forgetWifi).Methods("POST")
-	// r.HandleFunc("/wifiDisconnect", disconnectFromWifi).Methods("POST")
-	// r.HandleFunc("/shutDownMachine", shutdownMachine).Methods("POST")
-	// r.HandleFunc("/restartMachine", restartMachine).Methods("POST")
+	r.HandleFunc("/wifiSaved", handleWifiSaved).Methods("GET")
+	r.HandleFunc("/wifiConnected", handleWifiConnected).Methods("GET")
+	r.HandleFunc("/wifiToggle", toggleWifiStatus).Methods("POST")
+	r.HandleFunc("/wifiConnect", connectToWifi).Methods("POST")
+	r.HandleFunc("/wifiDisconnect", disconnectWifi).Methods("POST")
+	r.HandleFunc("/wifiForget", forgetWifi).Methods("POST")
+	r.HandleFunc("/shutDownMachine", shutdownMachine).Methods("POST")
+	r.HandleFunc("/restartMachine", restartMachine).Methods("POST")
 
 	// Create a new HTTP server with the CORS (Cross-Origin Resource Sharing) middleware enabled
 	corsOptions := handlers.CORS(

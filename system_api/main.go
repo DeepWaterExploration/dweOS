@@ -293,6 +293,27 @@ func handleGetTemperature(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func handleCPU(w http.ResponseWriter, r *http.Request) {
+	// Set the response status code
+	w.WriteHeader(http.StatusOK)
+
+	// Set the response headers to indicate the content type
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	// Build the response content as a JSON struct
+	responseContent, err := GetCPUInfo()
+
+	// Check if there was an error
+	if err != nil {
+		// Log the error
+		Log.Error(fmt.Sprintf("Error getting the CPU info: %v", err))
+		return
+	} else {
+		// Send the response content convert encoded in utf-8
+		json.NewEncoder(w).Encode(responseContent)
+	}
+}
+
 func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/wifiStatus", handleWifiStatus).Methods("GET")
@@ -306,6 +327,7 @@ func main() {
 	r.HandleFunc("/shutDownMachine", shutdownMachine).Methods("POST")
 	r.HandleFunc("/restartMachine", restartMachine).Methods("POST")
 	r.HandleFunc("/getTemperature", handleGetTemperature).Methods("GET")
+	r.HandleFunc("/getCPU", handleCPU).Methods("GET")
 
 	// Create a new HTTP server with the CORS (Cross-Origin Resource Sharing) middleware enabled
 	corsOptions := handlers.CORS(

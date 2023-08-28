@@ -5,6 +5,7 @@ import (
 	"log"
 	"os/exec"
 	"strings"
+	"time"
 
 	"pifke.org/wpasupplicant"
 )
@@ -58,14 +59,21 @@ func (wh *WifiHandler) connect(socket string) error {
 	return nil
 }
 
-func (wh *WifiHandler) NetworkStatus() (*WifiHandler, error) {
-	// Simulate gathering Wi-Fi status information.
-	// In a real implementation, you would use platform-specific libraries or APIs.
+func (wh *WifiHandler) NetworkStatus() (*NetworkStatus, error) {
+	result, err := wh.WPASupplicant.Status()
+	if err != nil {
+		return nil, fmt.Errorf("Error getting status: %v", err)
+	}
 
-	// For the sake of this example, we'll create a mock Wi-Fi status.
-	wifiStatus := &WifiHandler{}
-
-	return wifiStatus, nil
+	return &NetworkStatus{
+		WPAState: result.WPAState(),
+		KeyMgmt:  result.KeyMgmt(),
+		IPAddr:   result.IPAddr(),
+		SSID:     result.SSID(),
+		Address:  result.Address(),
+		BSSID:    result.BSSID(),
+		Freq:     result.Freq(),
+	}, nil
 }
 
 func (wh *WifiHandler) NetworkScan() ([]ScannedWifiNetwork, error) {
@@ -150,7 +158,7 @@ func (wh *WifiHandler) NetworkConnected() ([]SavedWifiNetwork, error) {
 	return connectedNetworks, nil
 }
 
-func (wh *WifiHandler) NetworkToggle(wifiOn bool) (bool, error) {
+func NetworkToggle(wifiOn bool) (bool, error) {
 	var cmdArgs []string
 	if wifiOn {
 		cmdArgs = []string{"sudo", "nmcli", "radio", "wifi", "on"}
@@ -158,6 +166,9 @@ func (wh *WifiHandler) NetworkToggle(wifiOn bool) (bool, error) {
 		cmdArgs = []string{"sudo", "nmcli", "radio", "wifi", "off"}
 	}
 	output, err := exec.Command(cmdArgs[0], cmdArgs[1:]...).Output()
+
+	// Sleep for 3 seconds (3000 milliseconds)
+	time.Sleep(3 * time.Second)
 
 	if err != nil || strings.Contains(string(output), "Error") {
 		return !wifiOn, err

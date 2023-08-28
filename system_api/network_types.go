@@ -9,6 +9,16 @@ const (
 	WSN SecurityType = "WSN" // WSN security
 )
 
+type NetworkStatus struct {
+	WPAState string `json:"wpa_state"`  // WPA state of the network interface
+	KeyMgmt  string `json:"key_mgmt"`   // Key management protocol
+	IPAddr   string `json:"ip_address"` // IP address of the network interface
+	SSID     string `json:"ssid"`       // SSID of the network interface
+	Address  string `json:"address"`    // MAC address of the network interface
+	BSSID    string `json:"bssid"`      // BSSID of the network interface
+	Freq     string `json:"freq"`       // Frequency of the network interface
+}
+
 // Represents a Wifi network scanned from the network interface
 type ScannedWifiNetwork struct {
 	SSID           string         `json:"ssid,omitempty"`  // Network SSID (can be hidden)

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
+	"reflect"
 	"strings"
 	"time"
 
@@ -11,7 +12,11 @@ import (
 )
 
 type WifiHandler struct {
-	WPASupplicant wpasupplicant.Conn
+	WPASupplicant   wpasupplicant.Conn
+	TimeoutDuration time.Duration
+	InterfaceName   string
+	ScanResults     []ScannedWifiNetwork
+	SavedResults    []SavedWifiNetwork
 }
 
 func NewWifiHandler() (*WifiHandler, error) {
@@ -36,10 +41,20 @@ func (wh *WifiHandler) init() error {
 
 	wh.WPASupplicant, err = wpasupplicant.Unixgram(interfaces[0])
 	Log.Printf("Connecting to wifi manager on interface %s", interfaces[0])
-	// wh.WPASupplicant.SetTimeout(1)
+
 	if err != nil {
 		return fmt.Errorf("Error connecting to wifi manager: %v", err)
 	}
+
+	// Set the timeout duration
+	wh.TimeoutDuration = time.Duration(3) * time.Second
+	wh.WPASupplicant.SetTimeout(wh.TimeoutDuration)
+
+	// Set the interface name
+	wh.InterfaceName = interfaces[0]
+
+	wh.ScanResults = []ScannedWifiNetwork{}
+	wh.SavedResults = []SavedWifiNetwork{}
 
 	return nil
 }
@@ -50,6 +65,9 @@ func (wh *WifiHandler) findValidInterfaces() ([]string, error) {
 		return nil, err
 	}
 	interfaces := strings.Fields(string(output))
+	if len(interfaces) == 0 {
+		return nil, fmt.Errorf("No valid wifi interfaces found")
+	}
 	return interfaces, nil
 }
 
@@ -77,9 +95,27 @@ func (wh *WifiHandler) NetworkStatus() (*NetworkStatus, error) {
 }
 
 func (wh *WifiHandler) NetworkScan() ([]ScannedWifiNetwork, error) {
+	wh.WPASupplicant.SetTimeout(wh.TimeoutDuration)
+	timeoutCh := time.After(wh.TimeoutDuration)
 	err := wh.WPASupplicant.Scan()
 	if err != nil {
-		return nil, fmt.Errorf("Error scanning networks: %v", err)
+		return nil, fmt.Errorf("Failed to scan %s: %s (%v)", wh.InterfaceName, err.Error(), reflect.TypeOf(err))
+	}
+	scanComplete := false
+	for {
+		select {
+		case wpaEvent := <-wh.WPASupplicant.EventQueue():
+			if wpaEvent.Event == "SCAN-RESULTS" {
+				scanComplete = true
+				break
+			}
+		case <-timeoutCh:
+			// return nil, fmt.Errorf("Scan %s timeout after %s", wh.InterfaceName, wh.TimeoutDuration)
+			return wh.ScanResults, nil
+		}
+		if scanComplete {
+			break
+		}
 	}
 
 	scanResults, errs := wh.WPASupplicant.ScanResults()
@@ -95,14 +131,15 @@ func (wh *WifiHandler) NetworkScan() ([]ScannedWifiNetwork, error) {
 
 	for _, network := range scanResults {
 		// check if the network is secure
+		joinedFlags := strings.Join(network.Flags(), "")
 		securityTypes := []SecurityType{}
-		if strings.Contains(strings.Join(network.Flags(), ""), "WPA") {
+		if strings.Contains(joinedFlags, "WPA") {
 			securityTypes = append(securityTypes, WPA)
 		}
-		if strings.Contains(strings.Join(network.Flags(), ""), "WEP") {
+		if strings.Contains(joinedFlags, "WEP") {
 			securityTypes = append(securityTypes, WEP)
 		}
-		if strings.Contains(strings.Join(network.Flags(), ""), "WSN") {
+		if strings.Contains(joinedFlags, "WSN") {
 			securityTypes = append(securityTypes, WSN)
 		}
 
@@ -115,7 +152,9 @@ func (wh *WifiHandler) NetworkScan() ([]ScannedWifiNetwork, error) {
 			SignalStrength: network.RSSI(),
 		})
 	}
-	return scannedNetworks, nil
+
+	wh.ScanResults = scannedNetworks
+	return wh.ScanResults, nil
 }
 
 func (wh *WifiHandler) NetworkSaved() ([]SavedWifiNetwork, error) {

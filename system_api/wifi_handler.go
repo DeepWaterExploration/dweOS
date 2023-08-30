@@ -110,8 +110,7 @@ func (wh *WifiHandler) NetworkScan() ([]ScannedWifiNetwork, error) {
 				break
 			}
 		case <-timeoutCh:
-			// return nil, fmt.Errorf("Scan %s timeout after %s", wh.InterfaceName, wh.TimeoutDuration)
-			return wh.ScanResults, nil
+			return nil, fmt.Errorf("Scan %s timeout after %s", wh.InterfaceName, wh.TimeoutDuration)
 		}
 		if scanComplete {
 			break

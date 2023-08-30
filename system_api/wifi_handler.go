@@ -205,12 +205,18 @@ func NetworkToggle(wifiOn bool) (bool, error) {
 	}
 	output, err := exec.Command(cmdArgs[0], cmdArgs[1:]...).Output()
 
-	// Sleep for 3 seconds (3000 milliseconds)
-	time.Sleep(3 * time.Second)
+	if err != nil || strings.Contains(string(output), "Error") {
+		return !wifiOn, err
+	}
+
+	output, err = exec.Command("sudo", "apt", "install", "network-manager", "-y").Output()
 
 	if err != nil || strings.Contains(string(output), "Error") {
 		return !wifiOn, err
 	}
+
+	// Sleep for 3 seconds (3000 milliseconds)
+	time.Sleep(3 * time.Second)
 
 	return wifiOn, nil
 }

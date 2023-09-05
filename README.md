@@ -12,7 +12,7 @@ cd DWE_OS_2
 2. Install project dependencies
 
 ```sh
-chmod +x ./install_dependencies.sh && ./install_dependencies.sh
+chmod +x ./install_dependencies.sh && sudo ./install_dependencies.sh
 
 ```
 

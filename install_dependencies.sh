@@ -17,22 +17,23 @@ install_dependencies_backend() {
 
 install_dependencies_system_api() {
   # Download the latest version of Golang
-  wget https://dl.google.com/go/go.linux-armv6l.tar.gz
-  https://go.dev/dl/go$VERSION.linux-armv6l.tar.gz
-
-  # Extract the archive
+  wget https://go.dev/dl/go$GO_VERSION.linux-armv6l.tar.gz
+  
+  # Extract the archive into the proper directory
   tar -C /usr/local -xzf go$GO_VERSION.linux-armv6l.tar.gz
 
+  # Remove the downloaded archive
+  rm go$GO_VERSION.linux-armv6l.tar.gz
+
   # Add the go binary to the PATH environment variable
-  export PATH=$PATH:/usr/local/go/bin
   source ~/.profile
 }
 
 
 install_dependencies() {
-  apt-get update && apt-get upgrade -y;
-  install_dependencies_frontend;
-  install_dependencies_backend;
+  # apt-get update && apt-get upgrade -y;
+  # install_dependencies_frontend;
+  # install_dependencies_backend;
   install_dependencies_system_api;
 }
 

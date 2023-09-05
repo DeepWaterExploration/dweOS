@@ -1,6 +1,8 @@
 #!/bin/bash
 # must be run with sudo
 
+GO_VERSION=1.21.0
+
 install_dependencies_frontend() {
   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
   export NVM_DIR="$HOME/.nvm"
@@ -13,11 +15,25 @@ install_dependencies_backend() {
   apt-get install -y cmake bash libglib2.0-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libudev-dev libboost-all-dev gstreamer1.0-tools gstreamer1.0-x gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-libav
 }
 
+install_dependencies_system_api() {
+  # Download the latest version of Golang
+  wget https://dl.google.com/go/go.linux-armv6l.tar.gz
+  https://go.dev/dl/go$VERSION.linux-armv6l.tar.gz
+
+  # Extract the archive
+  tar -C /usr/local -xzf go$GO_VERSION.linux-armv6l.tar.gz
+
+  # Add the go binary to the PATH environment variable
+  export PATH=$PATH:/usr/local/go/bin
+  source ~/.profile
+}
+
 
 install_dependencies() {
   apt-get update && apt-get upgrade -y;
   install_dependencies_frontend;
   install_dependencies_backend;
+  install_dependencies_system_api;
 }
 
 install_dependencies

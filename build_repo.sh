@@ -10,6 +10,12 @@ sh ./build_backend.sh
 # Return to root folder
 cd ..
 
+# Go to system_api folder
+cd system_api
+sh ./build_system_api.sh
+# Return to root folder
+cd ..
+
 # Create a release
 if [ -d "release" ]; then rm -Rf release; fi
 mkdir release && cd release

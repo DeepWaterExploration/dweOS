@@ -592,6 +592,13 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
       <AccordionDetails>
         <FormGroup style={{ marginTop: "20px" }}>
           {controls.map((control) => {
+            // Extremely Hacky Fix for Auto Exposure: Change in backend later
+            if (
+              control.name.includes("Auto Exposure") &&
+              control.flags.type === controlType.MENU
+            ) {
+              control.flags.type = controlType.BOOLEAN;
+            }
             switch (control.flags.type) {
               case controlType.INTEGER: {
                 const { name, id } = control;
@@ -642,9 +649,16 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                 );
               }
               case controlType.BOOLEAN: {
+                // Hacky fix for auto exposure: FIXME: Change in backend
+                let VALUE_TRUE = 1;
+                let VALUE_FALSE = 0;
+                if (control.name.includes("Auto Exposure")) {
+                  VALUE_TRUE = 3;
+                  VALUE_FALSE = 1;
+                }
                 let { name, id } = control;
                 const defaultValue =
-                  control.flags.default_value === 1 ? true : false;
+                  control.flags.default_value === VALUE_TRUE ? true : false;
                 if (name.includes("White Balance")) {
                   name = "AI TrueColor Technology™";
                 }
@@ -661,7 +675,11 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                 });
 
                 useDidMountEffect(() => {
-                  setUVCControl(usbInfo, controlValue ? 1 : 0, id);
+                  setUVCControl(
+                    usbInfo,
+                    controlValue ? VALUE_TRUE : VALUE_FALSE,
+                    id
+                  );
                 }, [controlValue]);
 
                 return (
@@ -691,12 +709,12 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                 }
 
                 // Hacky fix for auto exposure bug in camera firmware
-                if (name.includes("Auto Exposure") && menu.length === 2) {
-                  menuObject = {
-                    Automatic: 3,
-                    "Manual Mode": 1,
-                  };
-                }
+                // if (name.includes("Auto Exposure") && menu.length === 2) {
+                //   menuObject = {
+                //     Automatic: 3,
+                //     "Manual Mode": 1,
+                //   };
+                // }
 
                 const defaultValue = Object.keys(menuObject).find(
                   (key) => menuObject[key] === control.flags.default_value

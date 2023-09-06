@@ -326,11 +326,12 @@ int main(int argc, char **argv) {
         });
     /* Set up the server address and port */
     int SERVER_PORT = 8080;
-    const char* SERVER_IP = "0.0.0.0";
+    const char *SERVER_IP = "0.0.0.0";
 
     /* Start the server */
-    std::cout << "Server started at http://" << SERVER_IP << ":" << SERVER_PORT << "\n";
-    devices.start_monitoring();
+    std::cout << "Server started at http://" << SERVER_IP << ":" << SERVER_PORT
+              << "\n";
+    // devices.start_monitoring();
     svr.listen(SERVER_IP, SERVER_PORT);
     return 0;
 }

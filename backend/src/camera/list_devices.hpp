@@ -2,18 +2,18 @@
 #define LIST_DEVICES_HPP
 
 #include <dirent.h>
+#include <linux/usb/video.h>
+#include <linux/uvcvideo.h>
 
 #include <algorithm>  //for sorting
 #include <cstring>
 #include <iostream>
 #include <map>
 #include <memory>
-#include <nlohmann/json.hpp>
 #include <regex>
 #include <sstream>
 #include <string>
 #include <vector>
-using json = nlohmann::json;
 
 namespace v4l2 {
 namespace devices {
@@ -33,30 +33,51 @@ inline void list(std::vector<DEVICE_INFO> &devices) {
     dirent *ep;
     DIR *dp;
 
-    json device_list = json::object();
+    std::map<std::string, DEVICE_INFO> device_map;
 
     dp = opendir("/sys/class/video4linux/");
+    std::vector<std::string> devpaths;
     while (ep = readdir(dp)) {
         if (is_device_name(ep->d_name)) {
             std::string devpath = "/dev/" + std::string(ep->d_name);
-            std::string bus_info;
-            int fd = open(devpath.c_str(), O_RDWR);
-            v4l2_capability vcap;
-            int err = ioctl(fd, VIDIOC_QUERYCAP, &vcap);
-            if (!err) {
-                // bingo! bus information
-                bus_info = reinterpret_cast<char *>(vcap.bus_info);
-            } else {
-                continue;  // not the kind of device we are looking for
-            }
+            devpaths.push_back(devpath);
         }
     }
 
-    // for (DEVICE_INFO d : devices) {
-    //     std::cout << d.device_name << " " << d.bus_info << std::endl;
-    //     for (std::string path : d.device_paths) {
-    //         std::cout << path << std::endl;
+    std::sort(devpaths.begin(), devpaths.end());
+
+    for (std::string devpath : devpaths) {
+        std::string bus_info;
+        int fd = open(devpath.c_str(), O_RDWR);
+        v4l2_capability vcap;
+        int err = ioctl(fd, VIDIOC_QUERYCAP, &vcap);
+        if (!err) {
+            // bingo! bus information
+            bus_info = reinterpret_cast<char *>(vcap.bus_info);
+            if (device_map.contains(bus_info)) {
+                device_map.at(bus_info).device_paths.push_back(devpath);
+            } else {
+                DEVICE_INFO info;
+                info.device_name = "exploreHD";
+                info.device_paths.push_back(devpath);
+                info.bus_info = bus_info;
+                device_map[bus_info] = info;
+            }
+        } else {
+            continue;  // not the kind of device we are looking for
+        }
+    }
+
+    for (auto &device : device_map) {
+        devices.push_back(device.second);
+    }
+
+    // for (auto device : devices) {
+    //     std::cout << device.bus_info << "\n";
+    //     for (auto devpath : device.device_paths) {
+    //         std::cout << devpath << "\n";
     //     }
+    //     std::cout << "\n";
     // }
 }
 

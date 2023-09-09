@@ -331,7 +331,7 @@ int main(int argc, char **argv) {
     /* Start the server */
     std::cout << "Server started at http://" << SERVER_IP << ":" << SERVER_PORT
               << "\n";
-    // devices.start_monitoring();
+    devices.start_monitoring();
     svr.listen(SERVER_IP, SERVER_PORT);
     return 0;
 }

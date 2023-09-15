@@ -26,7 +26,11 @@ install_dependencies_system_api() {
   rm go$GO_VERSION.linux-armv6l.tar.gz
 
   # Add the go binary to the PATH environment variable
-  source ~/.profile
+  echo 'export GOROOT=/usr/local/go' >> ~/.bashrc
+  echo 'export GOPATH=$HOME/go' >> ~/.bashrc
+  echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
+  source ~/.bashrc
+
 }
 
 

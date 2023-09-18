@@ -34,8 +34,7 @@ func (wh *WifiHandler) init() error {
 	if len(interfaces) == 0 {
 		return fmt.Errorf("No valid wifi interfaces found")
 	}
-
-	// wh.WPASupplicant, err = wpasupplicant.Unixgram(interfaces[0])
+    
 	Log.Printf("Connecting to wifi manager on interface %s", interfaces[0])
 
 	if err != nil {

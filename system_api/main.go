@@ -181,6 +181,7 @@ func connectToWifi(w http.ResponseWriter, r *http.Request) {
 func disconnectWifi(w http.ResponseWriter, r *http.Request) {
 	// Set the response status code
 	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	// Set the response headers to indicate the content type
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")

@@ -2,17 +2,16 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os/exec"
-	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
-	"pifke.org/wpasupplicant"
+	"github.com/theojulienne/go-wireless"
 )
 
 type WifiHandler struct {
-	WPASupplicant   wpasupplicant.Conn
+	WPASupplicant   *wireless.Client
 	TimeoutDuration time.Duration
 	InterfaceName   string
 	ScanResults     []ScannedWifiNetwork
@@ -30,107 +29,46 @@ func NewWifiHandler() (*WifiHandler, error) {
 
 func (wh *WifiHandler) init() error {
 	// Establish a socket connection with the wifi manager
-	interfaces, err := wh.findValidInterfaces()
-	if err != nil {
-		return fmt.Errorf("Error finding valid interfaces: %v", err)
-	}
+	interfaces := wireless.Interfaces()
 
 	if len(interfaces) == 0 {
 		return fmt.Errorf("No valid wifi interfaces found")
 	}
 
-	wh.WPASupplicant, err = wpasupplicant.Unixgram(interfaces[0])
+	// wh.WPASupplicant, err = wpasupplicant.Unixgram(interfaces[0])
 	Log.Printf("Connecting to wifi manager on interface %s", interfaces[0])
 
 	if err != nil {
 		return fmt.Errorf("Error connecting to wifi manager: %v", err)
 	}
 
-	// Set the timeout duration
-	wh.TimeoutDuration = time.Duration(3) * time.Second
-	wh.WPASupplicant.SetTimeout(wh.TimeoutDuration)
-
 	// Set the interface name
 	wh.InterfaceName = interfaces[0]
 
 	wh.ScanResults = []ScannedWifiNetwork{}
 	wh.SavedResults = []SavedWifiNetwork{}
+	wh.WPASupplicant, err = wireless.NewClient(wh.InterfaceName)
 
+	// Set the timeout duration
+	wh.TimeoutDuration = time.Second * 1
+	wh.WPASupplicant.ScanTimeout = wh.TimeoutDuration
 	return nil
-}
-
-func (wh *WifiHandler) findValidInterfaces() ([]string, error) {
-	output, err := exec.Command("bash", "-c", "iwconfig 2>/dev/null | grep -o '^[[:alnum:]]*'").Output()
-	if err != nil {
-		return nil, err
-	}
-	interfaces := strings.Fields(string(output))
-	if len(interfaces) == 0 {
-		return nil, fmt.Errorf("No valid wifi interfaces found")
-	}
-	return interfaces, nil
-}
-
-func (wh *WifiHandler) connect(socket string) error {
-	// Implement the logic for connecting to the wifi manager
-	// You may need to replace this with the Go equivalent code
-	return nil
-}
-
-func (wh *WifiHandler) NetworkStatus() (*NetworkStatus, error) {
-	result, err := wh.WPASupplicant.Status()
-	if err != nil {
-		return nil, fmt.Errorf("Error getting status: %v", err)
-	}
-
-	return &NetworkStatus{
-		WPAState: result.WPAState(),
-		KeyMgmt:  result.KeyMgmt(),
-		IPAddr:   result.IPAddr(),
-		SSID:     result.SSID(),
-		Address:  result.Address(),
-		BSSID:    result.BSSID(),
-		Freq:     result.Freq(),
-	}, nil
 }
 
 func (wh *WifiHandler) NetworkScan() ([]ScannedWifiNetwork, error) {
-	wh.WPASupplicant.SetTimeout(wh.TimeoutDuration)
-	timeoutCh := time.After(wh.TimeoutDuration)
-	err := wh.WPASupplicant.Scan()
+	scanResults, err := wh.WPASupplicant.Scan()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to scan %s: %s (%v)", wh.InterfaceName, err.Error(), reflect.TypeOf(err))
-	}
-	scanComplete := false
-	for {
-		select {
-		case wpaEvent := <-wh.WPASupplicant.EventQueue():
-			if wpaEvent.Event == "SCAN-RESULTS" {
-				scanComplete = true
-				break
-			}
-		case <-timeoutCh:
-			return nil, fmt.Errorf("Scan %s timeout after %s", wh.InterfaceName, wh.TimeoutDuration)
-		}
-		if scanComplete {
-			break
+		if err.Error() == "FAIL-BUSY\n" {
+			return wh.ScanResults, nil
+		} else {
+			return nil, fmt.Errorf("Error getting scan results: %v", errs)
 		}
 	}
-
-	scanResults, errs := wh.WPASupplicant.ScanResults()
 	var scannedNetworks []ScannedWifiNetwork
-
-	if len(errs) > 0 {
-		for _, err := range errs {
-			log.Printf("Error getting scan results: %v", err)
-		}
-
-		return nil, fmt.Errorf("Error getting scan results: %v", errs)
-	}
 
 	for _, network := range scanResults {
 		// check if the network is secure
-		joinedFlags := strings.Join(network.Flags(), "")
+		joinedFlags := strings.Join(network.Flags, "")
 		securityTypes := []SecurityType{}
 		if strings.Contains(joinedFlags, "WPA") {
 			securityTypes = append(securityTypes, WPA)
@@ -143,21 +81,39 @@ func (wh *WifiHandler) NetworkScan() ([]ScannedWifiNetwork, error) {
 		}
 
 		scannedNetworks = append(scannedNetworks, ScannedWifiNetwork{
-			SSID:           network.SSID(),
-			Frequency:      network.Frequency(),
-			MacAddress:     network.BSSID().String(),
+			SSID:           network.SSID,
+			Frequency:      network.Frequency,
+			MacAddress:     network.BSSID,
 			Secure:         len(securityTypes) > 0,
 			SecurityType:   securityTypes,
-			SignalStrength: network.RSSI(),
+			SignalStrength: network.Signal,
 		})
 	}
 
 	wh.ScanResults = scannedNetworks
-	return wh.ScanResults, nil
+
+	return scannedNetworks, nil
+}
+
+func (wh *WifiHandler) NetworkStatus() (*NetworkStatus, error) {
+	result, err := wh.WPASupplicant.Status()
+	if err != nil {
+		return nil, fmt.Errorf("Error getting status: %v", err)
+	}
+
+	return &NetworkStatus{
+		WPAState: result.WpaState,
+		KeyMgmt:  result.KeyManagement,
+		IPAddr:   result.IPAddress,
+		SSID:     result.SSID,
+		Address:  result.Address,
+		BSSID:    result.BSSID,
+		// Freq:     result.,
+	}, nil
 }
 
 func (wh *WifiHandler) NetworkSaved() ([]SavedWifiNetwork, error) {
-	savedResults, err := wh.WPASupplicant.ListNetworks()
+	savedResults, err := wh.WPASupplicant.Networks()
 	if err != nil {
 		return nil, fmt.Errorf("Error listing connected networks: %v", err)
 	}
@@ -166,17 +122,20 @@ func (wh *WifiHandler) NetworkSaved() ([]SavedWifiNetwork, error) {
 
 	for _, network := range savedResults {
 		savedNetworks = append(savedNetworks, SavedWifiNetwork{
-			NetworkID:  network.NetworkID(),
-			SSID:       network.SSID(),
-			MacAddress: network.BSSID(),
-			Connected:  strings.Contains(strings.Join(network.Flags(), ""), "CURRENT"),
+			SSID:       network.SSID,
+			MacAddress: network.BSSID,
+			NetworkID:  network.IDStr,
+			Connected:  strings.Contains(strings.Join(network.Flags, ""), "CURRENT"),
 		})
 	}
+
+	wh.SavedResults = savedNetworks
+
 	return savedNetworks, nil
 }
 
 func (wh *WifiHandler) NetworkConnected() ([]SavedWifiNetwork, error) {
-	savedResults, err := wh.WPASupplicant.ListNetworks()
+	savedResults, err := wh.WPASupplicant.Networks()
 	if err != nil {
 		return nil, fmt.Errorf("Error listing connected networks: %v", err)
 	}
@@ -184,11 +143,11 @@ func (wh *WifiHandler) NetworkConnected() ([]SavedWifiNetwork, error) {
 	var connectedNetworks []SavedWifiNetwork
 
 	for _, network := range savedResults {
-		if strings.Contains(strings.Join(network.Flags(), ""), "CURRENT") {
+		if strings.Contains(strings.Join(network.Flags, ""), "CURRENT") {
 			connectedNetworks = append(connectedNetworks, SavedWifiNetwork{
-				NetworkID:  network.NetworkID(),
-				SSID:       network.SSID(),
-				MacAddress: network.BSSID(),
+				SSID:       network.SSID,
+				MacAddress: network.BSSID,
+				NetworkID:  network.IDStr,
 				Connected:  true,
 			})
 		}
@@ -196,33 +155,29 @@ func (wh *WifiHandler) NetworkConnected() ([]SavedWifiNetwork, error) {
 	return connectedNetworks, nil
 }
 
-func NetworkToggle(wifiOn bool) (bool, error) {
+func (wh *WifiHandler) NetworkToggle(wifiOn bool) (bool, error) {
 	var cmdArgs []string
-	if wifiOn {
-		cmdArgs = []string{"sudo", "nmcli", "radio", "wifi", "on"}
+	// InterfaceName
+	if !wifiOn {
+		cmdArgs = []string{"sudo", "ifconfig", wh.InterfaceName, "up"}
 	} else {
-		cmdArgs = []string{"sudo", "nmcli", "radio", "wifi", "off"}
+		cmdArgs = []string{"sudo", "ifconfig", wh.InterfaceName, "down"}
 	}
 	output, err := exec.Command(cmdArgs[0], cmdArgs[1:]...).Output()
 
 	if err != nil || strings.Contains(string(output), "Error") {
-		return !wifiOn, err
-	}
-
-	output, err = exec.Command("sudo", "apt", "install", "network-manager", "-y").Output()
-
-	if err != nil || strings.Contains(string(output), "Error") {
-		return !wifiOn, err
+		return wifiOn, err
 	}
 
 	// Sleep for 3 seconds (3000 milliseconds)
 	time.Sleep(3 * time.Second)
 
-	return wifiOn, nil
+	return !wifiOn, nil
 }
 
 func (wh *WifiHandler) NetworkConnect(WifiSSID string, WifiPassword string) (bool, error) {
-	_, err := exec.Command(fmt.Sprintf("nmcli device wifi con \"%s\" password \"%s\"", WifiSSID, WifiPassword)).Output()
+	net := wireless.NewNetwork(WifiSSID, WifiPassword)
+	_, err := wh.WPASupplicant.Connect(net)
 	if err != nil {
 		return false, err
 	}
@@ -230,11 +185,16 @@ func (wh *WifiHandler) NetworkConnect(WifiSSID string, WifiPassword string) (boo
 }
 
 func (wh *WifiHandler) NetworkDisconnect(WifiSSID string) (bool, error) {
-	_, err := exec.Command(fmt.Sprintf("nmcli con down \"%s\"", WifiSSID)).Output()
+	nets, err := wh.WPASupplicant.Networks()
 	if err != nil {
 		return false, err
 	}
-	_, err = exec.Command(fmt.Sprintf("f'nmcli connection modify \"%s\" connection.autoconnect no", WifiSSID)).Output()
+	net, ok := wireless.Networks(nets).FindBySSID(WifiSSID)
+	if !ok {
+		return false, err
+	}
+	net.Disable(true)
+	net, err = wh.WPASupplicant.UpdateNetwork(net)
 	if err != nil {
 		return false, err
 	}
@@ -242,9 +202,21 @@ func (wh *WifiHandler) NetworkDisconnect(WifiSSID string) (bool, error) {
 }
 
 func (wh *WifiHandler) NetworkForget(WifiSSID string) (bool, error) {
-	_, err := exec.Command(fmt.Sprintf("nmcli connection delete \"%s\"", WifiSSID)).Output()
-	if err != nil {
-		return false, err
+	var filtered []int
+	for _, item := range wh.SavedResults {
+		if item.SSID == WifiSSID {
+			num, err := strconv.Atoi(item.SSID)
+			if err != nil {
+				return false, err
+			}
+			filtered = append(filtered, num)
+		}
+	}
+	for _, network := range filtered {
+		err := wh.WPASupplicant.RemoveNetwork(network)
+		if err != nil {
+			return false, err
+		}
 	}
 	return true, nil
 }

@@ -171,7 +171,7 @@ export async function connectToWifi(
 export async function toggleWifiStatus(wifiStatus: boolean): Promise<boolean> {
   const url = `${SYSTEM_API_URL}/wifiToggle`;
   const data = {
-    wifi_status: wifiStatus,
+    WifiState: wifiStatus,
   };
   const config: RequestInit = {
     mode: "cors",

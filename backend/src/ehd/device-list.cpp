@@ -271,7 +271,7 @@ void DeviceList::_load_devices() {
 }
 
 void DeviceList::stop_monitoring() {
-    pthread_cancel(_monitor_thread);
+    if (_monitor_thread) pthread_cancel(_monitor_thread);
     _broadcast_server.stop();
 }
 

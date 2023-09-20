@@ -44,6 +44,8 @@ inline void list(std::vector<DEVICE_INFO> &devices) {
         }
     }
 
+    closedir(dp);
+
     std::sort(devpaths.begin(), devpaths.end());
 
     for (std::string devpath : devpaths) {
@@ -54,6 +56,8 @@ inline void list(std::vector<DEVICE_INFO> &devices) {
         if (!err) {
             // bingo! bus information
             bus_info = reinterpret_cast<char *>(vcap.bus_info);
+            if (!bus_info.starts_with("usb"))
+                continue;  // Not the correct type of device
             if (device_map.contains(bus_info)) {
                 device_map.at(bus_info).device_paths.push_back(devpath);
             } else {

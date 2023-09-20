@@ -34,7 +34,14 @@ Device::Device(v4l2::Device *device) : _device(device) {
     _device_option_values.mode = _get_h264_mode_raw();
 }
 
-Device::~Device() { delete _device; }
+Device::~Device() {
+    // Clean up the options
+    for (auto it = _options.begin(); it != _options.end(); it++) {
+        delete it->second;
+    }
+    _options.clear();
+    delete _device;
+}
 
 /* Set camera options */
 

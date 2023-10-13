@@ -83,5 +83,9 @@
     "variant": "cpp",
     "*.ipp": "cpp"
   },
-  "cmake.sourceDirectory": "/home/brandons/Development/test3/DWE_OS_2/backend"
+  "cmake.sourceDirectory": "/home/brandons/Development/test3/DWE_OS_2/backend",
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.autopep8"
+  },
+  "python.formatting.provider": "none"
 }

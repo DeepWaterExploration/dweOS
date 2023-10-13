@@ -8,6 +8,8 @@ typedef void *(*THREADFUNCPTR)(void *);
 
 RawPipeline::~RawPipeline() {
     if (_isRunning) stop();
+    delete _pipeline;
+    delete _msg;
 }
 
 void RawPipeline::start() {

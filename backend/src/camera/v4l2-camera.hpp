@@ -101,7 +101,7 @@ class Device {
 
     void configure_stream(uint32_t pixel_format, uint32_t width,
         uint32_t height, Interval interval, gst::StreamType streamType,
-        std::vector<gst::StreamEndpoint> endpoints={});
+        std::vector<gst::StreamEndpoint> endpoints = {});
     void start_stream();
     void stop_stream();
     void add_stream_endpoint(const std::string &host, uint32_t port);

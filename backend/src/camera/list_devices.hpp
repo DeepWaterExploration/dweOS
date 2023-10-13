@@ -53,6 +53,7 @@ inline void list(std::vector<DEVICE_INFO> &devices) {
         int fd = open(devpath.c_str(), O_RDWR);
         v4l2_capability vcap;
         int err = ioctl(fd, VIDIOC_QUERYCAP, &vcap);
+        close(fd);
         if (!err) {
             // bingo! bus information
             bus_info = reinterpret_cast<char *>(vcap.bus_info);

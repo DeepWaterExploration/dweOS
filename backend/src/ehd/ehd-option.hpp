@@ -46,6 +46,7 @@ class Option {
     ~Option() {
         /* Free the data buffer */
         free(_data);
+        free(_data_ptr);
     }
 
     /**

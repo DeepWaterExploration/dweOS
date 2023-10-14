@@ -7,10 +7,6 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-int open_camera(const char *device_path) { return open(device_path, O_RDWR); }
-
-int close_camera(int fd) { close(fd); }
-
 int uvc_set_ctrl(
     int fd, uint32_t unit, uint32_t ctrl, uint8_t *data, uint8_t size) {
     // int fd = open(device_path, O_RDWR);

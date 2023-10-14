@@ -1,1 +1,1 @@
-cc -fPIC -shared -o uvc_functions.so uvc_functions.c
+cc -fPIC -shared -o camera_helper.so camera_helper.c

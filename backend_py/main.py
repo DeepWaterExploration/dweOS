@@ -66,7 +66,6 @@ class Option:
         data = bytearray(self._size)
         data[0] = xu.EHD_DEVICE_TAG
         data[1] = self._command.value
-        # data = bytes([0x9A, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
         # Switch command
         self._camera.uvc_set_ctrl(
@@ -79,7 +78,6 @@ class Option:
         data = bytearray(self._size)
         data[0] = xu.EHD_DEVICE_TAG
         data[1] = self._command.value
-        print(data)
         self._data = bytes(self._size)
         # Switch command
         self._camera.uvc_set_ctrl(
@@ -90,6 +88,8 @@ class Option:
 
 
 class Device:
+
+    _cameras: list[Camera]
 
     def __init__(self) -> None:
         pass

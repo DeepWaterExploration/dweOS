@@ -65,26 +65,28 @@ class Option:
     def set_ctrl(self):
         data = bytearray(self._size)
         data[0] = xu.EHD_DEVICE_TAG
-        data[1] = self._ctrl.value
+        data[1] = self._command.value
+        # data = bytes([0x9A, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
         # Switch command
         self._camera.uvc_set_ctrl(
-            self._unit.value, self._command.value, bytes(data), self._size)
+            self._unit.value, self._ctrl.value, bytes(data), self._size)
 
         self._camera.uvc_set_ctrl(
-            self._unit.value, self._command.value, self._data, self._size)
+            self._unit.value, self._ctrl.value, self._data, self._size)
 
     def get_ctrl(self):
         data = bytearray(self._size)
         data[0] = xu.EHD_DEVICE_TAG
-        data[1] = self._ctrl.value
+        data[1] = self._command.value
+        print(data)
         self._data = bytes(self._size)
         # Switch command
         self._camera.uvc_set_ctrl(
-            self._unit.value, self._command.value, bytes(data), self._size)
+            self._unit.value, self._ctrl.value, bytes(data), self._size)
 
         self._camera.uvc_get_ctrl(
-            self._unit.value, self._command.value, self._data, self._size)
+            self._unit.value, self._ctrl.value, self._data, self._size)
 
 
 class Device:
@@ -101,16 +103,16 @@ if __name__ == '__main__':
     fd = cam.fileno()
 
     cam = Camera('/dev/video2')
-    opt = Option(cam, xu.Unit.USR_ID, xu.Selector.SYS_H264_CTRL,
-                 xu.Command.H264_BITRATE_CTRL)
-    opt.pack('<I', 15000000)
-    opt.set_ctrl()
+    # bitrate control
+    bitrate_opt = Option(cam, xu.Unit.USR_ID, xu.Selector.USR_H264_CTRL,
+                         xu.Command.H264_BITRATE_CTRL)
+    # pack a little endian 32-bit integer
+    bitrate_opt.pack('<I', 15000000)
+    # set the value based on the value stored in the data buffer above
+    bitrate_opt.set_ctrl()
 
-    opt.get_ctrl()
-    print(opt.unpack('<I'))
-
-    # get the bitrate
-    # data = bytes([0x9A, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-    # camera_helper.uvc_set_ctrl(fd, 0x04, 0x02, data, 11)
-    # camera_helper.uvc_get_ctrl(fd, 0x04, 0x02, data, 11)
-    # print((data[0] << 24) | (data[1] << 16) | (data[2] << 8) | (data[3]))
+    # get the value and store it in the data buffer
+    bitrate_opt.get_ctrl()
+    # unpack a little endian 32-bit integer
+    (bitrate) = bitrate_opt.unpack('<I')
+    print(bitrate)

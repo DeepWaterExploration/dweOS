@@ -1,6 +1,7 @@
 from io import TextIOWrapper
 from ctypes import *
 import struct
+from dataclasses import dataclass
 
 from enumeration import *
 from camera_helper_loader import *
@@ -13,7 +14,29 @@ class DeviceManager:
         pass
 
 
+@dataclass
+class Interval:
+    numerator: int
+    denominator: int
+
+
+@dataclass
+class FormatSize:
+    width: int
+    height: int
+    intervals: list[Interval]
+
+
+@dataclass
+class Format:
+    pixel_format: int
+    sizes: list[FormatSize]
+
+
 class Camera:
+    '''
+    Camera base class
+    '''
 
     _path: str  # /dev/video#
     _file_object: TextIOWrapper  # file object
@@ -32,8 +55,52 @@ class Camera:
     def uvc_get_ctrl(self, unit: xu.Unit, ctrl: xu.Selector, data: bytes, size: int) -> int:
         return camera_helper.uvc_get_ctrl(self._fd, unit, ctrl, data, size)
 
+    def _get_formats(self):
+        formats = []
+        for i in range(1000):
+            v4l2_fmt = v4l2.v4l2_fmtdesc()
+            v4l2_fmt.index = i
+            v4l2_fmt.type = v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE
+            try:
+                fcntl.ioctl(self._fd, v4l2.VIDIOC_ENUM_FMT, v4l2_fmt)
+            except:
+                break
+
+            fmt = Format(v4l2_fmt.pixelformat, [])
+            for j in range(1000):
+                frmsize = v4l2.v4l2_frmsizeenum()
+                frmsize.index = j
+                frmsize.pixel_format = fmt.pixel_format
+                try:
+                    fcntl.ioctl(self._fd, v4l2.VIDIOC_ENUM_FRAMESIZES, frmsize)
+                except:
+                    break
+                if frmsize.type == v4l2.V4L2_FRMSIZE_TYPE_DISCRETE:
+                    format_size = FormatSize(
+                        frmsize.discrete.width, frmsize.discrete.height, [])
+                    for k in range(1000):
+                        frmival = v4l2.v4l2_frmivalenum()
+                        frmival.index = k
+                        frmival.pixel_format = fmt.pixel_format
+                        frmival.width = frmsize.discrete.width
+                        frmival.height = frmsize.discrete.height
+                        try:
+                            fcntl.ioctl(
+                                self._fd, v4l2.VIDIOC_ENUM_FRAMEINTERVALS, frmival)
+                        except:
+                            break
+                        if frmival.type == v4l2.V4L2_FRMIVAL_TYPE_DISCRETE:
+                            format_size.intervals.append(
+                                Interval(frmival.discrete.numerator, frmival.discrete.denominator))
+                    fmt.sizes.append(format_size)
+            formats.append(fmt)
+        return formats
+
 
 class Option:
+    '''
+    EHD Option Class
+    '''
 
     _camera: Camera
     _data: bytes
@@ -90,9 +157,13 @@ class Option:
 class Device:
 
     _cameras: list[Camera]
+    _device_info: DeviceInfo
 
-    def __init__(self) -> None:
-        pass
+    def __init__(self, device_info: DeviceInfo) -> None:
+        self._device_info = device_info
+
+        for device_path in device_info.device_paths:
+            self._cameras.append(Camera(device_path))
 
 
 if __name__ == '__main__':
@@ -103,6 +174,9 @@ if __name__ == '__main__':
     fd = cam.fileno()
 
     cam = Camera('/dev/video2')
+
+    print(cam._get_formats())
+
     # bitrate control
     bitrate_opt = Option(cam, xu.Unit.USR_ID, xu.Selector.USR_H264_CTRL,
                          xu.Command.H264_BITRATE_CTRL)

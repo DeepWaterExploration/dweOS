@@ -7,6 +7,9 @@ from enumeration import *
 from camera_helper_loader import *
 import ehd_controls as xu
 
+from memory_profiler import profile
+import time
+
 
 class DeviceManager:
 
@@ -157,31 +160,31 @@ class Option:
         self._data = b'\x00' * self._size
 
 
-class Device:
+def is_ehd(device_info: DeviceInfo):
+    return (
+        device_info.vid == 0xc45 and
+        device_info.pid == 0x6366 and
+        len(device_info.device_paths) == 4
+    )
+
+
+class EHDDevice:
+
+    device_info: DeviceInfo
 
     _cameras: list[Camera] = []
-    _device_info: DeviceInfo
     _device_path: str
     _device_attrs: dict[str, str] = {}
     _options: dict[str, Option] = {}
 
     def __init__(self, device_info: DeviceInfo) -> None:
-        self._device_info = device_info
+        # make sure this is an exploreHD
+        assert (is_ehd(device_info))
+
+        self.device_info = device_info
 
         for device_path in device_info.device_paths:
             self._cameras.append(Camera(device_path))
-
-        if len(device_info.device_paths) < 0:
-            return
-
-        cam_name = device_info.device_paths[0].split('/')[-1]
-        syspath = '/sys/class/video4linux/' + cam_name
-        link = os.readlink(syspath) + '../../../../'
-        self._device_path = os.path.abspath(
-            '/sys/class/video4linux/' + link)
-
-        self._device_attrs['idVendor'] = self._get_device_attr('idVendor')
-        self._device_attrs['idProduct'] = self._get_device_attr('idProduct')
 
         self._options['bitrate'] = Option(
             self._cameras[2], xu.Unit.USR_ID, xu.Selector.SYS_H264_CTRL, xu.Command.H264_BITRATE_CTRL)
@@ -191,12 +194,6 @@ class Device:
 
         self._options['mode'] = Option(
             self._cameras[2], xu.Unit.USR_ID, xu.Selector.SYS_H264_CTRL, xu.Command.H264_BITRATE_CTRL)
-
-    def get_vid(self):
-        return int(self._device_attrs['idVendor'], base=16)
-
-    def get_pid(self):
-        return int(self._device_attrs['idProduct'], base=16)
 
     def set_bitrate(self, bitrate):
         opt = self._options['bitrate']
@@ -243,30 +240,52 @@ class Device:
         return file_object.read().strip()
 
 
+def list_diff(listA, listB):
+    diff = []
+    for element in listA:
+        if element not in listB:
+            diff.append(element)
+    return diff
+
+
+def monitor():
+    devices: list[EHDDevice] = []
+    old_device_list = []
+    while True:
+        devices_info = list_devices()
+
+        # find the new devices
+        new_devices = list_diff(devices_info, old_device_list)
+
+        # find the removed devices
+        removed_devices = list_diff(old_device_list, devices_info)
+
+        # add the new devices
+        for device_info in new_devices:
+            if not is_ehd(device_info):
+                continue
+            print(f'Device Added: {device_info.bus_info}')
+            try:
+                device = EHDDevice(device_info)
+            except:
+                continue
+            devices.append(EHDDevice(device_info))
+            old_device_list.append(device_info)
+
+        # remove the old devices
+        for device_info in removed_devices:
+            for device in devices:
+                if device.device_info == device_info:
+                    devices.remove(device)
+                    old_device_list.remove(device_info)
+                    print(f'Device Removed: {device_info.bus_info}')
+
+        time.sleep(0.1)
+
+
+def main():
+    monitor()
+
+
 if __name__ == '__main__':
-    devices_info = list_devices()
-    print(devices_info)
-
-    device = Device(devices_info[0])
-    print(device.get_vid())
-
-    # cam = open('/dev/video2')
-    # fd = cam.fileno()
-
-    # cam = Camera('/dev/video2')
-
-    # print(cam._get_formats())
-
-    # # bitrate control
-    # bitrate_opt = Option(cam, xu.Unit.USR_ID, xu.Selector.USR_H264_CTRL,
-    #                      xu.Command.H264_BITRATE_CTRL)
-    # # pack a little endian 32-bit integer
-    # bitrate_opt.pack('<I', 15000000)
-    # # set the value based on the value stored in the data buffer above
-    # bitrate_opt.set_ctrl()
-
-    # # get the value and store it in the data buffer
-    # bitrate_opt.get_ctrl()
-    # # unpack a little endian 32-bit integer
-    # (bitrate) = bitrate_opt.unpack('<I')
-    # print(bitrate)
+    main()

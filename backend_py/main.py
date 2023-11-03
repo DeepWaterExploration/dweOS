@@ -4,6 +4,7 @@ import struct
 from dataclasses import dataclass
 
 from enumeration import *
+from enum import Enum
 from camera_helper_loader import *
 import ehd_controls as xu
 
@@ -112,27 +113,45 @@ class Option:
     _ctrl: xu.Selector
     _command: xu.Command
     _size: int
+    _fmt: str
 
-    def __init__(self, camera: Camera, unit: xu.Unit, ctrl: xu.Selector, command: xu.Command, size=11) -> None:
+    def __init__(self, camera: Camera, fmt: str, unit: xu.Unit, ctrl: xu.Selector, command: xu.Command, size=11) -> None:
         self._camera = camera
-        self._data = b'\x00' * size
+        self._fmt = fmt
 
         self._unit = unit
         self._ctrl = ctrl
         self._command = command
         self._size = size
+        self._data = b'\x00' * size
+
+    # get the control value(s)
+    def get_value(self):
+        self._get_ctrl()
+        values = self._unpack(self._fmt)
+        self._clear()
+        # all cases will basically be this, but otherwise this will still work
+        if len(values) == 1:
+            return values[0]
+        return values
+
+    # set the control value
+    def set_value(self, *arg: list):
+        self._pack(self._fmt, *arg)
+        self._set_ctrl()
+        self._clear()
 
     # pack data to internal buffer
-    def pack(self, fmt: str, *arg: list[int]) -> None:
+    def _pack(self, fmt: str, *arg: list) -> None:
         data = struct.pack(fmt, *arg)
         # make sure the data is of the right length
         self._data = data + bytearray(self._size - len(data))
 
     # unpack data from internal buffer
-    def unpack(self, fmt: str) -> list[int]:
+    def _unpack(self, fmt: str) -> list:
         return struct.unpack_from(fmt, self._data)
 
-    def set_ctrl(self):
+    def _set_ctrl(self):
         data = bytearray(self._size)
         data[0] = xu.EHD_DEVICE_TAG
         data[1] = self._command.value
@@ -144,7 +163,7 @@ class Option:
         self._camera.uvc_set_ctrl(
             self._unit.value, self._ctrl.value, self._data, self._size)
 
-    def get_ctrl(self):
+    def _get_ctrl(self):
         data = bytearray(self._size)
         data[0] = xu.EHD_DEVICE_TAG
         data[1] = self._command.value
@@ -156,7 +175,7 @@ class Option:
         self._camera.uvc_get_ctrl(
             self._unit.value, self._ctrl.value, self._data, self._size)
 
-    def clear(self):
+    def _clear(self):
         self._data = b'\x00' * self._size
 
 
@@ -177,6 +196,13 @@ class EHDDevice:
     _device_attrs: dict[str, str] = {}
     _options: dict[str, Option] = {}
 
+    class H264Mode(Enum):
+        '''
+        H.264 Mode Enum
+        '''
+        MODE_CONSTANT_BITRATE = 1
+        MODE_VARIABLE_BITRATE = 2
+
     def __init__(self, device_info: DeviceInfo) -> None:
         # make sure this is an exploreHD
         assert (is_ehd(device_info))
@@ -186,60 +212,56 @@ class EHDDevice:
         for device_path in device_info.device_paths:
             self._cameras.append(Camera(device_path))
 
+        # UVC xu bitrate control
         self._options['bitrate'] = Option(
-            self._cameras[2], xu.Unit.USR_ID, xu.Selector.SYS_H264_CTRL, xu.Command.H264_BITRATE_CTRL)
+            self._cameras[2], '>I', xu.Unit.USR_ID, xu.Selector.USR_H264_CTRL, xu.Command.H264_BITRATE_CTRL)
 
+        # UVC xu gop control
         self._options['gop'] = Option(
-            self._cameras[2], xu.Unit.USR_ID, xu.Selector.SYS_H264_CTRL, xu.Command.H264_BITRATE_CTRL)
+            self._cameras[2], 'H', xu.Unit.USR_ID, xu.Selector.USR_H264_CTRL, xu.Command.GOP_CTRL)
 
+        # UVC xu H264 mode control
         self._options['mode'] = Option(
-            self._cameras[2], xu.Unit.USR_ID, xu.Selector.SYS_H264_CTRL, xu.Command.H264_BITRATE_CTRL)
-
-    def set_bitrate(self, bitrate):
-        opt = self._options['bitrate']
-        opt.pack('<I', bitrate)
-        opt.set_ctrl()
-        opt.clear()
+            self._cameras[2], 'B', xu.Unit.USR_ID, xu.Selector.USR_H264_CTRL, xu.Command.H264_MODE_CTRL)
 
     def get_bitrate(self):
-        opt = self._options['bitrate']
-        opt.get_ctrl()
-        (value) = opt.unpack('<I')
-        opt.clear()
-        return value
+        return self._get_option('bitrate')
 
-    def set_gop(self, gop):
-        opt = self._options['gop']
-        opt.pack('H', gop)
-        opt.set_ctrl()
-        opt.clear()
+    def set_bitrate(self, bitrate: int):
+        self._set_option('bitrate', bitrate)
 
     def get_gop(self):
-        opt = self._options['gop']
-        opt.get_ctrl()
-        (value) = opt.unpack('H')
-        opt.clear()
-        return value
+        return self._get_option('gop')
 
-    def set_mode(self, mode):
-        opt = self._options['mode']
-        opt.pack('B', mode)
-        opt.set_ctrl()
-        opt.clear()
+    def set_gop(self, gop: int):
+        self._set_option('gop', gop)
 
     def get_mode(self):
-        opt = self._options['mode']
-        opt.get_ctrl()
-        (value) = opt.unpack('B')
-        opt.clear()
-        return value
+        return self._get_option('mode')
 
+    def set_mode(self, mode: H264Mode):
+        self._set_option('mode', mode.value)
+
+    # get an option
+    def _get_option(self, opt: str):
+        if opt in self._options:
+            return self._options[opt].get_value()
+        return None
+
+    # set an option
+    def _set_option(self, opt: str, *arg: list):
+        if opt in self._options:
+            return self._options[opt].set_value(*arg)
+        return None
+
+    # get a device attribute
     def _get_device_attr(self, attr: str) -> str:
         attr_path = self._device_path + '/' + attr
         file_object = open(attr_path)
         return file_object.read().strip()
 
 
+# find the difference between lists
 def list_diff(listA, listB):
     diff = []
     for element in listA:
@@ -248,6 +270,7 @@ def list_diff(listA, listB):
     return diff
 
 
+# monitor devices for changes
 def monitor():
     devices: list[EHDDevice] = []
     old_device_list = []
@@ -264,13 +287,19 @@ def monitor():
         for device_info in new_devices:
             if not is_ehd(device_info):
                 continue
-            print(f'Device Added: {device_info.bus_info}')
+            # if the device is not ready (essentially meaning the linux filesystem has not been populated yet),
+            # this will error, resulting in the loop continuing
+            # yes, this is a bit hacky, but there is no real cleaner way of doing this
+            device = None
             try:
                 device = EHDDevice(device_info)
+                print(device.get_bitrate())
             except:
                 continue
-            devices.append(EHDDevice(device_info))
-            old_device_list.append(device_info)
+            if device:
+                print(f'Device Added: {device_info.bus_info}')
+                devices.append(EHDDevice(device_info))
+                old_device_list.append(device_info)
 
         # remove the old devices
         for device_info in removed_devices:

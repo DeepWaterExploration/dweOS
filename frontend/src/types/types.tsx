@@ -45,12 +45,12 @@ export interface ControlFlags {
   default_value: number;
   disabled: boolean;
   grabbed: boolean;
-  max: number;
-  min: number;
+  max_value: number;
+  min_value: number;
   read_only: boolean;
   slider: number;
   step: number;
-  type: controlType;
+  control_type: controlType;
   update: number;
   volatility: number;
   write_only: boolean;

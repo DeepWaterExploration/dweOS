@@ -41,10 +41,11 @@ def monitor():
             device = None
             try:
                 device = EHDDevice(device_info)
-            except:
+            except Exception as e:
+                print(e)
                 continue
             print(f'Device Added: {device_info.bus_info}')
-            pprint.pprint(DeviceSchema().dump(device), depth=4)
+            pprint.pprint(DeviceSchema().dump(device), depth=2)
             devices.append(device)
             old_device_list.append(device_info)
 

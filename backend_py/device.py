@@ -2,13 +2,27 @@ from io import TextIOWrapper
 from ctypes import *
 import typing
 import struct
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+import itertools
+from enum import Enum
 
 from enumeration import *
-from enum import Enum
 from camera_helper_loader import *
 import ehd_controls as xu
 import utils
+import v4l2
+
+
+class ControlTypeEnum(Enum):
+    INTEGER = 1
+    BOOLEAN = 2
+    MENU = 3
+    BUTTON = 4
+    INTEGER64 = 5
+    CTRL_CLASS = 6
+    STRING = 7
+    BITMASK = 8
+    INTEGER_MENU = 9
 
 
 @dataclass
@@ -22,6 +36,24 @@ class FormatSize:
     width: int
     height: int
     intervals: list[Interval]
+
+
+@dataclass
+class ControlFlags:
+    default_value: int = 0
+    max_value: int = 0
+    min_value: int = 0
+    step: int = 0
+    control_type: ControlTypeEnum = ControlTypeEnum.INTEGER
+    menu: typing.List[str | int] = field(default_factory=list)
+
+
+@dataclass
+class Control:
+    control_id: int
+    name: str
+    flags: ControlFlags = field(default_factory=ControlFlags)
+    value: int = 0
 
 
 class Camera:
@@ -177,7 +209,7 @@ def is_ehd(device_info: DeviceInfo):
 
 class EHDDevice:
 
-    cameras: list[Camera] = []
+    cameras: typing.List[Camera] = []
     name: str = 'exploreHD'
     manufacturer: str = 'DeepWater Exploration Inc.'
     nickname: str = ''
@@ -185,6 +217,7 @@ class EHDDevice:
     vid: int
     usb_info: str
     device_info: DeviceInfo
+    controls: typing.List[Control] = []
     _options: dict[str, Option] = {}
 
     class H264Mode(Enum):
@@ -219,6 +252,8 @@ class EHDDevice:
         self._options['mode'] = Option(
             self.cameras[2], 'B', xu.Unit.USR_ID, xu.Selector.USR_H264_CTRL, xu.Command.H264_MODE_CTRL)
 
+        self._get_controls()
+
     def get_bitrate(self):
         return self._get_option('bitrate')
 
@@ -237,6 +272,17 @@ class EHDDevice:
     def set_mode(self, mode: H264Mode):
         self._set_option('mode', mode.value)
 
+    def get_pu(self, control_id: int):
+        fd = self.cameras[0]._fd
+        control = v4l2.v4l2_control(control_id, 0)
+        fcntl.ioctl(fd, v4l2.VIDIOC_G_CTRL, control)
+        return control.value
+
+    def set_pu(self, control_id: int, value: int):
+        fd = self.cameras[0]._fd
+        control = v4l2.v4l2_control(control_id, value)
+        fcntl.ioctl(fd, v4l2.VIDIOC_S_CTRL, control)
+
     # get an option
     def _get_option(self, opt: str):
         if opt in self._options:
@@ -248,3 +294,26 @@ class EHDDevice:
         if opt in self._options:
             return self._options[opt].set_value(*arg)
         return None
+
+    def _get_controls(self):
+        fd = self.cameras[0]._fd
+        self.controls = []
+
+        for cid in itertools.chain(
+                range(v4l2.V4L2_CID_BASE, v4l2.V4L2_CID_USER_BASE + 36),
+                range(v4l2.V4L2_CID_CAMERA_CLASS_BASE, v4l2.V4L2_CID_CAMERA_CLASS_BASE + 4)):
+            qctrl = v4l2.v4l2_queryctrl(cid)
+            try:
+                fcntl.ioctl(fd, v4l2.VIDIOC_QUERYCTRL, qctrl)
+            except IOError as e:
+                continue
+            control = Control(qctrl.id, qctrl.name)
+
+            control.flags.control_type = ControlTypeEnum(qctrl.type)
+            control.flags.max_value = qctrl.maximum
+            control.flags.min_value = qctrl.minimum
+            control.flags.step = qctrl.step
+
+            control.value = self.get_pu(cid)
+
+            self.controls.append(control)

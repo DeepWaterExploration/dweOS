@@ -1,7 +1,35 @@
-from marshmallow import Schema, fields, post_load, post_dump
+from marshmallow import Schema, fields, post_load, post_dump, exceptions
 from enum import Enum
 import typing
 from device import *
+
+
+class UnionField(fields.Field):
+
+    valid_types: typing.List[fields.Field]
+
+    def __init__(self, *valid_types: typing.List[fields.Field]):
+        self.valid_types = valid_types
+
+    def _serialize(self, value, attr: str | None, data: typing.Mapping[str, typing.Any], **kwargs):
+        errors = []
+        for valid_type in self.valid_types:
+            try:
+                valid_type.serialize(value, attr)
+            except exceptions.ValidationError as error:
+                errors.append(error)
+        if len(errors) > 0:
+            raise exceptions.ValidationError(errors)
+
+    def _deserialize(self, value, attr: str | None, data: typing.Mapping[str, typing.Any] | None, **kwargs):
+        errors = []
+        for valid_type in self.valid_types:
+            try:
+                valid_type.deserialize(value, attr)
+            except exceptions.ValidationError as error:
+                errors.append(error)
+        if len(errors) > 0:
+            raise exceptions.ValidationError(errors)
 
 
 class CameraIntervalSchema(Schema):
@@ -21,39 +49,20 @@ class CameraSchema(Schema):
                           fields.Nested(CameraFormatSizeSchema, many=True))
 
 
-class ControlTypeEnum(Enum):
-    INTEGER = 1
-    BOOLEAN = 2
-    MENU = 3
-    BUTTON = 4
-    INTEGER64 = 5
-    CTRL_CLASS = 6
-    STRING = 7
-    BITMASK = 8
-    INTEGER_MENU = 9
-
-
 class ControlFlagsSchema(Schema):
-    default_value = fields.Number()
-    disabled = fields.Bool()
-    grabbed = fields.Bool()
-    max_value = fields.Number()
-    min_value = fields.Number()
-    read_only = fields.Bool()
-    slider = fields.Number()
-    step = fields.Number()
+    default_value = fields.Int()
+    max_value = fields.Int()
+    min_value = fields.Int()
+    step = fields.Int()
     control_type = fields.Enum(ControlTypeEnum)
-    update = fields.Number()
-    volitility = fields.Number()
-    write_only = fields.Bool()
-    # menu = fields.List(list[str] | list[int] | list[float])
+    menu = fields.List(UnionField(fields.Str(), fields.Int()))
 
 
 class ControlSchema(Schema):
     flags = fields.Nested(ControlFlagsSchema)
-    control_id = fields.Number()
+    control_id = fields.Int()
     name = fields.Str()
-    value = fields.Number()
+    value = fields.Int()
 
 
 class DeviceInfoSchema(Schema):
@@ -91,7 +100,3 @@ class DeviceSchema(Schema):
         }
         data['options'] = DeviceOptionsSchema().load(options)
         return data
-
-    @post_load
-    def make_device(self, data, **kwargs):
-        return EHDDevice(self.device_info)

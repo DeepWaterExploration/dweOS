@@ -1,5 +1,6 @@
-from marshmallow import Schema, fields, post_load
+from marshmallow import Schema, fields, post_load, post_dump
 from enum import Enum
+import typing
 from device import *
 
 
@@ -16,8 +17,8 @@ class CameraFormatSizeSchema(Schema):
 
 class CameraSchema(Schema):
     path = fields.Str()
-    formats = fields.Dict(fields.Str(), fields.List(
-        fields.Nested(CameraFormatSizeSchema)))
+    formats = fields.Dict(fields.Str(),
+                          fields.Nested(CameraFormatSizeSchema, many=True))
 
 
 class ControlTypeEnum(Enum):
@@ -63,9 +64,15 @@ class DeviceInfoSchema(Schema):
     pid = fields.Str()
 
 
+class DeviceOptionsSchema(Schema):
+    bitrate = fields.Int()
+    gop = fields.Int()
+    mode = fields.Int()
+
+
 class DeviceSchema(Schema):
-    cameras = fields.List(fields.Nested(CameraSchema))
-    controls = fields.List(fields.Nested(ControlSchema))
+    cameras = fields.Nested(CameraSchema, many=True)
+    controls = fields.Nested(ControlSchema, many=True)
     name = fields.Str()
     pid = fields.Int()
     vid = fields.Int()
@@ -73,6 +80,17 @@ class DeviceSchema(Schema):
     manufacturer = fields.Str()
     nickname = fields.Str()
     device_info = fields.Nested(DeviceInfoSchema)
+    options = fields.Nested(DeviceOptionsSchema)
+
+    @post_dump(pass_original=True)
+    def dump_options(self, data: typing.Dict, original: EHDDevice, **kwargs):
+        options = {
+            'bitrate': original.get_bitrate(),
+            'gop': original.get_gop(),
+            'mode': original.get_mode()
+        }
+        data['options'] = DeviceOptionsSchema().load(options)
+        return data
 
     @post_load
     def make_device(self, data, **kwargs):

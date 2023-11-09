@@ -21,6 +21,7 @@ def list_diff(listA, listB):
 def monitor():
     devices: list[EHDDevice] = []
     old_device_list = []
+    device_schema = DeviceSchema()
     while True:
         devices_info = list_devices()
 
@@ -42,8 +43,8 @@ def monitor():
                 device = EHDDevice(device_info)
             except:
                 continue
-            pprint.pprint(DeviceSchema().dump(device))
             print(f'Device Added: {device_info.bus_info}')
+            pprint.pprint(DeviceSchema().dump(device), depth=4)
             devices.append(device)
             old_device_list.append(device_info)
 

@@ -198,6 +198,7 @@ class EHDDevice:
         # make sure this is an exploreHD
         assert (is_ehd(device_info))
 
+        self.cameras = []
         for device_path in device_info.device_paths:
             self.cameras.append(Camera(device_path))
 

@@ -12,48 +12,8 @@ import ehd_controls as xu
 import utils
 import v4l2
 
-
-class ControlTypeEnum(Enum):
-    INTEGER = 1
-    BOOLEAN = 2
-    MENU = 3
-    BUTTON = 4
-    INTEGER64 = 5
-    CTRL_CLASS = 6
-    STRING = 7
-    BITMASK = 8
-    INTEGER_MENU = 9
-
-
-@dataclass
-class Interval:
-    numerator: int
-    denominator: int
-
-
-@dataclass
-class FormatSize:
-    width: int
-    height: int
-    intervals: list[Interval]
-
-
-@dataclass
-class ControlFlags:
-    default_value: int = 0
-    max_value: int = 0
-    min_value: int = 0
-    step: int = 0
-    control_type: ControlTypeEnum = ControlTypeEnum.INTEGER
-    menu: typing.List[str | int] = field(default_factory=list)
-
-
-@dataclass
-class Control:
-    control_id: int
-    name: str
-    flags: ControlFlags = field(default_factory=ControlFlags)
-    value: int = 0
+from camera_types import *
+from stream import *
 
 
 class Camera:
@@ -218,6 +178,8 @@ class EHDDevice:
     usb_info: str
     device_info: DeviceInfo
     controls: typing.List[Control] = []
+    stream: Stream = Stream()
+
     _options: dict[str, Option] = {}
 
     class H264Mode(Enum):
@@ -253,6 +215,26 @@ class EHDDevice:
             self.cameras[2], 'B', xu.Unit.USR_ID, xu.Selector.USR_H264_CTRL, xu.Command.H264_MODE_CTRL)
 
         self._get_controls()
+
+    def configure_stream(self, encode_type: StreamEncodeTypeEnum, width: int, height: int, interval: Interval, stream_type: StreamTypeEnum, stream_endpoints: List[StreamEndpoint] = []):
+        self.stream.stop()
+
+        camera: Camera = None
+        match encode_type:
+            case StreamEncodeTypeEnum.H264:
+                camera = self.cameras[2]
+            case StreamEncodeTypeEnum.MJPEG:
+                camera = self.cameras[0]
+            case _:
+                raise Exception()
+
+        self.stream.device_path = camera.path
+        self.stream.width = width
+        self.stream.height = height
+        self.stream.interval = interval
+        self.stream.endpoints = stream_endpoints
+        self.stream.encode_type = encode_type
+        self.stream.stream_type = stream_type
 
     def get_bitrate(self):
         return self._get_option('bitrate')
@@ -305,7 +287,7 @@ class EHDDevice:
             qctrl = v4l2.v4l2_queryctrl(cid)
             try:
                 fcntl.ioctl(fd, v4l2.VIDIOC_QUERYCTRL, qctrl)
-            except IOError as e:
+            except IOError:
                 continue
             control = Control(qctrl.id, qctrl.name)
 

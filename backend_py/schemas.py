@@ -1,7 +1,8 @@
 from marshmallow import Schema, fields, post_load, post_dump, exceptions
-from enum import Enum
 import typing
-from device import *
+
+from camera_types import *
+from device import EHDDevice
 
 
 class UnionField(fields.Field):
@@ -79,9 +80,26 @@ class DeviceOptionsSchema(Schema):
     mode = fields.Int()
 
 
+class StreamEndpointSchema(Schema):
+    host = fields.Str()
+    port = fields.Int()
+
+
+class StreamSchema(Schema):
+    device_path = fields.Str()
+    encode_type = fields.Enum(StreamEncodeTypeEnum)
+    stream_type = fields.Enum(StreamTypeEnum)
+    endpoints = fields.Nested(StreamEndpointSchema, many=True)
+    width = fields.Int()
+    height = fields.Int()
+    interval = fields.Nested(CameraIntervalSchema)
+    started = fields.Bool()
+
+
 class DeviceSchema(Schema):
     cameras = fields.Nested(CameraSchema, many=True)
     controls = fields.Nested(ControlSchema, many=True)
+    stream = fields.Nested(StreamSchema)
     name = fields.Str()
     pid = fields.Int()
     vid = fields.Int()

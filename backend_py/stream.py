@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import List
 import subprocess
+from multiprocessing import Process
+import time
 
 from camera_types import *
 
@@ -17,16 +19,21 @@ class Stream:
 
     started: bool = False
 
-    _process: subprocess.Popen = None
+    _process: Process = None
+
+    def _start(self):
+        pipeline_str = self._construct_pipeline()
+        print(pipeline_str)
+        subprocess.run(
+            f'gst-launch-1.0 {pipeline_str}'.split(' '), stdout=subprocess.PIPE)
 
     def start(self):
         if self._process:
             self.stop()
         self.started = True
-        pipeline_str = self._construct_pipeline()
-        print(pipeline_str)
-        self._process = subprocess.Popen(
-            f'gst-launch-1.0 {pipeline_str}'.split(' '))
+        self._process = Process(target=self._start)
+        self._process.start()
+        # self._process.wait()
 
     def stop(self):
         if not self.started:

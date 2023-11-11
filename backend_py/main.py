@@ -22,6 +22,7 @@ def list_diff(listA, listB):
 def monitor():
     devices: list[EHDDevice] = []
     old_device_list = []
+    port = 5600
 
     try:
         while True:
@@ -46,6 +47,10 @@ def monitor():
                 except Exception as e:
                     print(e)
                     continue
+                device.configure_stream(
+                    StreamEncodeTypeEnum.H264, 1920, 1080, Interval(1, 30), StreamTypeEnum.UDP, [StreamEndpoint('127.0.0.1', port)])
+                port += 1
+                device.stream.start()
                 print(f'Device Added: {device_info.bus_info}')
                 pprint.pprint(DeviceSchema().dump(
                     device), depth=2, compact=True, sort_dicts=False)
@@ -66,7 +71,8 @@ def monitor():
             # do not overload the bus
             time.sleep(0.1)
     except KeyboardInterrupt:
-        pass
+        for device in devices:
+            device.stream.stop()
 
 
 def main():

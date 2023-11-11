@@ -175,7 +175,7 @@ class EHDDevice:
     nickname: str = ''
     pid: int
     vid: int
-    usb_info: str
+    bus_info: str
     device_info: DeviceInfo
     controls: typing.List[Control] = []
     stream: Stream = Stream()
@@ -200,7 +200,7 @@ class EHDDevice:
         self.device_info = device_info
         self.vid = device_info.vid
         self.pid = device_info.pid
-        self.usb_info = device_info.bus_info
+        self.bus_info = device_info.bus_info
 
         # UVC xu bitrate control
         self._options['bitrate'] = Option(
@@ -249,7 +249,7 @@ class EHDDevice:
         self._set_option('gop', gop)
 
     def get_mode(self):
-        return self._get_option('mode')
+        return self.H264Mode(self._get_option('mode'))
 
     def set_mode(self, mode: H264Mode):
         self._set_option('mode', mode.value)

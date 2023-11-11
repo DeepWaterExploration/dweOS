@@ -22,7 +22,6 @@ def list_diff(listA, listB):
 def monitor():
     devices: list[EHDDevice] = []
     old_device_list = []
-    port = 5600
 
     try:
         while True:
@@ -47,13 +46,10 @@ def monitor():
                 except Exception as e:
                     print(e)
                     continue
-                device.configure_stream(
-                    StreamEncodeTypeEnum.H264, 1920, 1080, Interval(1, 30), StreamTypeEnum.UDP, [StreamEndpoint('127.0.0.1', port)])
-                port += 1
-                device.stream.start()
                 print(f'Device Added: {device_info.bus_info}')
-                pprint.pprint(DeviceSchema().dump(
-                    device), depth=2, compact=True, sort_dicts=False)
+                pprint.pprint(DeviceSchema(
+                    only=['vid', 'pid', 'nickname', 'bus_info', 'stream', 'controls', 'options'], exclude=['stream.device_path', 'controls.flags']).dump(
+                    device), depth=1, compact=True, sort_dicts=False)
                 # append the device to the device list
                 devices.append(device)
                 # add the device info to the device list

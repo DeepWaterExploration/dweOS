@@ -77,7 +77,7 @@ class DeviceInfoSchema(Schema):
 class DeviceOptionsSchema(Schema):
     bitrate = fields.Int()
     gop = fields.Int()
-    mode = fields.Int()
+    mode = fields.Enum(EHDDevice.H264Mode)
 
 
 class StreamEndpointSchema(Schema):
@@ -101,9 +101,9 @@ class DeviceSchema(Schema):
     controls = fields.Nested(ControlSchema, many=True)
     stream = fields.Nested(StreamSchema)
     name = fields.Str()
-    pid = fields.Int()
     vid = fields.Int()
-    usb_info = fields.Str()
+    pid = fields.Int()
+    bus_info = fields.Str()
     manufacturer = fields.Str()
     nickname = fields.Str()
     device_info = fields.Nested(DeviceInfoSchema)
@@ -114,7 +114,8 @@ class DeviceSchema(Schema):
         options = {
             'bitrate': original.get_bitrate(),
             'gop': original.get_gop(),
-            'mode': original.get_mode()
+            'mode': original.get_mode().name
         }
-        data['options'] = DeviceOptionsSchema().load(options)
+        if 'options' in self.only and 'options' not in self.exclude:
+            data['options'] = DeviceOptionsSchema().load(options)
         return data

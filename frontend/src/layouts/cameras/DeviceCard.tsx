@@ -140,21 +140,21 @@ const DeviceOptions: React.FC<DeviceOptionsProps> = (props) => {
 
   useDidMountEffect(() => {
     setExploreHDOption(
-      props.device.info.usbInfo,
+      props.device.bus_info,
       optionType.BITRATE,
       bitrate * 1000000
     );
   }, [bitrate]);
 
   useDidMountEffect(() => {
-    setExploreHDOption(props.device.info.usbInfo, optionType.MODE, mode);
+    setExploreHDOption(props.device.bus_info, optionType.MODE, mode);
     if (mode === bitrateMode.VBR) {
       setGOP(29);
     }
   }, [mode]);
 
   useDidMountEffect(() => {
-    setExploreHDOption(props.device.info.usbInfo, optionType.GOP, gop);
+    setExploreHDOption(props.device.bus_info, optionType.GOP, gop);
   }, [gop]);
 
   return (
@@ -262,7 +262,7 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
     if (!stream) {
       setStreamUpdatedTimeout(
         setTimeout(() => {
-          unconfigureStream(props.device.info.usbInfo);
+          unconfigureStream(props.device.bus_info);
         }, 250)
       );
     } else {
@@ -278,7 +278,7 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
     setStreamUpdatedTimeout(
       setTimeout(() => {
         configureStream(
-          props.device.info.usbInfo,
+          props.device.bus_info,
           {
             width: parseInt(width),
             height: parseInt(height),
@@ -538,7 +538,7 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
             color='primary'
             variant='contained'
             onClick={() => {
-              restartStream(props.device.info.usbInfo).then(() => {
+              restartStream(props.device.bus_info).then(() => {
                 enqueueSnackbar("Stream restarted", { variant: "info" });
               });
             }}
@@ -595,14 +595,14 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
             // Extremely Hacky Fix for Auto Exposure: Change in backend later
             if (
               control.name.includes("Auto Exposure") &&
-              control.flags.type === controlType.MENU
+              control.flags.control_type === controlType.MENU
             ) {
-              control.flags.type = controlType.BOOLEAN;
+              control.flags.control_type = controlType.BOOLEAN;
             }
-            switch (control.flags.type) {
+            switch (control.flags.control_type) {
               case controlType.INTEGER: {
                 const { name, id } = control;
-                const { min, max, step } = control.flags;
+                const { min_value, max_value, step } = control.flags;
                 const defaultValue = control.flags.default_value;
                 const [controlValue, setControlValue] = useState<number>(
                   defaultValue as number
@@ -614,7 +614,7 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                   name,
                   setControlValue,
                   defaultValue,
-                  type: control.flags.type,
+                  type: control.flags.control_type,
                 } as ControlState);
 
                 useDidMountEffect(() => {
@@ -635,8 +635,8 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                         setControlValueSlider(newValue as number);
                       }}
                       name={`control-${id}`}
-                      min={min}
-                      max={max}
+                      min={min_value}
+                      max={max_value}
                       step={step}
                       value={controlValueSlider}
                       defaultValue={defaultValue as number}
@@ -671,7 +671,7 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                   name,
                   setControlValue,
                   defaultValue,
-                  type: control.flags.type,
+                  type: control.flags.control_type,
                 });
 
                 useDidMountEffect(() => {
@@ -729,7 +729,7 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                     name,
                     setControlValue,
                     defaultValue,
-                    type: control.flags.type,
+                    type: control.flags.control_type,
                   });
                 }
 
@@ -824,7 +824,7 @@ const DeviceCard: React.FC<DeviceCardProps> = (props) => {
   const deviceWarning = null;
 
   const cameraControls = (
-    <CameraControls controls={controls} usbInfo={props.device.info.usbInfo} />
+    <CameraControls controls={controls} usbInfo={props.device.bus_info} />
   );
 
   return (
@@ -833,25 +833,25 @@ const DeviceCard: React.FC<DeviceCardProps> = (props) => {
     >
       <CardHeader
         action={deviceWarning}
-        title={props.device.info.name}
+        title={props.device.device_info.device_name}
         subheader={
           <>
-            {`Manufacturer: ${props.device.info.manufacturer}`}
+            {`Manufacturer: ${props.device.manufacturer}`}
             <LineBreak />
-            {`Model: ${props.device.info.model}`}
+            {`Model: `}
             <LineBreak />
-            {`USB ID: ${props.device.info.usbInfo}`}
+            {`USB ID: ${props.device.bus_info}`}
             <LineBreak />
             <TextField
               sx={{ top: 10 }}
               onChange={(e) => {
-                props.device.info.nickname = e.target.value;
-                setDeviceNickname(props.device.info.usbInfo, e.target.value);
+                props.device.nickname = e.target.value;
+                setDeviceNickname(props.device.bus_info, e.target.value);
               }}
               helperText='Device Nickname'
               placeholder='Device Nickname'
               variant='standard'
-              defaultValue={props.device.info.nickname}
+              defaultValue={props.device.nickname}
             ></TextField>
           </>
         }

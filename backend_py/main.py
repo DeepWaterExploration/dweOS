@@ -8,9 +8,46 @@ from schemas import *
 from device import *
 from stream import *
 
+import threading
 
-# find the difference between lists
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app)
+app.json.sort_keys = False
+devices: list[EHDDevice] = []
+
+
+def find_device_with_bus_info(bus_info: str) -> (EHDDevice | None):
+    for device in devices:
+        if device.bus_info == bus_info:
+            return device
+    return None
+
+
+@app.route('/devices', methods=['GET'])
+def get_devices():
+    return jsonify(DeviceSchema().dump(devices, many=True))
+
+
+@app.route('/devices/set_option', methods=['POST'])
+def set_option():
+    option_value = OptionValueSchema().load(request.get_json())
+    device = find_device_with_bus_info(option_value['bus_info'])
+    value = option_value['value']
+    match option_value['option']:
+        case OptionTypeEnum.BITRATE:
+            device.set_bitrate(value)
+        case OptionTypeEnum.MODE:
+            device.set_mode(value)
+        case OptionTypeEnum.GOP:
+            device.set_gop(value)
+    return jsonify({})
+
+
 def list_diff(listA, listB):
+    # find the difference between lists
     diff = []
     for element in listA:
         if element not in listB:
@@ -18,9 +55,12 @@ def list_diff(listA, listB):
     return diff
 
 
-# monitor devices for changes
-def monitor():
-    devices: list[EHDDevice] = []
+def save_device(device: EHDDevice):
+    pass
+
+
+def monitor(devices):
+    # monitor devices for changes
     old_device_list = []
 
     try:
@@ -72,7 +112,10 @@ def monitor():
 
 
 def main():
-    monitor()
+    monitor_process = threading.Thread(target=monitor, args=[devices])
+
+    monitor_process.start()
+    app.run(port=8080)
 
 
 if __name__ == '__main__':

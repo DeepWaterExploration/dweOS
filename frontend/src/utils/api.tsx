@@ -352,13 +352,13 @@ export async function setUVCControl(
  * @throws {Error} - If the index is invalid or the request fails.
  */
 export async function setExploreHDOption(
-  usbInfo: string,
+  bus_info: string,
   option: optionType,
-  value: number | bitrateMode
+  value: number
 ): Promise<void> {
   const url = `${DEVICE_API_URL}/devices/set_option`;
   const data = {
-    usbInfo,
+    bus_info,
     option,
     value,
   };

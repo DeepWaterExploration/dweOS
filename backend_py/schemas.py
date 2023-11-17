@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, post_dump, exceptions
+from marshmallow import Schema, fields, post_dump, exceptions, pre_load
 import typing
 
 from camera_types import *
@@ -70,14 +70,14 @@ class DeviceInfoSchema(Schema):
     device_name = fields.Str()
     bus_info = fields.Str()
     device_paths: fields.List(fields.Str())
-    vid = fields.Str()
-    pid = fields.Str()
+    vid = fields.Int()
+    pid = fields.Int()
 
 
 class DeviceOptionsSchema(Schema):
     bitrate = fields.Int()
     gop = fields.Int()
-    mode = fields.Enum(EHDDevice.H264Mode)
+    mode = fields.Enum(EHDDevice.H264Mode, by_value=True)
 
 
 class StreamEndpointSchema(Schema):
@@ -114,8 +114,29 @@ class DeviceSchema(Schema):
         options = {
             'bitrate': original.get_bitrate(),
             'gop': original.get_gop(),
-            'mode': original.get_mode().name
+            'mode': original.get_mode()
         }
-        if 'options' in self.only and 'options' not in self.exclude:
-            data['options'] = DeviceOptionsSchema().load(options)
+        if (self.only and 'options' in self.only) and (self.exclude and 'options' not in self.exclude):
+            data['options'] = DeviceOptionsSchema().dump(options)
+        elif not self.only and not self.exclude:
+            data['options'] = DeviceOptionsSchema().dump(options)
+        return data
+
+
+class OptionTypeEnum(Enum):
+    BITRATE = 'bitrate'
+    GOP = 'gop'
+    MODE = 'mode'
+
+
+class OptionValueSchema(Schema):
+    bus_info = fields.Str()
+    option = fields.Enum(OptionTypeEnum)
+    value = fields.Int()
+
+    @pre_load()
+    def dump_options(self, data: typing.Dict, **kwargs):
+        if data['option'] == OptionTypeEnum.MODE:
+            data['value'] = EHDDevice.H264Mode(data['value'])
+
         return data

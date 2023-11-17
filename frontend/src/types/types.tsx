@@ -4,7 +4,12 @@
 export interface Device {
   cameras: Camera[];
   controls: Control[];
-  info: CameraInfo;
+  bus_info: string;
+  pid: number;
+  vid: number;
+  manufacturer: string;
+  device_info: CameraInfo;
+  nickname: string;
   options: StreamOptions;
   stream: Stream;
 }
@@ -59,20 +64,17 @@ export interface ControlFlags {
 
 export interface CameraInfo {
   /* Differentiator between cameras (device path) */
-  name: string;
-  path: string;
-  pid: string;
-  usbInfo: string;
-  vid: string;
-  manufacturer: string;
-  model: string;
-  nickname: string;
+  device_name: string;
+  bus_info: string;
+  pid: number;
+  vid: number;
+  device_paths: string[];
 }
 
 export interface StreamOptions {
   bitrate: number;
   gop: number;
-  mode: bitrateMode;
+  mode: number;
 }
 
 export interface Stream {
@@ -102,14 +104,14 @@ export enum controlType {
 }
 
 export enum bitrateMode {
-  VBR = "VBR",
-  CBR = "CBR",
+  VBR = 2,
+  CBR = 1,
 }
 
 export enum optionType {
-  BITRATE = "bitrate",
-  GOP = "gop",
-  MODE = "mode",
+  BITRATE = "BITRATE",
+  GOP = "GOP",
+  MODE = "MODE",
 }
 
 /* If we ever need to support more stream protocols, just add them here */

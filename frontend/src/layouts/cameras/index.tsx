@@ -26,7 +26,7 @@ const CamerasPage: React.FC = () => {
       return [
         ...prevCards,
         ...devices.map((device) => (
-          <DeviceCard key={hash(device.info.usbInfo)} device={device} />
+          <DeviceCard key={hash(device.bus_info)} device={device} />
         )),
       ];
     });
@@ -35,7 +35,7 @@ const CamerasPage: React.FC = () => {
   const removeDevice = (device: Device): void => {
     setExploreHD_cards((prevCards) => {
       return prevCards.filter((card) => {
-        return card.props.device.info.usbInfo != device.info.usbInfo;
+        return card.props.device.bus_info != device.bus_info;
       });
     });
   };
@@ -86,8 +86,8 @@ const CamerasPage: React.FC = () => {
       {/* Sort devices */}
       {/* Sorting does not work with new backend changes */}
       {/* {exploreHD_cards.sort((a, b) => {
-        const usbInfoA = a.props.device.info.usbInfo.split(".");
-        const usbInfoB = b.props.device.info.usbInfo.split(".");
+        const usbInfoA = a.props.device.bus_info.split(".");
+        const usbInfoB = b.props.device.bus_info.split(".");
         for (let i = 0; i < usbInfoA.length; i++) {
           if (i > usbInfoB.length - 1) return 1;
           if (parseInt(usbInfoA[i]) > parseInt(usbInfoB[i])) {

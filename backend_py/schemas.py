@@ -1,8 +1,9 @@
-from marshmallow import Schema, fields, post_dump, exceptions, pre_load
+from marshmallow import Schema, fields, post_dump, exceptions, pre_load, post_load
 import typing
 
 from camera_types import *
 from device import EHDDevice
+from api import *
 
 
 class UnionField(fields.Field):
@@ -84,6 +85,10 @@ class StreamEndpointSchema(Schema):
     host = fields.Str()
     port = fields.Int()
 
+    @post_load()
+    def make_endpoint(self, data: typing.Dict, **kwargs):
+        return StreamEndpoint(data['host'], data['port'])
+
 
 class StreamSchema(Schema):
     device_path = fields.Str()
@@ -123,6 +128,8 @@ class DeviceSchema(Schema):
         return data
 
 
+# API SCHEMAS
+
 class OptionTypeEnum(Enum):
     BITRATE = 'bitrate'
     GOP = 'gop'
@@ -140,3 +147,16 @@ class OptionValueSchema(Schema):
             data['value'] = EHDDevice.H264Mode(data['value'])
 
         return data
+
+
+class StreamInfoSchema(Schema):
+    bus_info = fields.Str()
+    stream_format = fields.Nested(
+        StreamSchema, only=['width', 'height', 'interval'])
+    encode_type = fields.Enum(StreamEncodeTypeEnum)
+    endpoints = fields.Nested(StreamEndpointSchema, many=True)
+
+
+class DeviceNicknameSchema(Schema):
+    bus_info = fields.Str()
+    nickname = fields.Str()

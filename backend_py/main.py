@@ -2,6 +2,8 @@ import time
 from ctypes import *
 import pprint
 
+import random
+
 from enumeration import *
 from camera_helper_loader import *
 from schemas import *
@@ -35,6 +37,9 @@ def get_devices():
 def set_option():
     option_value = OptionValueSchema().load(request.get_json())
     device = find_device_with_bus_info(option_value['bus_info'])
+
+    if not device:
+        return jsonify({})
     value = option_value['value']
     match option_value['option']:
         case OptionTypeEnum.BITRATE:
@@ -43,6 +48,39 @@ def set_option():
             device.set_mode(value)
         case OptionTypeEnum.GOP:
             device.set_gop(value)
+    return jsonify({})
+
+
+@app.route('/devices/configure_stream', methods=['POST'])
+def configure_stream():
+    stream_info = StreamInfoSchema().load(request.get_json())
+    device = find_device_with_bus_info(stream_info['bus_info'])
+
+    if not device:
+        return jsonify({})
+
+    stream_format = stream_info['stream_format']
+    width: int = stream_format['width']
+    height: int = stream_format['height']
+    interval: Interval = Interval(
+        stream_format['interval']['numerator'], stream_format['interval']['denominator'])
+    encode_type: StreamEncodeTypeEnum = stream_info['encode_type']
+    endpoints = stream_info['endpoints']
+
+    device.configure_stream(encode_type, width, height,
+                            interval, StreamTypeEnum.UDP, endpoints)
+    device.stream.start()
+    return jsonify({})
+
+
+@app.route('/devices/set_nickname', methods=['POST'])
+def set_nickname():
+    device_nickname = DeviceNicknameSchema().load(request.get_json())
+    device = find_device_with_bus_info(device_nickname['bus_info'])
+    if not device:
+        return jsonify({})
+    nickname = device_nickname['nickname']
+    device.nickname = nickname
     return jsonify({})
 
 
@@ -116,6 +154,18 @@ def main():
 
     monitor_process.start()
     app.run(port=8080)
+
+    # device1 = EHDDevice(DeviceInfo('exploreHD', 'asdf', [
+    #                     '/dev/video2', '/dev/video3', '/dev/video4', '/dev/video5'], 0xc45, 0x6366))
+    # device2 = EHDDevice(DeviceInfo('exploreHD', 'asdf', [
+    #                     '/dev/video6', '/dev/video7', '/dev/video8', '/dev/video9'], 0xc45, 0x6366))
+    # print(device1.get_bitrate())
+    # print(device2.get_bitrate())
+    # device1.set_bitrate(200000000)
+    # device2.set_bitrate(100000000)
+    # time.sleep(1)
+    # print(device1.get_bitrate())
+    # print(device2.get_bitrate())
 
 
 if __name__ == '__main__':

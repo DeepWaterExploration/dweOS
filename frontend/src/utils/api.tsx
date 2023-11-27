@@ -112,15 +112,15 @@ export async function unconfigureStream(usbInfo: string) {
  * @throws {Error} - If the request to configure the device fails.
  */
 export async function configureStream(
-  usbInfo: string,
-  format: StreamFormat,
+  bus_info: string,
+  stream_format: StreamFormat,
   encode_type: encodeType,
   endpoints: StreamEndpoint[]
 ) {
-  const url = `${DEVICE_API_URL}/configure_stream`;
+  const url = `${DEVICE_API_URL}/devices/configure_stream`;
   const body = {
-    usbInfo,
-    format,
+    bus_info,
+    stream_format,
     encode_type,
     endpoints,
   };
@@ -140,7 +140,7 @@ export async function configureStream(
       return data;
     })
     .catch((error: Error) => {
-      console.log(`Failed to configure device ${usbInfo}`);
+      console.log(`Failed to configure device ${bus_info}`);
       console.error(error);
       return undefined;
     });
@@ -152,10 +152,10 @@ export async function configureStream(
  * @param {string} nickname
  * @throws {Error} - If the request to configure the device fails.
  */
-export async function setDeviceNickname(usbInfo: string, nickname: string) {
-  const url = `${DEVICE_API_URL}/devices/setNickname`;
+export async function setDeviceNickname(bus_info: string, nickname: string) {
+  const url = `${DEVICE_API_URL}/devices/set_nickname`;
   const body = {
-    usbInfo,
+    bus_info,
     nickname,
   };
   const config: RequestInit = {
@@ -174,7 +174,7 @@ export async function setDeviceNickname(usbInfo: string, nickname: string) {
       return data;
     })
     .catch((error: Error) => {
-      console.log(`Failed to configure device ${usbInfo}`);
+      console.log(`Failed to configure device ${bus_info}`);
       console.error(error);
       return undefined;
     });

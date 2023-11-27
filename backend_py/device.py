@@ -34,11 +34,11 @@ class Camera:
 
     # uvc_set_ctrl function defined in uvc_functions.c
     def uvc_set_ctrl(self, unit: xu.Unit, ctrl: xu.Selector, data: bytes, size: int) -> int:
-        return camera_helper.uvc_set_ctrl(self._fd, unit, ctrl, data, size)
+        return camera_helper.uvc_set_ctrl(bytes(self.path.encode()), unit, ctrl, data, size)
 
     # uvc_get_ctrl function defined in uvc_functions.c
     def uvc_get_ctrl(self, unit: xu.Unit, ctrl: xu.Selector, data: bytes, size: int) -> int:
-        return camera_helper.uvc_get_ctrl(self._fd, unit, ctrl, data, size)
+        return camera_helper.uvc_get_ctrl(bytes(self.path.encode()), unit, ctrl, data, size)
 
     def _get_formats(self):
         self.formats = {}
@@ -169,18 +169,15 @@ def is_ehd(device_info: DeviceInfo):
 
 class EHDDevice:
 
-    cameras: typing.List[Camera] = []
     name: str = 'exploreHD'
     manufacturer: str = 'DeepWater Exploration Inc.'
-    nickname: str = ''
-    pid: int
-    vid: int
-    bus_info: str
-    device_info: DeviceInfo
-    controls: typing.List[Control] = []
-    stream: Stream = Stream()
-
-    _options: dict[str, Option] = {}
+    # nickname: str = ''
+    # pid: int
+    # vid: int
+    # bus_info: str
+    # device_info: DeviceInfo
+    # controls: typing.List[Control] = []
+    # stream: Stream = Stream()
 
     class H264Mode(Enum):
         '''
@@ -193,6 +190,8 @@ class EHDDevice:
         # make sure this is an exploreHD
         assert (is_ehd(device_info))
 
+        self._options: dict[str, Option] = {}
+
         self.cameras = []
         for device_path in device_info.device_paths:
             self.cameras.append(Camera(device_path))
@@ -201,6 +200,9 @@ class EHDDevice:
         self.vid = device_info.vid
         self.pid = device_info.pid
         self.bus_info = device_info.bus_info
+        self.nickname = ''
+        self.controls = []
+        self.stream = Stream()
 
         # UVC xu bitrate control
         self._options['bitrate'] = Option(

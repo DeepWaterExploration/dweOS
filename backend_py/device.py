@@ -274,6 +274,7 @@ class EHDDevice:
             control.flags.max_value = qctrl.maximum
             control.flags.min_value = qctrl.minimum
             control.flags.step = qctrl.step
+            control.flags.default_value = qctrl.default
 
             control.value = self.get_pu(cid)
 

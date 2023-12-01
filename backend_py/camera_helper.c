@@ -8,10 +8,8 @@
 #include <unistd.h>
 
 int uvc_set_ctrl(
-    char *device_path, uint32_t unit, uint32_t ctrl, uint8_t *data, uint8_t size)
+    int fd, uint32_t unit, uint32_t ctrl, uint8_t *data, uint8_t size)
 {
-    int fd = open(device_path, O_RDWR);
-
     struct uvc_xu_control_query xctrlq;
     xctrlq.unit = unit;
     xctrlq.selector = ctrl;
@@ -22,15 +20,12 @@ int uvc_set_ctrl(
 
     /* Interface with the hardware of the H.264 enabled camera */
     int ret = ioctl(fd, UVCIOC_CTRL_QUERY, &xctrlq);
-    close(fd);
     return ret;
 }
 
 int uvc_get_ctrl(
-    char *device_path, uint32_t unit, uint32_t ctrl, uint8_t *data, uint8_t size)
+    int fd, uint32_t unit, uint32_t ctrl, uint8_t *data, uint8_t size)
 {
-    int fd = open(device_path, O_RDWR);
-
     struct uvc_xu_control_query xctrlq;
     xctrlq.unit = unit;
     xctrlq.selector = ctrl;
@@ -41,6 +36,5 @@ int uvc_get_ctrl(
 
     /* Interface with the hardware of the H.264 enabled camera */
     int ret = ioctl(fd, UVCIOC_CTRL_QUERY, &xctrlq);
-    close(fd);
     return ret;
 }

@@ -19,27 +19,29 @@ class Stream:
 
     started: bool = False
 
-    _process: Process = None
+    _process: subprocess.Popen = None
 
     def _start(self):
         pipeline_str = self._construct_pipeline()
         print(pipeline_str)
-        subprocess.run(
-            f'gst-launch-1.0 {pipeline_str}'.split(' '), stdout=subprocess.PIPE)
+        self._process = subprocess.Popen(
+            f'gst-launch-1.0 {pipeline_str}'.split(' '))
 
     def start(self):
-        if self._process:
+        if self.started:
             self.stop()
+        if len(self.endpoints) == 0:
+            self.stop()
+            return
         self.started = True
-        self._process = Process(target=self._start)
-        self._process.start()
-        # self._process.wait()
+        self._start()
 
     def stop(self):
         if not self.started:
             return
         self.started = False
         self._process.kill()
+        del self._process
 
     def _construct_pipeline(self):
         return f'{self._build_source()} ! {self._construct_caps()} ! {self._build_payload()} ! {self._build_sink()}'
@@ -74,8 +76,11 @@ class Stream:
                 if len(self.endpoints) == 0:
                     return 'fakesink'
                 sink = 'multiudpsink clients='
-                for endpoint in self.endpoints:
+                for endpoint, i in zip(self.endpoints, range(len(self.endpoints))):
                     sink += f'{endpoint.host}:{endpoint.port}'
+                    if i < len(self.endpoints)-1:
+                        sink += ','
+
                 return sink
             case _:
                 return ''

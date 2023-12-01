@@ -141,11 +141,10 @@ class OptionValueSchema(Schema):
     option = fields.Enum(OptionTypeEnum)
     value = fields.Int()
 
-    @pre_load()
+    @post_load()
     def dump_options(self, data: typing.Dict, **kwargs):
-        if data['option'] == OptionTypeEnum.MODE:
+        if data['option'] is OptionTypeEnum.MODE:
             data['value'] = EHDDevice.H264Mode(data['value'])
-
         return data
 
 

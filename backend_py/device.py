@@ -21,12 +21,7 @@ class Camera:
     Camera base class
     '''
 
-    path: str  # /dev/video#
-    formats: typing.Dict[str, list[FormatSize]]
-    _file_object: TextIOWrapper  # file object
-    _fd: int  # fd created by uvc_functions
-
-    def __init__(self, path) -> None:
+    def __init__(self, path: str) -> None:
         self.path = path
         self._file_object = open(path)
         self._fd = self._file_object.fileno()  # get the file descriptor
@@ -34,11 +29,11 @@ class Camera:
 
     # uvc_set_ctrl function defined in uvc_functions.c
     def uvc_set_ctrl(self, unit: xu.Unit, ctrl: xu.Selector, data: bytes, size: int) -> int:
-        return camera_helper.uvc_set_ctrl(bytes(self.path.encode()), unit, ctrl, data, size)
+        return camera_helper.uvc_set_ctrl(self._fd, unit, ctrl, data, size)
 
     # uvc_get_ctrl function defined in uvc_functions.c
     def uvc_get_ctrl(self, unit: xu.Unit, ctrl: xu.Selector, data: bytes, size: int) -> int:
-        return camera_helper.uvc_get_ctrl(bytes(self.path.encode()), unit, ctrl, data, size)
+        return camera_helper.uvc_get_ctrl(self._fd, unit, ctrl, data, size)
 
     def _get_formats(self):
         self.formats = {}
@@ -85,15 +80,6 @@ class Option:
     '''
     EHD Option Class
     '''
-
-    _camera: Camera
-    _data: bytes
-
-    _unit: xu.Unit
-    _ctrl: xu.Selector
-    _command: xu.Command
-    _size: int
-    _fmt: str
 
     def __init__(self, camera: Camera, fmt: str, unit: xu.Unit, ctrl: xu.Selector, command: xu.Command, size=11) -> None:
         self._camera = camera
@@ -171,13 +157,6 @@ class EHDDevice:
 
     name: str = 'exploreHD'
     manufacturer: str = 'DeepWater Exploration Inc.'
-    # nickname: str = ''
-    # pid: int
-    # vid: int
-    # bus_info: str
-    # device_info: DeviceInfo
-    # controls: typing.List[Control] = []
-    # stream: Stream = Stream()
 
     class H264Mode(Enum):
         '''
@@ -219,8 +198,6 @@ class EHDDevice:
         self._get_controls()
 
     def configure_stream(self, encode_type: StreamEncodeTypeEnum, width: int, height: int, interval: Interval, stream_type: StreamTypeEnum, stream_endpoints: List[StreamEndpoint] = []):
-        self.stream.stop()
-
         camera: Camera = None
         match encode_type:
             case StreamEncodeTypeEnum.H264:

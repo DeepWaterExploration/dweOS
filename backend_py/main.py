@@ -137,6 +137,7 @@ def monitor(devices):
             for device_info in removed_devices:
                 for device in devices:
                     if device.device_info == device_info:
+                        device.stream.stop()
                         devices.remove(device)
                         # remove the device info from the old device list
                         old_device_list.remove(device_info)
@@ -151,21 +152,17 @@ def monitor(devices):
 
 def main():
     monitor_process = threading.Thread(target=monitor, args=[devices])
-
     monitor_process.start()
+
     app.run(port=8080)
 
-    # device1 = EHDDevice(DeviceInfo('exploreHD', 'asdf', [
-    #                     '/dev/video2', '/dev/video3', '/dev/video4', '/dev/video5'], 0xc45, 0x6366))
-    # device2 = EHDDevice(DeviceInfo('exploreHD', 'asdf', [
-    #                     '/dev/video6', '/dev/video7', '/dev/video8', '/dev/video9'], 0xc45, 0x6366))
-    # print(device1.get_bitrate())
-    # print(device2.get_bitrate())
-    # device1.set_bitrate(200000000)
-    # device2.set_bitrate(100000000)
-    # time.sleep(1)
-    # print(device1.get_bitrate())
-    # print(device2.get_bitrate())
+    # device_info = list_devices()[0]
+    # device = EHDDevice(device_info)
+    # device.configure_stream(StreamEncodeTypeEnum.H264, 1920, 1080, Interval(
+    #     1, 30), StreamTypeEnum.UDP, [StreamEndpoint('127.0.0.1', 5600)])
+    # device.stream.start()
+    # time.sleep(5)
+    # device.stream.stop()
 
 
 if __name__ == '__main__':

@@ -65,7 +65,7 @@ const RESOLUTIONS = [
 
 const INTERVALS = ["30", "25", "20", "15", "10"];
 
-const ENCODERS = ["H264", "MJPG"];
+const ENCODERS = ["H264", "MJPEG"];
 
 const useDidMountEffect = (
   func: React.EffectCallback,

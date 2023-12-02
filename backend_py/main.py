@@ -2,13 +2,13 @@ import time
 from ctypes import *
 import pprint
 
-import random
-
 from enumeration import *
 from camera_helper_loader import *
 from schemas import *
 from device import *
 from stream import *
+from settings import SettingsManager
+from util import list_diff
 
 import threading
 
@@ -19,7 +19,11 @@ app = Flask(__name__)
 CORS(app)
 app.json.sort_keys = False
 devices: list[EHDDevice] = []
+settings_manager = SettingsManager()
 
+# only include the values needed for deserialization
+save_device_schema = DeviceSchema(
+                    only=['vid', 'pid', 'nickname', 'bus_info', 'stream', 'controls', 'options'], exclude=['stream.device_path', 'controls.flags'])
 
 def find_device_with_bus_info(bus_info: str) -> (EHDDevice | None):
     for device in devices:
@@ -48,6 +52,7 @@ def set_option():
             device.set_mode(value)
         case OptionTypeEnum.GOP:
             device.set_gop(value)
+    settings_manager.save_device(device)
     return jsonify({})
 
 
@@ -105,17 +110,9 @@ def set_uvc_control():
     return jsonify({})
 
 
-def list_diff(listA, listB):
-    # find the difference between lists
-    diff = []
-    for element in listA:
-        if element not in listB:
-            diff.append(element)
-    return diff
-
-
 def save_device(device: EHDDevice):
-    pass
+    serialized_device = save_device_schema.dump(device)
+
 
 
 def monitor(devices):
@@ -176,14 +173,6 @@ def main():
     monitor_process.start()
 
     app.run(port=8080)
-
-    # device_info = list_devices()[0]
-    # device = EHDDevice(device_info)
-    # device.configure_stream(StreamEncodeTypeEnum.H264, 1920, 1080, Interval(
-    #     1, 30), StreamTypeEnum.UDP, [StreamEndpoint('127.0.0.1', 5600)])
-    # device.stream.start()
-    # time.sleep(5)
-    # device.stream.stop()
 
 
 if __name__ == '__main__':

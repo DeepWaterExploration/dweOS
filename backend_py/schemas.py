@@ -4,6 +4,7 @@ import typing
 from camera_types import *
 from device import EHDDevice
 from api import *
+from saved_types import *
 
 
 class UnionField(fields.Field):
@@ -116,17 +117,32 @@ class DeviceSchema(Schema):
     options = fields.Nested(DeviceOptionsSchema)
 
     @post_dump(pass_original=True)
-    def dump_options(self, data: typing.Dict, original: EHDDevice, **kwargs):
-        options = {
-            'bitrate': original.get_bitrate(),
-            'gop': original.get_gop(),
-            'mode': original.get_mode()
-        }
-        if (self.only and 'options' in self.only) and (self.exclude and 'options' not in self.exclude):
-            data['options'] = DeviceOptionsSchema().dump(options)
-        elif not self.only and not self.exclude:
-            data['options'] = DeviceOptionsSchema().dump(options)
+    def dump_options(self, data: typing.Dict, original: Any, **kwargs):
+        if type(original) == EHDDevice:
+            options = {
+                'bitrate': original.get_bitrate(),
+                'gop': original.get_gop(),
+                'mode': original.get_mode()
+            }
+            if (self.only and 'options' in self.only) and (self.exclude and 'options' not in self.exclude):
+                data['options'] = DeviceOptionsSchema().dump(options)
+            elif not self.only and not self.exclude:
+                data['options'] = DeviceOptionsSchema().dump(options)
         return data
+
+
+class SavedDeviceSchema(DeviceSchema):
+    controls = fields.Nested(ControlSchema, exclude=['flags'], many=True)
+    stream = fields.Nested(StreamSchema, exclude=['device_path', 'started'])
+
+    @post_load()
+    def make_saved_device(self, data: typing.Dict, **kwargs):
+        saved_stream = SavedStream(**data['stream'])
+        saved_options = SavedOptions(**data['options'])
+        saved_controls = []
+        for control in data['controls']:
+            saved_controls.append(SavedControl(control['control_id'], control['name'], control['value']))
+        return SavedDevice(data['bus_info'], data['vid'], data['pid'], data['nickname'], controls=saved_controls, options=saved_options, stream=saved_stream)
 
 
 # API SCHEMAS

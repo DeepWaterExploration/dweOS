@@ -99,6 +99,7 @@ class StreamSchema(Schema):
     height = fields.Int()
     interval = fields.Nested(CameraIntervalSchema)
     started = fields.Bool()
+    configured = fields.Bool()
 
 
 class DeviceSchema(Schema):

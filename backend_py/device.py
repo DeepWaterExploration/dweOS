@@ -214,6 +214,11 @@ class EHDDevice:
         self.stream.endpoints = stream_endpoints
         self.stream.encode_type = encode_type
         self.stream.stream_type = stream_type
+        self.stream.configured = True
+
+    def unconfigure_stream(self):
+        self.stream.configured = False
+        self.stream.stop()
 
     def get_bitrate(self):
         return self._get_option('bitrate')

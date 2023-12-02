@@ -72,6 +72,15 @@ def configure_stream():
     device.stream.start()
     return jsonify({})
 
+@app.route('/devices/unconfigure_stream', methods=['POST'])
+def unconfigure_stream():
+    bus_info = StreamInfoSchema(only=['bus_info']).load(request.get_json())['bus_info']
+    device = find_device_with_bus_info(bus_info)
+    if not device:
+        return jsonify({})
+    
+    device.unconfigure_stream()
+    return jsonify({})
 
 @app.route('/devices/set_nickname', methods=['POST'])
 def set_nickname():

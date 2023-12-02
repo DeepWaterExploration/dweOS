@@ -76,10 +76,10 @@ export async function getDevice(id: number): Promise<Device> {
  * @param {number} usbInfo - The usb info of the connected camera.
  * @throws {Error} - If the request to configure the device fails.
  */
-export async function unconfigureStream(usbInfo: string) {
-  const url = `${DEVICE_API_URL}/unconfigure_stream`;
+export async function unconfigureStream(bus_info: string) {
+  const url = `${DEVICE_API_URL}/devices/unconfigure_stream`;
   const body = {
-    usbInfo,
+    bus_info,
   };
   const config: RequestInit = {
     mode: "cors",
@@ -97,7 +97,7 @@ export async function unconfigureStream(usbInfo: string) {
       return;
     })
     .catch((error: Error) => {
-      console.log(`Failed to configure device ${usbInfo}`);
+      console.log(`Failed to configure device ${bus_info}`);
       console.error(error);
       return;
     });

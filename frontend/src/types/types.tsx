@@ -83,6 +83,7 @@ export interface Stream {
   stream_type: streamType;
   endpoints: StreamEndpoint[];
   format: StreamFormat;
+  configured: boolean;
 }
 
 /* If we ever need to add more compression formats, just add them here */

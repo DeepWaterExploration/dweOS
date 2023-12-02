@@ -16,6 +16,7 @@ class Stream:
     width: int = 1920
     height: int = 1080
     interval: Interval = Interval(1, 30)
+    configured: bool = False
 
     started: bool = False
 

@@ -238,7 +238,7 @@ interface StreamOptionsProps {
 
 const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
   const [stream, setStream] = useState(
-    props.device.stream.device_path !== undefined
+    props.device.stream.configured
   );
 
   const [host, setHost] = useState("192.168.2.1");
@@ -557,7 +557,7 @@ interface CameraControlsProps {
 }
 
 interface ControlState {
-  id: number;
+  control_id: number;
   name: string;
   setControlValue:
   | ((value: number) => void)
@@ -610,7 +610,7 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                 const [controlValueSlider, setControlValueSlider] =
                   useState<number>(defaultValue as number);
                 setStatesList.push({
-                  id,
+                  control_id,
                   name,
                   setControlValue,
                   defaultValue,
@@ -634,7 +634,7 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                       onChange={(_, newValue) => {
                         setControlValueSlider(newValue as number);
                       }}
-                      name={`control-${id}`}
+                      name={`control-${control_id}`}
                       min={min_value}
                       max={max_value}
                       step={step}
@@ -690,7 +690,7 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                       onChange={(_, checked) => {
                         setControlValue(!controlValue);
                       }}
-                      name={`control-${id}`}
+                      name={`control-${control_id}`}
                       defaultChecked={defaultValue}
                     />
                   </>
@@ -739,7 +739,7 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
 
                 return (
                   <>
-                    <PopupState variant='popover' popupId={"" + id}>
+                    <PopupState variant='popover' popupId={"" + control_id}>
                       {(popupState) => (
                         <>
                           <div>

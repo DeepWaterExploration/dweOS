@@ -83,6 +83,18 @@ def set_nickname():
     device.nickname = nickname
     return jsonify({})
 
+@app.route('/devices/set_uvc_control', methods=['POST'])
+def set_uvc_control():
+    uvc_control = UVCControlSchema().load(request.get_json())
+    print(uvc_control)
+    device = find_device_with_bus_info(uvc_control['bus_info'])
+    if not device:
+        return jsonify({})
+    control_id = uvc_control['control_id']
+    value = uvc_control['value']
+    device.set_pu(control_id, value)
+    return jsonify({})
+
 
 def list_diff(listA, listB):
     # find the difference between lists

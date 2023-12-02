@@ -4,7 +4,6 @@ import {
   Stream,
   StreamEndpoint,
   StreamFormat,
-  bitrateMode,
   encodeType,
   optionType,
 } from "../types/types";
@@ -305,17 +304,15 @@ export async function stopStream(index: number): Promise<void> {
  * @throws {Error} - If the index is invalid or the request fails.
  */
 export async function setUVCControl(
-  usbInfo: string,
+  bus_info: string,
   value: number,
-  id: number
+  control_id: number
 ): Promise<void> {
   const url = `${DEVICE_API_URL}/devices/set_uvc_control`;
   const data = {
-    usbInfo,
-    control: {
-      value,
-      id,
-    },
+    bus_info,
+    value,
+    control_id,
   };
   const config: RequestInit = {
     mode: "cors",

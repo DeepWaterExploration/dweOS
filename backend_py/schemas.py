@@ -159,3 +159,8 @@ class StreamInfoSchema(Schema):
 class DeviceNicknameSchema(Schema):
     bus_info = fields.Str()
     nickname = fields.Str()
+
+class UVCControlSchema(Schema):
+    bus_info = fields.Str()
+    control_id = fields.Int()
+    value = fields.Int()

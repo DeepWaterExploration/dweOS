@@ -41,7 +41,7 @@ export interface CameraInterval {
 export interface Control {
   flags: ControlFlags;
   /* The control ID */
-  id: number;
+  control_id: number;
   name: string;
   value: number;
 }

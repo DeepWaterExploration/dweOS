@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import v4l2
 import fcntl
 import os
+from natsort import natsorted
 
 
 @dataclass
@@ -58,7 +59,7 @@ def list_devices():
     for bus_info in devices_map:
         device_info = devices_map[bus_info]
         # sort the device paths in ascending order
-        device_info.device_paths.sort()
+        device_info.device_paths = natsorted(device_info.device_paths)
         devices_info.append(device_info)
 
     return devices_info

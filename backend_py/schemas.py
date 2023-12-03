@@ -79,7 +79,7 @@ class DeviceInfoSchema(Schema):
 class DeviceOptionsSchema(Schema):
     bitrate = fields.Int()
     gop = fields.Int()
-    mode = fields.Enum(EHDDevice.H264Mode, by_value=True)
+    mode = fields.Enum(H264Mode, by_value=True)
 
 
 class StreamEndpointSchema(Schema):
@@ -128,6 +128,9 @@ class DeviceSchema(Schema):
                 data['options'] = DeviceOptionsSchema().dump(options)
             elif not self.only and not self.exclude:
                 data['options'] = DeviceOptionsSchema().dump(options)
+
+            for control in data['controls']:
+                control['value'] = original.get_pu(control['control_id'])
         return data
 
 
@@ -137,7 +140,8 @@ class SavedDeviceSchema(DeviceSchema):
 
     @post_load()
     def make_saved_device(self, data: typing.Dict, **kwargs):
-        saved_stream = SavedStream(**data['stream'])
+        interval = Interval(**data['stream']['interval'])
+        saved_stream = SavedStream(data['stream']['encode_type'], data['stream']['stream_type'], data['stream']['endpoints'], data['stream']['width'], data['stream']['height'], interval, data['stream']['configured'])
         saved_options = SavedOptions(**data['options'])
         saved_controls = []
         for control in data['controls']:
@@ -161,7 +165,7 @@ class OptionValueSchema(Schema):
     @post_load()
     def dump_options(self, data: typing.Dict, **kwargs):
         if data['option'] is OptionTypeEnum.MODE:
-            data['value'] = EHDDevice.H264Mode(data['value'])
+            data['value'] = H264Mode(data['value'])
         return data
 
 

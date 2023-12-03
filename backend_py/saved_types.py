@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import *
 from stream import StreamEncodeTypeEnum, StreamTypeEnum, StreamEndpoint, Interval
-from device import EHDDevice, Control
+from camera_types import H264Mode
 
 @dataclass
 class SavedControl:
@@ -23,7 +23,7 @@ class SavedStream:
 class SavedOptions:
     bitrate: int
     gop: int
-    mode: EHDDevice.H264Mode
+    mode: H264Mode
 
 @dataclass
 class SavedDevice:

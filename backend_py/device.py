@@ -15,6 +15,8 @@ import v4l2
 from camera_types import *
 from stream import *
 
+from saved_types import *
+
 
 class Camera:
     '''
@@ -158,13 +160,6 @@ class EHDDevice:
     name: str = 'exploreHD'
     manufacturer: str = 'DeepWater Exploration Inc.'
 
-    class H264Mode(Enum):
-        '''
-        H.264 Mode Enum
-        '''
-        MODE_CONSTANT_BITRATE = 1
-        MODE_VARIABLE_BITRATE = 2
-
     def __init__(self, device_info: DeviceInfo) -> None:
         # make sure this is an exploreHD
         assert (is_ehd(device_info))
@@ -182,6 +177,8 @@ class EHDDevice:
         self.nickname = ''
         self.controls = []
         self.stream = Stream()
+
+        print(self.cameras[0].path)
 
         # UVC xu bitrate control
         self._options['bitrate'] = Option(
@@ -233,7 +230,7 @@ class EHDDevice:
         self._set_option('gop', gop)
 
     def get_mode(self):
-        return self.H264Mode(self._get_option('mode'))
+        return H264Mode(self._get_option('mode'))
 
     def set_mode(self, mode: H264Mode):
         self._set_option('mode', mode.value)
@@ -248,6 +245,23 @@ class EHDDevice:
         fd = self.cameras[0]._fd
         control = v4l2.v4l2_control(control_id, value)
         fcntl.ioctl(fd, v4l2.VIDIOC_S_CTRL, control)
+
+    def load_settings(self, saved_device: SavedDevice):
+        # for control in saved_device.controls:
+        #     self.set_pu(control.control_id, control.value)
+        self.set_bitrate(saved_device.options.bitrate)
+        self.set_gop(saved_device.options.gop)
+        self.set_mode(saved_device.options.mode)
+        print(saved_device.stream.interval)
+        self.configure_stream(saved_device.stream.encode_type, 
+                              saved_device.stream.width, 
+                              saved_device.stream.height,
+                              saved_device.stream.interval, 
+                              saved_device.stream.stream_type, 
+                              saved_device.stream.endpoints)
+        self.stream.configured = saved_device.stream.configured
+        if self.stream.configured:
+            self.stream.start()
 
     # get an option
     def _get_option(self, opt: str):
@@ -281,6 +295,6 @@ class EHDDevice:
             control.flags.step = qctrl.step
             control.flags.default_value = qctrl.default
 
-            control.value = self.get_pu(cid)
+            # control.value = self.get_pu(cid)
 
             self.controls.append(control)

@@ -8,7 +8,7 @@ from schemas import *
 from device import *
 from stream import *
 from settings import SettingsManager
-from util import list_diff
+from utils import list_diff
 
 import threading
 
@@ -75,6 +75,7 @@ def configure_stream():
     device.configure_stream(encode_type, width, height,
                             interval, StreamTypeEnum.UDP, endpoints)
     device.stream.start()
+    settings_manager.save_device(device)
     return jsonify({})
 
 @app.route('/devices/unconfigure_stream', methods=['POST'])
@@ -85,6 +86,7 @@ def unconfigure_stream():
         return jsonify({})
     
     device.unconfigure_stream()
+    settings_manager.save_device(device)
     return jsonify({})
 
 @app.route('/devices/set_nickname', methods=['POST'])
@@ -95,6 +97,7 @@ def set_nickname():
         return jsonify({})
     nickname = device_nickname['nickname']
     device.nickname = nickname
+    settings_manager.save_device(device)
     return jsonify({})
 
 @app.route('/devices/set_uvc_control', methods=['POST'])
@@ -107,6 +110,7 @@ def set_uvc_control():
     control_id = uvc_control['control_id']
     value = uvc_control['value']
     device.set_pu(control_id, value)
+    settings_manager.save_device(device)
     return jsonify({})
 
 
@@ -148,6 +152,8 @@ def monitor(devices):
                     device), depth=1, compact=True, sort_dicts=False)
                 # append the device to the device list
                 devices.append(device)
+                # load the settings
+                settings_manager.load_device(device)
                 # add the device info to the device list
                 old_device_list.append(device_info)
 

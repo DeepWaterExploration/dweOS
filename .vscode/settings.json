@@ -85,7 +85,7 @@
   },
   "cmake.sourceDirectory": "/home/brandons/Development/test3/DWE_OS_2/backend",
   "[python]": {
-    "editor.defaultFormatter": "ms-python.autopep8"
+    "editor.defaultFormatter": "ms-python.python"
   },
   "python.formatting.provider": "none"
 }

@@ -4,6 +4,7 @@ import time
 import json
 from saved_types import *
 from schemas import SavedDeviceSchema, DeviceSchema
+from device import EHDDevice
 
 class SettingsManager:
 
@@ -14,7 +15,6 @@ class SettingsManager:
             open('./device_settings.json', 'w').close()
             self.file_object = open('./device_settings.json', 'r+')
         self.to_save: List[SavedDevice] = []
-        self.saved_devices: List[SavedDevice] = []
         self.thread = threading.Thread(target=self._run_settings_sync)
         self.thread.start()
 
@@ -27,6 +27,12 @@ class SettingsManager:
             self.file_object.truncate()
             self.settings = []
             self.file_object.flush()
+
+    def load_device(self, device: EHDDevice):
+        for saved_device in self.settings:
+            if saved_device.bus_info == device.bus_info:
+                device.load_settings(saved_device)
+                return
 
     def _save_device(self, saved_device: SavedDevice):
         for dev in self.settings:

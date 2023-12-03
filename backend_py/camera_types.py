@@ -43,7 +43,6 @@ class Control:
     control_id: int
     name: str
     flags: ControlFlags = field(default_factory=ControlFlags)
-    value: int = 0
 
 
 class StreamEncodeTypeEnum(Enum):
@@ -59,3 +58,10 @@ class StreamTypeEnum(Enum):
 class StreamEndpoint:
     host: str
     port: int
+
+class H264Mode(Enum):
+    '''
+    H.264 Mode Enum
+    '''
+    MODE_CONSTANT_BITRATE = 1
+    MODE_VARIABLE_BITRATE = 2

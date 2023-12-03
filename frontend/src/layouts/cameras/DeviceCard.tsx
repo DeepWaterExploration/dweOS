@@ -563,7 +563,7 @@ interface ControlState {
   | ((value: number) => void)
   | ((value: boolean) => void)
   | ((value: string) => void);
-  defaultValue: number | string | boolean;
+  default_value: number | string | boolean;
   type: controlType;
 }
 
@@ -601,19 +601,18 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
             }
             switch (control.flags.control_type) {
               case controlType.INTEGER: {
-                const { name, control_id } = control;
-                const { min_value, max_value, step } = control.flags;
-                const defaultValue = control.flags.default_value;
+                const { name, control_id, value } = control;
+                const { min_value, max_value, step, default_value } = control.flags;
                 const [controlValue, setControlValue] = useState<number>(
-                  defaultValue as number
+                  value as number
                 );
                 const [controlValueSlider, setControlValueSlider] =
-                  useState<number>(defaultValue as number);
+                  useState<number>(value as number);
                 setStatesList.push({
                   control_id,
                   name,
                   setControlValue,
-                  defaultValue,
+                  default_value,
                   type: control.flags.control_type,
                 } as ControlState);
 
@@ -639,7 +638,7 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                       max={max_value}
                       step={step}
                       value={controlValueSlider}
-                      defaultValue={defaultValue as number}
+                      defaultValue={value as number}
                       style={{
                         marginLeft: "20px",
                         width: "calc(100% - 25px)",
@@ -657,20 +656,21 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                   VALUE_FALSE = 1;
                 }
                 let { name, control_id } = control;
-                const defaultValue =
-                  control.flags.default_value === VALUE_TRUE ? true : false;
+                let { default_value } = control.flags;
+                const value =
+                  control.value === VALUE_TRUE ? true : false;
                 if (name.includes("White Balance")) {
                   name = "AI TrueColor Technology™";
                 }
                 const [controlValue, setControlValue] = useState<boolean>(
-                  defaultValue as boolean
+                  value as boolean
                 );
 
                 setStatesList.push({
                   control_id,
                   name,
                   setControlValue,
-                  defaultValue,
+                  default_value,
                   type: control.flags.control_type,
                 });
 
@@ -691,14 +691,14 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                         setControlValue(!controlValue);
                       }}
                       name={`control-${control_id}`}
-                      defaultChecked={defaultValue}
+                      defaultChecked={value}
                     />
                   </>
                 );
               }
               case controlType.MENU: {
                 const { name, control_id } = control;
-                const { menu } = control.flags;
+                const { menu, default_value } = control.flags;
                 if (!menu) break;
 
                 let menuObject: { [name: string]: number } = {};
@@ -716,19 +716,19 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                 //   };
                 // }
 
-                const defaultValue = Object.keys(menuObject).find(
-                  (key) => menuObject[key] === control.flags.default_value
+                const value = Object.keys(menuObject).find(
+                  (key) => menuObject[key] === control.value
                 );
                 const [controlValue, setControlValue] = useState<string>(
-                  defaultValue!
+                  value!
                 );
 
-                if (defaultValue) {
+                if (value) {
                   setStatesList.push({
                     control_id,
                     name,
                     setControlValue,
-                    defaultValue,
+                    default_value,
                     type: control.flags.control_type,
                   });
                 }
@@ -783,17 +783,17 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
               switch (control.type) {
                 case controlType.INTEGER:
                   (control.setControlValue as (value: number) => void)(
-                    control.defaultValue as number
+                    control.default_value as number
                   );
                   break;
                 case controlType.BOOLEAN:
                   (control.setControlValue as (value: boolean) => void)(
-                    control.defaultValue as boolean
+                    control.default_value as boolean
                   );
                   break;
                 case controlType.MENU:
                   (control.setControlValue as (value: string) => void)(
-                    control.defaultValue as string
+                    control.default_value as string
                   );
                   break;
               }

@@ -55,6 +55,5 @@ class SettingsManager:
 
     def save_device(self, device: EHDDevice):
         saved_device = SavedDeviceSchema().load(SavedDeviceSchema().dump(device))
-        print(saved_device)
         # schedule a save command
         self.to_save.append(saved_device)

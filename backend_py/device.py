@@ -178,8 +178,6 @@ class EHDDevice:
         self.controls = []
         self.stream = Stream()
 
-        print(self.cameras[0].path)
-
         # UVC xu bitrate control
         self._options['bitrate'] = Option(
             self.cameras[2], '>I', xu.Unit.USR_ID, xu.Selector.USR_H264_CTRL, xu.Command.H264_BITRATE_CTRL)
@@ -247,12 +245,14 @@ class EHDDevice:
         fcntl.ioctl(fd, v4l2.VIDIOC_S_CTRL, control)
 
     def load_settings(self, saved_device: SavedDevice):
-        # for control in saved_device.controls:
-        #     self.set_pu(control.control_id, control.value)
+        for control in saved_device.controls:
+            try:
+                self.set_pu(control.control_id, control.value)
+            except:
+                continue
         self.set_bitrate(saved_device.options.bitrate)
         self.set_gop(saved_device.options.gop)
         self.set_mode(saved_device.options.mode)
-        print(saved_device.stream.interval)
         self.configure_stream(saved_device.stream.encode_type, 
                               saved_device.stream.width, 
                               saved_device.stream.height,
@@ -260,6 +260,7 @@ class EHDDevice:
                               saved_device.stream.stream_type, 
                               saved_device.stream.endpoints)
         self.stream.configured = saved_device.stream.configured
+        self.nickname = saved_device.nickname
         if self.stream.configured:
             self.stream.start()
 

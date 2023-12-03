@@ -42,6 +42,7 @@ class ControlFlags:
 class Control:
     control_id: int
     name: str
+    value: int
     flags: ControlFlags = field(default_factory=ControlFlags)
 
 

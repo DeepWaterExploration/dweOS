@@ -154,6 +154,11 @@ def is_ehd(device_info: DeviceInfo):
         len(device_info.device_paths) == 4
     )
 
+@dataclass
+class OptionValues:
+    bitrate: int
+    gop: int
+    mode: H264Mode
 
 class EHDDevice:
 
@@ -190,6 +195,12 @@ class EHDDevice:
         self._options['mode'] = Option(
             self.cameras[2], 'B', xu.Unit.USR_ID, xu.Selector.USR_H264_CTRL, xu.Command.H264_MODE_CTRL)
 
+        self.options = OptionValues(
+            self.get_bitrate(),
+            self.get_gop(),
+            self.get_mode()
+        )
+
         self._get_controls()
 
     def configure_stream(self, encode_type: StreamEncodeTypeEnum, width: int, height: int, interval: Interval, stream_type: StreamTypeEnum, stream_endpoints: List[StreamEndpoint] = []):
@@ -219,18 +230,21 @@ class EHDDevice:
         return self._get_option('bitrate')
 
     def set_bitrate(self, bitrate: int):
+        self.options.bitrate = bitrate;
         self._set_option('bitrate', bitrate)
 
     def get_gop(self):
         return self._get_option('gop')
 
     def set_gop(self, gop: int):
+        self.options.gop = gop
         self._set_option('gop', gop)
 
     def get_mode(self):
         return H264Mode(self._get_option('mode'))
 
     def set_mode(self, mode: H264Mode):
+        self.options.mode = mode
         self._set_option('mode', mode.value)
 
     def get_pu(self, control_id: int):
@@ -288,14 +302,12 @@ class EHDDevice:
                 fcntl.ioctl(fd, v4l2.VIDIOC_QUERYCTRL, qctrl)
             except IOError:
                 continue
-            control = Control(qctrl.id, qctrl.name)
+            control = Control(qctrl.id, qctrl.name, self.get_pu(cid))
 
             control.flags.control_type = ControlTypeEnum(qctrl.type)
             control.flags.max_value = qctrl.maximum
             control.flags.min_value = qctrl.minimum
             control.flags.step = qctrl.step
             control.flags.default_value = qctrl.default
-
-            # control.value = self.get_pu(cid)
 
             self.controls.append(control)

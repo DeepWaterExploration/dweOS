@@ -116,22 +116,9 @@ class DeviceSchema(Schema):
     device_info = fields.Nested(DeviceInfoSchema)
     options = fields.Nested(DeviceOptionsSchema)
 
-    @post_dump(pass_original=True)
-    def dump_options(self, data: typing.Dict, original: Any, **kwargs):
-        if type(original) == EHDDevice:
-            options = {
-                'bitrate': original.get_bitrate(),
-                'gop': original.get_gop(),
-                'mode': original.get_mode()
-            }
-            if (self.only and 'options' in self.only) and (self.exclude and 'options' not in self.exclude):
-                data['options'] = DeviceOptionsSchema().dump(options)
-            elif not self.only and not self.exclude:
-                data['options'] = DeviceOptionsSchema().dump(options)
-
-            for control in data['controls']:
-                control['value'] = original.get_pu(control['control_id'])
-        return data
+    # @post_dump(pass_original=True)
+    # def dump_options(self, data: typing.Dict, original: Any, **kwargs):
+    #     return data
 
 
 class SavedDeviceSchema(DeviceSchema):

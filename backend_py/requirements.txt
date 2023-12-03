@@ -2,3 +2,4 @@ marshmallow
 flask
 flask_cors
 natsort
+websockets

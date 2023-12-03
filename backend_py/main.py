@@ -1,6 +1,7 @@
 import time
 from ctypes import *
 import pprint
+import re
 
 from enumeration import *
 from camera_helper_loader import *
@@ -14,6 +15,8 @@ import threading
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+
+import websockets
 
 app = Flask(__name__)
 CORS(app)
@@ -34,7 +37,17 @@ def find_device_with_bus_info(bus_info: str) -> (EHDDevice | None):
 
 @app.route('/devices', methods=['GET'])
 def get_devices():
-    return jsonify(DeviceSchema().dump(devices, many=True))
+    device_list = DeviceSchema().dump(devices, many=True)
+    key_pattern = re.compile(r'^(\D+)(\d+)$')
+    def key(item: Dict):
+        # Get the integer at the end of the path
+        try:
+            m = key_pattern.match(item['cameras'][0]['path'])
+            return int(m.group(2))
+        except:
+            return -1
+    device_list.sort(key=key)
+    return jsonify(device_list)
 
 
 @app.route('/devices/set_option', methods=['POST'])
@@ -179,6 +192,18 @@ def main():
     monitor_process.start()
 
     app.run(port=8080, host='0.0.0.0')
+
+    # devices_info = list_devices()
+    # first_ehd = None
+    # for device in devices_info:
+    #     if is_ehd(device):
+    #         first_ehd = EHDDevice(device)
+    #         break
+    # if not first_ehd:
+    #     return
+    
+    # while True:
+    #     print(first_ehd.get_bitrate(), first_ehd.get_mode())
 
 
 if __name__ == '__main__':

@@ -17,8 +17,8 @@ class ControlTypeEnum(Enum):
 
 @dataclass
 class Interval:
-    numerator: int
-    denominator: int
+    numerator: int = 1
+    denominator: int = 30
 
 
 @dataclass

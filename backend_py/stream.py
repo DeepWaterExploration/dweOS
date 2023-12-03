@@ -15,7 +15,7 @@ class Stream:
     endpoints: List[StreamEndpoint] = field(default_factory=list)
     width: int = 1920
     height: int = 1080
-    interval: Interval = Interval(1, 30)
+    interval: Interval = field(default_factory=Interval)
     configured: bool = False
 
     started: bool = False

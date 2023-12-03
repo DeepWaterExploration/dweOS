@@ -134,7 +134,23 @@ def save_device(device: EHDDevice):
 
 def monitor(devices):
     # monitor devices for changes
-    old_device_list = []
+    devices_info = list_devices()
+
+    for device_info in devices_info:
+        if not is_ehd(device_info):
+            continue
+        device = None
+        try:
+            device = EHDDevice(device_info)
+        except Exception as e:
+            print(e)
+            continue
+        # append the device to the device list
+        devices.append(device)
+        # load the settings
+        settings_manager.load_device(device)
+
+    old_device_list = devices_info
 
     try:
         while True:
@@ -150,9 +166,6 @@ def monitor(devices):
             for device_info in new_devices:
                 if not is_ehd(device_info):
                     continue
-                # if the device is not ready (essentially meaning the linux filesystem has not been populated yet),
-                # this will error, resulting in the loop continuing
-                # yes, this is a bit hacky, but there is no real cleaner way of doing this
                 device = None
                 try:
                     device = EHDDevice(device_info)
@@ -171,6 +184,10 @@ def monitor(devices):
                 pprint.pprint(DeviceSchema(
                     only=['vid', 'pid', 'nickname', 'bus_info', 'stream', 'controls', 'options'], exclude=['stream.device_path', 'controls.flags']).dump(
                     device), depth=1, compact=True, sort_dicts=False)
+                
+                broadcast_server.broadcast(Message(
+                    'device_added', DeviceSchema().dump(device)
+                ))
 
             # remove the old devices
             for device_info in removed_devices:

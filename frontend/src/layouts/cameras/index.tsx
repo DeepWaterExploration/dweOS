@@ -25,6 +25,10 @@ interface Message {
   data: object;
 }
 
+interface DeviceRemovedInfo {
+  bus_info: string;
+}
+
 const deserializeMessage = (message_str: string) => {
   let parts = message_str.split(': ');
   let message: Message = {
@@ -35,9 +39,6 @@ const deserializeMessage = (message_str: string) => {
 }
 
 const websocket = new WebSocket(DEVICE_API_WS);
-websocket.addEventListener('message', (message) => {
-  console.log(deserializeMessage(message.data));
-});
 
 const CamerasPage: React.FC = () => {
   const [exploreHD_cards, setExploreHD_cards] = useState<JSX.Element[]>([]);
@@ -75,6 +76,19 @@ const CamerasPage: React.FC = () => {
     getDevices().then((devices) => {
       console.log("Devices: ", devices);
       addDevices(devices);
+    });
+
+    websocket.addEventListener('message', (e) => {
+      let message = deserializeMessage(e.data);
+      console.log(message.data);
+      switch (message.event_name) {
+        case 'device_added':
+          addDevice(message.data as Device);
+          break;
+        case 'device_removed':
+          removeDevice((message.data as DeviceRemovedInfo).bus_info);
+          break;
+      }
     });
   }, []);
 

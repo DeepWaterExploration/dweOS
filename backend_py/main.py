@@ -89,7 +89,6 @@ def configure_stream():
                             interval, StreamTypeEnum.UDP, endpoints)
     device.stream.start()
     settings_manager.save_device(device)
-    socketio.emit('test')
     return jsonify({})
 
 @app.route('/devices/unconfigure_stream', methods=['POST'])

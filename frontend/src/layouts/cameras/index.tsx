@@ -3,7 +3,9 @@ import React, { useEffect, useState } from "react";
 
 import DeviceCard from "./DeviceCard";
 import { Device } from "../../types/types";
-import { getDevices, DEVICE_API_WS } from "../../utils/api";
+import { getDevices, DEVICE_API_WS, DEVICE_API_URL } from "../../utils/api";
+
+import { io } from 'socket.io-client';
 
 const hash = function (str: string) {
   let hash = 0,
@@ -17,6 +19,16 @@ const hash = function (str: string) {
   }
   return hash;
 };
+
+// // Create socket.io connection.
+// const socket = io(DEVICE_API_URL);
+// socket.on("connect", () => {
+//   console.log(socket.id);
+// });
+
+// socket.on('test', function () {
+//   console.log('test');
+// });
 
 const CamerasPage: React.FC = () => {
   const [exploreHD_cards, setExploreHD_cards] = useState<JSX.Element[]>([]);
@@ -32,18 +44,21 @@ const CamerasPage: React.FC = () => {
     });
   };
 
-  const removeDevice = (device: Device): void => {
+  const addDevice = (device: Device) => {
     setExploreHD_cards((prevCards) => {
-      return prevCards.filter((card) => {
-        return card.props.device.bus_info != device.bus_info;
-      });
+      return [
+        ...prevCards,
+        <DeviceCard key={hash(device.bus_info)} device={device} />
+      ];
     });
   };
 
-  const removeDevices = (devices: Device[]) => {
-    for (const device of devices) {
-      removeDevice(device);
-    }
+  const removeDevice = (bus_info: string): void => {
+    setExploreHD_cards((prevCards) => {
+      return prevCards.filter((card) => {
+        return card.props.device.bus_info != bus_info;
+      });
+    });
   };
 
   useEffect(() => {
@@ -52,25 +67,6 @@ const CamerasPage: React.FC = () => {
       console.log("Devices: ", devices);
       addDevices(devices);
     });
-
-    // Create WebSocket connection.
-    const socket = new WebSocket(DEVICE_API_WS);
-
-    // Listen for messages
-    socket.addEventListener("message", (event) => {
-      const lines = event.data.split("\n");
-      const event_name = lines[0];
-      const msg = JSON.parse(lines[1]);
-      console.log("Event: ", event_name);
-      console.log(msg);
-
-      if (event_name === "added_devices") {
-        addDevices(msg as Device[]);
-      } else if (event_name === "removed_devices") {
-        removeDevices(msg as Device[]);
-      }
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

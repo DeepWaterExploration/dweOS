@@ -16,13 +16,18 @@ import threading
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
-import websockets
+from flask_socketio import SocketIO
 
 app = Flask(__name__)
 CORS(app)
+socketio = SocketIO(app, cors_allowed_origins='*')
 app.json.sort_keys = False
 devices: list[EHDDevice] = []
 settings_manager = SettingsManager()
+
+@socketio.on('message')
+def handle_message(data):
+    print('received message: ' + data)
 
 # only include the values needed for deserialization
 save_device_schema = DeviceSchema(
@@ -159,16 +164,21 @@ def monitor(devices):
                 except Exception as e:
                     print(e)
                     continue
-                print(f'Device Added: {device_info.bus_info}')
-                pprint.pprint(DeviceSchema(
-                    only=['vid', 'pid', 'nickname', 'bus_info', 'stream', 'controls', 'options'], exclude=['stream.device_path', 'controls.flags']).dump(
-                    device), depth=1, compact=True, sort_dicts=False)
                 # append the device to the device list
                 devices.append(device)
                 # load the settings
                 settings_manager.load_device(device)
                 # add the device info to the device list
                 old_device_list.append(device_info)
+
+                # Output device to log (after loading settings)
+                print(f'Device Added: {device_info.bus_info}')
+                pprint.pprint(DeviceSchema(
+                    only=['vid', 'pid', 'nickname', 'bus_info', 'stream', 'controls', 'options'], exclude=['stream.device_path', 'controls.flags']).dump(
+                    device), depth=1, compact=True, sort_dicts=False)
+                
+                # emit the change to socketio
+                socketio.emit('device_added', DeviceSchema().dump(device))
 
             # remove the old devices
             for device_info in removed_devices:
@@ -179,6 +189,7 @@ def monitor(devices):
                         # remove the device info from the old device list
                         old_device_list.remove(device_info)
                         print(f'Device Removed: {device_info.bus_info}')
+                        socketio.emit('device_removed', device_info.bus_info)
 
             # do not overload the bus
             time.sleep(0.1)
@@ -191,7 +202,7 @@ def main():
     monitor_process = threading.Thread(target=monitor, args=[devices])
     monitor_process.start()
 
-    app.run(port=8080, host='0.0.0.0')
+    socketio.run(app, host='0.0.0.0', port=8080)
 
     # devices_info = list_devices()
     # first_ehd = None

@@ -20,15 +20,24 @@ const hash = function (str: string) {
   return hash;
 };
 
-// // Create socket.io connection.
-// const socket = io(DEVICE_API_URL);
-// socket.on("connect", () => {
-//   console.log(socket.id);
-// });
+interface Message {
+  event_name: string;
+  data: object;
+}
 
-// socket.on('test', function () {
-//   console.log('test');
-// });
+const deserializeMessage = (message_str: string) => {
+  let parts = message_str.split(': ');
+  let message: Message = {
+    event_name: parts[0],
+    data: JSON.parse(message_str.substring(message_str.indexOf(': ') + 1))
+  };
+  return message;
+}
+
+const websocket = new WebSocket(DEVICE_API_WS);
+websocket.addEventListener('message', (message) => {
+  console.log(deserializeMessage(message.data));
+});
 
 const CamerasPage: React.FC = () => {
   const [exploreHD_cards, setExploreHD_cards] = useState<JSX.Element[]>([]);

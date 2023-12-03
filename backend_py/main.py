@@ -10,24 +10,19 @@ from device import *
 from stream import *
 from settings import SettingsManager
 from utils import list_diff
+from broadcast_server import BroadcastServer, Message
 
 import threading
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
-from flask_socketio import SocketIO
-
 app = Flask(__name__)
 CORS(app)
-socketio = SocketIO(app, cors_allowed_origins='*')
 app.json.sort_keys = False
 devices: list[EHDDevice] = []
 settings_manager = SettingsManager()
-
-@socketio.on('message')
-def handle_message(data):
-    print('received message: ' + data)
+broadcast_server = BroadcastServer()
 
 # only include the values needed for deserialization
 save_device_schema = DeviceSchema(
@@ -94,6 +89,7 @@ def configure_stream():
                             interval, StreamTypeEnum.UDP, endpoints)
     device.stream.start()
     settings_manager.save_device(device)
+    socketio.emit('test')
     return jsonify({})
 
 @app.route('/devices/unconfigure_stream', methods=['POST'])
@@ -176,9 +172,6 @@ def monitor(devices):
                 pprint.pprint(DeviceSchema(
                     only=['vid', 'pid', 'nickname', 'bus_info', 'stream', 'controls', 'options'], exclude=['stream.device_path', 'controls.flags']).dump(
                     device), depth=1, compact=True, sort_dicts=False)
-                
-                # emit the change to socketio
-                socketio.emit('device_added', DeviceSchema().dump(device))
 
             # remove the old devices
             for device_info in removed_devices:
@@ -189,7 +182,10 @@ def monitor(devices):
                         # remove the device info from the old device list
                         old_device_list.remove(device_info)
                         print(f'Device Removed: {device_info.bus_info}')
-                        socketio.emit('device_removed', device_info.bus_info)
+
+                        broadcast_server.broadcast(Message('device_removed', {
+                            'bus_info': device_info.bus_info
+                        }))
 
             # do not overload the bus
             time.sleep(0.1)
@@ -197,12 +193,12 @@ def monitor(devices):
         for device in devices:
             device.stream.stop()
 
-
 def main():
     monitor_process = threading.Thread(target=monitor, args=[devices])
     monitor_process.start()
 
-    socketio.run(app, host='0.0.0.0', port=8080)
+    broadcast_server.run_in_background()
+    app.run(host='0.0.0.0', port=8080)
 
     # devices_info = list_devices()
     # first_ehd = None
@@ -212,9 +208,6 @@ def main():
     #         break
     # if not first_ehd:
     #     return
-    
-    # while True:
-    #     print(first_ehd.get_bitrate(), first_ehd.get_mode())
 
 
 if __name__ == '__main__':

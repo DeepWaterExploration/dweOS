@@ -3,6 +3,12 @@ from ctypes import *
 import pprint
 import re
 
+import threading
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+import eventlet
+from eventlet import wsgi
+
 from enumeration import *
 from camera_helper_loader import *
 from schemas import *
@@ -11,11 +17,6 @@ from stream import *
 from settings import SettingsManager
 from utils import list_diff
 from broadcast_server import BroadcastServer, Message
-
-import threading
-
-from flask import Flask, jsonify, request
-from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
@@ -214,7 +215,8 @@ def main():
     monitor_process.start()
 
     broadcast_server.run_in_background()
-    app.run(host='0.0.0.0', port=8080)
+    wsgi.server(eventlet.listen(('0.0.0.0', 8080)), app)
+    # app.run(host='0.0.0.0', port=8080)
 
     # devices_info = list_devices()
     # first_ehd = None

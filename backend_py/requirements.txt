@@ -2,5 +2,5 @@ marshmallow
 flask
 flask_cors
 natsort
-flask-socketio
+websockets
 eventlet

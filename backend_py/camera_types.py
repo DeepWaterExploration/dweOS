@@ -37,7 +37,6 @@ class ControlFlags:
     control_type: ControlTypeEnum = ControlTypeEnum.INTEGER
     menu: List[str | int] = field(default_factory=list)
 
-
 @dataclass
 class Control:
     control_id: int

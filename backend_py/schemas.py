@@ -58,7 +58,7 @@ class ControlFlagsSchema(Schema):
     min_value = fields.Int()
     step = fields.Int()
     control_type = fields.Enum(ControlTypeEnum)
-    menu = fields.List(UnionField(fields.Str(), fields.Int()))
+    menu = fields.List(fields.Str())
 
 
 class ControlSchema(Schema):

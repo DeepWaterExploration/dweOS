@@ -1,13 +1,12 @@
-from io import TextIOWrapper
 from ctypes import *
-import typing
+
 import struct
 from dataclasses import dataclass, field
 import itertools
-from enum import Enum
 
 from enumeration import *
 from camera_helper_loader import *
+import ctypes
 import ehd_controls as xu
 import utils
 import v4l2
@@ -171,7 +170,7 @@ class EHDDevice:
 
         self._options: dict[str, Option] = {}
 
-        self.cameras = []
+        self.cameras: List[Camera] = []
         for device_path in device_info.device_paths:
             self.cameras.append(Camera(device_path))
 
@@ -309,5 +308,12 @@ class EHDDevice:
             control.flags.min_value = qctrl.minimum
             control.flags.step = qctrl.step
             control.flags.default_value = qctrl.default
+
+            # match qctrl.type:
+            #     case v4l2.V4L2_CTRL_TYPE_MENU:
+            #         for mindex in range(qctrl.minimum, qctrl.maximum):
+            #             name = ctypes.create_string_buffer(32)
+            #             print(camera_helper.query_menu_name(fd, control.control_id, mindex, name))
+            #             print(name.raw)
 
             self.controls.append(control)

@@ -309,11 +309,11 @@ class EHDDevice:
             control.flags.step = qctrl.step
             control.flags.default_value = qctrl.default
 
-            # match qctrl.type:
-            #     case v4l2.V4L2_CTRL_TYPE_MENU:
-            #         for mindex in range(qctrl.minimum, qctrl.maximum):
-            #             name = ctypes.create_string_buffer(32)
-            #             print(camera_helper.query_menu_name(fd, control.control_id, mindex, name))
-            #             print(name.raw)
+            match qctrl.type:
+                case v4l2.V4L2_CTRL_TYPE_MENU:
+                    for mindex in range(qctrl.minimum, qctrl.maximum):
+                        name = ctypes.create_string_buffer(32)
+                        camera_helper.query_menu_name(fd, control.control_id, mindex, name)
+                        # print(name.raw)
 
             self.controls.append(control)

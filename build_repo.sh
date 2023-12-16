@@ -5,8 +5,8 @@ sh ./build_frontend.sh
 cd ..
 
 # Go to backend folder
-cd backend
-sh ./build_backend.sh
+cd backend_py
+sh ./build.sh
 # Return to root folder
 cd ..
 

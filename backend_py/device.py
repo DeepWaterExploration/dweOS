@@ -16,6 +16,8 @@ from stream import *
 
 from saved_types import *
 
+from v4l2py.device import Device
+
 
 class Camera:
     '''
@@ -181,6 +183,8 @@ class EHDDevice:
         self.nickname = ''
         self.controls = []
         self.stream = Stream()
+        self.v4l2_device = Device(self.cameras[0].path)
+        self.v4l2_device.open()
 
         # UVC xu bitrate control
         self._options['bitrate'] = Option(
@@ -247,15 +251,12 @@ class EHDDevice:
         self._set_option('mode', mode.value)
 
     def get_pu(self, control_id: int):
-        fd = self.cameras[0]._fd
-        control = v4l2.v4l2_control(control_id, 0)
-        fcntl.ioctl(fd, v4l2.VIDIOC_G_CTRL, control)
+        control = self.v4l2_device.controls[control_id]
         return control.value
 
     def set_pu(self, control_id: int, value: int):
-        fd = self.cameras[0]._fd
-        control = v4l2.v4l2_control(control_id, value)
-        fcntl.ioctl(fd, v4l2.VIDIOC_S_CTRL, control)
+        control = self.v4l2_device.controls[control_id]
+        control.value = value
 
     def load_settings(self, saved_device: SavedDevice):
         for control in saved_device.controls:
@@ -293,27 +294,37 @@ class EHDDevice:
         fd = self.cameras[0]._fd
         self.controls = []
 
-        for cid in itertools.chain(
-                range(v4l2.V4L2_CID_BASE, v4l2.V4L2_CID_USER_BASE + 36),
-                range(v4l2.V4L2_CID_CAMERA_CLASS_BASE, v4l2.V4L2_CID_CAMERA_CLASS_BASE + 4)):
-            qctrl = v4l2.v4l2_queryctrl(cid)
-            try:
-                fcntl.ioctl(fd, v4l2.VIDIOC_QUERYCTRL, qctrl)
-            except IOError:
-                continue
-            control = Control(qctrl.id, qctrl.name, self.get_pu(cid))
-
-            control.flags.control_type = ControlTypeEnum(qctrl.type)
-            control.flags.max_value = qctrl.maximum
-            control.flags.min_value = qctrl.minimum
-            control.flags.step = qctrl.step
-            control.flags.default_value = qctrl.default
-
-            match qctrl.type:
-                case v4l2.V4L2_CTRL_TYPE_MENU:
-                    for mindex in range(qctrl.minimum, qctrl.maximum):
-                        name = ctypes.create_string_buffer(32)
-                        camera_helper.query_menu_name(fd, control.control_id, mindex, name)
-                        # print(name.raw)
+        for ctrl in self.v4l2_device.controls.values():
+            control = Control(ctrl.id, ctrl.name, ctrl.value)
+            # control.flags.control_type = ctrl.flags.
+            control.flags.control_type = ControlTypeEnum(ctrl.type)
+            control.flags.max_value = ctrl.info.maximum
+            control.flags.min_value = ctrl.info.minimum
+            control.flags.step = ctrl.info.step
+            control.flags.default_value = ctrl.info.default_value
 
             self.controls.append(control)
+
+        # for cid in itertools.chain(
+        #         range(v4l2.V4L2_CID_BASE, v4l2.V4L2_CID_USER_BASE + 36),
+        #         range(v4l2.V4L2_CID_CAMERA_CLASS_BASE, v4l2.V4L2_CID_CAMERA_CLASS_BASE + 4)):
+        #     qctrl = v4l2.v4l2_queryctrl(cid)
+        #     try:
+        #         fcntl.ioctl(fd, v4l2.VIDIOC_QUERYCTRL, qctrl)
+        #     except IOError:
+        #         continue
+        #     control = Control(qctrl.id, qctrl.name, self.get_pu(cid))
+
+        #     control.flags.control_type = ControlTypeEnum(qctrl.type)
+        #     control.flags.max_value = qctrl.maximum
+        #     control.flags.min_value = qctrl.minimum
+        #     control.flags.step = qctrl.step
+        #     control.flags.default_value = qctrl.default
+
+        #     match qctrl.type:
+        #         case v4l2.V4L2_CTRL_TYPE_MENU:
+        #             for mindex in range(qctrl.minimum, qctrl.maximum):
+        #                 name = ctypes.create_string_buffer(32)
+        #                 camera_helper.query_menu_name(fd, control.control_id, mindex, name)
+                        # print(name.raw)
+

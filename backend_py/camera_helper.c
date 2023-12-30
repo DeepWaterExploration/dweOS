@@ -48,6 +48,5 @@ int query_menu_name(int fd, int control_id, int mindex, char *name)
     qmenu.index = mindex;
     int ret = ioctl(fd, VIDIOC_QUERYMENU, &qmenu);
     strcpy(name, qmenu.name);
-    printf("%s\n", qmenu.name);
     return ret;
 }

@@ -257,6 +257,9 @@ class EHDDevice:
     def set_pu(self, control_id: int, value: int):
         control = self.v4l2_device.controls[control_id]
         control.value = value
+        for ctrl in self.controls:
+            if ctrl.control_id == control_id:
+                ctrl.value = value
 
     def load_settings(self, saved_device: SavedDevice):
         for control in saved_device.controls:
@@ -296,12 +299,20 @@ class EHDDevice:
 
         for ctrl in self.v4l2_device.controls.values():
             control = Control(ctrl.id, ctrl.name, ctrl.value)
-            # control.flags.control_type = ctrl.flags.
+
             control.flags.control_type = ControlTypeEnum(ctrl.type)
             control.flags.max_value = ctrl.info.maximum
             control.flags.min_value = ctrl.info.minimum
             control.flags.step = ctrl.info.step
             control.flags.default_value = ctrl.info.default_value
+            control.value = self.get_pu(ctrl.id)
+
+            match control.flags.control_type:
+                case ControlTypeEnum.MENU:
+                    for i in ctrl.menu:
+                        menu_item = ctrl.menu[i]
+                        print(menu_item)
+                        control.flags.menu.append(MenuItem(menu_item.index, menu_item.name))
 
             self.controls.append(control)
 

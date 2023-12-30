@@ -237,9 +237,7 @@ interface StreamOptionsProps {
 }
 
 const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
-  const [stream, setStream] = useState(
-    props.device.stream.configured
-  );
+  const [stream, setStream] = useState(props.device.stream.configured);
 
   const [host, setHost] = useState("192.168.2.1");
   const [port, setPort] = useState(5600);
@@ -560,9 +558,9 @@ interface ControlState {
   control_id: number;
   name: string;
   setControlValue:
-  | ((value: number) => void)
-  | ((value: boolean) => void)
-  | ((value: string) => void);
+    | ((value: number) => void)
+    | ((value: boolean) => void)
+    | ((value: string) => void);
   default_value: number | string | boolean;
   type: controlType;
 }
@@ -602,7 +600,8 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
             switch (control.flags.control_type) {
               case controlType.INTEGER: {
                 const { name, control_id, value } = control;
-                const { min_value, max_value, step, default_value } = control.flags;
+                const { min_value, max_value, step, default_value } =
+                  control.flags;
                 const [controlValue, setControlValue] = useState<number>(
                   value as number
                 );
@@ -657,8 +656,7 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                 }
                 let { name, control_id } = control;
                 let { default_value } = control.flags;
-                const value =
-                  control.value === VALUE_TRUE ? true : false;
+                const value = control.value === VALUE_TRUE ? true : false;
                 if (name.includes("White Balance")) {
                   name = "AI TrueColor Technology™";
                 }
@@ -701,12 +699,10 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                 const { menu, default_value } = control.flags;
                 if (!menu) break;
 
-                let menuObject: { [name: string]: number } = {};
-                for (const menuItem of menu) {
-                  menuObject[menuItem] = (menu as string[]).indexOf(
-                    menuItem as string
-                  );
-                }
+                // let menuObject: { [name: string]: number } = {};
+                // for (const menuItem of menu) {
+                //   menuObject[menuItem] =
+                // }
 
                 // Hacky fix for auto exposure bug in camera firmware
                 // if (name.includes("Auto Exposure") && menu.length === 2) {
@@ -716,14 +712,17 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                 //   };
                 // }
 
-                const value = Object.keys(menuObject).find(
-                  (key) => menuObject[key] === control.value
-                );
-                const [controlValue, setControlValue] = useState<string>(
-                  value!
+                // const value = Object.keys(menuObject).find(
+                //   (key) => menuObject[key] === control.value
+                // );
+
+                const [controlValue, setControlValue] = useState<number>(
+                  control.value!
                 );
 
-                if (value) {
+                console.log(menu);
+
+                if (control.value) {
                   setStatesList.push({
                     control_id,
                     name,
@@ -734,7 +733,7 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                 }
 
                 useDidMountEffect(() => {
-                  setUVCControl(usbInfo, menuObject[controlValue], control_id);
+                  setUVCControl(usbInfo, controlValue, control_id);
                 }, [controlValue]);
 
                 return (
@@ -744,23 +743,29 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                         <>
                           <div>
                             <span>
-                              {name}: {controlValue}
+                              {name}:
+                              {
+                                menu.find(
+                                  (menuItem) => menuItem.index == controlValue
+                                )!.name
+                              }
                             </span>
                             <IconButton {...bindTrigger(popupState)}>
                               <ArrowDropDownIcon />
                             </IconButton>
                           </div>
                           <Menu {...bindMenu(popupState)}>
-                            {Object.keys(menuObject).map((item) => {
+                            {menu.map((menuItem) => {
                               return (
                                 <MenuItem
-                                  key={item}
+                                  key={menuItem.index}
                                   onClick={() => {
-                                    setControlValue(item as string);
+                                    console.log(menuItem.index, menuItem.name);
+                                    setControlValue(menuItem.index);
                                     popupState.close();
                                   }}
                                 >
-                                  {item}
+                                  {menuItem.name}
                                 </MenuItem>
                               );
                             })}

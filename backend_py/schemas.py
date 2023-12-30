@@ -52,13 +52,18 @@ class CameraSchema(Schema):
                           fields.Nested(CameraFormatSizeSchema, many=True))
 
 
+class MenuItem(Schema):
+    index = fields.Int()
+    name = fields.Str()
+
+
 class ControlFlagsSchema(Schema):
     default_value = fields.Int()
     max_value = fields.Int()
     min_value = fields.Int()
     step = fields.Int()
     control_type = fields.Enum(ControlTypeEnum)
-    menu = fields.List(fields.Str())
+    menu = fields.Nested(MenuItem, many=True)
 
 
 class ControlSchema(Schema):

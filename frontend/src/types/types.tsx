@@ -46,6 +46,11 @@ export interface Control {
   value: number;
 }
 
+export interface MenuItem {
+  name: string;
+  index: number;
+}
+
 export interface ControlFlags {
   default_value: number;
   disabled: boolean;
@@ -59,7 +64,7 @@ export interface ControlFlags {
   update: number;
   volatility: number;
   write_only: boolean;
-  menu?: number[] | string[];
+  menu?: MenuItem[];
 }
 
 export interface CameraInfo {

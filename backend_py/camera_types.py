@@ -29,13 +29,19 @@ class FormatSize:
 
 
 @dataclass
+class MenuItem:
+    index: int
+    name: str
+
+
+@dataclass
 class ControlFlags:
     default_value: int = 0
     max_value: int = 0
     min_value: int = 0
     step: int = 0
     control_type: ControlTypeEnum = ControlTypeEnum.INTEGER
-    menu: List[str | int] = field(default_factory=list)
+    menu: List[MenuItem] = field(default_factory=list)
 
 @dataclass
 class Control:

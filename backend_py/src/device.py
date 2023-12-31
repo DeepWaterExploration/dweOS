@@ -256,7 +256,10 @@ class EHDDevice:
 
     def set_pu(self, control_id: int, value: int):
         control = self.v4l2_device.controls[control_id]
-        control.value = value
+        try:
+            control.value = value
+        except AttributeError:
+            pass
         for ctrl in self.controls:
             if ctrl.control_id == control_id:
                 ctrl.value = value
@@ -311,31 +314,7 @@ class EHDDevice:
                 case ControlTypeEnum.MENU:
                     for i in ctrl.menu:
                         menu_item = ctrl.menu[i]
-                        print(menu_item)
                         control.flags.menu.append(MenuItem(menu_item.index, menu_item.name))
 
             self.controls.append(control)
-
-        # for cid in itertools.chain(
-        #         range(v4l2.V4L2_CID_BASE, v4l2.V4L2_CID_USER_BASE + 36),
-        #         range(v4l2.V4L2_CID_CAMERA_CLASS_BASE, v4l2.V4L2_CID_CAMERA_CLASS_BASE + 4)):
-        #     qctrl = v4l2.v4l2_queryctrl(cid)
-        #     try:
-        #         fcntl.ioctl(fd, v4l2.VIDIOC_QUERYCTRL, qctrl)
-        #     except IOError:
-        #         continue
-        #     control = Control(qctrl.id, qctrl.name, self.get_pu(cid))
-
-        #     control.flags.control_type = ControlTypeEnum(qctrl.type)
-        #     control.flags.max_value = qctrl.maximum
-        #     control.flags.min_value = qctrl.minimum
-        #     control.flags.step = qctrl.step
-        #     control.flags.default_value = qctrl.default
-
-        #     match qctrl.type:
-        #         case v4l2.V4L2_CTRL_TYPE_MENU:
-        #             for mindex in range(qctrl.minimum, qctrl.maximum):
-        #                 name = ctypes.create_string_buffer(32)
-        #                 camera_helper.query_menu_name(fd, control.control_id, mindex, name)
-                        # print(name.raw)
 

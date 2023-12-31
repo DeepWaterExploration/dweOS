@@ -1,1 +1,2 @@
-cc -fPIC -shared -o camera_helper.so camera_helper.c
+mkdir build -p
+cc -fPIC -shared -o ${PWD}/build/camera_helper.so ${PWD}/src/camera_helper.c

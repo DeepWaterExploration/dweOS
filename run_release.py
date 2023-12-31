@@ -5,6 +5,7 @@ from eventlet import wsgi
 import sys
 import signal
 import os
+import psutil
 
 if __name__ == '__main__':
     BACKEND_CMD = './run.sh'
@@ -14,10 +15,14 @@ if __name__ == '__main__':
 
 
     backend_process = subprocess.Popen(BACKEND_CMD.split(' '), cwd='backend_py')
+    
 
     def exit_clean(sig, frame):
         print('Exiting')
-        backend_process.send_signal(sig=signal.SIGKILL)
+        p = psutil.Process(backend_process.pid)
+        for child in p.children(True):
+            child.terminate()
+        p.terminate()
         sys.exit(0)
 
     @app.route('/',  defaults={'path': 'index.html'})

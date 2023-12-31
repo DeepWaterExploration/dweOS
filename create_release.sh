@@ -31,4 +31,4 @@ cp frontend/dist/* -r release/frontend
 
 echo "Successfully packaged frontend"
 
-cp run_release.sh release
+cp run_release.py release

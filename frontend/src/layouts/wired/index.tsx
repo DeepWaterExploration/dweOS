@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { getCPUInfo, getTemperatureInfo } from "./api";
 import CPUCard from "./CPUCard";
 import DiskCard from "./DiskCard";
+import { DiskInfo, MemoryInfo } from "./types";
 // import MemoryCard from "./MemoryCard";
 import TemperatureCard from "./TemperatureCard";
 import { CPUInfo, TemperatureInfo } from "./types";
@@ -94,7 +95,7 @@ const Wired: React.FC = () => {
            */}
           <TemperatureCard
             cpuTemp={temperatureInfo.processor_temp}
-            minTemp={minTemp}
+            minTemp={minTemp || 0}
             maxTemp={maxTemp}
           />
         </>

@@ -2,12 +2,13 @@ import time
 from ctypes import *
 import pprint
 import re
+import sys
+import signal
 
 import threading
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-import eventlet
-from eventlet import wsgi
+from gevent.pywsgi import WSGIServer
 
 from enumeration import *
 from camera_helper_loader import *
@@ -24,6 +25,8 @@ app.json.sort_keys = False
 devices: list[EHDDevice] = []
 settings_manager = SettingsManager()
 broadcast_server = BroadcastServer()
+
+is_monitoring = True
 
 # only include the values needed for deserialization
 save_device_schema = DeviceSchema(
@@ -127,12 +130,6 @@ def set_uvc_control():
     settings_manager.save_device(device)
     return jsonify({})
 
-
-def save_device(device: EHDDevice):
-    serialized_device = save_device_schema.dump(device)
-
-
-
 def monitor(devices):
     # monitor devices for changes
     devices_info = list_devices()
@@ -153,79 +150,83 @@ def monitor(devices):
 
     old_device_list = devices_info
 
-    try:
-        while True:
-            devices_info = list_devices()
+    while is_monitoring:
+        devices_info = list_devices()
 
-            # find the new devices
-            new_devices = list_diff(devices_info, old_device_list)
+        # find the new devices
+        new_devices = list_diff(devices_info, old_device_list)
 
-            # find the removed devices
-            removed_devices = list_diff(old_device_list, devices_info)
+        # find the removed devices
+        removed_devices = list_diff(old_device_list, devices_info)
 
-            # add the new devices
-            for device_info in new_devices:
-                if not is_ehd(device_info):
-                    continue
-                device = None
-                try:
-                    device = EHDDevice(device_info)
-                except Exception as e:
-                    print(e)
-                    continue
-                # append the device to the device list
-                devices.append(device)
-                # load the settings
-                settings_manager.load_device(device)
-                # add the device info to the device list
-                old_device_list.append(device_info)
+        # add the new devices
+        for device_info in new_devices:
+            if not is_ehd(device_info):
+                continue
+            device = None
+            try:
+                device = EHDDevice(device_info)
+            except Exception as e:
+                print(e)
+                continue
+            # append the device to the device list
+            devices.append(device)
+            # load the settings
+            settings_manager.load_device(device)
+            # add the device info to the device list
+            old_device_list.append(device_info)
 
-                # Output device to log (after loading settings)
-                print(f'Device Added: {device_info.bus_info}')
-                pprint.pprint(DeviceSchema(
-                    only=['vid', 'pid', 'nickname', 'bus_info', 'stream', 'controls', 'options'], exclude=['stream.device_path', 'controls.flags']).dump(
-                    device), depth=1, compact=True, sort_dicts=False)
-                
-                broadcast_server.broadcast(Message(
-                    'device_added', DeviceSchema().dump(device)
-                ))
+            # Output device to log (after loading settings)
+            print(f'Device Added: {device_info.bus_info}')
+            pprint.pprint(DeviceSchema(
+                only=['vid', 'pid', 'nickname', 'bus_info', 'stream', 'controls', 'options'], exclude=['stream.device_path', 'controls.flags']).dump(
+                device), depth=1, compact=True, sort_dicts=False)
+            
+            broadcast_server.broadcast(Message(
+                'device_added', DeviceSchema().dump(device)
+            ))
 
-            # remove the old devices
-            for device_info in removed_devices:
-                for device in devices:
-                    if device.device_info == device_info:
-                        device.stream.stop()
-                        devices.remove(device)
-                        # remove the device info from the old device list
-                        old_device_list.remove(device_info)
-                        print(f'Device Removed: {device_info.bus_info}')
+        # remove the old devices
+        for device_info in removed_devices:
+            for device in devices:
+                if device.device_info == device_info:
+                    device.stream.stop()
+                    devices.remove(device)
+                    # remove the device info from the old device list
+                    old_device_list.remove(device_info)
+                    print(f'Device Removed: {device_info.bus_info}')
 
-                        broadcast_server.broadcast(Message('device_removed', {
-                            'bus_info': device_info.bus_info
-                        }))
+                    broadcast_server.broadcast(Message('device_removed', {
+                        'bus_info': device_info.bus_info
+                    }))
 
-            # do not overload the bus
-            time.sleep(0.1)
-    except KeyboardInterrupt:
-        for device in devices:
-            device.stream.stop()
+        # do not overload the bus
+        time.sleep(0.1)
 
 def main():
     monitor_process = threading.Thread(target=monitor, args=[devices])
     monitor_process.start()
+    http_server = WSGIServer(('0.0.0.0', 8080), app)
+
+    def exit_clean(sig, frame):
+        http_server.stop()
+
+        for device in devices:
+            device.stream.stop()
+        
+        broadcast_server.kill()
+
+        global is_monitoring
+        is_monitoring = False
+        monitor_process.join()
+
+        sys.exit(0)
+
 
     broadcast_server.run_in_background()
-    wsgi.server(eventlet.listen(('0.0.0.0', 8080)), app)
-    # app.run(host='0.0.0.0', port=8080)
+    signal.signal(signal.SIGINT, exit_clean)
 
-    # devices_info = list_devices()
-    # first_ehd = None
-    # for device in devices_info:
-    #     if is_ehd(device):
-    #         first_ehd = EHDDevice(device)
-    #         break
-    # if not first_ehd:
-    #     return
+    http_server.serve_forever()
 
 
 if __name__ == '__main__':

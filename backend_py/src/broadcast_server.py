@@ -20,9 +20,14 @@ class BroadcastServer:
         self.thread = threading.Thread(target=self._run)
         self.messages: List[Message] = []
         self.clients = []
+        self.is_running = False
 
     def run_in_background(self):
         self.thread.start()
+
+    def kill(self):
+        self.is_running = False
+        self.thread.join()
 
     def broadcast(self, message: Message):
         self.messages.append(message)
@@ -45,7 +50,7 @@ class BroadcastServer:
             asyncio.create_task(self._try_send(websocket, message))
 
     async def _broadcast_messages(self):
-        while True:
+        while self.is_running:
             await asyncio.sleep(0.25)
 
             for message in self.messages:
@@ -57,5 +62,6 @@ class BroadcastServer:
 
     async def _serve(self):
         print('serving websocket server')
+        self.is_running = True
         async with serve(self._handler, '0.0.0.0', 9002):
             await self._broadcast_messages()

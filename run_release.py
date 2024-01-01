@@ -1,10 +1,15 @@
-from flask import Flask, send_from_directory
-from gevent.pywsgi import WSGIServer
-import sys
-import signal
-import os
-from backend_py.src import main
-import multiprocessing
+try:
+    from flask import Flask, send_from_directory
+    from gevent.pywsgi import WSGIServer
+    import sys
+    import signal
+    import os
+    from backend_py.src import main
+    import multiprocessing
+except ImportError:
+    import sys
+    print('Make sure you run ./install_requirements.sh before running this file')
+    sys.exit(1)
 
 def run_frontend():
     app = Flask(__name__)

@@ -61,7 +61,7 @@ class BroadcastServer:
         asyncio.run(self._serve())
 
     async def _serve(self):
-        print('serving websocket server')
+        print('Serving websocket server on port 9002')
         self.is_running = True
         async with serve(self._handler, '0.0.0.0', 9002):
             await self._broadcast_messages()

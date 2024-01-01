@@ -2,9 +2,10 @@ from typing import *
 import threading
 import time
 import json
-from saved_types import *
-from schemas import SavedDeviceSchema, DeviceSchema
-from device import EHDDevice
+
+from .saved_types import *
+from .schemas import SavedDeviceSchema
+from .device import EHDDevice
 
 class SettingsManager:
 

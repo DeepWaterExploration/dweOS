@@ -10,14 +10,14 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from gevent.pywsgi import WSGIServer
 
-from enumeration import *
-from camera_helper_loader import *
-from schemas import *
-from device import *
-from stream import *
-from settings import SettingsManager
-from utils import list_diff
-from broadcast_server import BroadcastServer, Message
+from .enumeration import *
+from .camera_helper_loader import *
+from .schemas import *
+from .device import *
+from .stream import *
+from .settings import SettingsManager
+from .utils import list_diff
+from .broadcast_server import BroadcastServer, Message
 
 app = Flask(__name__)
 CORS(app)
@@ -226,6 +226,7 @@ def main():
     broadcast_server.run_in_background()
     signal.signal(signal.SIGINT, exit_clean)
 
+    print('Starting backend server on http://0.0.0.0:8080')
     http_server.serve_forever()
 
 

@@ -1,8 +1,8 @@
 from marshmallow import Schema, fields, exceptions, post_load
 import typing
 
-from camera_types import *
-from saved_types import *
+from .camera_types import *
+from .saved_types import *
 
 
 class UnionField(fields.Field):

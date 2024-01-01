@@ -4,7 +4,7 @@ import subprocess
 from multiprocessing import Process
 import time
 
-from camera_types import *
+from .camera_types import *
 
 
 @dataclass

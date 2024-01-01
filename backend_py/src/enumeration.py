@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-import v4l2
+from . import v4l2
 import fcntl
 import os
 from natsort import natsorted

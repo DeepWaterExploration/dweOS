@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from typing import *
-from stream import StreamEncodeTypeEnum, StreamTypeEnum, StreamEndpoint, Interval
-from camera_types import H264Mode
+
+from .stream import StreamEncodeTypeEnum, StreamTypeEnum, StreamEndpoint, Interval
+from .camera_types import H264Mode
 
 @dataclass
 class SavedControl:

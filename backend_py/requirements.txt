@@ -4,3 +4,4 @@ flask_cors
 natsort
 websockets
 gevent
+eventlet

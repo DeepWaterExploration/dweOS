@@ -1,22 +1,18 @@
 from ctypes import *
-
 import struct
-from dataclasses import dataclass, field
-import itertools
-
-from enumeration import *
-from camera_helper_loader import *
-import ctypes
-import ehd_controls as xu
-import utils
-import v4l2
-
-from camera_types import *
-from stream import *
-
-from saved_types import *
+from dataclasses import dataclass
 
 from v4l2py.device import Device
+
+from . import v4l2
+from . import ehd_controls as xu
+
+from . import utils
+from .enumeration import *
+from .camera_helper_loader import *
+from .camera_types import *
+from .stream import *
+from .saved_types import *
 
 
 class Camera:

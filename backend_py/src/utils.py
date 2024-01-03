@@ -8,6 +8,7 @@ def fourcc2s(fourcc: int):
         res += '-BE'
     return res
 
+
 def list_diff(listA, listB):
     # find the difference between lists
     diff = []

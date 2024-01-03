@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import *
 import json
 
+
 @dataclass
 class Message:
     event_name: str
@@ -14,6 +15,7 @@ class Message:
 
     def __repr__(self) -> str:
         return f'{self.event_name}: {json.dumps(self.data)}'
+
 
 class BroadcastServer:
 

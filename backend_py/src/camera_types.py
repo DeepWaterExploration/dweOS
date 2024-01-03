@@ -43,6 +43,7 @@ class ControlFlags:
     control_type: ControlTypeEnum = ControlTypeEnum.INTEGER
     menu: List[MenuItem] = field(default_factory=list)
 
+
 @dataclass
 class Control:
     control_id: int
@@ -64,6 +65,7 @@ class StreamTypeEnum(Enum):
 class StreamEndpoint:
     host: str
     port: int
+
 
 class H264Mode(Enum):
     '''

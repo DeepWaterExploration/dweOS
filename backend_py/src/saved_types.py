@@ -4,11 +4,13 @@ from typing import *
 from .stream import StreamEncodeTypeEnum, StreamTypeEnum, StreamEndpoint, Interval
 from .camera_types import H264Mode
 
+
 @dataclass
 class SavedControl:
     control_id: int
     name: str
     value: int
+
 
 @dataclass
 class SavedStream:
@@ -20,11 +22,13 @@ class SavedStream:
     interval: Interval
     configured: bool
 
+
 @dataclass
 class SavedOptions:
     bitrate: int
     gop: int
     mode: H264Mode
+
 
 @dataclass
 class SavedDevice:

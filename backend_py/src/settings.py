@@ -7,6 +7,7 @@ from .saved_types import *
 from .schemas import SavedDeviceSchema
 from .device import EHDDevice
 
+
 class SettingsManager:
 
     def __init__(self) -> None:
@@ -21,7 +22,8 @@ class SettingsManager:
 
         try:
             settings: list[Dict] = json.loads(self.file_object.read())
-            self.settings: List[SavedDevice] = SavedDeviceSchema(many=True).load(settings)
+            self.settings: List[SavedDevice] = SavedDeviceSchema(
+                many=True).load(settings)
         except json.JSONDecodeError:
             self.file_object.seek(0)
             self.file_object.write('[]')

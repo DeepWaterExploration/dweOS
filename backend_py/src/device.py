@@ -151,11 +151,13 @@ def is_ehd(device_info: DeviceInfo):
         len(device_info.device_paths) == 4
     )
 
+
 @dataclass
 class OptionValues:
     bitrate: int
     gop: int
     mode: H264Mode
+
 
 class EHDDevice:
 
@@ -229,7 +231,7 @@ class EHDDevice:
         return self._get_option('bitrate')
 
     def set_bitrate(self, bitrate: int):
-        self.options.bitrate = bitrate;
+        self.options.bitrate = bitrate
         self._set_option('bitrate', bitrate)
 
     def get_gop(self):
@@ -269,11 +271,11 @@ class EHDDevice:
         self.set_bitrate(saved_device.options.bitrate)
         self.set_gop(saved_device.options.gop)
         self.set_mode(saved_device.options.mode)
-        self.configure_stream(saved_device.stream.encode_type, 
-                              saved_device.stream.width, 
+        self.configure_stream(saved_device.stream.encode_type,
+                              saved_device.stream.width,
                               saved_device.stream.height,
-                              saved_device.stream.interval, 
-                              saved_device.stream.stream_type, 
+                              saved_device.stream.interval,
+                              saved_device.stream.stream_type,
                               saved_device.stream.endpoints)
         self.stream.configured = saved_device.stream.configured
         self.nickname = saved_device.nickname
@@ -310,7 +312,7 @@ class EHDDevice:
                 case ControlTypeEnum.MENU:
                     for i in ctrl.menu:
                         menu_item = ctrl.menu[i]
-                        control.flags.menu.append(MenuItem(menu_item.index, menu_item.name))
+                        control.flags.menu.append(
+                            MenuItem(menu_item.index, menu_item.name))
 
             self.controls.append(control)
-

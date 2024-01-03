@@ -6,10 +6,14 @@ try:
     import os
     from backend_py.src import main
     import multiprocessing
+    import logging
 except ImportError:
     import sys
     print('Make sure you run ./install_requirements.sh before running this file')
     sys.exit(1)
+
+logging.getLogger().setLevel(logging.INFO)
+
 
 def run_frontend():
     app = Flask(__name__)
@@ -22,11 +26,12 @@ def run_frontend():
 
     @app.errorhandler(404)
     def not_found(e):
-        return send_from_directory(FRONTEND_DIR,'index.html')
+        return send_from_directory(FRONTEND_DIR, 'index.html')
 
     print('Starting client server on http://0.0.0.0:5000')
     http_server = WSGIServer(('0.0.0.0', 5000), app)
     http_server.serve_forever()
+
 
 if __name__ == '__main__':
     frontend_thread = multiprocessing.Process(target=run_frontend)
@@ -36,7 +41,7 @@ if __name__ == '__main__':
         print('Exiting')
         frontend_thread.kill()
         sys.exit(0)
-    
+
     signal.signal(signal.SIGINT, exit_clean)
 
     main()

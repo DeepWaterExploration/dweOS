@@ -1,3 +1,5 @@
-from src import main
+from src import main, logging
+
+logging.getLogger().setLevel(logging.INFO)
 
 main()

@@ -19,6 +19,8 @@ from .settings import SettingsManager
 from .utils import list_diff
 from .broadcast_server import BroadcastServer, Message
 
+import logging
+
 app = Flask(__name__)
 CORS(app)
 app.json.sort_keys = False
@@ -120,7 +122,6 @@ def set_nickname():
 @app.route('/devices/set_uvc_control', methods=['POST'])
 def set_uvc_control():
     uvc_control = UVCControlSchema().load(request.get_json())
-    print(uvc_control)
     device = find_device_with_bus_info(uvc_control['bus_info'])
     if not device:
         return jsonify({})
@@ -167,7 +168,7 @@ def monitor(devices):
             try:
                 device = EHDDevice(device_info)
             except Exception as e:
-                print(e)
+                logging.warning(e)
                 continue
             # append the device to the device list
             devices.append(device)
@@ -177,10 +178,7 @@ def monitor(devices):
             old_device_list.append(device_info)
 
             # Output device to log (after loading settings)
-            print(f'Device Added: {device_info.bus_info}')
-            pprint.pprint(DeviceSchema(
-                only=['vid', 'pid', 'nickname', 'bus_info', 'stream', 'controls', 'options'], exclude=['stream.device_path', 'controls.flags']).dump(
-                device), depth=1, compact=True, sort_dicts=False)
+            logging.info(f'Device Added: {device_info.bus_info}')
             
             broadcast_server.broadcast(Message(
                 'device_added', DeviceSchema().dump(device)
@@ -194,7 +192,7 @@ def monitor(devices):
                     devices.remove(device)
                     # remove the device info from the old device list
                     old_device_list.remove(device_info)
-                    print(f'Device Removed: {device_info.bus_info}')
+                    logging.info(f'Device Removed: {device_info.bus_info}')
 
                     broadcast_server.broadcast(Message('device_removed', {
                         'bus_info': device_info.bus_info
@@ -209,6 +207,8 @@ def main():
     http_server = WSGIServer(('0.0.0.0', 8080), app)
 
     def exit_clean(sig, frame):
+        logging.info('Shutting down')
+
         http_server.stop()
 
         for device in devices:
@@ -226,7 +226,7 @@ def main():
     broadcast_server.run_in_background()
     signal.signal(signal.SIGINT, exit_clean)
 
-    print('Starting backend server on http://0.0.0.0:8080')
+    logging.info('Starting backend server on http://0.0.0.0:8080')
     http_server.serve_forever()
 
 

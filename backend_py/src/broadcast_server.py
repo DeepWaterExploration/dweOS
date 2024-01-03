@@ -1,5 +1,6 @@
 from websockets.server import serve
 from websockets import broadcast, ConnectionClosed
+import logging
 import threading
 import asyncio
 from dataclasses import dataclass
@@ -16,11 +17,12 @@ class Message:
 
 class BroadcastServer:
 
-    def __init__(self) -> None:
+    def __init__(self, port: int = 9002) -> None:
         self.thread = threading.Thread(target=self._run)
         self.messages: List[Message] = []
         self.clients = []
         self.is_running = False
+        self.port = port
 
     def run_in_background(self):
         self.thread.start()
@@ -61,7 +63,6 @@ class BroadcastServer:
         asyncio.run(self._serve())
 
     async def _serve(self):
-        print('Serving websocket server on port 9002')
         self.is_running = True
-        async with serve(self._handler, '0.0.0.0', 9002):
+        async with serve(self._handler, '0.0.0.0', self.port):
             await self._broadcast_messages()

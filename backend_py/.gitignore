@@ -11,6 +11,3 @@ __pycache__/
 # due to using tox and pytest
 .tox
 .cache
-
-# device settings file
-device_settings.json

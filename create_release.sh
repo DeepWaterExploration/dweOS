@@ -26,8 +26,8 @@ npm run build
 
 cd ..
 
-mkdir release/frontend
-cp frontend/dist/* -r release/frontend
+mkdir -p release/frontend/dist
+cp frontend/dist/* -r release/frontend/dist
 
 echo "Successfully packaged frontend"
 

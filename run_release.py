@@ -17,7 +17,7 @@ logging.getLogger().setLevel(logging.INFO)
 
 def run_frontend():
     app = Flask(__name__)
-    FRONTEND_DIR = os.path.abspath('./frontend')
+    FRONTEND_DIR = os.path.abspath('./frontend/dist')
 
     @app.route('/',  defaults={'path': 'index.html'})
     @app.route('/<path:path>')

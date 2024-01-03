@@ -29,7 +29,7 @@ def run_frontend():
         return send_from_directory(FRONTEND_DIR, 'index.html')
 
     print('Starting client server on http://0.0.0.0:5000')
-    http_server = WSGIServer(('0.0.0.0', 5000), app)
+    http_server = WSGIServer(('0.0.0.0', 5000), app, log=None)
     http_server.serve_forever()
 
 

@@ -86,7 +86,7 @@ def set_uvc_control():
 
 
 def main():
-    http_server = WSGIServer(('0.0.0.0', 8080), app)
+    http_server = WSGIServer(('0.0.0.0', 8080), app, log=None)
     device_manager.start_monitoring()
 
     def exit_clean(sig, frame):

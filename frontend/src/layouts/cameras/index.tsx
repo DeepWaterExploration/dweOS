@@ -5,7 +5,7 @@ import DeviceCard from "./DeviceCard";
 import { Device } from "../../types/types";
 import { getDevices, DEVICE_API_WS, DEVICE_API_URL } from "../../utils/api";
 
-import { io } from 'socket.io-client';
+import { io } from "socket.io-client";
 
 const hash = function (str: string) {
   let hash = 0,
@@ -30,13 +30,13 @@ interface DeviceRemovedInfo {
 }
 
 const deserializeMessage = (message_str: string) => {
-  let parts = message_str.split(': ');
+  let parts = message_str.split(": ");
   let message: Message = {
     event_name: parts[0],
-    data: JSON.parse(message_str.substring(message_str.indexOf(': ') + 1))
+    data: JSON.parse(message_str.substring(message_str.indexOf(": ") + 1)),
   };
   return message;
-}
+};
 
 const websocket = new WebSocket(DEVICE_API_WS);
 
@@ -58,7 +58,7 @@ const CamerasPage: React.FC = () => {
     setExploreHD_cards((prevCards) => {
       return [
         ...prevCards,
-        <DeviceCard key={hash(device.bus_info)} device={device} />
+        <DeviceCard key={hash(device.bus_info)} device={device} />,
       ];
     });
   };
@@ -78,14 +78,14 @@ const CamerasPage: React.FC = () => {
       addDevices(devices);
     });
 
-    websocket.addEventListener('message', (e) => {
+    websocket.addEventListener("message", (e) => {
       let message = deserializeMessage(e.data);
       console.log(message.data);
       switch (message.event_name) {
-        case 'device_added':
+        case "device_added":
           addDevice(message.data as Device);
           break;
-        case 'device_removed':
+        case "device_removed":
           removeDevice((message.data as DeviceRemovedInfo).bus_info);
           break;
       }
@@ -119,7 +119,12 @@ const CamerasPage: React.FC = () => {
         }
         return 1;
       })} */}
-      {exploreHD_cards}
+      {exploreHD_cards.sort((a, b) => {
+        const regex = /(\/dev\/video)(\d+)/;
+        let pathA = a.props.device.cameras[0].path;
+        let pathB = b.props.device.cameras[0].path;
+        return Number(regex.exec(pathA)![2]) - Number(regex.exec(pathB)![2]);
+      })}
     </Grid>
   );
 };

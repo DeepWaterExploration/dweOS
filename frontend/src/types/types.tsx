@@ -15,7 +15,7 @@ export interface Device {
 }
 
 export interface Camera {
-  device_path: string;
+  path: string;
   formats: { [index: string]: CameraFormatSize[] };
 }
 

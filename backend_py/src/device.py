@@ -302,17 +302,26 @@ class EHDDevice:
             control = Control(ctrl.id, ctrl.name, ctrl.value)
 
             control.flags.control_type = ControlTypeEnum(ctrl.type)
-            control.flags.max_value = ctrl.maximum
-            control.flags.min_value = ctrl.minimum
-            control.flags.step = ctrl.step
+            try:
+                control.flags.max_value = ctrl.maximum
+            except:
+                control.flags.max_value = 0
+            try:
+                control.flags.min_value = ctrl.minimum
+            except:
+                control.flags.min_value = 0
+            try:
+                control.flags.step = ctrl.step
+            except:
+                control.flags.step = 0
             control.flags.default_value = ctrl._info.default_value
             control.value = self.get_pu(ctrl.id)
 
             match control.flags.control_type:
                 case ControlTypeEnum.MENU:
-                    for i in ctrl.menu:
-                        menu_item = ctrl.menu[i]
+                    for i in ctrl.data:
+                        menu_item = ctrl.data[i]
                         control.flags.menu.append(
-                            MenuItem(menu_item.index, menu_item.name))
+                            MenuItem(i, menu_item))
 
             self.controls.append(control)

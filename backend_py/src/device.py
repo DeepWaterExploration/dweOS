@@ -305,7 +305,7 @@ class EHDDevice:
             control.flags.max_value = ctrl.maximum
             control.flags.min_value = ctrl.minimum
             control.flags.step = ctrl.step
-            control.flags.default_value = ctrl.default_value
+            control.flags.default_value = ctrl._info.default_value
             control.value = self.get_pu(ctrl.id)
 
             match control.flags.control_type:

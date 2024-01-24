@@ -338,7 +338,7 @@ func main() {
 		)
 
 		// Set up the server address and port
-		const port = 8080
+		const port = 5050
 		const host = "localhost"
 
 		// Start the server

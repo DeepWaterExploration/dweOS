@@ -21,7 +21,7 @@ import {
  * @throws {Error} - If the request to get the wifi status fails.
  */
 export async function getWifiStatus(): Promise<boolean> {
-  const url = `${SYSTEM_API_URL}/getWifiStatus`;
+  const url = `${SYSTEM_API_URL}/wifiStatus`;
   const config: RequestInit = {
     mode: "cors",
     method: "GET",

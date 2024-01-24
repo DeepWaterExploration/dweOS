@@ -5,3 +5,4 @@ natsort
 websockets
 gevent
 eventlet
+v4l2py==2.3.0

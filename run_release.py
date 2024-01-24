@@ -7,7 +7,6 @@ try:
     from backend_py.src import main
     import multiprocessing
     import logging
-    from system_api import server
 except ImportError:
     import sys
     print('Make sure you run ./install_requirements.sh before running this file')
@@ -38,13 +37,9 @@ if __name__ == '__main__':
     frontend_thread = multiprocessing.Process(target=run_frontend)
     frontend_thread.start()
 
-    system_thread = multiprocessing.Process(target=server.run_server)
-    system_thread.start()
-
     def exit_clean(sig, frame):
         print('Exiting')
         frontend_thread.kill()
-        system_thread.kill()
         sys.exit(0)
 
     signal.signal(signal.SIGINT, exit_clean)

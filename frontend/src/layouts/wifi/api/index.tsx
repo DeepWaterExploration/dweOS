@@ -20,7 +20,7 @@ import {
  * @returns {Promise<GetWifiStatusResponse>} - A promise that resolves to the result of the request.
  * @throws {Error} - If the request to get the wifi status fails.
  */
-export async function getWifiStatus(): Promise<boolean> {
+export async function getWifiStatus(): Promise<GetWifiStatusResponse> {
   const url = `${SYSTEM_API_URL}/wifiStatus`;
   const config: RequestInit = {
     mode: "cors",
@@ -34,12 +34,12 @@ export async function getWifiStatus(): Promise<boolean> {
     // Process the response data
     .then((response: Response) => response.json())
     .then((data: GetWifiStatusResponse) => {
-      return data.enabled as boolean;
+      return data;
     })
     .catch((error: Error) => {
       console.log("Failed to get wifi capability status");
       console.error(error);
-      return false;
+      return {} as GetWifiStatusResponse;
     });
 }
 

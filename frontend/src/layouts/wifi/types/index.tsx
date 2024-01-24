@@ -79,8 +79,13 @@ export interface WiFiInterface {
  * Represents the response when inquiring about the wifi connection status
  */
 export interface GetWifiStatusResponse {
-  /* Whether wifi is enabled */
-  enabled: boolean;
+  wpa_state: string;
+  key_mgmt: string;
+  ip_address: string;
+  ssid: string;
+  address: string;
+  bssid: string;
+  freq: string;
 }
 
 /**

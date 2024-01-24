@@ -1,74 +1,40 @@
-import { Grid } from "@mui/material";
+import {
+  Avatar,
+  Button,
+  Card,
+  CardHeader,
+  Grid,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+} from "@mui/material";
 import React, { useEffect, useState } from "react";
 
 import {
   getAvailableWifi,
   getConnectedNetwork,
   getSavedWifi,
-  // getWifiStatus,
+  getWifiStatus,
   toggleWifiStatus,
 } from "./api";
 // import NetworkDetailsCard from "./NetworkDetails";
 import NetworkHistoryCard from "./NetworkHistory";
 import NetworkSettingsCard from "./NetworkSettings";
-import { SavedWifiNetwork, ScannedWifiNetwork, WiFiNetwork } from "./types";
+import {
+  GetWifiStatusResponse,
+  SavedWifiNetwork,
+  ScannedWifiNetwork,
+  WiFiNetwork,
+} from "./types";
+import { SignalWifi1Bar } from "@mui/icons-material";
 
 const Wifi: React.FC = () => {
-  const [wifiStatus, setWifiStatus] = useState<boolean | null>(null);
-  const [connectedNetwork, setConnectedNetwork] =
-    useState<SavedWifiNetwork | null>(null);
-  const [availableNetworks, setAvailableNetworks] = useState<
-    ScannedWifiNetwork[] | null
-  >(null);
-  const [savedNetworks, setSavedNetworks] = useState<SavedWifiNetwork[] | null>(
-    null
-  );
+  const [currentNetwork, setCurrentNetwork] = useState("");
 
-  useEffect(() => {
-    const turnOnWifi = async () => {
-      console.log("turning on wifi", wifiStatus);
-      const newWifiStatus = await toggleWifiStatus(true);
-      setWifiStatus(newWifiStatus); // Update state using the temporary variable
-      console.log("wifi: ", newWifiStatus);
-    };
-
-    // const updateWifiStatus = async () => {
-    //   const newWifiStatus = await toggleWifiStatus(true);
-    //   setWifiStatus(newWifiStatus);
-    // };
-
-    const updateNetworks = async () => {
-      if (wifiStatus) {
-        const networks = await getAvailableWifi();
-        setAvailableNetworks(networks);
-        // console.log("available networks: ", networks);
-        const connectedNetwork = await getConnectedNetwork();
-        setConnectedNetwork(connectedNetwork);
-        // console.log("connected network: ", connectedNetwork);
-        const savedNetworks = await getSavedWifi();
-        // console.log("saved networks: ", savedNetworks);
-        setSavedNetworks(savedNetworks);
-      } else {
-        setConnectedNetwork(null);
-        setAvailableNetworks(null);
-        setSavedNetworks(null);
-      }
-    };
-
-    const interval = setInterval(() => {
-      updateNetworks();
-    }, 5000);
-
-    // Initial updates
-    turnOnWifi();
-    // updateWifiStatus();
-    updateNetworks();
-
-    // Clean up the interval on component unmount to avoid memory leaks
-    return () => {
-      clearInterval(interval);
-    };
-  }, [wifiStatus]);
+  getWifiStatus().then((status) => {
+    setCurrentNetwork(status.ssid);
+  });
 
   return (
     <Grid
@@ -81,23 +47,53 @@ const Wifi: React.FC = () => {
         padding: "0 3em",
       }}
     >
-      {wifiStatus !== null && (
-        <>
-          <NetworkSettingsCard
-            wifiStatus={wifiStatus}
-            setWifiStatus={setWifiStatus}
-            connectedNetwork={connectedNetwork}
-            setConnectedNetwork={setConnectedNetwork}
-            availableNetworks={availableNetworks}
-            setAvailableNetworks={setAvailableNetworks}
+      <>
+        <Card
+          sx={{
+            minWidth: 512,
+            boxShadow: 3,
+            textAlign: "left",
+            margin: "20px",
+            padding: "15px",
+          }}
+        >
+          <CardHeader
+            // action={deviceWarning}
+            title={"Network Settings"}
+            sx={{ paddingBottom: "0px" }}
           />
-          <NetworkHistoryCard
-            savedNetworks={savedNetworks}
-            setSavedNetworks={setSavedNetworks}
-          />
-          {/* <NetworkDetailsCard /> */}
-        </>
-      )}
+          <List dense={true}>
+            <ListItem>
+              <ListItemAvatar>
+                <Avatar>
+                  <SignalWifi1Bar sx={{ fontSize: 22.5, mx: 0.5 }} />
+                </Avatar>
+              </ListItemAvatar>
+              <ListItemText
+                primary={currentNetwork}
+                secondary={`100 dBm`}
+                style={{ width: "200px" }}
+              />
+              <Button
+                variant='contained'
+                style={{
+                  color: "white",
+                  marginRight: "20px",
+                  fontWeight: "bold",
+                }}
+              >
+                Forget
+              </Button>
+              <Button
+                variant='contained'
+                style={{ color: "white", fontWeight: "bold" }}
+              >
+                Disconnect
+              </Button>
+            </ListItem>
+          </List>
+        </Card>
+      </>
     </Grid>
   );
 };

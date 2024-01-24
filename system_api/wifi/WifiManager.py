@@ -3,11 +3,11 @@ import time
 from typing import Any, Dict, List, Optional
 
 from loguru import logger
-from wifi.exceptions import FetchError, ParseError
-from wifi.network_types import (ConnectedWifiNetwork, ConnectionStatus,
-                                SavedWifiNetwork, ScannedWifiNetwork,
-                                WifiCredentials)
-from wifi.wpa_supplicant import WPASupplicant
+from .exceptions import FetchError, ParseError
+from .network_types import (ConnectedWifiNetwork, ConnectionStatus,
+                            SavedWifiNetwork, ScannedWifiNetwork,
+                            WifiCredentials)
+from .wpa_supplicant import WPASupplicant
 
 
 class WifiManager:
@@ -58,7 +58,8 @@ class WifiManager:
             temp_header = listed_lines.pop(0)[0]
             header = temp_header.replace(b" ", b"").split(b"/")
         except Exception as error:
-            raise ParseError("Failed creating header to dictionary.") from error
+            raise ParseError(
+                "Failed creating header to dictionary.") from error
 
         output: List[Any] = []
         for line in listed_lines:
@@ -95,7 +96,8 @@ class WifiManager:
                     WifiManager.__decode_escaped(key)
                 ] = WifiManager.__decode_escaped(value)
             except Exception as error:
-                raise ParseError("Failed parsing dictionary data from list.") from error
+                raise ParseError(
+                    "Failed parsing dictionary data from list.") from error
 
         return output
 
@@ -231,7 +233,8 @@ class WifiManager:
             await self.wpa.send_command_save_config()
             await self.wpa.send_command_reconfigure()
         except Exception as error:
-            raise ConnectionError("Failed to remove existing network.") from error
+            raise ConnectionError(
+                "Failed to remove existing network.") from error
 
     async def connect_to_network(self, network_id: int, timeout: float = 20.0) -> None:
         """Connect to wifi network
@@ -259,7 +262,8 @@ class WifiManager:
                     raise RuntimeError("Association or authentication failed.")
                 timer = time.time() - start_time
                 if timer > timeout:
-                    raise RuntimeError("Could not stablish a wifi connection in time.")
+                    raise RuntimeError(
+                        "Could not stablish a wifi connection in time.")
                 await asyncio.sleep(2.0)
 
             # Remove network from ignored list if user deliberately connected
@@ -268,12 +272,15 @@ class WifiManager:
                 current_network
                 and current_network.ssid in self._ignored_reconnection_networks
             ):
-                logger.debug(f"Removing '{current_network.ssid}' from ignored list.")
-                self._ignored_reconnection_networks.remove(current_network.ssid)
+                logger.debug(
+                    f"Removing '{current_network.ssid}' from ignored list.")
+                self._ignored_reconnection_networks.remove(
+                    current_network.ssid)
             self.connection_status = ConnectionStatus.JUST_CONNECTED
         except Exception as error:
             self.connection_status = ConnectionStatus.UNKNOWN
-            raise ConnectionError(f"Failed to connect to network. {error}") from error
+            raise ConnectionError(
+                f"Failed to connect to network. {error}") from error
         finally:
             if was_hotspot_enabled:
                 self.enable_hotspot(save_settings=False)
@@ -284,7 +291,8 @@ class WifiManager:
             data = await self.wpa.send_command_status()
             return WifiManager.__dict_from_list(data)
         except Exception as error:
-            raise FetchError("Failed to get status from wifi manager.") from error
+            raise FetchError(
+                "Failed to get status from wifi manager.") from error
 
     async def reconfigure(self) -> None:
         """Reconfigure wpa_supplicant
@@ -293,7 +301,8 @@ class WifiManager:
         try:
             await self.wpa.send_command_reconfigure()
         except Exception as error:
-            raise RuntimeError("Failed to reconfigure wifi manager.") from error
+            raise RuntimeError(
+                "Failed to reconfigure wifi manager.") from error
 
     async def disconnect(self) -> None:
         """Reconfigure wpa_supplicant
@@ -304,15 +313,18 @@ class WifiManager:
             # Save current network in ignored list so the watchdog doesn't auto-reconnect to it
             current_network = await self.get_current_network()
             if current_network:
-                logger.debug(f"Adding '{current_network.ssid}' to ignored list.")
-                self._ignored_reconnection_networks.append(current_network.ssid)
+                logger.debug(
+                    f"Adding '{current_network.ssid}' to ignored list.")
+                self._ignored_reconnection_networks.append(
+                    current_network.ssid)
                 await self.wpa.send_command_disable_network(current_network.networkid)
 
             await self.wpa.send_command_disconnect()
             self.connection_status = ConnectionStatus.JUST_DISCONNECTED
         except Exception as error:
             self.connection_status = ConnectionStatus.UNKNOWN
-            raise ConnectionError("Failed to disconnect from wifi network.") from error
+            raise ConnectionError(
+                "Failed to disconnect from wifi network.") from error
 
     async def enable_saved_networks(self, ignore: Optional[List[str]] = None) -> None:
         """Enable saved networks."""
@@ -341,8 +353,10 @@ class WifiManager:
                                     frequency=scan_result.get("frequency"),
                                     mac_address=scan_result.get("mac_address"),
                                     secure=scan_result.get("secure"),
-                                    security_type=scan_result.get("security_type"),
-                                    signal_strength=scan_result.get("signal_strength"),
+                                    security_type=scan_result.get(
+                                        "security_type"),
+                                    signal_strength=scan_result.get(
+                                        "signal_strength"),
                                     network_id=network.get("network_id"),
                                 ).to_dict()  # Convert the object to a dictionary
                             }

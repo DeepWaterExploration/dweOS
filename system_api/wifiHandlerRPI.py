@@ -3,8 +3,8 @@ import sys
 from typing import List
 
 from loguru import logger
-from wifi.exceptions import BusyError
-from wifi.WifiManager import WifiManager
+from .wifi.exceptions import BusyError
+from .wifi.WifiManager import WifiManager
 
 
 class WifiHandler:

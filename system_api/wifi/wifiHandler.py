@@ -4,7 +4,7 @@ from typing import List
 
 from loguru import logger
 
-from system_api.wifi import WifiManager
+from . import WifiManager
 
 
 class WifiHandler:

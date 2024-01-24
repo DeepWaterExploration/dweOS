@@ -1,3 +1,4 @@
+from .wifiHandlerRPI import WifiHandler
 import asyncio
 import base64
 import http.server
@@ -8,22 +9,21 @@ import sys
 import urllib.parse
 from http.server import HTTPServer
 
-import cpuHandler
-import systemHandler
-import temperatureHandler
+from . import cpuHandler
+from . import systemHandler
+from . import temperatureHandler
 from loguru import logger
 
 current_os = platform.system()
 platform_name = platform.uname()
 
-from wifiHandlerRPI import WifiHandler
 
 if (
     current_os == "Linux"
     and "raspbian" in platform_name.release.lower()
     or platform_name.node == "blueos"
 ):
-    from wifiHandlerRPI import WifiHandler
+    from .wifiHandlerRPI import WifiHandler
 elif current_os == "Linux":
     pass
 elif current_os == "Darwin":  # macOS
@@ -68,7 +68,8 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     def end_headers(self):
         # Set "Access-Control-Allow-Origin" header to the value of the "Origin" header
         # If "Origin" header is not present in the request, use "*" to allow requests from any origin
-        self.send_header("Access-Control-Allow-Origin", self.headers.get("Origin", "*"))
+        self.send_header("Access-Control-Allow-Origin",
+                         self.headers.get("Origin", "*"))
 
         # Set "Access-Control-Allow-Methods" header to allow the specified HTTP methods for cross-origin requests
         # In this case, we allow "GET", "POST", and "OPTIONS" methods

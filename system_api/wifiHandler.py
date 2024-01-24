@@ -6,7 +6,7 @@ from typing import List
 
 import netifaces as ni
 import pywifi
-from wifi.WifiManager import WifiManager
+from .wifi.WifiManager import WifiManager
 
 wifi_manager = WifiManager()
 
@@ -75,7 +75,8 @@ def is_network_secured(ssid):
         try:
             # Run the nmcli command and capture the output
             cmd = ["nmcli", "connection", "show", ssid]
-            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, check=True)
 
             # Check if the SSID is present in the output
             if ssid in result.stdout:
@@ -433,8 +434,10 @@ def get_wifi_info():
                         {
                             "ssid": network_profile.ssid,  # Access the ssid directly
                             "bssid": network_profile.bssid,  # Access the bssid directly
-                            "secure": True,  # Access the auth (security) directly
-                            "security_type": network_profile.akm,  # Access the akm (security details) directly
+                            # Access the auth (security) directly
+                            "secure": True,
+                            # Access the akm (security details) directly
+                            "security_type": network_profile.akm,
                             "frequency": network_profile.freq,  # Access the frequency directly
                             "signal_strength": int(
                                 network_profile.signal
@@ -448,7 +451,8 @@ def get_wifi_info():
                         {
                             "ssid": network_profile.ssid,  # Access the ssid directly
                             "bssid": network_profile.bssid,  # Access the bssid directly
-                            "secure": False,  # Access the auth (security) directly
+                            # Access the auth (security) directly
+                            "secure": False,
                             "frequency": network_profile.freq,  # Access the frequency directly
                             "signal_strength": int(
                                 network_profile.signal
@@ -504,7 +508,8 @@ def connect_to_wifi(ssid: str, password: str) -> int:
     else:
         return -1  # Unsupported platform
     try:
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        result = subprocess.run(
+            cmd, shell=True, capture_output=True, text=True)
         if result.returncode == 0:
             return {
                 "status": "success",

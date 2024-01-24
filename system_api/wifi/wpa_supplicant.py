@@ -7,8 +7,8 @@ import time
 from pathlib import Path
 from typing import List, Optional, Tuple, Union
 
-from wifi.exceptions import (BusyError, NetworkAddFail, SockCommError,
-                             WPAOperationFail)
+from .exceptions import (BusyError, NetworkAddFail, SockCommError,
+                         WPAOperationFail)
 
 
 def find_valid_interfaces() -> List[str]:
@@ -36,8 +36,10 @@ class WPASupplicant:
     TIMEOUT_LIMIT = (
         10  # Timeout for socket communication and scanning for WiFi networks
     )
-    SOCKET_SEND_PATH = f"/run/wpa_supplicant/{find_valid_interfaces()[0]}"  # Path to the UNIX socket used for communication with wpa_supplicant
-    SOCKET_RECV_PATH = f"/tmp/wpa_ctrl_{os.getpid()}-1"  # Path to the UNIX socket used for receiving data from wpa_supplicant
+    # Path to the UNIX socket used for communication with wpa_supplicant
+    SOCKET_SEND_PATH = f"/run/wpa_supplicant/{find_valid_interfaces()[0]}"
+    # Path to the UNIX socket used for receiving data from wpa_supplicant
+    SOCKET_RECV_PATH = f"/tmp/wpa_ctrl_{os.getpid()}-1"
 
     def __init__(self) -> None:
         """Initializes the WPASupplicant object."""
@@ -226,7 +228,8 @@ class WPASupplicant:
         """
         network_id = await self.send_command("ADD_NETWORK", timeout)
         if not network_id.strip().isdigit():
-            raise NetworkAddFail("Add_network operation did not return a valid id.")
+            raise NetworkAddFail(
+                "Add_network operation did not return a valid id.")
         return int(network_id.strip())
 
     async def send_command_remove_network(

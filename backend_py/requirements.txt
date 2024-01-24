@@ -1,0 +1,8 @@
+marshmallow
+flask
+flask_cors
+natsort
+websockets
+gevent
+eventlet
+v4l2py

@@ -4,13 +4,18 @@
 export interface Device {
   cameras: Camera[];
   controls: Control[];
-  info: CameraInfo;
+  bus_info: string;
+  pid: number;
+  vid: number;
+  manufacturer: string;
+  device_info: CameraInfo;
+  nickname: string;
   options: StreamOptions;
   stream: Stream;
 }
 
 export interface Camera {
-  device_path: string;
+  path: string;
   formats: { [index: string]: CameraFormatSize[] };
 }
 
@@ -36,43 +41,45 @@ export interface CameraInterval {
 export interface Control {
   flags: ControlFlags;
   /* The control ID */
-  id: number;
+  control_id: number;
   name: string;
   value: number;
+}
+
+export interface MenuItem {
+  name: string;
+  index: number;
 }
 
 export interface ControlFlags {
   default_value: number;
   disabled: boolean;
   grabbed: boolean;
-  max: number;
-  min: number;
+  max_value: number;
+  min_value: number;
   read_only: boolean;
   slider: number;
   step: number;
-  type: controlType;
+  control_type: controlType;
   update: number;
   volatility: number;
   write_only: boolean;
-  menu?: number[] | string[];
+  menu?: MenuItem[];
 }
 
 export interface CameraInfo {
   /* Differentiator between cameras (device path) */
-  name: string;
-  path: string;
-  pid: string;
-  usbInfo: string;
-  vid: string;
-  manufacturer: string;
-  model: string;
-  nickname: string;
+  device_name: string;
+  bus_info: string;
+  pid: number;
+  vid: number;
+  device_paths: string[];
 }
 
 export interface StreamOptions {
   bitrate: number;
   gop: number;
-  mode: bitrateMode;
+  mode: number;
 }
 
 export interface Stream {
@@ -81,6 +88,7 @@ export interface Stream {
   stream_type: streamType;
   endpoints: StreamEndpoint[];
   format: StreamFormat;
+  configured: boolean;
 }
 
 /* If we ever need to add more compression formats, just add them here */
@@ -90,26 +98,26 @@ export enum encodeType {
 }
 
 export enum controlType {
-  INTEGER = 1,
-  BOOLEAN = 2,
-  MENU = 3,
-  BUTTON = 4,
-  INTEGER64 = 5,
-  CTRL_CLASS = 6,
-  STRING = 7,
-  BITMASK = 8,
-  INTEGER_MENU = 9,
+  INTEGER = "INTEGER",
+  BOOLEAN = "BOOLEAN",
+  MENU = "MENU",
+  BUTTON = "BUTTON",
+  INTEGER64 = "INTEGER64",
+  CTRL_CLASS = "CTRL_CLASS",
+  STRING = "STRING",
+  BITMASK = "BITMASK",
+  INTEGER_MENU = "INTEGER_MENU",
 }
 
 export enum bitrateMode {
-  VBR = "VBR",
-  CBR = "CBR",
+  VBR = 2,
+  CBR = 1,
 }
 
 export enum optionType {
-  BITRATE = "bitrate",
-  GOP = "gop",
-  MODE = "mode",
+  BITRATE = "BITRATE",
+  GOP = "GOP",
+  MODE = "MODE",
 }
 
 /* If we ever need to support more stream protocols, just add them here */

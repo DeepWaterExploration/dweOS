@@ -65,7 +65,7 @@ const RESOLUTIONS = [
 
 const INTERVALS = ["30", "25", "20", "15", "10"];
 
-const ENCODERS = ["H264", "MJPG"];
+const ENCODERS = ["H264", "MJPEG"];
 
 const useDidMountEffect = (
   func: React.EffectCallback,
@@ -140,21 +140,21 @@ const DeviceOptions: React.FC<DeviceOptionsProps> = (props) => {
 
   useDidMountEffect(() => {
     setExploreHDOption(
-      props.device.info.usbInfo,
+      props.device.bus_info,
       optionType.BITRATE,
       bitrate * 1000000
     );
   }, [bitrate]);
 
   useDidMountEffect(() => {
-    setExploreHDOption(props.device.info.usbInfo, optionType.MODE, mode);
+    setExploreHDOption(props.device.bus_info, optionType.MODE, mode);
     if (mode === bitrateMode.VBR) {
       setGOP(29);
     }
   }, [mode]);
 
   useDidMountEffect(() => {
-    setExploreHDOption(props.device.info.usbInfo, optionType.GOP, gop);
+    setExploreHDOption(props.device.bus_info, optionType.GOP, gop);
   }, [gop]);
 
   return (
@@ -237,9 +237,7 @@ interface StreamOptionsProps {
 }
 
 const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
-  const [stream, setStream] = useState(
-    props.device.stream.device_path !== undefined
-  );
+  const [stream, setStream] = useState(props.device.stream.configured);
 
   const [host, setHost] = useState("192.168.2.1");
   const [port, setPort] = useState(5600);
@@ -262,7 +260,7 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
     if (!stream) {
       setStreamUpdatedTimeout(
         setTimeout(() => {
-          unconfigureStream(props.device.info.usbInfo);
+          unconfigureStream(props.device.bus_info);
         }, 250)
       );
     } else {
@@ -278,7 +276,7 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
     setStreamUpdatedTimeout(
       setTimeout(() => {
         configureStream(
-          props.device.info.usbInfo,
+          props.device.bus_info,
           {
             width: parseInt(width),
             height: parseInt(height),
@@ -538,7 +536,7 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
             color='primary'
             variant='contained'
             onClick={() => {
-              restartStream(props.device.info.usbInfo).then(() => {
+              restartStream(props.device.bus_info).then(() => {
                 enqueueSnackbar("Stream restarted", { variant: "info" });
               });
             }}
@@ -557,13 +555,13 @@ interface CameraControlsProps {
 }
 
 interface ControlState {
-  id: number;
+  control_id: number;
   name: string;
   setControlValue:
     | ((value: number) => void)
     | ((value: boolean) => void)
     | ((value: string) => void);
-  defaultValue: number | string | boolean;
+  default_value: number | string | boolean;
   type: controlType;
 }
 
@@ -592,26 +590,33 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
       <AccordionDetails>
         <FormGroup style={{ marginTop: "20px" }}>
           {controls.map((control) => {
-            switch (control.flags.type) {
+            // Extremely Hacky Fix for Auto Exposure: Change in backend later
+            if (
+              control.name.includes("Auto Exposure") &&
+              control.flags.control_type === controlType.MENU
+            ) {
+              control.flags.control_type = controlType.BOOLEAN;
+            }
+            switch (control.flags.control_type) {
               case controlType.INTEGER: {
-                const { name, id } = control;
-                const { min, max, step } = control.flags;
-                const defaultValue = control.flags.default_value;
+                const { name, control_id, value } = control;
+                const { min_value, max_value, step, default_value } =
+                  control.flags;
                 const [controlValue, setControlValue] = useState<number>(
-                  defaultValue as number
+                  value as number
                 );
                 const [controlValueSlider, setControlValueSlider] =
-                  useState<number>(defaultValue as number);
+                  useState<number>(value as number);
                 setStatesList.push({
-                  id,
+                  control_id,
                   name,
                   setControlValue,
-                  defaultValue,
-                  type: control.flags.type,
+                  default_value,
+                  type: control.flags.control_type,
                 } as ControlState);
 
                 useDidMountEffect(() => {
-                  setUVCControl(usbInfo, controlValue, id);
+                  setUVCControl(usbInfo, controlValue, control_id);
                   setControlValueSlider(controlValue);
                 }, [controlValue]);
 
@@ -627,12 +632,12 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                       onChange={(_, newValue) => {
                         setControlValueSlider(newValue as number);
                       }}
-                      name={`control-${id}`}
-                      min={min}
-                      max={max}
+                      name={`control-${control_id}`}
+                      min={min_value}
+                      max={max_value}
                       step={step}
                       value={controlValueSlider}
-                      defaultValue={defaultValue as number}
+                      defaultValue={value as number}
                       style={{
                         marginLeft: "20px",
                         width: "calc(100% - 25px)",
@@ -642,26 +647,37 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                 );
               }
               case controlType.BOOLEAN: {
-                let { name, id } = control;
-                const defaultValue =
-                  control.flags.default_value === 1 ? true : false;
+                // Hacky fix for auto exposure: FIXME: Change in backend
+                let VALUE_TRUE = 1;
+                let VALUE_FALSE = 0;
+                if (control.name.includes("Auto Exposure")) {
+                  VALUE_TRUE = 3;
+                  VALUE_FALSE = 1;
+                }
+                let { name, control_id } = control;
+                let { default_value } = control.flags;
+                const value = control.value === VALUE_TRUE ? true : false;
                 if (name.includes("White Balance")) {
                   name = "AI TrueColor Technology™";
                 }
                 const [controlValue, setControlValue] = useState<boolean>(
-                  defaultValue as boolean
+                  value as boolean
                 );
 
                 setStatesList.push({
-                  id,
+                  control_id,
                   name,
                   setControlValue,
-                  defaultValue,
-                  type: control.flags.type,
+                  default_value,
+                  type: control.flags.control_type,
                 });
 
                 useDidMountEffect(() => {
-                  setUVCControl(usbInfo, controlValue ? 1 : 0, id);
+                  setUVCControl(
+                    usbInfo,
+                    controlValue ? VALUE_TRUE : VALUE_FALSE,
+                    control_id
+                  );
                 }, [controlValue]);
 
                 return (
@@ -672,77 +688,84 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
                       onChange={(_, checked) => {
                         setControlValue(!controlValue);
                       }}
-                      name={`control-${id}`}
-                      defaultChecked={defaultValue}
+                      name={`control-${control_id}`}
+                      defaultChecked={value}
                     />
                   </>
                 );
               }
               case controlType.MENU: {
-                const { name, id } = control;
-                const { menu } = control.flags;
+                const { name, control_id } = control;
+                const { menu, default_value } = control.flags;
                 if (!menu) break;
 
-                let menuObject: { [name: string]: number } = {};
-                for (const menuItem of menu) {
-                  menuObject[menuItem] = (menu as string[]).indexOf(
-                    menuItem as string
-                  );
-                }
+                // let menuObject: { [name: string]: number } = {};
+                // for (const menuItem of menu) {
+                //   menuObject[menuItem] =
+                // }
 
                 // Hacky fix for auto exposure bug in camera firmware
-                if (name.includes("Auto Exposure") && menu.length === 2) {
-                  menuObject = {
-                    Automatic: 3,
-                    "Manual Mode": 1,
-                  };
-                }
+                // if (name.includes("Auto Exposure") && menu.length === 2) {
+                //   menuObject = {
+                //     Automatic: 3,
+                //     "Manual Mode": 1,
+                //   };
+                // }
 
-                const defaultValue = Object.keys(menuObject).find(
-                  (key) => menuObject[key] === control.flags.default_value
-                );
-                const [controlValue, setControlValue] = useState<string>(
-                  defaultValue!
+                // const value = Object.keys(menuObject).find(
+                //   (key) => menuObject[key] === control.value
+                // );
+
+                const [controlValue, setControlValue] = useState<number>(
+                  control.value!
                 );
 
-                if (defaultValue) {
+                console.log(menu);
+
+                if (control.value) {
                   setStatesList.push({
-                    id,
+                    control_id,
                     name,
                     setControlValue,
-                    defaultValue,
-                    type: control.flags.type,
+                    default_value,
+                    type: control.flags.control_type,
                   });
                 }
 
                 useDidMountEffect(() => {
-                  setUVCControl(usbInfo, menuObject[controlValue], id);
+                  setUVCControl(usbInfo, controlValue, control_id);
                 }, [controlValue]);
 
                 return (
                   <>
-                    <PopupState variant='popover' popupId={"" + id}>
+                    <PopupState variant='popover' popupId={"" + control_id}>
                       {(popupState) => (
                         <>
                           <div>
                             <span>
-                              {name}: {controlValue}
+                              {name}:
+                              {
+                                menu.find(
+                                  (menuItem) => menuItem.index == controlValue
+                                )!.name
+                              }
                             </span>
                             <IconButton {...bindTrigger(popupState)}>
                               <ArrowDropDownIcon />
                             </IconButton>
                           </div>
                           <Menu {...bindMenu(popupState)}>
-                            {Object.keys(menuObject).map((item) => {
+                            {menu.map((menuItem) => {
                               return (
                                 <MenuItem
-                                  key={item}
+                                  key={menuItem.index}
                                   onClick={() => {
-                                    setControlValue(item as string);
+                                    console.log(menuItem.index, menuItem.name);
+                                    setControlValue(menuItem.index);
                                     popupState.close();
                                   }}
                                 >
-                                  {item}
+                                  {menuItem.name}
                                 </MenuItem>
                               );
                             })}
@@ -765,17 +788,17 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
               switch (control.type) {
                 case controlType.INTEGER:
                   (control.setControlValue as (value: number) => void)(
-                    control.defaultValue as number
+                    control.default_value as number
                   );
                   break;
                 case controlType.BOOLEAN:
                   (control.setControlValue as (value: boolean) => void)(
-                    control.defaultValue as boolean
+                    control.default_value as boolean
                   );
                   break;
                 case controlType.MENU:
                   (control.setControlValue as (value: string) => void)(
-                    control.defaultValue as string
+                    control.default_value as string
                   );
                   break;
               }
@@ -806,7 +829,7 @@ const DeviceCard: React.FC<DeviceCardProps> = (props) => {
   const deviceWarning = null;
 
   const cameraControls = (
-    <CameraControls controls={controls} usbInfo={props.device.info.usbInfo} />
+    <CameraControls controls={controls} usbInfo={props.device.bus_info} />
   );
 
   return (
@@ -815,25 +838,25 @@ const DeviceCard: React.FC<DeviceCardProps> = (props) => {
     >
       <CardHeader
         action={deviceWarning}
-        title={props.device.info.name}
+        title={props.device.device_info.device_name}
         subheader={
           <>
-            {`Manufacturer: ${props.device.info.manufacturer}`}
+            {`Manufacturer: ${props.device.manufacturer}`}
             <LineBreak />
-            {`Model: ${props.device.info.model}`}
+            {`Model: `}
             <LineBreak />
-            {`USB ID: ${props.device.info.usbInfo}`}
+            {`USB ID: ${props.device.bus_info}`}
             <LineBreak />
             <TextField
               sx={{ top: 10 }}
               onChange={(e) => {
-                props.device.info.nickname = e.target.value;
-                setDeviceNickname(props.device.info.usbInfo, e.target.value);
+                props.device.nickname = e.target.value;
+                setDeviceNickname(props.device.bus_info, e.target.value);
               }}
               helperText='Device Nickname'
               placeholder='Device Nickname'
               variant='standard'
-              defaultValue={props.device.info.nickname}
+              defaultValue={props.device.nickname}
             ></TextField>
           </>
         }

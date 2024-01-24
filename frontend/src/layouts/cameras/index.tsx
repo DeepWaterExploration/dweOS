@@ -3,7 +3,9 @@ import React, { useEffect, useState } from "react";
 
 import DeviceCard from "./DeviceCard";
 import { Device } from "../../types/types";
-import { getDevices, DEVICE_API_WS } from "../../utils/api";
+import { getDevices, DEVICE_API_WS, DEVICE_API_URL } from "../../utils/api";
+
+import { io } from "socket.io-client";
 
 const hash = function (str: string) {
   let hash = 0,
@@ -18,6 +20,26 @@ const hash = function (str: string) {
   return hash;
 };
 
+interface Message {
+  event_name: string;
+  data: object;
+}
+
+interface DeviceRemovedInfo {
+  bus_info: string;
+}
+
+const deserializeMessage = (message_str: string) => {
+  let parts = message_str.split(": ");
+  let message: Message = {
+    event_name: parts[0],
+    data: JSON.parse(message_str.substring(message_str.indexOf(": ") + 1)),
+  };
+  return message;
+};
+
+const websocket = new WebSocket(DEVICE_API_WS);
+
 const CamerasPage: React.FC = () => {
   const [exploreHD_cards, setExploreHD_cards] = useState<JSX.Element[]>([]);
 
@@ -26,24 +48,27 @@ const CamerasPage: React.FC = () => {
       return [
         ...prevCards,
         ...devices.map((device) => (
-          <DeviceCard key={hash(device.info.usbInfo)} device={device} />
+          <DeviceCard key={hash(device.bus_info)} device={device} />
         )),
       ];
     });
   };
 
-  const removeDevice = (device: Device): void => {
+  const addDevice = (device: Device) => {
     setExploreHD_cards((prevCards) => {
-      return prevCards.filter((card) => {
-        return card.props.device.info.usbInfo != device.info.usbInfo;
-      });
+      return [
+        ...prevCards,
+        <DeviceCard key={hash(device.bus_info)} device={device} />,
+      ];
     });
   };
 
-  const removeDevices = (devices: Device[]) => {
-    for (const device of devices) {
-      removeDevice(device);
-    }
+  const removeDevice = (bus_info: string): void => {
+    setExploreHD_cards((prevCards) => {
+      return prevCards.filter((card) => {
+        return card.props.device.bus_info != bus_info;
+      });
+    });
   };
 
   useEffect(() => {
@@ -53,24 +78,18 @@ const CamerasPage: React.FC = () => {
       addDevices(devices);
     });
 
-    // Create WebSocket connection.
-    const socket = new WebSocket(DEVICE_API_WS);
-
-    // Listen for messages
-    socket.addEventListener("message", (event) => {
-      const lines = event.data.split("\n");
-      const event_name = lines[0];
-      const msg = JSON.parse(lines[1]);
-      console.log("Event: ", event_name);
-      console.log(msg);
-
-      if (event_name === "added_devices") {
-        addDevices(msg as Device[]);
-      } else if (event_name === "removed_devices") {
-        removeDevices(msg as Device[]);
+    websocket.addEventListener("message", (e) => {
+      let message = deserializeMessage(e.data);
+      console.log(message.data);
+      switch (message.event_name) {
+        case "device_added":
+          addDevice(message.data as Device);
+          break;
+        case "device_removed":
+          removeDevice((message.data as DeviceRemovedInfo).bus_info);
+          break;
       }
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -86,8 +105,8 @@ const CamerasPage: React.FC = () => {
       {/* Sort devices */}
       {/* Sorting does not work with new backend changes */}
       {/* {exploreHD_cards.sort((a, b) => {
-        const usbInfoA = a.props.device.info.usbInfo.split(".");
-        const usbInfoB = b.props.device.info.usbInfo.split(".");
+        const usbInfoA = a.props.device.bus_info.split(".");
+        const usbInfoB = b.props.device.bus_info.split(".");
         for (let i = 0; i < usbInfoA.length; i++) {
           if (i > usbInfoB.length - 1) return 1;
           if (parseInt(usbInfoA[i]) > parseInt(usbInfoB[i])) {
@@ -100,7 +119,12 @@ const CamerasPage: React.FC = () => {
         }
         return 1;
       })} */}
-      {exploreHD_cards}
+      {exploreHD_cards.sort((a, b) => {
+        const regex = /(\/dev\/video)(\d+)/;
+        let pathA = a.props.device.cameras[0].path;
+        let pathB = b.props.device.cameras[0].path;
+        return Number(regex.exec(pathA)![2]) - Number(regex.exec(pathB)![2]);
+      })}
     </Grid>
   );
 };

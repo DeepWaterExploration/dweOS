@@ -4,13 +4,12 @@ import {
   Stream,
   StreamEndpoint,
   StreamFormat,
-  bitrateMode,
   encodeType,
   optionType,
 } from "../types/types";
 
 const hostAddress: string = window.location.hostname;
-export const DEVICE_API_URL = `http://0.0.0.0:8080`;
+export const DEVICE_API_URL = `http://${hostAddress}:8080`;
 export const DEVICE_API_WS = `ws://${hostAddress}:9002`;
 export const SYSTEM_API_URL = `http://${hostAddress}:5050`;
 export const UPDATER_API_URL = `http://${hostAddress}:5000`;
@@ -77,10 +76,10 @@ export async function getDevice(id: number): Promise<Device> {
  * @param {number} usbInfo - The usb info of the connected camera.
  * @throws {Error} - If the request to configure the device fails.
  */
-export async function unconfigureStream(usbInfo: string) {
-  const url = `${DEVICE_API_URL}/unconfigure_stream`;
+export async function unconfigureStream(bus_info: string) {
+  const url = `${DEVICE_API_URL}/devices/unconfigure_stream`;
   const body = {
-    usbInfo,
+    bus_info,
   };
   const config: RequestInit = {
     mode: "cors",
@@ -98,7 +97,7 @@ export async function unconfigureStream(usbInfo: string) {
       return;
     })
     .catch((error: Error) => {
-      console.log(`Failed to configure device ${usbInfo}`);
+      console.log(`Failed to configure device ${bus_info}`);
       console.error(error);
       return;
     });
@@ -112,15 +111,15 @@ export async function unconfigureStream(usbInfo: string) {
  * @throws {Error} - If the request to configure the device fails.
  */
 export async function configureStream(
-  usbInfo: string,
-  format: StreamFormat,
+  bus_info: string,
+  stream_format: StreamFormat,
   encode_type: encodeType,
   endpoints: StreamEndpoint[]
 ) {
-  const url = `${DEVICE_API_URL}/configure_stream`;
+  const url = `${DEVICE_API_URL}/devices/configure_stream`;
   const body = {
-    usbInfo,
-    format,
+    bus_info,
+    stream_format,
     encode_type,
     endpoints,
   };
@@ -140,7 +139,7 @@ export async function configureStream(
       return data;
     })
     .catch((error: Error) => {
-      console.log(`Failed to configure device ${usbInfo}`);
+      console.log(`Failed to configure device ${bus_info}`);
       console.error(error);
       return undefined;
     });
@@ -152,10 +151,10 @@ export async function configureStream(
  * @param {string} nickname
  * @throws {Error} - If the request to configure the device fails.
  */
-export async function setDeviceNickname(usbInfo: string, nickname: string) {
-  const url = `${DEVICE_API_URL}/devices/setNickname`;
+export async function setDeviceNickname(bus_info: string, nickname: string) {
+  const url = `${DEVICE_API_URL}/devices/set_nickname`;
   const body = {
-    usbInfo,
+    bus_info,
     nickname,
   };
   const config: RequestInit = {
@@ -174,7 +173,7 @@ export async function setDeviceNickname(usbInfo: string, nickname: string) {
       return data;
     })
     .catch((error: Error) => {
-      console.log(`Failed to configure device ${usbInfo}`);
+      console.log(`Failed to configure device ${bus_info}`);
       console.error(error);
       return undefined;
     });
@@ -305,17 +304,15 @@ export async function stopStream(index: number): Promise<void> {
  * @throws {Error} - If the index is invalid or the request fails.
  */
 export async function setUVCControl(
-  usbInfo: string,
+  bus_info: string,
   value: number,
-  id: number
+  control_id: number
 ): Promise<void> {
   const url = `${DEVICE_API_URL}/devices/set_uvc_control`;
   const data = {
-    usbInfo,
-    control: {
-      value,
-      id,
-    },
+    bus_info,
+    value,
+    control_id,
   };
   const config: RequestInit = {
     mode: "cors",
@@ -352,13 +349,13 @@ export async function setUVCControl(
  * @throws {Error} - If the index is invalid or the request fails.
  */
 export async function setExploreHDOption(
-  usbInfo: string,
+  bus_info: string,
   option: optionType,
-  value: number | bitrateMode
+  value: number
 ): Promise<void> {
   const url = `${DEVICE_API_URL}/devices/set_option`;
   const data = {
-    usbInfo,
+    bus_info,
     option,
     value,
   };

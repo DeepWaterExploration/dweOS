@@ -1,16 +1,12 @@
-try:
-    from flask import Flask, send_from_directory
-    from gevent.pywsgi import WSGIServer
-    import sys
-    import signal
-    import os
-    from backend_py.src import main
-    import multiprocessing
-    import logging
-except ImportError:
-    import sys
-    print('Make sure you run ./install_requirements.sh before running this file')
-    sys.exit(1)
+from flask import Flask, send_from_directory
+from gevent.pywsgi import WSGIServer
+import sys
+import signal
+import os
+from backend_py.src import main
+import multiprocessing
+import subprocess
+import logging
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -37,9 +33,13 @@ if __name__ == '__main__':
     frontend_thread = multiprocessing.Process(target=run_frontend)
     frontend_thread.start()
 
+    system_api_process = subprocess.Popen(
+        ['go', 'run', '.'], cwd='./system_api')
+
     def exit_clean(sig, frame):
         print('Exiting')
         frontend_thread.kill()
+        system_api_process.kill()
         sys.exit(0)
 
     signal.signal(signal.SIGINT, exit_clean)

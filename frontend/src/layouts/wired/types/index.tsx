@@ -2,11 +2,11 @@
  * Represents the types of information about the CPU
  */
 export interface CPUInfo {
-  processor_name: string;
-  physical_cores: number;
-  total_cores: number;
-  core_usage: number[];
-  total_usage: number;
+    processor_name: string;
+    physical_cores: number;
+    total_cores: number;
+    core_usage: number[];
+    total_usage: number;
 }
 
 /**
@@ -14,14 +14,14 @@ export interface CPUInfo {
  */
 
 export interface DiskInfo {
-  disk_usage: number;
+    disk_usage: number;
 }
 
 /**
  * Represents the types of information about the memory
  */
 export interface MemoryInfo {
-  memory_usage: number;
+    memory_usage: number;
 }
 
 /**
@@ -29,5 +29,5 @@ export interface MemoryInfo {
  */
 
 export interface TemperatureInfo {
-  processor_temp: number;
+    processor_temp: number;
 }

@@ -7,58 +7,58 @@ import { routes } from "../routes";
 import { RouteItem } from "../types/types.tsx";
 
 interface GetRoutesProps {
-  routes: RouteItem[];
+    routes: RouteItem[];
 }
 
 const GetRoutes: React.FC<GetRoutesProps> = (props): ReactNode => {
-  return (
-    <Routes>
-      <Route
-        path='/'
-        element={props.routes.find((route) => route.default)?.component}
-      />
-      {props.routes.map((route) => {
-        if (route.route && route.component) {
-          return (
+    return (
+        <Routes>
             <Route
-              path={route.route}
-              element={route.component}
-              key={route.key}
+                path='/'
+                element={props.routes.find((route) => route.default)?.component}
             />
-          );
-        }
-        return null; // Add a default return value if the if condition is not met
-      })}
-    </Routes>
-  );
+            {props.routes.map((route) => {
+                if (route.route && route.component) {
+                    return (
+                        <Route
+                            path={route.route}
+                            element={route.component}
+                            key={route.key}
+                        />
+                    );
+                }
+                return null; // Add a default return value if the if condition is not met
+            })}
+        </Routes>
+    );
 };
 
 interface NavigationRoutesProps {
-  theme: string;
+    theme: string;
 }
 
 const NavigationRoutes: React.FC<NavigationRoutesProps> = () => {
-  return (
-    <Box
-      component='main'
-      sx={{
-        backgroundColor: (theme) =>
-          theme.palette.mode === "light"
-            ? theme.palette.grey[100]
-            : theme.palette.grey[900],
-        flexGrow: 1,
-        height: "100vh",
-        overflow: "auto",
-        paddingTop: "7em",
-      }}
-    >
-      {/* <Toolbar /> */}
-      {/* DeviceCards */}
-      <div style={{ height: "calc(100vh - 7.5em)" }}>
-        <GetRoutes routes={routes} />
-      </div>
-    </Box>
-  );
+    return (
+        <Box
+            component='main'
+            sx={{
+                backgroundColor: (theme) =>
+                    theme.palette.mode === "light"
+                        ? theme.palette.grey[100]
+                        : theme.palette.grey[900],
+                flexGrow: 1,
+                height: "100vh",
+                overflow: "auto",
+                paddingTop: "7em",
+            }}
+        >
+            {/* <Toolbar /> */}
+            {/* DeviceCards */}
+            <div style={{ height: "calc(100vh - 7.5em)" }}>
+                <GetRoutes routes={routes} />
+            </div>
+        </Box>
+    );
 };
 
 export default NavigationRoutes;

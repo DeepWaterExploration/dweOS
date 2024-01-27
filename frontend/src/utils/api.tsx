@@ -1,11 +1,11 @@
 import {
-  Device,
-  ReleaseList,
-  Stream,
-  StreamEndpoint,
-  StreamFormat,
-  encodeType,
-  optionType,
+    Device,
+    ReleaseList,
+    Stream,
+    StreamEndpoint,
+    StreamFormat,
+    encodeType,
+    optionType,
 } from "../types/types";
 
 const hostAddress: string = window.location.hostname;
@@ -20,26 +20,26 @@ export const UPDATER_API_URL = `http://${hostAddress}:5000`;
  * @throws {Error} - If the request to retrieve the device list fails.
  */
 export async function getDevices(): Promise<Device[]> {
-  const url = `${DEVICE_API_URL}/devices`;
-  const config: RequestInit = {
-    mode: "cors",
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    // credentials: "include",
-  };
-  return await fetch(url, config)
-    // Process the response data
-    .then((response: Response) => response.json())
-    .then((data: Device[]) => {
-      return data;
-    })
-    .catch((error: Error) => {
-      console.log("Failed to retrieve device list");
-      console.error(error);
-      return [];
-    });
+    const url = `${DEVICE_API_URL}/devices`;
+    const config: RequestInit = {
+        mode: "cors",
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        // credentials: "include",
+    };
+    return await fetch(url, config)
+        // Process the response data
+        .then((response: Response) => response.json())
+        .then((data: Device[]) => {
+            return data;
+        })
+        .catch((error: Error) => {
+            console.log("Failed to retrieve device list");
+            console.error(error);
+            return [];
+        });
 }
 
 /**
@@ -49,26 +49,26 @@ export async function getDevices(): Promise<Device[]> {
  * @throws {Error} - If the request to retrieve the device fails.
  */
 export async function getDevice(id: number): Promise<Device> {
-  const url = `${DEVICE_API_URL}/devices/${id}`;
-  const config: RequestInit = {
-    mode: "cors",
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    // credentials: "include",
-  };
-  return await fetch(url, config)
-    // Process the response data
-    .then((response: Response) => response.json())
-    .then((data: Device) => {
-      return data;
-    })
-    .catch((error: Error) => {
-      console.log(`Failed to retrieve device ${id}`);
-      console.error(error);
-      return {} as Device;
-    });
+    const url = `${DEVICE_API_URL}/devices/${id}`;
+    const config: RequestInit = {
+        mode: "cors",
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        // credentials: "include",
+    };
+    return await fetch(url, config)
+        // Process the response data
+        .then((response: Response) => response.json())
+        .then((data: Device) => {
+            return data;
+        })
+        .catch((error: Error) => {
+            console.log(`Failed to retrieve device ${id}`);
+            console.error(error);
+            return {} as Device;
+        });
 }
 
 /**
@@ -77,30 +77,30 @@ export async function getDevice(id: number): Promise<Device> {
  * @throws {Error} - If the request to configure the device fails.
  */
 export async function unconfigureStream(bus_info: string) {
-  const url = `${DEVICE_API_URL}/devices/unconfigure_stream`;
-  const body = {
-    bus_info,
-  };
-  const config: RequestInit = {
-    mode: "cors",
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    // credentials: "include",
-    body: JSON.stringify(body),
-  };
-  return await fetch(url, config)
-    // Process the response data
-    .then((response: Response) => response.json())
-    .then(() => {
-      return;
-    })
-    .catch((error: Error) => {
-      console.log(`Failed to configure device ${bus_info}`);
-      console.error(error);
-      return;
-    });
+    const url = `${DEVICE_API_URL}/devices/unconfigure_stream`;
+    const body = {
+        bus_info,
+    };
+    const config: RequestInit = {
+        mode: "cors",
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        // credentials: "include",
+        body: JSON.stringify(body),
+    };
+    return await fetch(url, config)
+        // Process the response data
+        .then((response: Response) => response.json())
+        .then(() => {
+            return;
+        })
+        .catch((error: Error) => {
+            console.log(`Failed to configure device ${bus_info}`);
+            console.error(error);
+            return;
+        });
 }
 
 /**
@@ -111,38 +111,38 @@ export async function unconfigureStream(bus_info: string) {
  * @throws {Error} - If the request to configure the device fails.
  */
 export async function configureStream(
-  bus_info: string,
-  stream_format: StreamFormat,
-  encode_type: encodeType,
-  endpoints: StreamEndpoint[]
+    bus_info: string,
+    stream_format: StreamFormat,
+    encode_type: encodeType,
+    endpoints: StreamEndpoint[]
 ) {
-  const url = `${DEVICE_API_URL}/devices/configure_stream`;
-  const body = {
-    bus_info,
-    stream_format,
-    encode_type,
-    endpoints,
-  };
-  const config: RequestInit = {
-    mode: "cors",
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    // credentials: "include",
-    body: JSON.stringify(body),
-  };
-  return await fetch(url, config)
-    // Process the response data
-    .then((response: Response) => response.json())
-    .then((data: Stream) => {
-      return data;
-    })
-    .catch((error: Error) => {
-      console.log(`Failed to configure device ${bus_info}`);
-      console.error(error);
-      return undefined;
-    });
+    const url = `${DEVICE_API_URL}/devices/configure_stream`;
+    const body = {
+        bus_info,
+        stream_format,
+        encode_type,
+        endpoints,
+    };
+    const config: RequestInit = {
+        mode: "cors",
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        // credentials: "include",
+        body: JSON.stringify(body),
+    };
+    return await fetch(url, config)
+        // Process the response data
+        .then((response: Response) => response.json())
+        .then((data: Stream) => {
+            return data;
+        })
+        .catch((error: Error) => {
+            console.log(`Failed to configure device ${bus_info}`);
+            console.error(error);
+            return undefined;
+        });
 }
 
 /**
@@ -152,31 +152,31 @@ export async function configureStream(
  * @throws {Error} - If the request to configure the device fails.
  */
 export async function setDeviceNickname(bus_info: string, nickname: string) {
-  const url = `${DEVICE_API_URL}/devices/set_nickname`;
-  const body = {
-    bus_info,
-    nickname,
-  };
-  const config: RequestInit = {
-    mode: "cors",
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    // credentials: "include",
-    body: JSON.stringify(body),
-  };
-  return await fetch(url, config)
-    // Process the response data
-    .then((response: Response) => response.json())
-    .then((data: Stream) => {
-      return data;
-    })
-    .catch((error: Error) => {
-      console.log(`Failed to configure device ${bus_info}`);
-      console.error(error);
-      return undefined;
-    });
+    const url = `${DEVICE_API_URL}/devices/set_nickname`;
+    const body = {
+        bus_info,
+        nickname,
+    };
+    const config: RequestInit = {
+        mode: "cors",
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        // credentials: "include",
+        body: JSON.stringify(body),
+    };
+    return await fetch(url, config)
+        // Process the response data
+        .then((response: Response) => response.json())
+        .then((data: Stream) => {
+            return data;
+        })
+        .catch((error: Error) => {
+            console.log(`Failed to configure device ${bus_info}`);
+            console.error(error);
+            return undefined;
+        });
 }
 
 /**
@@ -187,38 +187,38 @@ export async function setDeviceNickname(bus_info: string, nickname: string) {
  * @throws {Error} - If the index is invalid or the request fails.
  */
 export async function addStreamEndpoint(
-  index: number,
-  endpoint: StreamEndpoint
+    index: number,
+    endpoint: StreamEndpoint
 ): Promise<void> {
-  const url = `${DEVICE_API_URL}/add_stream_endpoint`;
-  const data = {
-    index,
-    endpoint,
-  };
-  const config: RequestInit = {
-    mode: "cors",
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    // credentials: "include",
-    body: JSON.stringify(data),
-  };
+    const url = `${DEVICE_API_URL}/add_stream_endpoint`;
+    const data = {
+        index,
+        endpoint,
+    };
+    const config: RequestInit = {
+        mode: "cors",
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        // credentials: "include",
+        body: JSON.stringify(data),
+    };
 
-  return await fetch(url, config)
-    // Process the response data
-    .then((response: Response) => {
-      if (!response.ok) {
-        if (response.status === 403) {
-          throw new Error("Error: Invalid index");
-        }
-        throw new Error("Failed to add stream endpoint");
-      }
-    })
-    .catch((error: Error) => {
-      console.log("Failed to add stream endpoint");
-      console.error(error);
-    });
+    return await fetch(url, config)
+        // Process the response data
+        .then((response: Response) => {
+            if (!response.ok) {
+                if (response.status === 403) {
+                    throw new Error("Error: Invalid index");
+                }
+                throw new Error("Failed to add stream endpoint");
+            }
+        })
+        .catch((error: Error) => {
+            console.log("Failed to add stream endpoint");
+            console.error(error);
+        });
 }
 
 /**
@@ -228,34 +228,34 @@ export async function addStreamEndpoint(
  * @throws {Error} - If the index is invalid or the request fails.
  */
 export async function startStream(index: number): Promise<void> {
-  const url = `${DEVICE_API_URL}/start_stream`;
-  const data = {
-    index,
-  };
-  const config: RequestInit = {
-    mode: "cors",
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    // credentials: "include",
-    body: JSON.stringify(data),
-  };
+    const url = `${DEVICE_API_URL}/start_stream`;
+    const data = {
+        index,
+    };
+    const config: RequestInit = {
+        mode: "cors",
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        // credentials: "include",
+        body: JSON.stringify(data),
+    };
 
-  return await fetch(url, config)
-    // Process the response data
-    .then((response: Response) => {
-      if (!response.ok) {
-        if (response.status === 403) {
-          throw new Error("Error: Invalid index");
-        }
-        throw new Error("Failed to start stream");
-      }
-    })
-    .catch((error: Error) => {
-      console.log("Failed to start stream");
-      console.error(error);
-    });
+    return await fetch(url, config)
+        // Process the response data
+        .then((response: Response) => {
+            if (!response.ok) {
+                if (response.status === 403) {
+                    throw new Error("Error: Invalid index");
+                }
+                throw new Error("Failed to start stream");
+            }
+        })
+        .catch((error: Error) => {
+            console.log("Failed to start stream");
+            console.error(error);
+        });
 }
 
 /**
@@ -265,34 +265,34 @@ export async function startStream(index: number): Promise<void> {
  * @throws {Error} - If the index is invalid or the request fails.
  */
 export async function stopStream(index: number): Promise<void> {
-  const url = `${DEVICE_API_URL}/stop_stream`;
-  const data = {
-    index,
-  };
-  const config: RequestInit = {
-    mode: "cors",
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    // credentials: "include",
-    body: JSON.stringify(data),
-  };
+    const url = `${DEVICE_API_URL}/stop_stream`;
+    const data = {
+        index,
+    };
+    const config: RequestInit = {
+        mode: "cors",
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        // credentials: "include",
+        body: JSON.stringify(data),
+    };
 
-  return await fetch(url, config)
-    // Process the response data
-    .then((response: Response) => {
-      if (!response.ok) {
-        if (response.status === 403) {
-          throw new Error("Error: Invalid index");
-        }
-        throw new Error("Failed to stop stream");
-      }
-    })
-    .catch((error: Error) => {
-      console.log("Failed to stop stream");
-      console.error(error);
-    });
+    return await fetch(url, config)
+        // Process the response data
+        .then((response: Response) => {
+            if (!response.ok) {
+                if (response.status === 403) {
+                    throw new Error("Error: Invalid index");
+                }
+                throw new Error("Failed to stop stream");
+            }
+        })
+        .catch((error: Error) => {
+            console.log("Failed to stop stream");
+            console.error(error);
+        });
 }
 
 /**
@@ -304,40 +304,40 @@ export async function stopStream(index: number): Promise<void> {
  * @throws {Error} - If the index is invalid or the request fails.
  */
 export async function setUVCControl(
-  bus_info: string,
-  value: number,
-  control_id: number
+    bus_info: string,
+    value: number,
+    control_id: number
 ): Promise<void> {
-  const url = `${DEVICE_API_URL}/devices/set_uvc_control`;
-  const data = {
-    bus_info,
-    value,
-    control_id,
-  };
-  const config: RequestInit = {
-    mode: "cors",
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    // credentials: "include",
-    body: JSON.stringify(data),
-  };
+    const url = `${DEVICE_API_URL}/devices/set_uvc_control`;
+    const data = {
+        bus_info,
+        value,
+        control_id,
+    };
+    const config: RequestInit = {
+        mode: "cors",
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        // credentials: "include",
+        body: JSON.stringify(data),
+    };
 
-  return await fetch(url, config)
-    // Process the response data
-    .then((response: Response) => {
-      if (!response.ok) {
-        if (response.status === 403) {
-          throw new Error("Error: Invalid index");
-        }
-        throw new Error("Failed to set UVC control");
-      }
-    })
-    .catch((error: Error) => {
-      console.log("Failed to set UVC control");
-      console.error(error);
-    });
+    return await fetch(url, config)
+        // Process the response data
+        .then((response: Response) => {
+            if (!response.ok) {
+                if (response.status === 403) {
+                    throw new Error("Error: Invalid index");
+                }
+                throw new Error("Failed to set UVC control");
+            }
+        })
+        .catch((error: Error) => {
+            console.log("Failed to set UVC control");
+            console.error(error);
+        });
 }
 
 /**
@@ -349,40 +349,40 @@ export async function setUVCControl(
  * @throws {Error} - If the index is invalid or the request fails.
  */
 export async function setExploreHDOption(
-  bus_info: string,
-  option: optionType,
-  value: number
+    bus_info: string,
+    option: optionType,
+    value: number
 ): Promise<void> {
-  const url = `${DEVICE_API_URL}/devices/set_option`;
-  const data = {
-    bus_info,
-    option,
-    value,
-  };
-  const config: RequestInit = {
-    mode: "cors",
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    // credentials: "include",
-    body: JSON.stringify(data),
-  };
+    const url = `${DEVICE_API_URL}/devices/set_option`;
+    const data = {
+        bus_info,
+        option,
+        value,
+    };
+    const config: RequestInit = {
+        mode: "cors",
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        // credentials: "include",
+        body: JSON.stringify(data),
+    };
 
-  return await fetch(url, config)
-    // Process the response data
-    .then((response: Response) => {
-      if (!response.ok) {
-        if (response.status === 403) {
-          throw new Error("Error: Invalid index");
-        }
-        throw new Error("Failed to set exploreHD option");
-      }
-    })
-    .catch((error: Error) => {
-      console.log("Failed to set exploreHD option");
-      console.error(error);
-    });
+    return await fetch(url, config)
+        // Process the response data
+        .then((response: Response) => {
+            if (!response.ok) {
+                if (response.status === 403) {
+                    throw new Error("Error: Invalid index");
+                }
+                throw new Error("Failed to set exploreHD option");
+            }
+        })
+        .catch((error: Error) => {
+            console.log("Failed to set exploreHD option");
+            console.error(error);
+        });
 }
 
 /**
@@ -392,59 +392,59 @@ export async function setExploreHDOption(
  * @throws {Error} - If the index is invalid or the request fails.
  */
 export async function restartStream(usbInfo: string): Promise<void> {
-  const url = `${DEVICE_API_URL}/restart_stream`;
-  const data = {
-    usbInfo,
-  };
-  const config: RequestInit = {
-    mode: "cors",
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-    // credentials: "include",
-  };
+    const url = `${DEVICE_API_URL}/restart_stream`;
+    const data = {
+        usbInfo,
+    };
+    const config: RequestInit = {
+        mode: "cors",
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+        // credentials: "include",
+    };
 
-  return await fetch(url, config)
-    // Process the response data
-    .then((response: Response) => {
-      if (!response.ok) {
-        throw new Error("Failed to restart stream");
-      }
-    })
-    .catch((error: Error) => {
-      console.log("Failed to restart stream");
-      console.error(error);
-    });
+    return await fetch(url, config)
+        // Process the response data
+        .then((response: Response) => {
+            if (!response.ok) {
+                throw new Error("Failed to restart stream");
+            }
+        })
+        .catch((error: Error) => {
+            console.log("Failed to restart stream");
+            console.error(error);
+        });
 }
 
 /**
  * Restore a device to factory settings.
  */
 export async function resetSettings(): Promise<void> {
-  const url = `${DEVICE_API_URL}/reset_settings`;
-  const config: RequestInit = {
-    mode: "cors",
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    // credentials: "include",
-  };
+    const url = `${DEVICE_API_URL}/reset_settings`;
+    const config: RequestInit = {
+        mode: "cors",
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        // credentials: "include",
+    };
 
-  return await fetch(url, config)
-    // Process the response data
-    .then((response: Response) => {
-      if (!response.ok) {
-        throw new Error("Failed to reset settings");
-      }
-      window.location.reload();
-    })
-    .catch((error: Error) => {
-      console.log("Failed to reset settings");
-      console.error(error);
-    });
+    return await fetch(url, config)
+        // Process the response data
+        .then((response: Response) => {
+            if (!response.ok) {
+                throw new Error("Failed to reset settings");
+            }
+            window.location.reload();
+        })
+        .catch((error: Error) => {
+            console.log("Failed to reset settings");
+            console.error(error);
+        });
 }
 
 /**
@@ -452,20 +452,20 @@ export async function resetSettings(): Promise<void> {
  * @throws {Error} - If the request to shut down the machine fails.
  */
 export async function shutDownMachine(): Promise<null> {
-  const url = `${SYSTEM_API_URL}/shutDownMachine`;
-  const config: RequestInit = {
-    mode: "cors",
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  };
-  await fetch(url, config).catch((error: Error) => {
-    console.log("Failed to restart device");
-    console.error(error);
-    throw error;
-  });
-  return null;
+    const url = `${SYSTEM_API_URL}/shutDownMachine`;
+    const config: RequestInit = {
+        mode: "cors",
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    };
+    await fetch(url, config).catch((error: Error) => {
+        console.log("Failed to restart device");
+        console.error(error);
+        throw error;
+    });
+    return null;
 }
 
 /**
@@ -474,60 +474,60 @@ export async function shutDownMachine(): Promise<null> {
  * @throws {Error} - If the request to restart the machine fails.
  */
 export async function restartMachine(): Promise<null> {
-  const url = `${SYSTEM_API_URL}/restartMachine`;
-  const config: RequestInit = {
-    mode: "cors",
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  };
-  await fetch(url, config).catch((error: Error) => {
-    console.log("Failed to restart device");
-    console.error(error);
-    throw error;
-  });
-  return null;
+    const url = `${SYSTEM_API_URL}/restartMachine`;
+    const config: RequestInit = {
+        mode: "cors",
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    };
+    await fetch(url, config).catch((error: Error) => {
+        console.log("Failed to restart device");
+        console.error(error);
+        throw error;
+    });
+    return null;
 }
 
 export async function installUpdate(tag_name: string): Promise<null> {
-  const url = `${UPDATER_API_URL}/install_update`;
-  const data = {
-    tag_name,
-  };
-  const config: RequestInit = {
-    mode: "cors",
-    method: "POST",
-    body: JSON.stringify(data),
-    headers: {
-      "Content-Type": "application/json",
-    },
-  };
-  await fetch(url, config).catch((error: Error) => {
-    console.log("Failed to restart device");
-    console.error(error);
-    throw error;
-  });
-  return null;
+    const url = `${UPDATER_API_URL}/install_update`;
+    const data = {
+        tag_name,
+    };
+    const config: RequestInit = {
+        mode: "cors",
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: {
+            "Content-Type": "application/json",
+        },
+    };
+    await fetch(url, config).catch((error: Error) => {
+        console.log("Failed to restart device");
+        console.error(error);
+        throw error;
+    });
+    return null;
 }
 
 export async function getReleases(): Promise<ReleaseList> {
-  const url = `${UPDATER_API_URL}/releases`;
-  const config: RequestInit = {
-    mode: "cors",
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  };
-  return await fetch(url, config)
-    .then((response: Response) => response.json())
-    .then((data: ReleaseList) => {
-      return data;
-    })
-    .catch((error: Error) => {
-      console.log("Failed to restart device");
-      console.error(error);
-      throw error;
-    });
+    const url = `${UPDATER_API_URL}/releases`;
+    const config: RequestInit = {
+        mode: "cors",
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    };
+    return await fetch(url, config)
+        .then((response: Response) => response.json())
+        .then((data: ReleaseList) => {
+            return data;
+        })
+        .catch((error: Error) => {
+            console.log("Failed to restart device");
+            console.error(error);
+            throw error;
+        });
 }

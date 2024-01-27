@@ -33,5 +33,7 @@ echo "Successfully packaged frontend"
 
 cp run_release.py release
 cp install_requirements.sh release
+cp create_venv.sh release
+cp run_release.sh release
 
 tar -czvf release.tar.gz release

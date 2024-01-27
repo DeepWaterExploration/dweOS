@@ -1,3 +1,4 @@
 release
 release.tar.gz
 **/device_settings.json
+.env

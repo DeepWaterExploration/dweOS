@@ -9,7 +9,7 @@ import { DiskInfo, MemoryInfo } from "./types";
 import TemperatureCard from "./TemperatureCard";
 import { CPUInfo, TemperatureInfo } from "./types";
 
-const Wired: React.FC = () => {
+const TaskMonitor: React.FC = () => {
     const [cpuInfo, setCPUInfo] = useState<CPUInfo | null>(null);
     const [diskInfo, setDiskInfo] = useState<DiskInfo | null>(null);
     const [memoryInfo, setMemoryInfo] = useState<MemoryInfo | null>(null);
@@ -106,4 +106,4 @@ const Wired: React.FC = () => {
     );
 };
 
-export default Wired;
+export default TaskMonitor;

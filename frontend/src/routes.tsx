@@ -17,7 +17,7 @@ import { Box } from "@mui/material";
 import CamerasPage from "./layouts/cameras";
 import Updater from "./layouts/updater";
 import WifiPage from "./layouts/wifi";
-import WiredPage from "./layouts/wired";
+import TaskMonitor from "./layouts/task_monitor";
 import { RouteItem, routeType } from "./types/types";
 
 export const routes: RouteItem[] = [
@@ -45,15 +45,14 @@ export const routes: RouteItem[] = [
         default: false,
     },
     {
-        route: "/devices/misc",
-        component: <Box />,
-        //  <Misc />,
+        route: "/devices/task_monitor",
+        component: <TaskMonitor />,
         exact: true,
         icon: <SettingsOutlinedIcon />,
         category: "Devices",
         type: routeType.COLLAPSE,
-        name: "Misc",
-        key: "misc",
+        name: "Task Monitor",
+        key: "task_monitor",
         default: false,
     },
     {
@@ -70,7 +69,7 @@ export const routes: RouteItem[] = [
     },
     {
         route: "/communications/wired",
-        component: <WiredPage />,
+        component: <Box />,
         exact: true,
         icon: <StorageOutlinedIcon />,
         category: "Communications",

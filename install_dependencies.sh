@@ -1,6 +1,8 @@
 #!/bin/bash
 # must be run with sudo
 
+GO_VERSION=1.21.0
+
 install_dependencies_frontend() {
   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
   export NVM_DIR="$HOME/.nvm"

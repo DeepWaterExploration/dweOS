@@ -14,7 +14,7 @@ updates:
       time: "10:00"
       # Use Los Angeles Standard Time (UTC -07:00)
       timezone: "America/Los_Angeles"
-    # Raise all npm pull requests with custom labels
+    # Raise all pull requests with custom labels
     labels:
       - "github-actions"
       - "dependencies"
@@ -28,8 +28,22 @@ updates:
       time: "10:00"
       # Use Los Angeles Standard Time (UTC -07:00)
       timezone: "America/Los_Angeles"
-    # Raise all npm pull requests with custom labels
+    # Raise all pull requests with custom labels
     labels:
       - "npm"
       - "dependencies"
     versioning-strategy: "increase"
+
+  # Maintain dependencies for Go
+  - package-ecosystem: "gomod" # See documentation for possible values
+    directory: "/system_api/" # Location of package manifests
+    open-pull-requests-limit: 10
+    schedule:
+      interval: "daily"
+      time: "10:00"
+      # Use Los Angeles Standard Time (UTC -07:00)
+      timezone: "America/Los_Angeles"
+    # Raise all pull requests with custom labels
+    labels:
+      - "go"
+      - "dependencies"

@@ -2,22 +2,24 @@
 
 API and driver rewrite of DWE OS
 
-1. Clone the repository and submodules
+## Installation
+
+TODO
+
+## Building for development
+
+1. Clone the repository
 
 ```sh
-git clone --recursive https://github.com/DeepwaterExploration/DWE_OS_2.git
+git clone https://github.com/DeepwaterExploration/DWE_OS_2.git
 cd DWE_OS_2
-```
-
-2. Install project dependencies
-
-```sh
-chmod +x ./install_dependencies.sh && sudo ./install_dependencies.sh
-
 ```
 
 3. Build the project
 
 ```sh
-chmod +x ./build_repo.sh && ./build_repo.sh
+cd frontend
+npm install
+cd ..
+./create_release.sh
 ```

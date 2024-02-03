@@ -57,3 +57,37 @@ export async function getAvailableWifi(): Promise<ScannedWifiNetwork[]> {
             return {} as ScannedWifiNetwork[];
         });
 }
+
+/**
+ * Gets the list of available wifi networks.
+ * @returns {Promise<void>} - A promise that resolves to the result of the request.
+ * @throws {Error} - If the request to get the list of available wifi networks fails.
+ */
+export async function connectToWifi(
+    ssid: string,
+    password: string
+): Promise<void> {
+    const url = `${SYSTEM_API_URL}/wifiConnect`;
+    const config: RequestInit = {
+        mode: "cors",
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            wifi_ssid: ssid,
+            wifi_password: password,
+        }),
+        // credentials: "include",
+    };
+    return await fetch(url, config)
+        // Process the response data
+        .then((response: Response) => response.json())
+        .then((data) => {
+            console.log(data);
+        })
+        .catch((error: Error) => {
+            console.log("Failed to get available wifi networks");
+            console.error(error);
+        });
+}

@@ -146,6 +146,7 @@ func connectToWifi(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Failed to parse request body: %v", err), http.StatusBadRequest)
 		return
 	}
+	Log.Info(fmt.Sprintf("Attempting to connect to %s with password: %s", request.WifiSSID, request.WifiPassword));
 
 	// Build the response content as a JSON struct
 	responseContent, err := wifiHandler.NetworkConnect(request.WifiSSID, request.WifiPassword)

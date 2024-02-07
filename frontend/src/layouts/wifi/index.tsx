@@ -8,6 +8,7 @@ import NetworkDetailsCard from "./NetworkDetailsCard";
 
 const Wifi: React.FC = () => {
     const [currentNetwork, setCurrentNetwork] = useState({} as WifiStatus);
+    const [currentSSID, setCurrentSSID] = useState("");
     const [scannedNetworks, setScannedNetworks] = useState(
         [] as ScannedWifiNetwork[]
     );
@@ -23,6 +24,10 @@ const Wifi: React.FC = () => {
         });
     }, []);
 
+    useEffect(() => {
+        setCurrentSSID(currentNetwork.ssid);
+    }, [currentNetwork]);
+
     return (
         <Grid
             container
@@ -35,12 +40,13 @@ const Wifi: React.FC = () => {
             }}
         >
             <NetworkSettingsCard
-                currentNetwork={currentNetwork}
-                setCurrentNetwork={setCurrentNetwork}
+                currentSSID={currentSSID}
+                setCurrentSSID={setCurrentSSID}
                 scannedNetworks={scannedNetworks}
                 setScannedNetworks={setScannedNetworks}
+                setCurrentNetwork={setCurrentNetwork}
             />
-            <NetworkDetailsCard currentNetwork={currentNetwork} />
+            <NetworkDetailsCard ip_address={currentNetwork.ip_address} />
         </Grid>
     );
 };

@@ -66,7 +66,7 @@ export async function getAvailableWifi(): Promise<ScannedWifiNetwork[]> {
 export async function connectToWifi(
     ssid: string,
     password: string
-): Promise<void> {
+): Promise<boolean> {
     const url = `${SYSTEM_API_URL}/wifiConnect`;
     const config: RequestInit = {
         mode: "cors",
@@ -80,6 +80,26 @@ export async function connectToWifi(
         }),
         // credentials: "include",
     };
+    let res = await fetch(url, config);
+    try {
+        let data = await res.json();
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+export async function disconnectFromWifi(ssid: string): Promise<void> {
+    const url = `${SYSTEM_API_URL}/wifiDisconnect`;
+    const config: RequestInit = {
+        mode: "cors",
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ wifi_ssid: ssid }),
+        // credentials: "include",
+    };
     return await fetch(url, config)
         // Process the response data
         .then((response: Response) => response.json())
@@ -87,7 +107,7 @@ export async function connectToWifi(
             console.log(data);
         })
         .catch((error: Error) => {
-            console.log("Failed to get available wifi networks");
+            console.log("Failed to disconnect");
             console.error(error);
         });
 }

@@ -2,7 +2,7 @@ import { Card, CardHeader, Typography } from "@mui/material";
 import { WifiStatus } from "./types";
 
 export interface NetworkDetailsCardProps {
-    currentNetwork: WifiStatus;
+    ip_address: string;
 }
 
 const NetworkDetailsCard: React.FC<NetworkDetailsCardProps> = (props) => {
@@ -30,7 +30,7 @@ const NetworkDetailsCard: React.FC<NetworkDetailsCardProps> = (props) => {
                     marginTop: "10px",
                 }}
             >
-                IP Address - {props.currentNetwork.ip_address}
+                IP Address - {props.ip_address}
             </Typography>
         </Card>
     );

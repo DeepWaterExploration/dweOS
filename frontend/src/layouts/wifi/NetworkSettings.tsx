@@ -28,7 +28,8 @@ import {
 } from "@mui/icons-material";
 import { WifiStatus, ScannedWifiNetwork } from "./types";
 import { useState } from "react";
-import { connectToWifi } from "./api";
+import { connectToWifi, disconnectFromWifi, getWifiStatus } from "./api";
+import { useSnackbar } from "notistack";
 
 export interface SignalIconProps {
     signal_strength: number;
@@ -92,7 +93,7 @@ const WifiListItem: React.FC<WifiListItemProps> = (props) => {
             />
             {props.connected ? (
                 <>
-                    <Button
+                    {/* <Button
                         variant='contained'
                         style={{
                             color: "white",
@@ -101,7 +102,7 @@ const WifiListItem: React.FC<WifiListItemProps> = (props) => {
                         }}
                     >
                         Forget
-                    </Button>
+                    </Button> */}
                     <Button
                         variant='contained'
                         style={{ color: "white", fontWeight: "bold" }}
@@ -202,7 +203,10 @@ const WifiConnectDialog: React.FC<WifiConnectDialogProps> = (props) => {
                         width: "50%",
                         fontWeight: "bold",
                     }}
-                    onClick={() => props.on_connect(password)}
+                    onClick={() => {
+                        props.on_connect(password);
+                        setPassword("");
+                    }}
                 >
                     Connect
                 </Button>
@@ -212,7 +216,8 @@ const WifiConnectDialog: React.FC<WifiConnectDialogProps> = (props) => {
 };
 
 export interface NetworkSettingsCardProps {
-    currentNetwork: WifiStatus;
+    currentSSID: string;
+    setCurrentSSID: React.Dispatch<React.SetStateAction<string>>;
     setCurrentNetwork: React.Dispatch<React.SetStateAction<WifiStatus>>;
 
     scannedNetworks: ScannedWifiNetwork[];
@@ -226,10 +231,37 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
     const [connectNetwork, setConnectNetwork] = useState(
         {} as ScannedWifiNetwork
     );
+    const { enqueueSnackbar } = useSnackbar();
 
     const handleConnect = (network: ScannedWifiNetwork) => {
         setConnectNetwork(network);
         setConnectDialog(true);
+    };
+
+    const handleDisconnect = () => {
+        disconnectFromWifi(props.currentSSID).then(() => {
+            enqueueSnackbar(
+                `Successfully disconnected from network: ${props.currentSSID}`,
+                {
+                    variant: "success",
+                }
+            );
+
+            // wait for new network to come in if there is one
+            // TODO: just constantly check for a new network over an interval
+            setTimeout(() => {
+                getWifiStatus().then((status: WifiStatus) => {
+                    props.setCurrentNetwork(status);
+
+                    enqueueSnackbar(
+                        `Successfully connected to network: ${status.ssid}`,
+                        {
+                            variant: "success",
+                        }
+                    );
+                });
+            }, 5000);
+        });
     };
 
     return (
@@ -248,7 +280,27 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
                 dialogOpen={connectDialog}
                 setDialogOpen={setConnectDialog}
                 on_connect={(password) => {
-                    connectToWifi(connectNetwork.ssid || "", password);
+                    connectToWifi(connectNetwork.ssid || "", password).then(
+                        (success) => {
+                            if (success) {
+                                props.setCurrentSSID(connectNetwork.ssid || "");
+                                enqueueSnackbar(
+                                    `WiFi Network: "${connectNetwork.ssid}" connected successfully`,
+                                    {
+                                        variant: "success",
+                                    }
+                                );
+                            } else {
+                                enqueueSnackbar(
+                                    `WiFi Network: "${connectNetwork.ssid}" failed to connect`,
+                                    {
+                                        variant: "error",
+                                    }
+                                );
+                            }
+                        }
+                    );
+                    setConnectDialog(false);
                 }}
             />
 
@@ -259,9 +311,12 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
 
             <List dense={true}>
                 <WifiListItem
-                    ssid={props.currentNetwork.ssid}
+                    ssid={props.currentSSID}
                     signal_strength={-60} // signal strength not given by current network
                     connected={true}
+                    on_disconnect={() => {
+                        handleDisconnect();
+                    }}
                 />
             </List>
 
@@ -299,8 +354,7 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
                                     ) === index
                             ) // filter out duplicates
                             .filter(
-                                (network) =>
-                                    network.ssid !== props.currentNetwork.ssid
+                                (network) => network.ssid !== props.currentSSID
                             ) // filter out current network
                             .map((scanned_network) => {
                                 if (!scanned_network.ssid) return;

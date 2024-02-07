@@ -108,9 +108,9 @@ export default function NavigationBar() {
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const menuOpen = Boolean(anchorEl);
     const [theme, setTheme] = useState(
-        localStorage.getItem("theme") == "dark"
-            ? dweTheme("dark")
-            : dweTheme("light")
+        localStorage.getItem("theme") == "light"
+            ? dweTheme("light")
+            : dweTheme("dark")
     );
 
     const toggleTheme = () => {

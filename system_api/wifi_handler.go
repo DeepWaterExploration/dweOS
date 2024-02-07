@@ -177,6 +177,7 @@ func (wh *WifiHandler) NetworkToggle(wifiOn bool) (bool, error) {
 func (wh *WifiHandler) NetworkConnect(WifiSSID string, WifiPassword string) (bool, error) {
 	// net := wireless.NewNetwork(WifiSSID, WifiPassword)
 	// net, err := wh.WPASupplicant.Connect(net)
+	exec.Command("nmcli", "con", "delete", WifiSSID)
 	cmd := exec.Command("nmcli", "device", "wifi", "connect", WifiSSID, "password", WifiPassword)
 	out, err := cmd.Output()
 	if err != nil {
@@ -190,19 +191,15 @@ func (wh *WifiHandler) NetworkConnect(WifiSSID string, WifiPassword string) (boo
 }
 
 func (wh *WifiHandler) NetworkDisconnect(WifiSSID string) (bool, error) {
-	nets, err := wh.WPASupplicant.Networks()
+	cmd := exec.Command("nmcli", "con", "down", WifiSSID)
+	out, err := cmd.Output()
 	if err != nil {
+		// if there was any error, print it here
+		fmt.Println("could not run command: ", err)
 		return false, err
 	}
-	net, ok := wireless.Networks(nets).FindBySSID(WifiSSID)
-	if !ok {
-		return false, err
-	}
-	net.Disable(true)
-	net, err = wh.WPASupplicant.UpdateNetwork(net)
-	if err != nil {
-		return false, err
-	}
+	// otherwise, print the output from running the command
+	fmt.Println("Output: ", string(out))
 	return true, nil
 }
 

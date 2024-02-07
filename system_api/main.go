@@ -340,7 +340,7 @@ func main() {
 
 		// Set up the server address and port
 		const port = 5050
-		const host = "localhost"
+		const host = "0.0.0.0"
 
 		// Start the server
 		Log.Info(fmt.Sprintf("Server started at http://%s:%d.", host, port))

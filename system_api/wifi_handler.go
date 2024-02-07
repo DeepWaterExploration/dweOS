@@ -34,7 +34,7 @@ func (wh *WifiHandler) init() error {
 	if len(interfaces) == 0 {
 		return fmt.Errorf("No valid wifi interfaces found")
 	}
-    
+
 	Log.Printf("Connecting to wifi manager on interface %s", interfaces[0])
 
 	if err != nil {
@@ -175,11 +175,17 @@ func (wh *WifiHandler) NetworkToggle(wifiOn bool) (bool, error) {
 }
 
 func (wh *WifiHandler) NetworkConnect(WifiSSID string, WifiPassword string) (bool, error) {
-	net := wireless.NewNetwork(WifiSSID, WifiPassword)
-	_, err := wh.WPASupplicant.Connect(net)
+	// net := wireless.NewNetwork(WifiSSID, WifiPassword)
+	// net, err := wh.WPASupplicant.Connect(net)
+	cmd := exec.Command("nmcli", "device", "wifi", "connect", WifiSSID, "password", WifiPassword)
+	out, err := cmd.Output()
 	if err != nil {
+		// if there was any error, print it here
+		fmt.Println("could not run command: ", err)
 		return false, err
 	}
+	// otherwise, print the output from running the command
+	fmt.Println("Output: ", string(out))
 	return true, nil
 }
 

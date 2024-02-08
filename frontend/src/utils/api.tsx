@@ -1,5 +1,6 @@
 import {
     Device,
+    PortInfo,
     ReleaseList,
     Stream,
     StreamEndpoint,
@@ -39,35 +40,6 @@ export async function getDevices(): Promise<Device[]> {
             console.log("Failed to retrieve device list");
             console.error(error);
             return [];
-        });
-}
-
-/**
- * Retrieves the information for a specific device by index. If the device is not found, returns an empty object.
- * @param {number} id - The index of the connected camera.
- * @returns {Promise<Device[]>} - A promise that resolves to a Device object.
- * @throws {Error} - If the request to retrieve the device fails.
- */
-export async function getDevice(id: number): Promise<Device> {
-    const url = `${DEVICE_API_URL}/devices/${id}`;
-    const config: RequestInit = {
-        mode: "cors",
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        // credentials: "include",
-    };
-    return await fetch(url, config)
-        // Process the response data
-        .then((response: Response) => response.json())
-        .then((data: Device) => {
-            return data;
-        })
-        .catch((error: Error) => {
-            console.log(`Failed to retrieve device ${id}`);
-            console.error(error);
-            return {} as Device;
         });
 }
 
@@ -217,80 +189,6 @@ export async function addStreamEndpoint(
         })
         .catch((error: Error) => {
             console.log("Failed to add stream endpoint");
-            console.error(error);
-        });
-}
-
-/**
- * Start a stream on a device.
- * @param {number} index - The index of the connected camera.
- * @returns {Promise<void>} - A promise that resolves when the stream is successfully started.
- * @throws {Error} - If the index is invalid or the request fails.
- */
-export async function startStream(index: number): Promise<void> {
-    const url = `${DEVICE_API_URL}/start_stream`;
-    const data = {
-        index,
-    };
-    const config: RequestInit = {
-        mode: "cors",
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        // credentials: "include",
-        body: JSON.stringify(data),
-    };
-
-    return await fetch(url, config)
-        // Process the response data
-        .then((response: Response) => {
-            if (!response.ok) {
-                if (response.status === 403) {
-                    throw new Error("Error: Invalid index");
-                }
-                throw new Error("Failed to start stream");
-            }
-        })
-        .catch((error: Error) => {
-            console.log("Failed to start stream");
-            console.error(error);
-        });
-}
-
-/**
- * Stop a stream on a device.
- * @param {number} index - The index of the connected camera.
- * @returns {Promise<void>} - A promise that resolves when the stream is successfully stopped.
- * @throws {Error} - If the index is invalid or the request fails.
- */
-export async function stopStream(index: number): Promise<void> {
-    const url = `${DEVICE_API_URL}/stop_stream`;
-    const data = {
-        index,
-    };
-    const config: RequestInit = {
-        mode: "cors",
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        // credentials: "include",
-        body: JSON.stringify(data),
-    };
-
-    return await fetch(url, config)
-        // Process the response data
-        .then((response: Response) => {
-            if (!response.ok) {
-                if (response.status === 403) {
-                    throw new Error("Error: Invalid index");
-                }
-                throw new Error("Failed to stop stream");
-            }
-        })
-        .catch((error: Error) => {
-            console.log("Failed to stop stream");
             console.error(error);
         });
 }
@@ -530,4 +428,19 @@ export async function getReleases(): Promise<ReleaseList> {
             console.error(error);
             throw error;
         });
+}
+
+export async function getNextPort(host: string): Promise<number> {
+    const url = `${DEVICE_API_URL}/devices/get_next_port?${new URLSearchParams({
+        host,
+    })}`;
+    const config: RequestInit = {
+        mode: "cors",
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    };
+    let res = await fetch(url, config);
+    return ((await res.json()) as PortInfo).port;
 }

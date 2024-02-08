@@ -46,6 +46,7 @@ import {
 } from "../../types/types";
 import {
     configureStream,
+    getNextPort,
     restartStream,
     setDeviceNickname,
     setExploreHDOption,
@@ -258,6 +259,10 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
     const [streamUpdatedTimeout, setStreamUpdatedTimeout] =
         useState<NodeJS.Timeout>();
 
+    useEffect(() => {
+        getNextPort(host).then(setPort);
+    }, []);
+
     useDidMountEffect(() => {
         if (!stream) {
             setStreamUpdatedTimeout(
@@ -295,6 +300,7 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                         if (streamUpdatedTimeout)
                             clearTimeout(streamUpdatedTimeout);
                     }
+                    getNextPort(host).then(setPort);
                 });
             }, 250)
         );

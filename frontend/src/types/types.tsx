@@ -125,6 +125,10 @@ export enum streamType {
     UDP = "UDP",
 }
 
+export interface PortInfo {
+    port: number;
+}
+
 /**
  * Represents a stream format.
  */

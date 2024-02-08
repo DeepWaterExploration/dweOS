@@ -1,0 +1,11 @@
+[Unit]
+Description=Web Based UVC Control Driver for the DeepWater Exploration exploreHD and HDCam.
+
+[Service]
+Type=simple
+TimeoutStartSec=0
+Restart=always
+ExecStart=/opt/DWE_OS_2/run_release.sh
+
+[Install]
+WantedBy=multi-user.target

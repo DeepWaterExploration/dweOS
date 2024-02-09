@@ -39,5 +39,6 @@ cp run_release.py release
 cp install_requirements.sh release
 cp create_venv.sh release
 cp run_release.sh release
+cp -r service release
 
 tar -czvf release.tar.gz release

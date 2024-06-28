@@ -583,9 +583,9 @@ interface ControlState {
     control_id: number;
     name: string;
     setControlValue:
-        | ((value: number) => void)
-        | ((value: boolean) => void)
-        | ((value: string) => void);
+    | ((value: number) => void)
+    | ((value: boolean) => void)
+    | ((value: string) => void);
     default_value: number | string | boolean;
     type: controlType;
 }
@@ -782,65 +782,30 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
 
                                 return (
                                     <>
-                                        <PopupState
-                                            variant='popover'
-                                            popupId={"" + control_id}
-                                        >
+                                        <PopupState variant='popover' popupId={"" + control_id}>
                                             {(popupState) => (
-                                                <>
-                                                    <div>
-                                                        <span>
-                                                            {name}:
-                                                            {
-                                                                menu.find(
-                                                                    (
-                                                                        menuItem
-                                                                    ) =>
-                                                                        menuItem.index ==
-                                                                        controlValue
-                                                                )!.name
-                                                            }
-                                                        </span>
-                                                        <IconButton
-                                                            {...bindTrigger(
-                                                                popupState
-                                                            )}
-                                                        >
-                                                            <ArrowDropDownIcon />
-                                                        </IconButton>
-                                                    </div>
-                                                    <Menu
-                                                        {...bindMenu(
-                                                            popupState
-                                                        )}
+                                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                    <span style={{ marginRight: '8px' }}>{name}:</span>
+                                                    <TextField
+                                                        variant="standard"
+                                                        select
+                                                        value={controlValue}
+                                                        onChange={(e) => {
+                                                            setControlValue(parseInt(e.target.value));
+                                                            popupState.close();
+                                                        }}
+                                                        {...bindTrigger(popupState)}
+                                                        InputProps={{
+                                                            disableUnderline: true
+                                                        }}
                                                     >
-                                                        {menu.map(
-                                                            (menuItem) => {
-                                                                return (
-                                                                    <MenuItem
-                                                                        key={
-                                                                            menuItem.index
-                                                                        }
-                                                                        onClick={() => {
-                                                                            console.log(
-                                                                                menuItem.index,
-                                                                                menuItem.name
-                                                                            );
-                                                                            setControlValue(
-                                                                                menuItem.index
-                                                                            );
-                                                                            popupState.close();
-                                                                        }}
-                                                                    >
-                                                                        {
-                                                                            menuItem.name
-                                                                        }
-                                                                    </MenuItem>
-                                                                );
-                                                            }
-                                                        )}
-                                                    </Menu>
-                                                </>
+                                                        {menu.map((menuItem) => (
+                                                            <MenuItem key={menuItem.index} value={menuItem.index}>
+                                                                {menuItem.name}
+                                                            </MenuItem>
+                                                        ))}
+                                                    </TextField>
+                                                </div>
                                             )}
                                         </PopupState>
                                     </>

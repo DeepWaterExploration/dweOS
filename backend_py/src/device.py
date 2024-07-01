@@ -3,7 +3,7 @@ import struct
 from dataclasses import dataclass
 from typing import Dict, Callable, Any
 
-from v4l2py import device
+from linuxpy.video import device
 from enum import Enum
 
 from . import v4l2

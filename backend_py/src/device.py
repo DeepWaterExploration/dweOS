@@ -3,7 +3,7 @@ import struct
 from dataclasses import dataclass
 from typing import Dict, Callable, Any
 
-from v4l2py.device import Device
+from v4l2py import device
 from enum import Enum
 
 from . import v4l2
@@ -21,6 +21,30 @@ class DeviceType(Enum):
     EXPLOREHD = 0
     STELLARHD = 1
 
+PID_VIDS = {
+    'exploreHD': {
+        'VID': 0xc45,
+        'PID': 0x6366,
+        'device_type': DeviceType.EXPLOREHD
+    },
+    'stellarHD: Leader': {
+        'VID': 0xc45,
+        'PID': 0x6367,
+        'device_type': DeviceType.STELLARHD
+    },
+    'stellarHD: Follower': {
+        'VID': 0xc45,
+        'PID': 0x6368,
+        'device_type': DeviceType.STELLARHD
+    }
+}
+
+def lookup_pid_vid(vid: int, pid: int):
+    for name in PID_VIDS:
+        dev = PID_VIDS[name]
+        if dev['VID'] == vid and dev['PID'] == pid:
+            return (name, dev['device_type'])
+    return None
 
 class Camera:
     '''
@@ -91,7 +115,7 @@ class Option:
     '''
 
     def __init__(self, camera: Camera, fmt: str, unit: xu.Unit, ctrl: xu.Selector, command: xu.Command, 
-                 conversion_func_set: Callable[[Any],list|Any]=lambda val : val, 
+                 conversion_func_set: Callable[[Any],list|Any] = lambda val : val, 
                  conversion_func_get: Callable[[list|Any],Any] = lambda val : val, 
                  size=11) -> None:
         self._camera = camera
@@ -169,19 +193,9 @@ class Option:
         self._data = b'\x00' * self._size
 
 
-def is_ehd(device_info: DeviceInfo):
-    return (
-        device_info.vid == 0xc45 and
-        device_info.pid == 0x6366 and
-        len(device_info.device_paths) == 4
-    )
-
 class Device:
 
-    def __init__(self, name: str, manufacturer: str, device_info: DeviceInfo) -> None:
-        self.name = name
-        self.manufacturer = manufacturer
-
+    def __init__(self, device_info: DeviceInfo) -> None:
         self.cameras: List[Camera] = []
         for device_path in device_info.device_paths:
             self.cameras.append(Camera(device_path))
@@ -189,17 +203,19 @@ class Device:
         self.device_info = device_info
         self.vid = device_info.vid
         self.pid = device_info.pid
+        (self.name, self.device_type) = lookup_pid_vid(self.vid, self.pid)
+        if self.name is not None:
+            self.manufacturer = 'DeepWater Exploration Inc.'
+        else:
+            raise Exception()
         self.bus_info = device_info.bus_info
         self.nickname = ''
         self.stream = Stream()
-        self.v4l2_device = Device(self.cameras[0].path) # for control purposes
+        self.v4l2_device = device.Device(self.cameras[0].path) # for control purposes
         self.v4l2_device.open()
 
         # This must be configured by the implementing class
         self._options: Dict[str, Option] = self._get_options()
-
-        # these options are going to be added to the controls list with a note saying they are
-        # DWE exclusive. This will allow the frontend to move them to the top where they should be for vital options
 
         # list the controls and store them
         self.controls = []
@@ -240,6 +256,12 @@ class Device:
 
             self.controls.append(control)
 
+    def find_camera_with_format(self, fmt: str) -> Camera | None:
+        for cam in self.cameras:
+            if cam.has_format(fmt):
+                return cam
+        return None
+
     def configure_stream(self, encode_type: StreamEncodeTypeEnum, width: int, height: int, interval: Interval, stream_type: StreamTypeEnum, stream_endpoints: List[StreamEndpoint] = []):
         camera: Camera = None
         match encode_type:
@@ -250,11 +272,11 @@ class Device:
                         break
             case StreamEncodeTypeEnum.MJPEG:
                 for cam in self.cameras:
-                    if cam.has_format('MJPEG'):
+                    if cam.has_format('MJPG'):
                         camera = cam
                         break
                 if not camera:
-                    pass # TODO: ERROR
+                    raise Exception()
             case _:
                 raise Exception()
 
@@ -273,9 +295,9 @@ class Device:
                 self.set_pu(control.control_id, control.value)
             except:
                 continue
-        # self.set_bitrate(saved_device.options.bitrate)
-        # self.set_gop(saved_device.options.gop)
-        # self.set_mode(saved_device.options.mode)
+
+        # TODO: add options
+
         self.configure_stream(saved_device.stream.encode_type,
                               saved_device.stream.width,
                               saved_device.stream.height,

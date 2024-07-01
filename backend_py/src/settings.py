@@ -5,7 +5,7 @@ import json
 
 from .saved_types import *
 from .schemas import SavedDeviceSchema
-from .device import EHDDevice
+from .device import Device
 
 
 class SettingsManager:
@@ -31,7 +31,7 @@ class SettingsManager:
             self.settings = []
             self.file_object.flush()
 
-    def load_device(self, device: EHDDevice):
+    def load_device(self, device: Device):
         for saved_device in self.settings:
             if saved_device.bus_info == device.bus_info:
                 device.load_settings(saved_device)
@@ -56,7 +56,7 @@ class SettingsManager:
             self.to_save = []
             time.sleep(1)
 
-    def save_device(self, device: EHDDevice):
+    def save_device(self, device: Device):
         saved_device = SavedDeviceSchema().load(SavedDeviceSchema().dump(device))
         # schedule a save command
         self.to_save.append(saved_device)

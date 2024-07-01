@@ -74,7 +74,7 @@ class ControlSchema(Schema):
 class DeviceInfoSchema(Schema):
     device_name = fields.Str()
     bus_info = fields.Str()
-    device_paths: fields.List(fields.Str())
+    device_paths = fields.List(fields.Str())
     vid = fields.Int()
     pid = fields.Int()
 
@@ -117,7 +117,8 @@ class DeviceSchema(Schema):
     manufacturer = fields.Str()
     nickname = fields.Str()
     device_info = fields.Nested(DeviceInfoSchema)
-    options = fields.Nested(DeviceOptionsSchema)
+    # options = fields.Nested(DeviceOptionsSchema)
+    # TODO: allow for multiple options types :))
 
     # @post_dump(pass_original=True)
     # def dump_options(self, data: typing.Dict, original: Any, **kwargs):

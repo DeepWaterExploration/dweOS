@@ -5,11 +5,13 @@ import threading
 import re
 
 from .schemas import *
-from .device import EHDDevice, is_ehd
+from .device import Device, lookup_pid_vid, DeviceInfo, DeviceType
 from .settings import SettingsManager
 from .broadcast_server import BroadcastServer, Message
 from .enumeration import list_devices
 from .utils import list_diff
+
+from .devices.ehd import EHDDevice
 
 
 class DeviceManager:
@@ -18,7 +20,7 @@ class DeviceManager:
     '''
 
     def __init__(self, broadcast_server=BroadcastServer(), settings_manager=SettingsManager()) -> None:
-        self.devices: List[EHDDevice] = []
+        self.devices: List[Device] = []
         self.broadcast_server = broadcast_server
         self.settings_manager = settings_manager
 
@@ -35,6 +37,19 @@ class DeviceManager:
 
         for device in self.devices:
             device.stream.stop()
+
+    @staticmethod
+    def create_device(device_info: DeviceInfo) -> Device | None:
+        (_, device_type) = lookup_pid_vid(device_info.vid, device_info.pid)
+
+        match device_type:
+            case DeviceType.EXPLOREHD:
+                return EHDDevice(device_info)
+            case DeviceType.STELLARHD:
+                return None
+            case _:
+                # Not a DWE device
+                return None
 
     def get_devices(self):
         '''
@@ -53,20 +68,14 @@ class DeviceManager:
         device_list.sort(key=key)
         return device_list
 
-    def set_device_option(self, bus_info: str, option_type: OptionTypeEnum, option_value: int) -> bool:
+    def set_device_option(self, bus_info: str, option: str, option_value: int | bool) -> bool:
         '''
         Set a device option
         '''
         device = self._find_device_with_bus_info(bus_info)
         if not device:
             return False
-        match option_type:
-            case OptionTypeEnum.BITRATE:
-                device.set_bitrate(option_value)
-            case OptionTypeEnum.MODE:
-                device.set_mode(option_value)
-            case OptionTypeEnum.GOP:
-                device.set_gop(option_value)
+        device.set_option(option, option_value)
 
         self.settings_manager.save_device(device)
         return True
@@ -151,7 +160,7 @@ class DeviceManager:
         self.settings_manager.save_device(device)
         return True
 
-    def _find_device_with_bus_info(self, bus_info: str) -> EHDDevice | None:
+    def _find_device_with_bus_info(self, bus_info: str) -> Device | None:
         for device in self.devices:
             if device.bus_info == bus_info:
                 return device
@@ -163,11 +172,11 @@ class DeviceManager:
         devices_info = list_devices()
 
         for device_info in devices_info:
-            if not is_ehd(device_info):
-                continue
             device = None
             try:
-                device = EHDDevice(device_info)
+                device = self.create_device(device_info)
+                if not device:
+                    continue
             except Exception as e:
                 logging.warn(e)
                 continue
@@ -189,11 +198,11 @@ class DeviceManager:
 
             # add the new devices
             for device_info in new_devices:
-                if not is_ehd(device_info):
-                    continue
                 device = None
                 try:
-                    device = EHDDevice(device_info)
+                    device = self.create_device(device_info)
+                    if not device:
+                        continue
                 except Exception as e:
                     logging.warning(e)
                     continue

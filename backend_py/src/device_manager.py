@@ -12,6 +12,7 @@ from .enumeration import list_devices
 from .utils import list_diff
 
 from .devices.ehd import EHDDevice
+from .devices.shd import SHDDevice
 
 
 class DeviceManager:
@@ -46,7 +47,7 @@ class DeviceManager:
             case DeviceType.EXPLOREHD:
                 return EHDDevice(device_info)
             case DeviceType.STELLARHD:
-                return None
+                return SHDDevice(device_info)
             case _:
                 # Not a DWE device
                 return None

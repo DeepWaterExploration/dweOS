@@ -37,5 +37,5 @@ class SavedDevice:
     pid: int
     nickname: str
     stream: SavedStream
-    options: SavedOptions
+    # options: SavedOptions
     controls: List[SavedControl]

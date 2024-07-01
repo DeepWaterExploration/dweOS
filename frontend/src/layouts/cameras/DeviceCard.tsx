@@ -866,7 +866,7 @@ const DeviceCard: React.FC<DeviceCardProps> = (props) => {
     const controls = props.device.controls;
     console.log(controls);
 
-    const deviceOptions = <DeviceOptions device={props.device} />;
+    // const deviceOptions = <DeviceOptions device={props.device} />;
     const deviceWarning = null;
 
     const cameraControls = (
@@ -918,7 +918,7 @@ const DeviceCard: React.FC<DeviceCardProps> = (props) => {
         ) : (
           <></>
         )} */}
-                {deviceOptions}
+                {/* {deviceOptions} */}
                 <StreamOptions device={props.device} />
                 {cameraControls}
             </CardContent>

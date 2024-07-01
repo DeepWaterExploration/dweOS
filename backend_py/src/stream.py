@@ -10,7 +10,7 @@ from .camera_types import *
 @dataclass
 class Stream:
     device_path: str = ''
-    encode_type: StreamEncodeTypeEnum = StreamEncodeTypeEnum.H264
+    encode_type: StreamEncodeTypeEnum = None
     stream_type: StreamTypeEnum = StreamTypeEnum.UDP
     endpoints: List[StreamEndpoint] = field(default_factory=list)
     width: int = 1920

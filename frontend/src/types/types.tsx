@@ -68,7 +68,6 @@ export interface ControlFlags {
 }
 
 export interface CameraInfo {
-    /* Differentiator between cameras (device path) */
     device_name: string;
     bus_info: string;
     pid: number;

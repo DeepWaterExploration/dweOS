@@ -16,6 +16,8 @@ from .camera_types import *
 from .stream import *
 from .saved_types import *
 
+import logging
+
 
 class DeviceType(Enum):
     EXPLOREHD = 0
@@ -275,10 +277,13 @@ class Device:
                     if cam.has_format('MJPG'):
                         camera = cam
                         break
-                if not camera:
-                    raise Exception()
             case _:
-                raise Exception()
+                pass
+        
+        if not camera:
+            logging.warn('Attempting to select incompatible encoding type. This is undefined behavior.')
+            return
+        
 
         self.stream.device_path = camera.path
         self.stream.width = width

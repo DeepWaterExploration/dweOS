@@ -117,6 +117,7 @@ class Option:
     '''
 
     def __init__(self, camera: Camera, fmt: str, unit: xu.Unit, ctrl: xu.Selector, command: xu.Command, 
+                 name: str,
                  conversion_func_set: Callable[[Any],list|Any] = lambda val : val, 
                  conversion_func_get: Callable[[list|Any],Any] = lambda val : val, 
                  size=11) -> None:
@@ -130,6 +131,8 @@ class Option:
         self._command = command
         self._size = size
         self._data = b'\x00' * size
+
+        self.name = name;
     
     # get the control value(s)
     def get_value_raw(self):
@@ -219,16 +222,22 @@ class Device:
         # This must be configured by the implementing class
         self._options: Dict[str, Option] = self._get_options()
 
+        # Options dict
+        # self.options = {}
+
         # list the controls and store them
         self.controls = []
+
+        self._id_counter = 1
+
         self._get_controls()
 
-    def _get_options(self) -> Dict[str, Option]:
+    def _get_options(self) -> Dict[str, Option]: 
         return {}
 
     def _get_controls(self):
         fd = self.cameras[0]._fd
-        self.controls = []
+        self.controls: List[Control] = []
 
         for ctrl in self.v4l2_device.controls.values():
             control = Control(ctrl.id, ctrl.name, ctrl.value)
@@ -268,15 +277,9 @@ class Device:
         camera: Camera = None
         match encode_type:
             case StreamEncodeTypeEnum.H264:
-                for cam in self.cameras:
-                    if cam.has_format('H264'):
-                        camera = cam
-                        break
+                camera = self.find_camera_with_format('H264')
             case StreamEncodeTypeEnum.MJPEG:
-                for cam in self.cameras:
-                    if cam.has_format('MJPG'):
-                        camera = cam
-                        break
+                camera = self.find_camera_with_format('MJPG')
             case _:
                 pass
         
@@ -293,6 +296,21 @@ class Device:
         self.stream.encode_type = encode_type
         self.stream.stream_type = stream_type
         self.stream.configured = True
+
+    def add_control_from_option(self, option_name: str, default_value: Any, control_type: ControlTypeEnum, max_value: float = 0, min_value: float = 0, step: float = 0):
+        try:
+            option = self._options[option_name]
+            value = int(option.get_value())
+            self.controls.insert(0, Control(
+                -self._id_counter, option.name, value, ControlFlags(
+                    default_value, max_value, min_value, step, control_type
+                )
+            ))
+            self._id_counter += 1
+        except AttributeError:
+            logging.error(f'Unknown attribute: {self.__class__.__name__}._options[{option_name}]')
+            logging.error('Failed to add option to controls list.')
+        
 
     def load_settings(self, saved_device: SavedDevice):
         for control in saved_device.controls:
@@ -323,6 +341,16 @@ class Device:
         return control.value
 
     def set_pu(self, control_id: int, value: int):
+        if control_id < 0:
+            # DWE control
+            for control in self.controls:
+                if control.control_id == control_id:
+                    control.value = value
+                    for option_name in self._options:
+                        if self._options[option_name].name == control.name:
+                            self.set_option(option_name, value)
+                            return
+
         control = self.v4l2_device.controls[control_id]
         try:
             control.value = value

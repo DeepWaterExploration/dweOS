@@ -1,8 +1,5 @@
-from typing import Dict
 from ..enumeration import DeviceInfo
-from ..device import Device, Option
-from ..camera_types import H264Mode
-from .. import ehd_controls as xu
+from ..device import Device
 
 class SHDDevice(Device):
     '''

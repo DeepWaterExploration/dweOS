@@ -390,7 +390,6 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
     useEffect(() => {
         let cameraFormat = getFormatString();
         let newIntervals: string[] = [];
-        // TODO: fix this hacky mess
         for (let camera of props.device.cameras) {
             let format = camera.formats[cameraFormat];
             if (format) {

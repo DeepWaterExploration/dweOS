@@ -56,10 +56,10 @@ class MenuItem(Schema):
 
 
 class ControlFlagsSchema(Schema):
-    default_value = fields.Int()
-    max_value = fields.Int()
-    min_value = fields.Int()
-    step = fields.Int()
+    default_value = fields.Number()
+    max_value = fields.Number()
+    min_value = fields.Number()
+    step = fields.Number()
     control_type = fields.Enum(ControlTypeEnum)
     menu = fields.Nested(MenuItem, many=True)
 
@@ -68,7 +68,7 @@ class ControlSchema(Schema):
     flags = fields.Nested(ControlFlagsSchema)
     control_id = fields.Int()
     name = fields.Str()
-    value = fields.Int()
+    value = fields.Number()
 
 
 class DeviceInfoSchema(Schema):
@@ -117,8 +117,7 @@ class DeviceSchema(Schema):
     manufacturer = fields.Str()
     nickname = fields.Str()
     device_info = fields.Nested(DeviceInfoSchema)
-    # options = fields.Nested(DeviceOptionsSchema)
-    # TODO: allow for multiple options types :))
+    options = fields.Dict(keys=fields.Str(), values=fields.Raw())
 
     # @post_dump(pass_original=True)
     # def dump_options(self, data: typing.Dict, original: Any, **kwargs):

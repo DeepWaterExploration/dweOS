@@ -35,6 +35,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { styles } from "./style";
 import {
     CameraFormatSize,
+    CameraInterval,
     Control,
     Device,
     Stream,
@@ -360,6 +361,50 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
             }
         }
     };
+
+    const [resolutions, setResolutions] = useState([] as string[]);
+    const [intervals, setIntervals] = useState([] as string[]);
+
+    const getFormatString = () => {
+        let cameraFormat: string = encodeFormat;
+        if (cameraFormat === encodeType.MJPEG) cameraFormat = 'MJPG';
+        return cameraFormat;
+    }
+
+    useEffect(() => {
+        // TODO: change the API to fix this
+        // TODO: change the API to give a list of resolutions instead of this mess
+        let cameraFormat = getFormatString();
+        let newResolutions = [];
+        for (let camera of props.device.cameras) {
+            let format = camera.formats[cameraFormat];
+            if (format) {
+                for (let resolution of format) {
+                    newResolutions.push(`${resolution.width}x${resolution.height}`);
+                }
+            }
+        }
+        setResolutions(newResolutions);
+    }, [encodeFormat]);
+
+    useEffect(() => {
+        let cameraFormat = getFormatString();
+        let newIntervals: string[] = [];
+        // TODO: fix this hacky mess
+        for (let camera of props.device.cameras) {
+            let format = camera.formats[cameraFormat];
+            if (format) {
+                for (let resolution of format) {
+                    for (let interval of resolution.intervals) {
+                        if (!newIntervals.includes(interval.denominator.toString()))
+                            newIntervals.push(interval.denominator.toString());
+                    }
+                }
+            }
+        }
+        setIntervals(newIntervals);
+    }, [resolutions]);
+
     return (
         <FormGroup
             style={{
@@ -389,7 +434,7 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                             }
                             size='small'
                         >
-                            {RESOLUTIONS.map((resolution) => (
+                            {resolutions.map((resolution) => (
                                 <MenuItem key={resolution} value={resolution}>
                                     {resolution}
                                 </MenuItem>
@@ -406,7 +451,7 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                             }
                             size='small'
                         >
-                            {INTERVALS.map((interval) => (
+                            {intervals.map((interval) => (
                                 <MenuItem key={interval} value={interval}>
                                     {interval}
                                 </MenuItem>

@@ -55,19 +55,7 @@ import {
     unconfigureStream,
 } from "../../utils/api";
 
-const RESOLUTIONS = [
-    "1920x1080",
-    "1280x720",
-    "800x600",
-    "640x480",
-    "640x360",
-    "352x288",
-    "320x420",
-];
-
-const INTERVALS = ["30", "25", "20", "15", "10"];
-
-const ENCODERS = ["H264", "MJPEG"];
+const ENCODERS = ["H264", "MJPG"];
 
 const useDidMountEffect = (
     func: React.EffectCallback,
@@ -221,7 +209,7 @@ const DeviceOptions: React.FC<DeviceOptionsProps> = (props) => {
                         step={1}
                     />
                 </Grid>
-            </Grid>
+            </Grid>setRes
             <DeviceSwitch
                 checked={mode === bitrateMode.VBR}
                 name='vbrSwitch'
@@ -240,6 +228,23 @@ interface StreamOptionsProps {
     device: Device;
 }
 
+const getResolutions = (device: Device, encodeFormat: encodeType) => {
+    let newResolutions = [];
+    for (let camera of device.cameras) {
+        let format = camera.formats[encodeFormat as string];
+        if (format) {
+            for (let resolution of format) {
+                newResolutions.push(`${resolution.width}x${resolution.height}`);
+            }
+        }
+    }
+    return newResolutions;
+}
+
+const getIntervals = () => {
+
+}
+
 const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
     const [stream, setStream] = useState(props.device.stream.configured);
 
@@ -250,18 +255,22 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
 
     const { enqueueSnackbar } = useSnackbar();
 
-    const [resolution, setResolution] = useState("1920x1080");
-    const [encodeFormat, setEncodeFormat] = useState(encodeType.H264);
-    const [fps, setFps] = useState("30");
+    const [encodeFormat, setEncodeFormat] = useState(props.device.stream.encode_type);
+    const [fps, setFps] = useState('');
     const [endpoints, setEndpoints] = useState<StreamEndpoint[]>(
         props.device.stream.endpoints ? props.device.stream.endpoints : []
     );
+    console.log('AODWEJUHQIAWUE ' + props.device.stream)
+    const defaultResolution = `${props.device.stream.width}x${props.device.stream.height}`;
+    const [resolution, setResolution] = useState(defaultResolution);
+
 
     const [streamUpdatedTimeout, setStreamUpdatedTimeout] =
         useState<NodeJS.Timeout>();
 
     useEffect(() => {
         getNextPort(host).then(setPort);
+        setFps(`${props.device.stream.interval.denominator}`);
     }, []);
 
     useDidMountEffect(() => {
@@ -296,11 +305,13 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                     encodeFormat,
                     endpoints
                 ).then((value: Stream | undefined) => {
-                    if (value !== undefined) {
-                        props.device.stream = value;
-                        if (streamUpdatedTimeout)
-                            clearTimeout(streamUpdatedTimeout);
-                    }
+                    console.log(value)
+                    // TODO: Fix this
+                    // if (value !== undefined) {
+                    //     props.device.stream = value;
+                    //     if (streamUpdatedTimeout)
+                    //         clearTimeout(streamUpdatedTimeout);
+                    // }
                     getNextPort(host).then(setPort);
                 });
             }, 250)
@@ -367,23 +378,11 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
 
     const getFormatString = () => {
         let cameraFormat: string = encodeFormat;
-        if (cameraFormat === encodeType.MJPEG) cameraFormat = 'MJPG';
         return cameraFormat;
     }
 
     useEffect(() => {
-        // TODO: change the API to fix this
-        // TODO: change the API to give a list of resolutions instead of this mess
-        let cameraFormat = getFormatString();
-        let newResolutions = [];
-        for (let camera of props.device.cameras) {
-            let format = camera.formats[cameraFormat];
-            if (format) {
-                for (let resolution of format) {
-                    newResolutions.push(`${resolution.width}x${resolution.height}`);
-                }
-            }
-        }
+        let newResolutions = getResolutions(props.device, encodeFormat);
         setResolutions(newResolutions);
     }, [encodeFormat]);
 
@@ -403,6 +402,20 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
         }
         setIntervals(newIntervals);
     }, [resolutions]);
+
+    const [encoders, setEncoders] = useState([] as string[]);
+
+    useEffect(() => {
+        let newEncoders = []
+        for (let camera of props.device.cameras) {
+            for (let format in camera.formats) {
+                if (ENCODERS.includes(format)) {
+                    newEncoders.push(format);
+                }
+            }
+        }
+        setEncoders(newEncoders);
+    }, []);
 
     return (
         <FormGroup
@@ -427,7 +440,7 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                             select
                             label='Resolution'
                             variant='outlined'
-                            defaultValue='1920x1080'
+                            defaultValue={defaultResolution}
                             onChange={(selected) =>
                                 setResolution(selected.target.value)
                             }
@@ -444,7 +457,7 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                             select
                             label='FPS'
                             variant='outlined'
-                            defaultValue='30'
+                            defaultValue={props.device.stream.interval.denominator}
                             onChange={(selected) =>
                                 setFps(selected.target.value)
                             }
@@ -473,7 +486,7 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                             }
                             size='small'
                         >
-                            {ENCODERS.map((option) => (
+                            {encoders.map((option) => (
                                 <MenuItem key={option} value={option}>
                                     {option}
                                 </MenuItem>
@@ -932,8 +945,6 @@ const DeviceCard: React.FC<DeviceCardProps> = (props) => {
                 subheader={
                     <>
                         {`Manufacturer: ${props.device.manufacturer}`}
-                        <LineBreak />
-                        {`Model: `}
                         <LineBreak />
                         {`USB ID: ${props.device.bus_info}`}
                         <LineBreak />

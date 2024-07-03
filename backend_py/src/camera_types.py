@@ -53,7 +53,7 @@ class Control:
 
 
 class StreamEncodeTypeEnum(Enum):
-    MJPEG = 0
+    MJPG = 0
     H264 = 1
 
 

@@ -86,13 +86,15 @@ export interface Stream {
     encode_type: encodeType;
     stream_type: streamType;
     endpoints: StreamEndpoint[];
-    format: StreamFormat;
+    width: number;
+    height: number;
+    interval: CameraInterval;
     configured: boolean;
 }
 
 /* If we ever need to add more compression formats, just add them here */
 export enum encodeType {
-    MJPEG = "MJPEG",
+    MJPG = "MJPG",
     H264 = "H264",
 }
 

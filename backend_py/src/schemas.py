@@ -117,7 +117,6 @@ class DeviceSchema(Schema):
     manufacturer = fields.Str()
     nickname = fields.Str()
     device_info = fields.Nested(DeviceInfoSchema)
-    options = fields.Dict(keys=fields.Str(), values=fields.Raw())
 
     # @post_dump(pass_original=True)
     # def dump_options(self, data: typing.Dict, original: Any, **kwargs):

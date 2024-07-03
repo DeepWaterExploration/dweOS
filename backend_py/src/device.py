@@ -15,6 +15,7 @@ from .camera_helper_loader import *
 from .camera_types import *
 from .stream import *
 from .saved_types import *
+from .utils import string_to_stream_encode_type
 
 import logging
 
@@ -71,7 +72,7 @@ class Camera:
         return pixformat in self.formats.keys()
 
     def _get_formats(self):
-        self.formats = {}
+        self.formats: Dict[str,List[FormatSize]] = {}
         for i in range(1000):
             v4l2_fmt = v4l2.v4l2_fmtdesc()
             v4l2_fmt.index = i
@@ -216,6 +217,21 @@ class Device:
         self.bus_info = device_info.bus_info
         self.nickname = ''
         self.stream = Stream()
+
+        for camera in self.cameras:
+            for encoding in camera.formats:
+                encode_type = string_to_stream_encode_type(encoding)
+                if encode_type:
+                    self.stream.encode_type = encode_type
+                    # The highest resolution is the default
+                    # Most users will use this, however it is available to be changed in the frontend
+                    self.stream.width = camera.formats[encoding][0].width
+                    self.stream.height = camera.formats[encoding][0].height
+                    self.stream.interval.denominator = camera.formats[encoding][0].intervals[0].denominator
+                    self.stream.interval.numerator = camera.formats[encoding][0].intervals[0].numerator
+                    break
+
+
         self.v4l2_device = device.Device(self.cameras[0].path) # for control purposes
         self.v4l2_device.open()
 
@@ -278,7 +294,7 @@ class Device:
         match encode_type:
             case StreamEncodeTypeEnum.H264:
                 camera = self.find_camera_with_format('H264')
-            case StreamEncodeTypeEnum.MJPEG:
+            case StreamEncodeTypeEnum.MJPG:
                 camera = self.find_camera_with_format('MJPG')
             case _:
                 pass

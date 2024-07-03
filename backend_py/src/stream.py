@@ -3,6 +3,7 @@ from typing import List
 import subprocess
 from multiprocessing import Process
 import time
+import shlex
 
 from .camera_types import *
 
@@ -13,8 +14,8 @@ class Stream:
     encode_type: StreamEncodeTypeEnum = None
     stream_type: StreamTypeEnum = StreamTypeEnum.UDP
     endpoints: List[StreamEndpoint] = field(default_factory=list)
-    width: int = 1920
-    height: int = 1080
+    width: int = None
+    height: int = None
     interval: Interval = field(default_factory=Interval)
     configured: bool = False
 
@@ -26,7 +27,7 @@ class Stream:
         pipeline_str = self._construct_pipeline()
         print(pipeline_str)
         self._process = subprocess.Popen(
-            f'gst-launch-1.0 {pipeline_str}'.split(' '), stdout=subprocess.DEVNULL)
+            shlex.split(f'gst-launch-1.0 {pipeline_str}'), stdout=subprocess.DEVNULL)
 
     def start(self):
         if self.started:
@@ -51,7 +52,7 @@ class Stream:
         match self.encode_type:
             case StreamEncodeTypeEnum.H264:
                 return 'video/x-h264'
-            case StreamEncodeTypeEnum.MJPEG:
+            case StreamEncodeTypeEnum.MJPG:
                 return 'image/jpeg'
             case _:
                 return ''
@@ -66,7 +67,7 @@ class Stream:
         match self.encode_type:
             case StreamEncodeTypeEnum.H264:
                 return 'h264parse ! queue ! rtph264pay name=pay0 config-interval=10 pt=96'
-            case StreamEncodeTypeEnum.MJPEG:
+            case StreamEncodeTypeEnum.MJPG:
                 return 'rtpjpegpay'
             case _:
                 return ''

@@ -4,8 +4,15 @@ import subprocess
 from multiprocessing import Process
 import time
 import shlex
+import threading
 
 from .camera_types import *
+
+import logging
+
+import gi
+gi.require_version('Gst', '1.0')
+from gi.repository import GLib, Gst
 
 
 @dataclass
@@ -23,11 +30,32 @@ class Stream:
 
     _process: subprocess.Popen = None
 
-    def _start(self):
+    pipeline = None
+    loop = None
+
+    def _run_pipeline(self):
+        Gst.init(None)
+
         pipeline_str = self._construct_pipeline()
-        print(pipeline_str)
-        self._process = subprocess.Popen(
-            shlex.split(f'gst-launch-1.0 {pipeline_str}'), stdout=subprocess.DEVNULL)
+        logging.info(pipeline_str)
+        self.pipeline = Gst.parse_launch(pipeline_str)
+
+        self.loop = GLib.MainLoop()
+
+        self.pipeline.set_state(Gst.State.PLAYING)
+        try:
+            self.loop.run()
+        except e:
+            pass
+
+        self.pipeline.set_state(Gst.State.NULL)
+
+    def _start(self):
+        self._thread = threading.Thread(target=self._run_pipeline)
+        self._thread.start()
+
+        # self._process = subprocess.Popen(
+        #     f'gst-launch-1.0 {pipeline_str}', shell=True)
 
     def start(self):
         if self.started:
@@ -39,11 +67,15 @@ class Stream:
         self._start()
 
     def stop(self):
+        logging.info(f'Stopping stream {self.device_path}')
         if not self.started:
             return
         self.started = False
-        self._process.kill()
-        del self._process
+        self.pipeline.set_state(Gst.State.NULL)
+        self.loop.quit()
+        self._thread.join()
+        del self._thread
+        # del self._process
 
     def _construct_pipeline(self):
         return f'{self._build_source()} ! {self._construct_caps()} ! {self._build_payload()} ! {self._build_sink()}'

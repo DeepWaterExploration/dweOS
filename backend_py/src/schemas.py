@@ -3,6 +3,7 @@ import typing
 
 from .camera_types import *
 from .saved_types import *
+from .device import DeviceType
 
 
 class UnionField(fields.Field):
@@ -117,6 +118,7 @@ class DeviceSchema(Schema):
     manufacturer = fields.Str()
     nickname = fields.Str()
     device_info = fields.Nested(DeviceInfoSchema)
+    device_type = fields.Enum(DeviceType)
 
     # @post_dump(pass_original=True)
     # def dump_options(self, data: typing.Dict, original: Any, **kwargs):

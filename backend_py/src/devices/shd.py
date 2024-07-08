@@ -3,7 +3,7 @@ from ..device import Device
 
 class SHDDevice(Device):
     '''
-    Class for exploreHD devices
+    Class for stellarHD devices
     '''
 
     def __init__(self, device_info: DeviceInfo) -> None:

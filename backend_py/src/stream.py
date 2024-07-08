@@ -71,10 +71,6 @@ class Stream:
         if not self.started:
             return
         self.started = False
-        self.pipeline.set_state(Gst.State.NULL)
-        self.loop.quit()
-        self._thread.join()
-        del self._thread
         # del self._process
 
     def _construct_pipeline(self):
@@ -98,7 +94,7 @@ class Stream:
     def _build_payload(self):
         match self.encode_type:
             case StreamEncodeTypeEnum.H264:
-                return 'h264parse ! queue ! rtph264pay name=pay0 config-interval=10 pt=96'
+                return 'h264parse ! queue ! rtph264pay config-interval=10 pt=96'
             case StreamEncodeTypeEnum.MJPG:
                 return 'rtpjpegpay'
             case _:
@@ -109,7 +105,7 @@ class Stream:
             case StreamTypeEnum.UDP:
                 if len(self.endpoints) == 0:
                     return 'fakesink'
-                sink = 'multiudpsink clients='
+                sink = 'multiudpsink sync=true clients='
                 for endpoint, i in zip(self.endpoints, range(len(self.endpoints))):
                     sink += f'{endpoint.host}:{endpoint.port}'
                     if i < len(self.endpoints)-1:
@@ -118,3 +114,42 @@ class Stream:
                 return sink
             case _:
                 return ''
+
+class StreamRunner:
+
+    def __init__(self, *streams: Stream) -> None:
+        self.streams = streams
+        self.pipeline = None
+        self.loop = None
+        self._thread = threading.Thread(target=self._run_pipeline)
+
+    def _run_pipeline(self):
+        Gst.init(None)
+
+        pipeline_str = self._construct_pipeline()
+        print(pipeline_str)
+        self.pipeline = Gst.parse_launch(pipeline_str)
+
+        self.loop = GLib.MainLoop()
+
+        self.pipeline.set_state(Gst.State.PLAYING)
+        try:
+            self.loop.run()
+        except:
+            pass
+
+        self.pipeline.set_state(Gst.State.NULL)
+
+    def _construct_pipeline(self):
+        pipeline_strs = []
+        for stream in self.streams:
+            pipeline_strs.append(stream._construct_pipeline())
+        return ' '.join(pipeline_strs)
+
+    def start(self):
+        self._thread.start()
+
+    def stop(self):
+        self.pipeline.set_state(Gst.State.NULL)
+        self.loop.quit()
+        self._thread.join()

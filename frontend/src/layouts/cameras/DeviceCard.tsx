@@ -94,6 +94,7 @@ interface DeviceSwitchProps {
     name: string;
     checked: boolean;
     text: string;
+    disabled: boolean;
 }
 
 const DeviceSwitch: React.FC<DeviceSwitchProps> = (props) => {
@@ -104,6 +105,7 @@ const DeviceSwitch: React.FC<DeviceSwitchProps> = (props) => {
                     name={props.name}
                     checked={props.checked}
                     onChange={props.onChange}
+                    disabled={props.disabled}
                 />
             }
             label={<Typography color='text.secondary'>{props.text}</Typography>}
@@ -209,7 +211,8 @@ const DeviceOptions: React.FC<DeviceOptionsProps> = (props) => {
                         step={1}
                     />
                 </Grid>
-            </Grid>setRes
+            </Grid>
+            setRes
             <DeviceSwitch
                 checked={mode === bitrateMode.VBR}
                 name='vbrSwitch'
@@ -218,6 +221,7 @@ const DeviceOptions: React.FC<DeviceOptionsProps> = (props) => {
                         e.target.checked ? bitrateMode.VBR : bitrateMode.CBR
                     );
                 }}
+                disabled={false}
                 text='VBR (Variable Bitrate)'
             />
         </FormGroup>
@@ -239,11 +243,9 @@ const getResolutions = (device: Device, encodeFormat: encodeType) => {
         }
     }
     return newResolutions;
-}
+};
 
-const getIntervals = () => {
-
-}
+const getIntervals = () => {};
 
 const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
     const [stream, setStream] = useState(props.device.stream.configured);
@@ -255,15 +257,16 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
 
     const { enqueueSnackbar } = useSnackbar();
 
-    const [encodeFormat, setEncodeFormat] = useState(props.device.stream.encode_type);
-    const [fps, setFps] = useState('');
+    const [encodeFormat, setEncodeFormat] = useState(
+        props.device.stream.encode_type
+    );
+    const [fps, setFps] = useState("");
     const [endpoints, setEndpoints] = useState<StreamEndpoint[]>(
         props.device.stream.endpoints ? props.device.stream.endpoints : []
     );
-    console.log('AODWEJUHQIAWUE ' + props.device.stream)
+    console.log("AODWEJUHQIAWUE " + props.device.stream);
     const defaultResolution = `${props.device.stream.width}x${props.device.stream.height}`;
     const [resolution, setResolution] = useState(defaultResolution);
-
 
     const [streamUpdatedTimeout, setStreamUpdatedTimeout] =
         useState<NodeJS.Timeout>();
@@ -305,7 +308,7 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                     encodeFormat,
                     endpoints
                 ).then((value: Stream | undefined) => {
-                    console.log(value)
+                    console.log(value);
                     // TODO: Fix this
                     // if (value !== undefined) {
                     //     props.device.stream = value;
@@ -379,7 +382,7 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
     const getFormatString = () => {
         let cameraFormat: string = encodeFormat;
         return cameraFormat;
-    }
+    };
 
     useEffect(() => {
         let newResolutions = getResolutions(props.device, encodeFormat);
@@ -394,7 +397,11 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
             if (format) {
                 for (let resolution of format) {
                     for (let interval of resolution.intervals) {
-                        if (!newIntervals.includes(interval.denominator.toString()))
+                        if (
+                            !newIntervals.includes(
+                                interval.denominator.toString()
+                            )
+                        )
                             newIntervals.push(interval.denominator.toString());
                     }
                 }
@@ -406,7 +413,7 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
     const [encoders, setEncoders] = useState([] as string[]);
 
     useEffect(() => {
-        let newEncoders = []
+        let newEncoders = [];
         for (let camera of props.device.cameras) {
             for (let format in camera.formats) {
                 if (ENCODERS.includes(format)) {
@@ -425,6 +432,11 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
             }}
         >
             <DeviceSwitch
+                disabled={
+                    props.device.is_leader === undefined
+                        ? false
+                        : !props.device.is_leader
+                }
                 onChange={(e) => {
                     setStream(e.target.checked);
                 }}
@@ -433,199 +445,212 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                 text='Stream'
             />
             {stream ? (
-                <>
-                    <div style={styles.cardContent.div}>
-                        <TextField
-                            sx={{ width: "50%" }}
-                            select
-                            label='Resolution'
-                            variant='outlined'
-                            defaultValue={defaultResolution}
-                            onChange={(selected) =>
-                                setResolution(selected.target.value)
-                            }
-                            size='small'
+                props.device.is_leader ? (
+                    <>
+                        <div style={styles.cardContent.div}>
+                            <TextField
+                                sx={{ width: "50%" }}
+                                select
+                                label='Resolution'
+                                variant='outlined'
+                                defaultValue={defaultResolution}
+                                onChange={(selected) =>
+                                    setResolution(selected.target.value)
+                                }
+                                size='small'
+                            >
+                                {resolutions.map((resolution) => (
+                                    <MenuItem
+                                        key={resolution}
+                                        value={resolution}
+                                    >
+                                        {resolution}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
+                            <TextField
+                                sx={{ width: "20%" }}
+                                select
+                                label='FPS'
+                                variant='outlined'
+                                defaultValue={
+                                    props.device.stream.interval.denominator
+                                }
+                                onChange={(selected) =>
+                                    setFps(selected.target.value)
+                                }
+                                size='small'
+                            >
+                                {intervals.map((interval) => (
+                                    <MenuItem key={interval} value={interval}>
+                                        {interval}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
+                            <TextField
+                                sx={{ width: "30%" }}
+                                select
+                                label='Format'
+                                variant='outlined'
+                                defaultValue={
+                                    props.device.stream.encode_type
+                                        ? props.device.stream.encode_type
+                                        : encodeType.H264
+                                }
+                                onChange={(selected) =>
+                                    setEncodeFormat(
+                                        selected.target.value as encodeType
+                                    )
+                                }
+                                size='small'
+                            >
+                                {encoders.map((option) => (
+                                    <MenuItem key={option} value={option}>
+                                        {option}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
+                        </div>
+                        <Accordion
+                            defaultExpanded={endpoints.length > 0}
+                            style={{
+                                width: "100%",
+                            }}
                         >
-                            {resolutions.map((resolution) => (
-                                <MenuItem key={resolution} value={resolution}>
-                                    {resolution}
-                                </MenuItem>
-                            ))}
-                        </TextField>
-                        <TextField
-                            sx={{ width: "20%" }}
-                            select
-                            label='FPS'
-                            variant='outlined'
-                            defaultValue={props.device.stream.interval.denominator}
-                            onChange={(selected) =>
-                                setFps(selected.target.value)
-                            }
-                            size='small'
-                        >
-                            {intervals.map((interval) => (
-                                <MenuItem key={interval} value={interval}>
-                                    {interval}
-                                </MenuItem>
-                            ))}
-                        </TextField>
-                        <TextField
-                            sx={{ width: "30%" }}
-                            select
-                            label='Format'
-                            variant='outlined'
-                            defaultValue={
-                                props.device.stream.encode_type
-                                    ? props.device.stream.encode_type
-                                    : encodeType.H264
-                            }
-                            onChange={(selected) =>
-                                setEncodeFormat(
-                                    selected.target.value as encodeType
-                                )
-                            }
-                            size='small'
-                        >
-                            {encoders.map((option) => (
-                                <MenuItem key={option} value={option}>
-                                    {option}
-                                </MenuItem>
-                            ))}
-                        </TextField>
-                    </div>
-                    <Accordion
-                        defaultExpanded={endpoints.length > 0}
-                        style={{
-                            width: "100%",
-                        }}
-                    >
-                        <AccordionSummary
-                            expandIcon={<ExpandMoreIcon />}
-                            aria-controls='panel2a-content'
-                            id='panel2a-header'
-                        >
-                            <Typography fontWeight='800'>
-                                Stream Endpoints
-                            </Typography>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                            <Box
+                            <AccordionSummary
+                                expandIcon={<ExpandMoreIcon />}
+                                aria-controls='panel2a-content'
+                                id='panel2a-header'
+                            >
+                                <Typography fontWeight='800'>
+                                    Stream Endpoints
+                                </Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <Box
+                                    sx={{
+                                        backgroundColor: "background.paper",
+                                    }}
+                                >
+                                    {endpoints.length === 0 ? (
+                                        <Typography
+                                            fontWeight='500'
+                                            style={{
+                                                width: "100%",
+                                                textAlign: "center",
+                                                padding: "25px",
+                                            }}
+                                        >
+                                            No stream endpoint added
+                                        </Typography>
+                                    ) : (
+                                        <List dense={true}>
+                                            {endpoints.map((endpoint) => {
+                                                return (
+                                                    <ListItem
+                                                        key={`${endpoint.host}:${endpoint.port}`}
+                                                        secondaryAction={
+                                                            <IconButton
+                                                                edge='end'
+                                                                aria-label='delete'
+                                                                onClick={() => {
+                                                                    setEndpoints(
+                                                                        (
+                                                                            prevEndpoints
+                                                                        ) =>
+                                                                            prevEndpoints.filter(
+                                                                                (
+                                                                                    e
+                                                                                ) =>
+                                                                                    `${e.host}:${e.port}` !==
+                                                                                    `${endpoint.host}:${endpoint.port}`
+                                                                            )
+                                                                    );
+                                                                }}
+                                                            >
+                                                                <DeleteIcon />
+                                                            </IconButton>
+                                                        }
+                                                    >
+                                                        <ListItemAvatar>
+                                                            <Avatar>
+                                                                <LinkedCameraIcon />
+                                                            </Avatar>
+                                                        </ListItemAvatar>
+                                                        <ListItemText
+                                                            primary={`IP Address: ${endpoint.host}`}
+                                                            secondary={`Port: ${endpoint.port}`}
+                                                        />
+                                                    </ListItem>
+                                                );
+                                            })}
+                                        </List>
+                                    )}
+                                </Box>
+                            </AccordionDetails>
+                        </Accordion>
+                        {/* Container for User Input and Interaction */}
+                        <div style={styles.cardContent.div}>
+                            {/* IP Address input */}
+                            <TextField
+                                sx={styles.textField}
+                                label='IP Address'
+                                variant='outlined'
+                                size='small'
+                                value={host}
+                                onChange={(e) => setHost(e.target.value)}
+                                error={!!ipError}
+                                helperText={ipError}
+                            />
+                            {/* Port Input */}
+                            <TextField
+                                sx={styles.portField}
+                                label='Port'
+                                variant='outlined'
+                                size='small'
+                                value={port}
+                                onChange={(e) =>
+                                    setPort(parseInt(e.target.value))
+                                }
+                                error={!!portError}
+                                helperText={portError}
+                                type='number'
+                                inputProps={{ min: 1024, max: 65535 }} // Specify minimum and maximum values
+                            />
+                            {/* Add Stream Endpoint Button */}
+                            <IconButton
                                 sx={{
-                                    backgroundColor: "background.paper",
+                                    width: "40px",
+                                    height: "40px",
+                                    color: "text.secondary",
+                                    marginLeft: "-10px",
+                                }}
+                                onClick={() => {
+                                    handleAddEndpoint();
                                 }}
                             >
-                                {endpoints.length === 0 ? (
-                                    <Typography
-                                        fontWeight='500'
-                                        style={{
-                                            width: "100%",
-                                            textAlign: "center",
-                                            padding: "25px",
-                                        }}
-                                    >
-                                        No stream endpoint added
-                                    </Typography>
-                                ) : (
-                                    <List dense={true}>
-                                        {endpoints.map((endpoint) => {
-                                            return (
-                                                <ListItem
-                                                    key={`${endpoint.host}:${endpoint.port}`}
-                                                    secondaryAction={
-                                                        <IconButton
-                                                            edge='end'
-                                                            aria-label='delete'
-                                                            onClick={() => {
-                                                                setEndpoints(
-                                                                    (
-                                                                        prevEndpoints
-                                                                    ) =>
-                                                                        prevEndpoints.filter(
-                                                                            (
-                                                                                e
-                                                                            ) =>
-                                                                                `${e.host}:${e.port}` !==
-                                                                                `${endpoint.host}:${endpoint.port}`
-                                                                        )
-                                                                );
-                                                            }}
-                                                        >
-                                                            <DeleteIcon />
-                                                        </IconButton>
-                                                    }
-                                                >
-                                                    <ListItemAvatar>
-                                                        <Avatar>
-                                                            <LinkedCameraIcon />
-                                                        </Avatar>
-                                                    </ListItemAvatar>
-                                                    <ListItemText
-                                                        primary={`IP Address: ${endpoint.host}`}
-                                                        secondary={`Port: ${endpoint.port}`}
-                                                    />
-                                                </ListItem>
-                                            );
-                                        })}
-                                    </List>
-                                )}
-                            </Box>
-                        </AccordionDetails>
-                    </Accordion>
-                    {/* Container for User Input and Interaction */}
-                    <div style={styles.cardContent.div}>
-                        {/* IP Address input */}
-                        <TextField
-                            sx={styles.textField}
-                            label='IP Address'
-                            variant='outlined'
-                            size='small'
-                            value={host}
-                            onChange={(e) => setHost(e.target.value)}
-                            error={!!ipError}
-                            helperText={ipError}
-                        />
-                        {/* Port Input */}
-                        <TextField
-                            sx={styles.portField}
-                            label='Port'
-                            variant='outlined'
-                            size='small'
-                            value={port}
-                            onChange={(e) => setPort(parseInt(e.target.value))}
-                            error={!!portError}
-                            helperText={portError}
-                            type='number'
-                            inputProps={{ min: 1024, max: 65535 }} // Specify minimum and maximum values
-                        />
-                        {/* Add Stream Endpoint Button */}
-                        <IconButton
-                            sx={{
-                                width: "40px",
-                                height: "40px",
-                                color: "text.secondary",
-                                marginLeft: "-10px",
-                            }}
+                                <AddIcon />
+                            </IconButton>
+                        </div>
+                        <Button
+                            color='primary'
+                            variant='contained'
                             onClick={() => {
-                                handleAddEndpoint();
+                                restartStream(props.device.bus_info).then(
+                                    () => {
+                                        enqueueSnackbar("Stream restarted", {
+                                            variant: "info",
+                                        });
+                                    }
+                                );
                             }}
                         >
-                            <AddIcon />
-                        </IconButton>
-                    </div>
-                    <Button
-                        color='primary'
-                        variant='contained'
-                        onClick={() => {
-                            restartStream(props.device.bus_info).then(() => {
-                                enqueueSnackbar("Stream restarted", {
-                                    variant: "info",
-                                });
-                            });
-                        }}
-                    >
-                        Restart Stream
-                    </Button>
-                </>
+                            Restart Stream
+                        </Button>
+                    </>
+                ) : (
+                    <></>
+                )
             ) : undefined}
         </FormGroup>
     );
@@ -640,9 +665,9 @@ interface ControlState {
     control_id: number;
     name: string;
     setControlValue:
-    | ((value: number) => void)
-    | ((value: boolean) => void)
-    | ((value: string) => void);
+        | ((value: number) => void)
+        | ((value: boolean) => void)
+        | ((value: string) => void);
     default_value: number | string | boolean;
     type: controlType;
 }
@@ -839,28 +864,61 @@ const CameraControls: React.FC<CameraControlsProps> = (props) => {
 
                                 return (
                                     <>
-                                        <PopupState variant='popover' popupId={"" + control_id}>
+                                        <PopupState
+                                            variant='popover'
+                                            popupId={"" + control_id}
+                                        >
                                             {(popupState) => (
-                                                <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                    <span style={{ marginRight: '8px' }}>{name}:</span>
+                                                <div
+                                                    style={{
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                    }}
+                                                >
+                                                    <span
+                                                        style={{
+                                                            marginRight: "8px",
+                                                        }}
+                                                    >
+                                                        {name}:
+                                                    </span>
                                                     <TextField
-                                                        variant="standard"
+                                                        variant='standard'
                                                         select
                                                         value={controlValue}
                                                         onChange={(e) => {
-                                                            setControlValue(parseInt(e.target.value));
+                                                            setControlValue(
+                                                                parseInt(
+                                                                    e.target
+                                                                        .value
+                                                                )
+                                                            );
                                                             popupState.close();
                                                         }}
-                                                        {...bindTrigger(popupState)}
+                                                        {...bindTrigger(
+                                                            popupState
+                                                        )}
                                                         InputProps={{
-                                                            disableUnderline: true
+                                                            disableUnderline:
+                                                                true,
                                                         }}
                                                     >
-                                                        {menu.map((menuItem) => (
-                                                            <MenuItem key={menuItem.index} value={menuItem.index}>
-                                                                {menuItem.name}
-                                                            </MenuItem>
-                                                        ))}
+                                                        {menu.map(
+                                                            (menuItem) => (
+                                                                <MenuItem
+                                                                    key={
+                                                                        menuItem.index
+                                                                    }
+                                                                    value={
+                                                                        menuItem.index
+                                                                    }
+                                                                >
+                                                                    {
+                                                                        menuItem.name
+                                                                    }
+                                                                </MenuItem>
+                                                            )
+                                                        )}
                                                     </TextField>
                                                 </div>
                                             )}

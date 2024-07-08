@@ -12,6 +12,10 @@ export interface Device {
     nickname: string;
     options: StreamOptions;
     stream: Stream;
+
+    device_type: string | undefined;
+    is_leader: boolean | undefined;
+    follower: string | undefined;
 }
 
 export interface Camera {

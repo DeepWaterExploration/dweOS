@@ -24,5 +24,6 @@ class SHDDevice(Device):
     def start_stream(self):
         # do not stream if follower
         if not self.is_leader:
+            logging.warn('Attempting to start stream as a follower. This is currently not allowed.')
             return
         super().start_stream()

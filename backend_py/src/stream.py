@@ -26,53 +26,6 @@ class Stream:
     interval: Interval = field(default_factory=Interval)
     configured: bool = False
 
-    started: bool = False
-
-    _process: subprocess.Popen = None
-
-    pipeline = None
-    loop = None
-
-    def _run_pipeline(self):
-        Gst.init(None)
-
-        pipeline_str = self._construct_pipeline()
-        logging.info(pipeline_str)
-        self.pipeline = Gst.parse_launch(pipeline_str)
-
-        self.loop = GLib.MainLoop()
-
-        self.pipeline.set_state(Gst.State.PLAYING)
-        try:
-            self.loop.run()
-        except e:
-            pass
-
-        self.pipeline.set_state(Gst.State.NULL)
-
-    def _start(self):
-        self._thread = threading.Thread(target=self._run_pipeline)
-        self._thread.start()
-
-        # self._process = subprocess.Popen(
-        #     f'gst-launch-1.0 {pipeline_str}', shell=True)
-
-    def start(self):
-        if self.started:
-            self.stop()
-        if len(self.endpoints) == 0:
-            self.stop()
-            return
-        self.started = True
-        self._start()
-
-    def stop(self):
-        logging.info(f'Stopping stream {self.device_path}')
-        if not self.started:
-            return
-        self.started = False
-        # del self._process
-
     def _construct_pipeline(self):
         return f'{self._build_source()} ! {self._construct_caps()} ! {self._build_payload()} ! {self._build_sink()}'
 
@@ -114,14 +67,37 @@ class Stream:
                 return sink
             case _:
                 return ''
+            
+    def start(*args):
+        pass
+
+    def stop(*args):
+        pass
 
 class StreamRunner:
 
     def __init__(self, *streams: Stream) -> None:
-        self.streams = streams
+        self.streams = [*streams]
         self.pipeline = None
         self.loop = None
+        self.started = False
+        self.thread: threading.Thread = None
+
+    def start(self):
+        if self.started:
+            self.stop()
         self._thread = threading.Thread(target=self._run_pipeline)
+        self.started = True
+        self._thread.start()
+
+    def stop(self):
+        if not self.started:
+            return
+        self.started = False
+        self.pipeline.set_state(Gst.State.NULL)
+        self.loop.quit()
+        self._thread.join()
+        del self._thread
 
     def _run_pipeline(self):
         Gst.init(None)
@@ -145,11 +121,3 @@ class StreamRunner:
         for stream in self.streams:
             pipeline_strs.append(stream._construct_pipeline())
         return ' '.join(pipeline_strs)
-
-    def start(self):
-        self._thread.start()
-
-    def stop(self):
-        self.pipeline.set_state(Gst.State.NULL)
-        self.loop.quit()
-        self._thread.join()

@@ -119,6 +119,8 @@ class DeviceSchema(Schema):
     nickname = fields.Str()
     device_info = fields.Nested(DeviceInfoSchema)
     device_type = fields.Enum(DeviceType)
+    is_leader = fields.Bool(required=False, allow_none=True)
+    follower = fields.Str(required=False, allow_none=True)
 
     # @post_dump(pass_original=True)
     # def dump_options(self, data: typing.Dict, original: Any, **kwargs):
@@ -128,6 +130,8 @@ class DeviceSchema(Schema):
 class SavedDeviceSchema(DeviceSchema):
     controls = fields.Nested(ControlSchema, exclude=['flags'], many=True)
     stream = fields.Nested(StreamSchema, exclude=['device_path', 'started'])
+
+    # TODO: save the device type and reset if the wrong device is plugged in to a saved port
 
     @post_load()
     def make_saved_device(self, data: typing.Dict, **kwargs):

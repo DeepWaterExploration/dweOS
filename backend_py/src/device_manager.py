@@ -6,6 +6,7 @@ import re
 
 from .schemas import *
 from .device import Device, lookup_pid_vid, DeviceInfo, DeviceType
+from .stream import StreamRunner
 from .settings import SettingsManager
 from .broadcast_server import BroadcastServer, Message
 from .enumeration import list_devices
@@ -46,8 +47,10 @@ class DeviceManager:
         match device_type:
             case DeviceType.EXPLOREHD:
                 return EHDDevice(device_info)
-            case DeviceType.STELLARHD:
+            case DeviceType.STELLARHD_LEADER:
                 return SHDDevice(device_info)
+            case DeviceType.STELLARHD_FOLLOWER:
+                return SHDDevice(device_info, False)
             case _:
                 # Not a DWE device
                 return None
@@ -117,7 +120,7 @@ class DeviceManager:
 
         device.configure_stream(encode_type, width, height,
                                 interval, StreamTypeEnum.UDP, endpoints)
-        device.stream.start()
+        device.start_stream()
 
         self.settings_manager.save_device(device)
         return True

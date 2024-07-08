@@ -22,7 +22,8 @@ import logging
 
 class DeviceType(Enum):
     EXPLOREHD = 0
-    STELLARHD = 1
+    STELLARHD_LEADER= 1
+    STELLARHD_FOLLOWER = 2
 
 PID_VIDS = {
     'exploreHD': {
@@ -33,12 +34,12 @@ PID_VIDS = {
     'stellarHD: Leader': {
         'VID': 0xc45,
         'PID': 0x6367,
-        'device_type': DeviceType.STELLARHD
+        'device_type': DeviceType.STELLARHD_LEADER
     },
     'stellarHD: Follower': {
         'VID': 0xc45,
         'PID': 0x6368,
-        'device_type': DeviceType.STELLARHD
+        'device_type': DeviceType.STELLARHD_FOLLOWER
     }
 }
 
@@ -218,6 +219,9 @@ class Device:
         self.nickname = ''
         self.stream = Stream()
 
+        # each device has a streamrunner, but not all of them are used if they are a follower (shd)
+        self.stream_runner = StreamRunner(self.stream)
+
         for camera in self.cameras:
             for encoding in camera.formats:
                 encode_type = string_to_stream_encode_type(encoding)
@@ -327,6 +331,8 @@ class Device:
             logging.error(f'Unknown attribute: {self.__class__.__name__}._options[{option_name}]')
             logging.error('Failed to add option to controls list.')
         
+    def start_stream(self):
+        self.stream_runner.start()
 
     def load_settings(self, saved_device: SavedDevice):
         for control in saved_device.controls:
@@ -346,11 +352,11 @@ class Device:
         self.stream.configured = saved_device.stream.configured
         self.nickname = saved_device.nickname
         if self.stream.configured:
-            self.stream.start()
+            self.start_stream()
 
     def unconfigure_stream(self):
         self.stream.configured = False
-        self.stream.stop()
+        self.stream_runner.stop()
 
     def get_pu(self, control_id: int):
         control = self.v4l2_device.controls[control_id]

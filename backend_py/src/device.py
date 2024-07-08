@@ -341,8 +341,6 @@ class Device:
             except:
                 continue
 
-        # TODO: add options
-
         self.configure_stream(saved_device.stream.encode_type,
                               saved_device.stream.width,
                               saved_device.stream.height,

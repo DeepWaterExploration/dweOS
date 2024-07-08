@@ -44,6 +44,34 @@ export async function getDevices(): Promise<Device[]> {
 }
 
 /**
+ * Retrieves a list of devices connected to the system
+ * @returns {Promise<Device[]>} - A promise that resolves to an array of Device objects.
+ * @throws {Error} - If the request to retrieve the device list fails.
+ */
+export async function getLeaders(): Promise<Device[]> {
+    const url = `${DEVICE_API_URL}/devices/leader_bus_infos`;
+    const config: RequestInit = {
+        mode: "cors",
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        // credentials: "include",
+    };
+    return await fetch(url, config)
+        // Process the response data
+        .then((response: Response) => response.json())
+        .then((data: Device[]) => {
+            return data;
+        })
+        .catch((error: Error) => {
+            console.log("Failed to retrieve device list");
+            console.error(error);
+            return [];
+        });
+}
+
+/**
  * Configures a device stream with the provided settings.
  * @param {number} usbInfo - The usb info of the connected camera.
  * @throws {Error} - If the request to configure the device fails.

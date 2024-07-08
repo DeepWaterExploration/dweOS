@@ -15,7 +15,7 @@ export interface Device {
 
     device_type: string | undefined;
     is_leader: boolean | undefined;
-    follower: string | undefined;
+    leader: string | undefined;
 }
 
 export interface Camera {

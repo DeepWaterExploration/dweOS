@@ -80,6 +80,19 @@ def main():
             uvc_control['bus_info'], uvc_control['control_id'], uvc_control['value'])
 
         return jsonify({})
+    
+    @app.route('/devices/leader_bus_infos')
+    def get_leader_bus_infos():
+        bus_infos = []
+        for device in device_manager.devices:
+            if device.device_type == DeviceType.STELLARHD_LEADER:
+                bus_infos.append({
+                    'nickname': device.nickname,
+                    'bus_info': device.bus_info
+                })
+
+        return jsonify(bus_infos)
+
 
     http_server = WSGIServer(('0.0.0.0', 8080), app, log=None)
     device_manager.start_monitoring()

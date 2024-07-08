@@ -47,6 +47,7 @@ import {
 } from "../../types/types";
 import {
     configureStream,
+    getLeaders,
     getNextPort,
     restartStream,
     setDeviceNickname,
@@ -255,6 +256,8 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
     const [ipError, setIpError] = useState("");
     const [portError, setPortError] = useState("");
 
+    const [leaders, setLeaders] = useState([] as Device[]);
+
     const { enqueueSnackbar } = useSnackbar();
 
     const [encodeFormat, setEncodeFormat] = useState(
@@ -264,7 +267,7 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
     const [endpoints, setEndpoints] = useState<StreamEndpoint[]>(
         props.device.stream.endpoints ? props.device.stream.endpoints : []
     );
-    console.log("AODWEJUHQIAWUE " + props.device.stream);
+    // console.log("AODWEJUHQIAWUE " + props.device.stream);
     const defaultResolution = `${props.device.stream.width}x${props.device.stream.height}`;
     const [resolution, setResolution] = useState(defaultResolution);
 
@@ -274,6 +277,11 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
     useEffect(() => {
         getNextPort(host).then(setPort);
         setFps(`${props.device.stream.interval.denominator}`);
+
+        // TODO: use a real global state
+        getLeaders().then((devices) => {
+            setLeaders(devices);
+        });
     }, []);
 
     useDidMountEffect(() => {
@@ -444,8 +452,12 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                 name='streamSwitch'
                 text='Stream'
             />
-            {stream ? (
-                props.device.is_leader ? (
+            {(
+                props.device.is_leader === undefined
+                    ? true
+                    : props.device.is_leader
+            ) ? (
+                stream ? (
                     <>
                         <div style={styles.cardContent.div}>
                             <TextField
@@ -648,10 +660,49 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                             Restart Stream
                         </Button>
                     </>
-                ) : (
-                    <></>
-                )
-            ) : undefined}
+                ) : undefined
+            ) : (
+                <>
+                    <PopupState variant='popover'>
+                        {(popupState) => (
+                            <div
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                }}
+                            >
+                                <span
+                                    style={{
+                                        marginRight: "8px",
+                                    }}
+                                >
+                                    Leader:
+                                </span>
+                                <TextField
+                                    variant='standard'
+                                    select
+                                    InputProps={{
+                                        disableUnderline: true,
+                                    }}
+                                >
+                                    {leaders.map((device) => {
+                                        return (
+                                            <MenuItem
+                                                key={device.bus_info}
+                                                value={device.bus_info}
+                                            >
+                                                {device.nickname.length > 0
+                                                    ? `${device.nickname}: ${device.bus_info}`
+                                                    : device.bus_info}
+                                            </MenuItem>
+                                        );
+                                    })}
+                                </TextField>
+                            </div>
+                        )}
+                    </PopupState>
+                </>
+            )}
         </FormGroup>
     );
 };

@@ -19,12 +19,6 @@ from .utils import string_to_stream_encode_type
 
 import logging
 
-
-class DeviceType(Enum):
-    EXPLOREHD = 0
-    STELLARHD_LEADER= 1
-    STELLARHD_FOLLOWER = 2
-
 PID_VIDS = {
     'exploreHD': {
         'VID': 0xc45,
@@ -43,7 +37,7 @@ PID_VIDS = {
     }
 }
 
-def lookup_pid_vid(vid: int, pid: int):
+def lookup_pid_vid(vid: int, pid: int) -> Tuple[str, DeviceType]:
     for name in PID_VIDS:
         dev = PID_VIDS[name]
         if dev['VID'] == vid and dev['PID'] == pid:

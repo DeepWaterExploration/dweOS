@@ -74,34 +74,7 @@ class H264Mode(Enum):
     MODE_CONSTANT_BITRATE = 1
     MODE_VARIABLE_BITRATE = 2
 
-class OptionTypeEnum(Enum):
-    '''
-    Option Type Enum
-    This is for multiple cameras to all have unique options that can be configured separate from v4l2 controls
-    '''
-    TYPE_BOOLEAN=0
-    TYPE_INTEGER=1
-    TYPE_ENUM=2
-
-@dataclass
-class BaseOptionInfo:
-    '''
-    This is an option descriptor that will get serialized and sent to the frontend
-    which allows for the frontend to configure the value
-    '''
-    option_type: OptionTypeEnum
-    value: int | bool
-    name: str
-    default_value: int | bool
-
-@dataclass
-class SliderOptionInfo(BaseOptionInfo):
-    option_type = OptionTypeEnum.TYPE_INTEGER
-    min_value: int
-    max_value: int
-    step: int
-    scale: float
-
-@dataclass
-class SwitchOptionInfo(BaseOptionInfo):
-    option_type = OptionTypeEnum.TYPE_BOOLEAN
+class DeviceType(Enum):
+    EXPLOREHD = 0
+    STELLARHD_LEADER= 1
+    STELLARHD_FOLLOWER = 2

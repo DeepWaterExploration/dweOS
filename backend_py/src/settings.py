@@ -2,11 +2,11 @@ from typing import *
 import threading
 import time
 import json
+import logging
 
 from .saved_types import *
 from .schemas import SavedDeviceSchema
 from .device import Device
-
 
 class SettingsManager:
 
@@ -34,6 +34,11 @@ class SettingsManager:
     def load_device(self, device: Device):
         for saved_device in self.settings:
             if saved_device.bus_info == device.bus_info:
+                if device.device_type != saved_device.device_type:
+                    logging.info(f'Device {device.bus_info} with device_type: {device.device_type} plugged into port of saved device_type: {saved_device.device_type}.\
+                                  Discarding stored data as this could cause numerous issues.')
+                    self.settings.remove(saved_device)
+                    return
                 device.load_settings(saved_device)
                 return
 

@@ -130,20 +130,18 @@ class DeviceSchema(Schema):
 class SavedDeviceSchema(DeviceSchema):
     controls = fields.Nested(ControlSchema, exclude=['flags'], many=True)
     stream = fields.Nested(StreamSchema, exclude=['device_path', 'started'])
-
-    # TODO: save the device type and reset if the wrong device is plugged in to a saved port
+    device_type = fields.Enum(DeviceType)
 
     @post_load()
     def make_saved_device(self, data: typing.Dict, **kwargs):
         interval = Interval(**data['stream']['interval'])
         saved_stream = SavedStream(data['stream']['encode_type'], data['stream']['stream_type'], data['stream']
                                    ['endpoints'], data['stream']['width'], data['stream']['height'], interval, data['stream']['configured'])
-        # saved_options = SavedOptions(**data['options'])
         saved_controls = []
         for control in data['controls']:
             saved_controls.append(SavedControl(
                 control['control_id'], control['name'], control['value']))
-        return SavedDevice(data['bus_info'], data['vid'], data['pid'], data['nickname'], controls=saved_controls, stream=saved_stream)
+        return SavedDevice(data['bus_info'], data['vid'], data['pid'], data['nickname'], controls=saved_controls, stream=saved_stream, device_type=data['device_type'])
 
 
 # API SCHEMAS

@@ -12,18 +12,22 @@ class SHDDevice(Device):
         super().__init__(device_info)
         self.is_leader = is_leader
         self.leader: str = None
+        self.leader_device: 'SHDDevice' = None
 
     def set_leader(self, leader: 'SHDDevice'):
         # We love forward references
         if not leader.is_leader:
             logging.warn('Attempting to add follower SHD as a leader, this is undefined behavior and will not be permitted.')
             return
+        self.leader_device = leader
         self.leader = leader.bus_info
         leader.stream_runner.streams.append(self.stream)
 
     def start_stream(self):
         # do not stream if follower
         if not self.is_leader:
-            logging.warn('Attempting to start stream as a follower. This is currently not allowed.')
-            return
+            if self.leader:
+                logging.info('Starting stream as a follower. This will start the leader\'s stream')
+                self.leader_device.start_stream()
+                return
         super().start_stream()

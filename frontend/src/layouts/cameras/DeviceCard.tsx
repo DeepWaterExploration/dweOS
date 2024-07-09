@@ -460,6 +460,68 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                 stream ? (
                     <>
                         <div style={styles.cardContent.div}>
+                            {(
+                                props.device.is_leader === undefined
+                                    ? false
+                                    : !props.device.is_leader
+                            ) ? (
+                                <PopupState variant='popover'>
+                                    {(popupState) => (
+                                        <div
+                                            style={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                            }}
+                                        >
+                                            <span
+                                                style={{
+                                                    marginRight: "8px",
+                                                }}
+                                            >
+                                                Leader:
+                                            </span>
+                                            <TextField
+                                                variant='standard'
+                                                select
+                                                InputProps={{
+                                                    disableUnderline: true,
+                                                }}
+                                                defaultValue={
+                                                    props.device.leader
+                                                }
+                                            >
+                                                {leaders.map((device) => {
+                                                    return (
+                                                        <MenuItem
+                                                            key={
+                                                                device.bus_info
+                                                            }
+                                                            value={
+                                                                device.bus_info
+                                                            }
+                                                            onClick={() => {
+                                                                popupState.close();
+                                                                setLeader(
+                                                                    device.bus_info,
+                                                                    props.device
+                                                                        .bus_info
+                                                                );
+                                                            }}
+                                                        >
+                                                            {device.nickname
+                                                                .length > 0
+                                                                ? `${device.nickname}: ${device.bus_info}`
+                                                                : device.bus_info}
+                                                        </MenuItem>
+                                                    );
+                                                })}
+                                            </TextField>
+                                        </div>
+                                    )}
+                                </PopupState>
+                            ) : undefined}
+                        </div>
+                        <div style={styles.cardContent.div}>
                             <TextField
                                 sx={{ width: "50%" }}
                                 select
@@ -661,60 +723,6 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                         </Button>
                     </>
                 ) : undefined
-            ) : undefined}
-            {(
-                props.device.is_leader === undefined
-                    ? false
-                    : !props.device.is_leader
-            ) ? (
-                <>
-                    <PopupState variant='popover'>
-                        {(popupState) => (
-                            <div
-                                style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                }}
-                            >
-                                <span
-                                    style={{
-                                        marginRight: "8px",
-                                    }}
-                                >
-                                    Leader:
-                                </span>
-                                <TextField
-                                    variant='standard'
-                                    select
-                                    InputProps={{
-                                        disableUnderline: true,
-                                    }}
-                                    defaultValue={props.device.leader}
-                                >
-                                    {leaders.map((device) => {
-                                        return (
-                                            <MenuItem
-                                                key={device.bus_info}
-                                                value={device.bus_info}
-                                                onClick={() => {
-                                                    popupState.close();
-                                                    setLeader(
-                                                        device.bus_info,
-                                                        props.device.bus_info
-                                                    );
-                                                }}
-                                            >
-                                                {device.nickname.length > 0
-                                                    ? `${device.nickname}: ${device.bus_info}`
-                                                    : device.bus_info}
-                                            </MenuItem>
-                                        );
-                                    })}
-                                </TextField>
-                            </div>
-                        )}
-                    </PopupState>
-                </>
             ) : undefined}
         </FormGroup>
     );

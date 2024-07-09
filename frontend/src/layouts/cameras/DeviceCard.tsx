@@ -662,7 +662,7 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
             ) : undefined}
             {(
                 props.device.is_leader === undefined
-                    ? true
+                    ? false
                     : !props.device.is_leader
             ) ? (
                 <>

@@ -10,11 +10,6 @@ from .camera_types import *
 
 import logging
 
-import gi
-gi.require_version('Gst', '1.0')
-from gi.repository import GLib, Gst
-
-
 @dataclass
 class Stream:
     device_path: str = ''
@@ -81,40 +76,25 @@ class StreamRunner:
         self.pipeline = None
         self.loop = None
         self.started = False
-        self.thread: threading.Thread = None
 
     def start(self):
         if self.started:
             self.stop()
-        self._thread = threading.Thread(target=self._run_pipeline)
         self.started = True
-        self._thread.start()
+        self._run_pipeline()
 
     def stop(self):
         if not self.started:
             return
         self.started = False
-        self.pipeline.set_state(Gst.State.NULL)
-        self.loop.quit()
-        self._thread.join()
-        del self._thread
+        self._process.kill()
+        del self._process
 
     def _run_pipeline(self):
-        Gst.init(None)
-
         pipeline_str = self._construct_pipeline()
         print(pipeline_str)
-        self.pipeline = Gst.parse_launch(pipeline_str)
-
-        self.loop = GLib.MainLoop()
-
-        self.pipeline.set_state(Gst.State.PLAYING)
-        try:
-            self.loop.run()
-        except:
-            pass
-
-        self.pipeline.set_state(Gst.State.NULL)
+        self._process = subprocess.Popen(
+            f'gst-launch-1.0 {pipeline_str}'.split(' '), stdout=subprocess.DEVNULL)
 
     def _construct_pipeline(self):
         pipeline_strs = []

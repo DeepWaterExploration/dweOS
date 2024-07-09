@@ -15,6 +15,10 @@ from .settings import SettingsManager
 from .broadcast_server import BroadcastServer
 from .device_manager import DeviceManager
 
+from .devices.shd import SHDDevice
+
+from typing import cast
+
 import logging
 
 
@@ -92,7 +96,18 @@ def main():
                 })
 
         return jsonify(bus_infos)
-
+    
+    @app.route('/devices/set_leader', methods=['POST'])
+    def set_leader():
+        leader_schema = DeviceLeaderSchema().load(request.get_json())
+        follower_device = device_manager._find_device_with_bus_info(leader_schema['follower'])
+        leader_device = device_manager._find_device_with_bus_info(leader_schema['leader'])
+        if not leader_device or not follower_device:
+            logging.warn('Unable to find leader or follower device.')
+            return jsonify({})
+        if follower_device.device_type == DeviceType.STELLARHD_FOLLOWER:
+            cast(SHDDevice, follower_device).set_leader(leader_device)
+        return jsonify({})
 
     http_server = WSGIServer(('0.0.0.0', 8080), app, log=None)
     device_manager.start_monitoring()

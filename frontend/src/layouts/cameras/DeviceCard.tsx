@@ -52,6 +52,7 @@ import {
     restartStream,
     setDeviceNickname,
     setExploreHDOption,
+    setLeader,
     setUVCControl,
     unconfigureStream,
 } from "../../utils/api";
@@ -443,7 +444,8 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                 disabled={
                     props.device.is_leader === undefined
                         ? false
-                        : !props.device.is_leader
+                        : // : !props.device.is_leader
+                          false // TODO: change this is just until global state
                 }
                 onChange={(e) => {
                     setStream(e.target.checked);
@@ -452,11 +454,7 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                 name='streamSwitch'
                 text='Stream'
             />
-            {(
-                props.device.is_leader === undefined
-                    ? true
-                    : props.device.is_leader
-            ) ? (
+            {(props.device.is_leader === undefined ? true : true) ? ( // TODO: change this but this is just for now until global state exists
                 stream ? (
                     <>
                         <div style={styles.cardContent.div}>
@@ -661,7 +659,12 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                         </Button>
                     </>
                 ) : undefined
-            ) : (
+            ) : undefined}
+            {(
+                props.device.is_leader === undefined
+                    ? true
+                    : !props.device.is_leader
+            ) ? (
                 <>
                     <PopupState variant='popover'>
                         {(popupState) => (
@@ -684,12 +687,20 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                                     InputProps={{
                                         disableUnderline: true,
                                     }}
+                                    defaultValue={props.device.leader}
                                 >
                                     {leaders.map((device) => {
                                         return (
                                             <MenuItem
                                                 key={device.bus_info}
                                                 value={device.bus_info}
+                                                onClick={() => {
+                                                    popupState.close();
+                                                    setLeader(
+                                                        device.bus_info,
+                                                        props.device.bus_info
+                                                    );
+                                                }}
                                             >
                                                 {device.nickname.length > 0
                                                     ? `${device.nickname}: ${device.bus_info}`
@@ -702,7 +713,7 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                         )}
                     </PopupState>
                 </>
-            )}
+            ) : undefined}
         </FormGroup>
     );
 };

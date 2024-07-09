@@ -106,6 +106,38 @@ export async function unconfigureStream(bus_info: string) {
 /**
  * Configures a device stream with the provided settings.
  * @param {number} usbInfo - The usb info of the connected camera.
+ * @throws {Error} - If the request to configure the device fails.
+ */
+export async function setLeader(leader: string, follower: string) {
+    const url = `${DEVICE_API_URL}/devices/set_leader`;
+    const body = {
+        leader,
+        follower,
+    };
+    const config: RequestInit = {
+        mode: "cors",
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        // credentials: "include",
+        body: JSON.stringify(body),
+    };
+    return await fetch(url, config)
+        // Process the response data
+        .then((response: Response) => response.json())
+        .then(() => {
+            return;
+        })
+        .catch((error: Error) => {
+            console.error(error);
+            return;
+        });
+}
+
+/**
+ * Configures a device stream with the provided settings.
+ * @param {number} usbInfo - The usb info of the connected camera.
  * @param {StreamFormat} format - The format of the stream.
  * @param {encodeType} encode_type - The encode type of the stream.
  * @throws {Error} - If the request to configure the device fails.

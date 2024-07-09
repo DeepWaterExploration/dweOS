@@ -33,8 +33,14 @@ class SHDDevice(Device):
 
     def remove_leader(self):
         self.leader_device.stream_runner.streams.remove(self.stream)
+        # restart the leader device stream to take this device out of it
+        if self.leader_device.stream_runner.started:
+            self.leader_device.start_stream()
         self.leader_device = None
         self.leader = None
+        # start the stream if configured
+        if self.stream.configured:
+            self.stream_runner.start()
 
     def start_stream(self):
         if not self.is_leader:

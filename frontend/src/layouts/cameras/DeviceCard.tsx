@@ -487,7 +487,11 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                                                 InputProps={{
                                                     disableUnderline: true,
                                                 }}
-                                                value={props.device.leader}
+                                                value={
+                                                    props.device.leader
+                                                        ? props.device.leader
+                                                        : "None"
+                                                }
                                             >
                                                 <MenuItem
                                                     key='None'

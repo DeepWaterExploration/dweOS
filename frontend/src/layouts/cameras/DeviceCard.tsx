@@ -49,6 +49,7 @@ import {
     configureStream,
     getLeaders,
     getNextPort,
+    removeLeader,
     restartStream,
     setDeviceNickname,
     setExploreHDOption,
@@ -459,12 +460,12 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
             {(props.device.is_leader === undefined ? true : true) ? ( // TODO: change this but this is just for now until global state exists
                 stream ? (
                     <>
-                        <div style={styles.cardContent.div}>
-                            {(
-                                props.device.is_leader === undefined
-                                    ? false
-                                    : !props.device.is_leader
-                            ) ? (
+                        {(
+                            props.device.is_leader === undefined
+                                ? false
+                                : !props.device.is_leader
+                        ) ? (
+                            <div style={styles.cardContent.div}>
                                 <PopupState variant='popover'>
                                     {(popupState) => (
                                         <div
@@ -486,10 +487,21 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                                                 InputProps={{
                                                     disableUnderline: true,
                                                 }}
-                                                defaultValue={
-                                                    props.device.leader
-                                                }
+                                                value={props.device.leader}
                                             >
+                                                <MenuItem
+                                                    key='None'
+                                                    value='None'
+                                                    onClick={() => {
+                                                        popupState.close();
+                                                        removeLeader(
+                                                            props.device
+                                                                .bus_info
+                                                        );
+                                                    }}
+                                                >
+                                                    None
+                                                </MenuItem>
                                                 {leaders.map((device) => {
                                                     return (
                                                         <MenuItem
@@ -506,6 +518,9 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                                                                     props.device
                                                                         .bus_info
                                                                 );
+                                                                // bad global state
+                                                                props.device.leader =
+                                                                    device.bus_info;
                                                             }}
                                                         >
                                                             {device.nickname
@@ -519,8 +534,8 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                                         </div>
                                     )}
                                 </PopupState>
-                            ) : undefined}
-                        </div>
+                            </div>
+                        ) : undefined}
                         <div style={styles.cardContent.div}>
                             <TextField
                                 sx={{ width: "50%" }}

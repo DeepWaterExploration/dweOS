@@ -67,6 +67,12 @@ export async function setLeader(leader: string, follower: string) {
     return await response.json();
 }
 
+export async function removeLeader(follower: string) {
+    const url = `${DEVICE_API_URL}/devices/remove_leader`;
+    const response = await postRequest(url, { follower });
+    return await response.json();
+}
+
 export async function configureStream(
     bus_info: string,
     stream_format: StreamFormat,

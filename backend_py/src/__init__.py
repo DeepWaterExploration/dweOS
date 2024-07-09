@@ -107,6 +107,21 @@ def main():
             return jsonify({})
         if follower_device.device_type == DeviceType.STELLARHD_FOLLOWER:
             cast(SHDDevice, follower_device).set_leader(leader_device)
+        else:
+            logging.warn('Attempting to remove leader from a non follower device type.')
+        return jsonify({})
+    
+    @app.route('/devices/remove_leader', methods=['POST'])
+    def remove_leader():
+        leader_schema = DeviceLeaderSchema().load(request.get_json())
+        follower_device = device_manager._find_device_with_bus_info(leader_schema['follower'])
+        if not follower_device:
+            logging.warn('Unable to find follower device.')
+            return jsonify({})
+        if follower_device.device_type == DeviceType.STELLARHD_FOLLOWER:
+            cast(SHDDevice, follower_device).remove_leader()
+        else:
+            logging.warn('Attempting to remove leader from a non follower device type.')
         return jsonify({})
 
     http_server = WSGIServer(('0.0.0.0', 8080), app, log=None)

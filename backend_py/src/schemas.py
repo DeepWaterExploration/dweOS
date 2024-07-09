@@ -184,4 +184,5 @@ class UVCControlSchema(Schema):
 
 class DeviceLeaderSchema(Schema):
     follower = fields.Str()
-    leader = fields.Str()
+    # not required in case of removing leader
+    leader = fields.Str(required=False, allow_none=True)

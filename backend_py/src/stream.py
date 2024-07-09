@@ -88,6 +88,7 @@ class StreamRunner:
             return
         self.started = False
         self._process.kill()
+        self._process.wait()
         del self._process
 
     def _run_pipeline(self):

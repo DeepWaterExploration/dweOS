@@ -21,7 +21,10 @@ class SHDDevice(Device):
             return
         self.leader_device = leader
         self.leader = leader.bus_info
-        leader.stream_runner.streams.append(self.stream)
+        if len(leader.stream_runner.streams) < 2:
+            leader.stream_runner.streams.append(self.stream)
+        else:
+            leader.stream_runner.streams[1] = self.stream
 
     def start_stream(self):
         # do not stream if follower

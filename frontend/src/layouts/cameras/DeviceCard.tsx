@@ -235,12 +235,14 @@ interface StreamOptionsProps {
 }
 
 const getResolutions = (device: Device, encodeFormat: encodeType) => {
-    let newResolutions = [];
+    let newResolutions: string[] = [];
     for (let camera of device.cameras) {
         let format = camera.formats[encodeFormat as string];
         if (format) {
             for (let resolution of format) {
-                newResolutions.push(`${resolution.width}x${resolution.height}`);
+                let resolution_str = `${resolution.width}x${resolution.height}`;
+                if (newResolutions.includes(resolution_str)) continue;
+                newResolutions.push(resolution_str);
             }
         }
     }

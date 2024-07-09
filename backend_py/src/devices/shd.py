@@ -17,7 +17,7 @@ class SHDDevice(Device):
     def set_leader(self, leader: 'SHDDevice'):
         # We love forward references
         if not leader.is_leader:
-            logging.warn('Attempting to add follower SHD as a leader, this is undefined behavior and will not be permitted.')
+            logging.warn('Attempting to add follower SHD as a leader. This is undefined behavior and will not be permitted.')
             return
         self.leader_device = leader
         self.leader = leader.bus_info
@@ -32,6 +32,9 @@ class SHDDevice(Device):
         leader.start_stream()
 
     def remove_leader(self):
+        if not self.leader_device:
+            logging.warn('Attempting to remove leader from a device with no leader. This is undefined behavior and will not be permitted.')
+            return
         self.leader_device.stream_runner.streams.remove(self.stream)
         # restart the leader device stream to take this device out of it
         if self.leader_device.stream_runner.started:

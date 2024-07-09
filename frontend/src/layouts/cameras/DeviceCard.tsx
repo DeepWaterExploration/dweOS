@@ -502,6 +502,8 @@ const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                                                             props.device
                                                                 .bus_info
                                                         );
+                                                        props.device.leader =
+                                                            undefined;
                                                     }}
                                                 >
                                                     None

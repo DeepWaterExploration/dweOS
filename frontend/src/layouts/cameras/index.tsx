@@ -5,6 +5,10 @@ import DeviceCard from "../../components/DeviceCard";
 import { Device } from "../../types/types";
 import { getDevices, DEVICE_API_WS } from "../../utils/api";
 
+// Global State
+// TODO: use this
+export const DevicesContext = React.createContext(null);
+
 const hash = function (str: string) {
     let hash = 0,
         i,

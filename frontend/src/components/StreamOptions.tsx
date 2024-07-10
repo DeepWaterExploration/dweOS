@@ -34,6 +34,7 @@ import {
 } from "../utils/api";
 import { DeviceSwitch } from "./DeviceSwitch";
 import { useDidMountEffect } from "../utils/utils";
+import { DeviceLeader } from "./DeviceLeader";
 
 /*
  * Get the list of resolutions available from the device
@@ -252,12 +253,7 @@ export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
             }}
         >
             <DeviceSwitch
-                disabled={
-                    props.device.is_leader === undefined
-                        ? false
-                        : // : !props.device.is_leader
-                          false // TODO: change this is just until global state
-                }
+                disabled={false}
                 onChange={(e) => {
                     setStream(e.target.checked);
                 }}
@@ -273,82 +269,10 @@ export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                                 ? false
                                 : !props.device.is_leader
                         ) ? (
-                            <div style={styles.cardContent.div}>
-                                <PopupState variant='popover'>
-                                    {(popupState) => (
-                                        <div
-                                            style={{
-                                                display: "flex",
-                                                alignItems: "center",
-                                            }}
-                                        >
-                                            <span
-                                                style={{
-                                                    marginRight: "8px",
-                                                }}
-                                            >
-                                                Leader:
-                                            </span>
-                                            <TextField
-                                                variant='standard'
-                                                select
-                                                InputProps={{
-                                                    disableUnderline: true,
-                                                }}
-                                                value={
-                                                    props.device.leader
-                                                        ? props.device.leader
-                                                        : "None"
-                                                }
-                                            >
-                                                <MenuItem
-                                                    key='None'
-                                                    value='None'
-                                                    onClick={() => {
-                                                        popupState.close();
-                                                        removeLeader(
-                                                            props.device
-                                                                .bus_info
-                                                        );
-                                                        props.device.leader =
-                                                            undefined;
-                                                    }}
-                                                >
-                                                    None
-                                                </MenuItem>
-                                                {leaders.map((device) => {
-                                                    return (
-                                                        <MenuItem
-                                                            key={
-                                                                device.bus_info
-                                                            }
-                                                            value={
-                                                                device.bus_info
-                                                            }
-                                                            onClick={() => {
-                                                                popupState.close();
-                                                                setLeader(
-                                                                    device.bus_info,
-                                                                    props.device
-                                                                        .bus_info
-                                                                );
-                                                                // bad global state
-                                                                props.device.leader =
-                                                                    device.bus_info;
-                                                            }}
-                                                        >
-                                                            {device.nickname
-                                                                .length > 0
-                                                                ? `${device.nickname}: ${device.bus_info}`
-                                                                : device.bus_info}
-                                                        </MenuItem>
-                                                    );
-                                                })}
-                                            </TextField>
-                                        </div>
-                                    )}
-                                </PopupState>
-                            </div>
+                            <DeviceLeader
+                                device={props.device}
+                                leaders={leaders}
+                            />
                         ) : undefined}
                         <div style={styles.cardContent.div}>
                             <TextField

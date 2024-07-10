@@ -125,7 +125,7 @@ export async function setExploreHDOption(
 }
 
 export async function restartStream(bus_info: string) {
-    const url = `${DEVICE_API_URL}/restart_stream`;
+    const url = `${DEVICE_API_URL}/devices/restart_stream`;
     const response = await postRequest(url, { bus_info });
     await response.json();
 }

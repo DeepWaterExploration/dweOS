@@ -123,6 +123,16 @@ def main():
         else:
             logging.warn('Attempting to remove leader from a non follower device type.')
         return jsonify({})
+    
+    @app.route('/devices/restart_stream', methods=['POST'])
+    def restart_stream():
+        bus_info = StreamInfoSchema(only=['bus_info']).load(request.get_json())['bus_info']
+        dev = device_manager._find_device_with_bus_info(bus_info)
+        if not dev:
+            logging.warn(f'Unable to find device {bus_info}')
+            return jsonify({})
+        dev.start_stream()
+        return jsonify({})
 
     http_server = WSGIServer(('0.0.0.0', 8080), app, log=None)
     device_manager.start_monitoring()

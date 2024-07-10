@@ -4,6 +4,7 @@ import "./main.css";
 import { SnackbarProvider } from "notistack";
 
 import NavigationBar from "./components/navigationBar";
+import React from "react";
 
 function App() {
     return (
@@ -16,9 +17,5 @@ function App() {
         </SnackbarProvider>
     );
 }
-
-// Millions of lines of code later...
-// const AppBlock = block(App);
-// export default AppBlock;
 
 export default App;

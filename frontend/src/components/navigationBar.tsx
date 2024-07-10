@@ -103,7 +103,7 @@ const Drawer = styled(MuiDrawer, {
     }),
 }));
 
-export default function NavigationBar() {
+const NavigationBar = () => {
     const [open, setOpen] = useState(true);
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const menuOpen = Boolean(anchorEl);
@@ -322,4 +322,6 @@ export default function NavigationBar() {
             </Router>
         </ThemeProvider>
     );
-}
+};
+
+export default NavigationBar;

@@ -62,7 +62,7 @@ class Stream:
                 return sink
             case _:
                 return ''
-            
+
     def start(*args):
         pass
 
@@ -95,7 +95,7 @@ class StreamRunner:
         pipeline_str = self._construct_pipeline()
         print(pipeline_str)
         self._process = subprocess.Popen(
-            f'gst-launch-1.0 {pipeline_str}', shell=True)
+            f'gst-launch-1.0 {pipeline_str}'.split(' '), stdout=subprocess.DEVNULL)
 
     def _construct_pipeline(self):
         pipeline_strs = []

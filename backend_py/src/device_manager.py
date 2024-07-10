@@ -10,7 +10,7 @@ from .stream import StreamRunner
 from .settings import SettingsManager
 from .broadcast_server import BroadcastServer, Message
 from .enumeration import list_devices
-from .utils import list_diff
+from .device_utils import list_diff, find_device_with_bus_info
 
 from .devices.ehd import EHDDevice
 from .devices.shd import SHDDevice
@@ -163,13 +163,39 @@ class DeviceManager:
 
         self.settings_manager.save_device(device)
         return True
+    
+    def set_leader(self, leader_bus_info: str, follower_bus_info: str) -> bool:
+        follower_device = self._find_device_with_bus_info(follower_bus_info)
+        leader_device = self._find_device_with_bus_info(leader_bus_info)
+        if not leader_device or not follower_device:
+            logging.warn('Unable to find leader or follower device.')
+            return False
+        if follower_device.device_type == DeviceType.STELLARHD_FOLLOWER:
+            cast(SHDDevice, follower_device).set_leader(leader_device)
+            self.settings_manager.save_device(follower_device)
+        else:
+            logging.warn('Attempting to add leader to a non follower device type.')
+            return False
+        return True
+    
+    def remove_leader(self, bus_info: str) -> bool:
+        follower_device = self._find_device_with_bus_info(bus_info)
+        if not follower_device:
+            logging.warn('Unable to find follower device.')
+            return False
+        if follower_device.device_type == DeviceType.STELLARHD_FOLLOWER:
+            cast(SHDDevice, follower_device).remove_leader()
+            self.settings_manager.save_device(follower_device)
+        else:
+            logging.warn('Attempting to remove leader from a non follower device type.')
+            return False
+        return True
 
     def _find_device_with_bus_info(self, bus_info: str) -> Device | None:
-        for device in self.devices:
-            if device.bus_info == bus_info:
-                return device
-        logging.error(f'Device not found: {bus_info}')
-        return None
+        device = find_device_with_bus_info(self.devices, bus_info)
+        if not device:
+            logging.error(f'Device not found: {bus_info}')
+        return device
 
     def _monitor(self):
         # monitor devices for changes
@@ -188,6 +214,9 @@ class DeviceManager:
             self.devices.append(device)
             # load the settings
             self.settings_manager.load_device(device)
+        
+        # Initialize the leader follower pairs
+        self.settings_manager.load_leader_followers(self.devices)
 
         old_device_list = devices_info
 
@@ -224,11 +253,23 @@ class DeviceManager:
                     'device_added', DeviceSchema().dump(device)
                 ))
 
+            # make sure to load the leader followers in case there are new ones to check
+            self.settings_manager.load_leader_followers(self.devices)
+
             # remove the old devices
             for device_info in removed_devices:
                 for device in self.devices:
                     if device.device_info == device_info:
-                        device.stream.stop()
+                        device.stream_runner.stop()
+                        if device.device_type == DeviceType.STELLARHD_LEADER:
+                            for follower in self.devices:
+                                if follower.device_type == DeviceType.STELLARHD_FOLLOWER:
+                                    # remove the leader if its leader is the removed device
+                                    # FIXME: This could be cleaner if the leader has a list of followers instead, which it does sorta, but not quite
+                                    follower_casted = cast(SHDDevice, follower)
+                                    if follower_casted.leader == device.bus_info:
+                                        follower_casted.remove_leader()
+
                         self.devices.remove(device)
                         # remove the device info from the old device list
                         old_device_list.remove(device_info)

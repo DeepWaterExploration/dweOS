@@ -141,7 +141,14 @@ class SavedDeviceSchema(DeviceSchema):
         for control in data['controls']:
             saved_controls.append(SavedControl(
                 control['control_id'], control['name'], control['value']))
-        return SavedDevice(data['bus_info'], data['vid'], data['pid'], data['nickname'], controls=saved_controls, stream=saved_stream, device_type=data['device_type'])
+            
+        leader = None
+        is_leader = None
+        if 'leader' in data:
+            is_leader = data['is_leader']
+            leader = data['leader']
+
+        return SavedDevice(data['bus_info'], data['vid'], data['pid'], data['nickname'], controls=saved_controls, stream=saved_stream, device_type=data['device_type'], leader=leader, is_leader=is_leader)
 
 
 # API SCHEMAS

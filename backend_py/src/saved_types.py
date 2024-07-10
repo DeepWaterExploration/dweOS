@@ -32,3 +32,10 @@ class SavedDevice:
     stream: SavedStream
     controls: List[SavedControl]
     device_type: DeviceType
+    is_leader: bool
+    leader: str
+
+@dataclass
+class SavedLeaderFollowerPair:
+    leader_bus_info: str
+    follower_bus_info: str

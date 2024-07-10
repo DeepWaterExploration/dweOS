@@ -25,12 +25,3 @@ def string_to_stream_encode_type(encoding: str):
         case 'H264':
             return StreamEncodeTypeEnum.H264
     return None
-
-
-def list_diff(listA, listB):
-    # find the difference between lists
-    diff = []
-    for element in listA:
-        if element not in listB:
-            diff.append(element)
-    return diff

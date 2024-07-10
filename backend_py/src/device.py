@@ -9,13 +9,13 @@ from enum import Enum
 from . import v4l2
 from . import ehd_controls as xu
 
-from . import utils
+from .stream_utils import fourcc2s
 from .enumeration import *
 from .camera_helper_loader import *
 from .camera_types import *
 from .stream import *
 from .saved_types import *
-from .utils import string_to_stream_encode_type
+from .stream_utils import string_to_stream_encode_type
 
 import logging
 
@@ -104,7 +104,7 @@ class Camera:
                             format_size.intervals.append(
                                 Interval(frmival.discrete.numerator, frmival.discrete.denominator))
                     format_sizes.append(format_size)
-            self.formats[utils.fourcc2s(v4l2_fmt.pixelformat)] = format_sizes
+            self.formats[fourcc2s(v4l2_fmt.pixelformat)] = format_sizes
 
 
 class Option:

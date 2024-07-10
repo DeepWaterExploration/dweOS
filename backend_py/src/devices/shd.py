@@ -1,5 +1,7 @@
 import logging
 
+from ..saved_types import SavedDevice
+
 from ..enumeration import DeviceInfo
 from ..device import Device
 
@@ -30,6 +32,12 @@ class SHDDevice(Device):
         
         # restart leader's stream to now include this device
         leader.start_stream()
+
+    def load_settings(self, saved_device: SavedDevice):
+        if not saved_device.is_leader:
+            # self.set_leader()
+            print(saved_device.leader)
+        return super().load_settings(saved_device)
 
     def remove_leader(self):
         if not self.leader_device:

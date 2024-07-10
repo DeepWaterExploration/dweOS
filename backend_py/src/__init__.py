@@ -84,7 +84,7 @@ def main():
             uvc_control['bus_info'], uvc_control['control_id'], uvc_control['value'])
 
         return jsonify({})
-    
+
     @app.route('/devices/leader_bus_infos')
     def get_leader_bus_infos():
         bus_infos = []
@@ -96,34 +96,19 @@ def main():
                 })
 
         return jsonify(bus_infos)
-    
+
     @app.route('/devices/set_leader', methods=['POST'])
     def set_leader():
         leader_schema = DeviceLeaderSchema().load(request.get_json())
-        follower_device = device_manager._find_device_with_bus_info(leader_schema['follower'])
-        leader_device = device_manager._find_device_with_bus_info(leader_schema['leader'])
-        if not leader_device or not follower_device:
-            logging.warn('Unable to find leader or follower device.')
-            return jsonify({})
-        if follower_device.device_type == DeviceType.STELLARHD_FOLLOWER:
-            cast(SHDDevice, follower_device).set_leader(leader_device)
-        else:
-            logging.warn('Attempting to remove leader from a non follower device type.')
+        device_manager.set_leader(leader_schema['leader'], leader_schema['follower'])
         return jsonify({})
-    
+
     @app.route('/devices/remove_leader', methods=['POST'])
     def remove_leader():
         leader_schema = DeviceLeaderSchema().load(request.get_json())
-        follower_device = device_manager._find_device_with_bus_info(leader_schema['follower'])
-        if not follower_device:
-            logging.warn('Unable to find follower device.')
-            return jsonify({})
-        if follower_device.device_type == DeviceType.STELLARHD_FOLLOWER:
-            cast(SHDDevice, follower_device).remove_leader()
-        else:
-            logging.warn('Attempting to remove leader from a non follower device type.')
+        device_manager.remove_leader(leader_schema['follower'])
         return jsonify({})
-    
+
     @app.route('/devices/restart_stream', methods=['POST'])
     def restart_stream():
         bus_info = StreamInfoSchema(only=['bus_info']).load(request.get_json())['bus_info']

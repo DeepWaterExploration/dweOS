@@ -7,6 +7,10 @@ import logging
 from .saved_types import *
 from .schemas import SavedDeviceSchema
 from .device import Device
+from .devices.shd import SHDDevice
+from .camera_types import DeviceType
+
+from .device_utils import find_device_with_bus_info
 
 class SettingsManager:
 
@@ -19,6 +23,8 @@ class SettingsManager:
         self.to_save: List[SavedDevice] = []
         self.thread = threading.Thread(target=self._run_settings_sync)
         self.thread.start()
+
+        self.leader_follower_pairs: List[SavedLeaderFollowerPair] = []
 
         try:
             settings: list[Dict] = json.loads(self.file_object.read())
@@ -39,8 +45,47 @@ class SettingsManager:
                                   Discarding stored data as this could cause numerous issues.')
                     self.settings.remove(saved_device)
                     return
+                if saved_device.device_type == DeviceType.STELLARHD_FOLLOWER:
+                    if not saved_device.is_leader:
+                        if saved_device.leader:
+                            self.leader_follower_pairs.append(SavedLeaderFollowerPair(saved_device.leader, saved_device.bus_info))
+
                 device.load_settings(saved_device)
                 return
+
+    def load_leader_followers(self, devices: List[Device]):
+        # TODO: make this code maybe in another class or something, but it works for now and it is clean enough
+        # If a follower is plugged in and the leader is not attached yet, wait until it is attached to do anything
+        # If a follower is plugged in and the leader is not a stellar leader, remove the leader information
+        for leader_follower_pair in self.leader_follower_pairs:
+            leader = find_device_with_bus_info(devices, leader_follower_pair.leader_bus_info)
+            follower = find_device_with_bus_info(devices, leader_follower_pair.follower_bus_info)
+
+            if not leader or not follower:
+                logging.warn(f'Error finding devices: {leader_follower_pair.leader_bus_info}, {leader_follower_pair.follower_bus_info}')
+                continue
+
+            if follower.device_type != DeviceType.STELLARHD_FOLLOWER:
+                # wrong device type plugged in
+                logging.error('This should never ever happen, but is ok and will be managed by the software.')
+                self.leader_follower_pairs.remove(leader_follower_pair)
+                continue
+
+            # cast the type
+            follower = cast(SHDDevice, follower)
+
+            if leader.device_type != DeviceType.STELLARHD_LEADER:
+                logging.info('Non leader device plugged into leader port. This is ok and will be managed by the software!')
+                self.leader_follower_pairs.remove(leader_follower_pair)
+                continue
+
+            leader = cast(SHDDevice, leader)
+
+            # set the leader
+            follower.set_leader(leader)
+
+            # The leader follower pair has been used and everything is good
+            self.leader_follower_pairs.remove(leader_follower_pair)
 
     def _save_device(self, saved_device: SavedDevice):
         for dev in self.settings:

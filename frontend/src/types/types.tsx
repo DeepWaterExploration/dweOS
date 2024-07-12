@@ -23,6 +23,16 @@ export interface Message {
     data: object;
 }
 
+export enum IntercomponentMessageType {
+    SET_STREAM = 0,
+}
+
+export interface IntercomponentMessage {
+    bus_id: string;
+    message_type: IntercomponentMessageType;
+    data: any;
+}
+
 export interface Camera {
     path: string;
     formats: { [index: string]: CameraFormatSize[] };

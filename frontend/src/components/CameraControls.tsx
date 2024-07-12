@@ -12,14 +12,13 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 import PopupState, { bindTrigger } from "material-ui-popup-state";
 import React, { useState } from "react";
-import { Control, controlType } from "../types/types";
+import { Control, controlType, Device } from "../types/types";
 import { setUVCControl } from "../utils/api";
 import { useDidMountEffect } from "../utils/utils";
 import { LineBreak } from "./LineBreak";
 
 interface CameraControlsProps {
-    controls: Control[];
-    usbInfo: string;
+    device: Device;
 }
 
 interface ControlState {
@@ -34,8 +33,10 @@ interface ControlState {
 }
 
 export const CameraControls: React.FC<CameraControlsProps> = (props) => {
-    const { controls, usbInfo } = props;
+    const controls = props.device.controls;
+    const bus_info = props.device.bus_info;
 
+    // FIXME: for default controls
     const setStatesList: ControlState[] = [];
 
     return (
@@ -90,7 +91,7 @@ export const CameraControls: React.FC<CameraControlsProps> = (props) => {
 
                                 useDidMountEffect(() => {
                                     setUVCControl(
-                                        usbInfo,
+                                        bus_info,
                                         controlValue,
                                         control_id
                                     );
@@ -158,7 +159,7 @@ export const CameraControls: React.FC<CameraControlsProps> = (props) => {
 
                                 useDidMountEffect(() => {
                                     setUVCControl(
-                                        usbInfo,
+                                        bus_info,
                                         controlValue ? VALUE_TRUE : VALUE_FALSE,
                                         control_id
                                     );
@@ -183,27 +184,8 @@ export const CameraControls: React.FC<CameraControlsProps> = (props) => {
                                 const { menu, default_value } = control.flags;
                                 if (!menu) break;
 
-                                // let menuObject: { [name: string]: number } = {};
-                                // for (const menuItem of menu) {
-                                //   menuObject[menuItem] =
-                                // }
-
-                                // Hacky fix for auto exposure bug in camera firmware
-                                // if (name.includes("Auto Exposure") && menu.length === 2) {
-                                //   menuObject = {
-                                //     Automatic: 3,
-                                //     "Manual Mode": 1,
-                                //   };
-                                // }
-
-                                // const value = Object.keys(menuObject).find(
-                                //   (key) => menuObject[key] === control.value
-                                // );
-
                                 const [controlValue, setControlValue] =
                                     useState<number>(control.value!);
-
-                                console.log(menu);
 
                                 if (control.value) {
                                     setStatesList.push({
@@ -217,7 +199,7 @@ export const CameraControls: React.FC<CameraControlsProps> = (props) => {
 
                                 useDidMountEffect(() => {
                                     setUVCControl(
-                                        usbInfo,
+                                        bus_info,
                                         controlValue,
                                         control_id
                                     );

@@ -1,14 +1,12 @@
 import Grid from "@mui/material/Grid";
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 
 import DeviceCard from "../../components/DeviceCard";
-import { Device } from "../../types/types";
+import { Device, IntercomponentMessage } from "../../types/types";
 import { getDevices, DEVICE_API_WS } from "../../utils/api";
-import { deserializeMessage } from "../../utils/utils";
+import { deserializeMessage, findDeviceWithBusInfo } from "../../utils/utils";
 
-// Global State
-// TODO: use this
-export const DevicesContext = React.createContext(null);
+import DevicesContext from "../../contexts/DevicesContext";
 
 const hash = function (str: string) {
     let hash = 0,
@@ -29,52 +27,31 @@ interface DeviceRemovedInfo {
 
 export const websocket = new WebSocket(DEVICE_API_WS);
 
-const CamerasPage: React.FC = () => {
-    const [exploreHD_cards, setExploreHD_cards] = useState<JSX.Element[]>([]);
-    const [devices, setDevices] = useState<Device[]>([]);
+const DevicesContainer = () => {
+    const { devices, setDevices } = useContext(DevicesContext) as {
+        devices: Device[];
+        setDevices: React.Dispatch<React.SetStateAction<Device[]>>;
+    };
 
     const addDevices = (devices: Device[]) => {
-        setExploreHD_cards((prevCards) => {
-            return [
-                ...prevCards,
-                ...devices.map((device) => (
-                    <DeviceCard key={hash(device.bus_info)} device={device} />
-                )),
-            ];
-        });
-        setDevices((prevDevices) => {
+        setDevices((prevDevices: Device[]) => {
             return [...prevDevices, ...devices];
         });
     };
 
     const addDevice = (device: Device) => {
-        setExploreHD_cards((prevCards) => {
-            return [
-                ...prevCards,
-                <DeviceCard key={hash(device.bus_info)} device={device} />,
-            ];
-        });
-        setDevices((prevDevices) => {
+        setDevices((prevDevices: Device[]) => {
             return [...prevDevices, device];
         });
     };
 
     const removeDevice = (bus_info: string): void => {
-        setExploreHD_cards((prevCards) => {
-            return prevCards.filter((card) => {
-                return card.props.device.bus_info != bus_info;
+        setDevices((prevDevices: Device[]) => {
+            return prevDevices.filter((device) => {
+                return device.bus_info != bus_info;
             });
         });
     };
-
-    useEffect(() => {
-        for (let i in devices) {
-            let device = devices[i];
-            exploreHD_cards[i] = (
-                <DeviceCard key={hash(device.bus_info)} device={device} />
-            );
-        }
-    }, [devices]);
 
     useEffect(() => {
         // Code to run once when the component is defined
@@ -107,18 +84,35 @@ const CamerasPage: React.FC = () => {
                 justifyContent: "space-evenly",
             }}
         >
-            <DevicesContext.Provider value={{ devices, setDevices }}>
-                {exploreHD_cards.sort((a, b) => {
+            {devices
+                .sort((a: Device, b: Device) => {
                     const regex = /(\/dev\/video)(\d+)/;
-                    let pathA = a.props.device.cameras[0].path;
-                    let pathB = b.props.device.cameras[0].path;
+                    let pathA = a.cameras[0].path;
+                    let pathB = b.cameras[0].path;
                     return (
                         Number(regex.exec(pathA)![2]) -
                         Number(regex.exec(pathB)![2])
                     );
-                })}
-            </DevicesContext.Provider>
+                })
+                .map((device, index) => (
+                    <DeviceCard key={index} device={device} />
+                ))}
         </Grid>
+    );
+};
+
+const CamerasPage = () => {
+    const [devices, setDevices] = useState([] as Device[]);
+
+    return (
+        <DevicesContext.Provider
+            value={{
+                devices,
+                setDevices,
+            }}
+        >
+            <DevicesContainer />
+        </DevicesContext.Provider>
     );
 };
 

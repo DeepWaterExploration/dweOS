@@ -53,7 +53,7 @@ class Control:
 
 
 class StreamEncodeTypeEnum(Enum):
-    MJPEG = 0
+    MJPG = 0
     H264 = 1
 
 
@@ -73,3 +73,8 @@ class H264Mode(Enum):
     '''
     MODE_CONSTANT_BITRATE = 1
     MODE_VARIABLE_BITRATE = 2
+
+class DeviceType(Enum):
+    EXPLOREHD = 0
+    STELLARHD_LEADER= 1
+    STELLARHD_FOLLOWER = 2

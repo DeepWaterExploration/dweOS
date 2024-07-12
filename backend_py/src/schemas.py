@@ -3,6 +3,7 @@ import typing
 
 from .camera_types import *
 from .saved_types import *
+from .device import DeviceType
 
 
 class UnionField(fields.Field):
@@ -56,10 +57,10 @@ class MenuItem(Schema):
 
 
 class ControlFlagsSchema(Schema):
-    default_value = fields.Int()
-    max_value = fields.Int()
-    min_value = fields.Int()
-    step = fields.Int()
+    default_value = fields.Number()
+    max_value = fields.Number()
+    min_value = fields.Number()
+    step = fields.Number()
     control_type = fields.Enum(ControlTypeEnum)
     menu = fields.Nested(MenuItem, many=True)
 
@@ -68,13 +69,13 @@ class ControlSchema(Schema):
     flags = fields.Nested(ControlFlagsSchema)
     control_id = fields.Int()
     name = fields.Str()
-    value = fields.Int()
+    value = fields.Number()
 
 
 class DeviceInfoSchema(Schema):
     device_name = fields.Str()
     bus_info = fields.Str()
-    device_paths: fields.List(fields.Str())
+    device_paths = fields.List(fields.Str())
     vid = fields.Int()
     pid = fields.Int()
 
@@ -117,7 +118,9 @@ class DeviceSchema(Schema):
     manufacturer = fields.Str()
     nickname = fields.Str()
     device_info = fields.Nested(DeviceInfoSchema)
-    options = fields.Nested(DeviceOptionsSchema)
+    device_type = fields.Enum(DeviceType)
+    is_leader = fields.Bool(required=False, allow_none=True)
+    leader = fields.Str(required=False, allow_none=True)
 
     # @post_dump(pass_original=True)
     # def dump_options(self, data: typing.Dict, original: Any, **kwargs):
@@ -127,18 +130,25 @@ class DeviceSchema(Schema):
 class SavedDeviceSchema(DeviceSchema):
     controls = fields.Nested(ControlSchema, exclude=['flags'], many=True)
     stream = fields.Nested(StreamSchema, exclude=['device_path', 'started'])
+    device_type = fields.Enum(DeviceType)
 
     @post_load()
     def make_saved_device(self, data: typing.Dict, **kwargs):
         interval = Interval(**data['stream']['interval'])
         saved_stream = SavedStream(data['stream']['encode_type'], data['stream']['stream_type'], data['stream']
                                    ['endpoints'], data['stream']['width'], data['stream']['height'], interval, data['stream']['configured'])
-        saved_options = SavedOptions(**data['options'])
         saved_controls = []
         for control in data['controls']:
             saved_controls.append(SavedControl(
                 control['control_id'], control['name'], control['value']))
-        return SavedDevice(data['bus_info'], data['vid'], data['pid'], data['nickname'], controls=saved_controls, options=saved_options, stream=saved_stream)
+            
+        leader = None
+        is_leader = None
+        if 'leader' in data:
+            is_leader = data['is_leader']
+            leader = data['leader']
+
+        return SavedDevice(data['bus_info'], data['vid'], data['pid'], data['nickname'], controls=saved_controls, stream=saved_stream, device_type=data['device_type'], leader=leader, is_leader=is_leader)
 
 
 # API SCHEMAS
@@ -178,3 +188,8 @@ class UVCControlSchema(Schema):
     bus_info = fields.Str()
     control_id = fields.Int()
     value = fields.Int()
+
+class DeviceLeaderSchema(Schema):
+    follower = fields.Str()
+    # not required in case of removing leader
+    leader = fields.Str(required=False, allow_none=True)

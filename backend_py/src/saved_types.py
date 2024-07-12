@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import *
 
 from .stream import StreamEncodeTypeEnum, StreamTypeEnum, StreamEndpoint, Interval
-from .camera_types import H264Mode
+from .camera_types import DeviceType
 
 
 @dataclass
@@ -24,18 +24,18 @@ class SavedStream:
 
 
 @dataclass
-class SavedOptions:
-    bitrate: int
-    gop: int
-    mode: H264Mode
-
-
-@dataclass
 class SavedDevice:
     bus_info: str
     vid: int
     pid: int
     nickname: str
     stream: SavedStream
-    options: SavedOptions
     controls: List[SavedControl]
+    device_type: DeviceType
+    is_leader: bool
+    leader: str
+
+@dataclass
+class SavedLeaderFollowerPair:
+    leader_bus_info: str
+    follower_bus_info: str

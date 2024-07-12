@@ -11,7 +11,7 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 
 // routes to different pages
-import { RouteItem } from "../types/types.tsx";
+import { RouteItem } from "../types/types";
 
 interface CreateRouteItemProps {
     category: string;
@@ -77,9 +77,9 @@ const CreateRouteItem: React.FC<CreateRouteItemProps> = (props) => {
                                                       .main
                                                 : "inherit"
                                             : // If the current location matches the route
-                                            props.locationName === route.route
-                                            ? props.theme.palette.primary.main
-                                            : "inherit"
+                                              props.locationName === route.route
+                                              ? props.theme.palette.primary.main
+                                              : "inherit"
                                     } !important`,
                                 }}
                             >

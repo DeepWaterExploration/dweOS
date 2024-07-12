@@ -1,10 +1,22 @@
 {
-  "compilerOptions": {
-    "composite": true,
-    "skipLibCheck": true,
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "allowSyntheticDefaultImports": true
-  },
-  "include": ["vite.config.ts"]
+    "compilerOptions": {
+        "jsx": "react",
+        "composite": true,
+        "skipLibCheck": true,
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "allowSyntheticDefaultImports": true
+    },
+    "include": [
+        "vite.config.mts",
+        "src/*",
+        "src/components/*",
+        "src/layouts/cameras/*",
+        "src/layouts/task_monitor/*",
+        "src/layouts/updater/*",
+        "src/layouts/wifi/*",
+        "src/types/*",
+        "src/utils/*",
+        "src/contexts"
+    ]
 }

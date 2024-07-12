@@ -15,6 +15,10 @@ from .settings import SettingsManager
 from .broadcast_server import BroadcastServer
 from .device_manager import DeviceManager
 
+from .devices.shd import SHDDevice
+
+from typing import cast
+
 import logging
 
 
@@ -79,6 +83,40 @@ def main():
         device_manager.set_device_uvc_control(
             uvc_control['bus_info'], uvc_control['control_id'], uvc_control['value'])
 
+        return jsonify({})
+
+    @app.route('/devices/leader_bus_infos')
+    def get_leader_bus_infos():
+        bus_infos = []
+        for device in device_manager.devices:
+            if device.device_type == DeviceType.STELLARHD_LEADER:
+                bus_infos.append({
+                    'nickname': device.nickname,
+                    'bus_info': device.bus_info
+                })
+
+        return jsonify(bus_infos)
+
+    @app.route('/devices/set_leader', methods=['POST'])
+    def set_leader():
+        leader_schema = DeviceLeaderSchema().load(request.get_json())
+        device_manager.set_leader(leader_schema['leader'], leader_schema['follower'])
+        return jsonify({})
+
+    @app.route('/devices/remove_leader', methods=['POST'])
+    def remove_leader():
+        leader_schema = DeviceLeaderSchema().load(request.get_json())
+        device_manager.remove_leader(leader_schema['follower'])
+        return jsonify({})
+
+    @app.route('/devices/restart_stream', methods=['POST'])
+    def restart_stream():
+        bus_info = StreamInfoSchema(only=['bus_info']).load(request.get_json())['bus_info']
+        dev = device_manager._find_device_with_bus_info(bus_info)
+        if not dev:
+            logging.warn(f'Unable to find device {bus_info}')
+            return jsonify({})
+        dev.start_stream()
         return jsonify({})
 
     http_server = WSGIServer(('0.0.0.0', 8080), app, log=None)

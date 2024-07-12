@@ -12,6 +12,25 @@ export interface Device {
     nickname: string;
     options: StreamOptions;
     stream: Stream;
+
+    device_type: string | undefined;
+    is_leader: boolean | undefined;
+    leader: string | undefined;
+}
+
+export interface Message {
+    event_name: string;
+    data: object;
+}
+
+export enum IntercomponentMessageType {
+    SET_STREAM = 0,
+}
+
+export interface IntercomponentMessage {
+    bus_id: string;
+    message_type: IntercomponentMessageType;
+    data: any;
 }
 
 export interface Camera {
@@ -68,7 +87,6 @@ export interface ControlFlags {
 }
 
 export interface CameraInfo {
-    /* Differentiator between cameras (device path) */
     device_name: string;
     bus_info: string;
     pid: number;
@@ -87,13 +105,15 @@ export interface Stream {
     encode_type: encodeType;
     stream_type: streamType;
     endpoints: StreamEndpoint[];
-    format: StreamFormat;
+    width: number;
+    height: number;
+    interval: CameraInterval;
     configured: boolean;
 }
 
 /* If we ever need to add more compression formats, just add them here */
 export enum encodeType {
-    MJPEG = "MJPEG",
+    MJPG = "MJPG",
     H264 = "H264",
 }
 

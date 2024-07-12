@@ -51,7 +51,6 @@ export const styles = {
         width: "55px",
         height: "55px",
         color: "white",
-        // bgcolor: `${palette.main[1]} !important`,
         borderRadius: 2,
     },
     recordButton: {

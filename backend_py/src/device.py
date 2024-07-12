@@ -1,19 +1,48 @@
 from ctypes import *
 import struct
 from dataclasses import dataclass
+from typing import Dict, Callable, Any
 
-from v4l2py.device import Device
+from linuxpy.video import device
+from enum import Enum
 
 from . import v4l2
 from . import ehd_controls as xu
 
-from . import utils
+from .stream_utils import fourcc2s
 from .enumeration import *
 from .camera_helper_loader import *
 from .camera_types import *
 from .stream import *
 from .saved_types import *
+from .stream_utils import string_to_stream_encode_type
 
+import logging
+
+PID_VIDS = {
+    'exploreHD': {
+        'VID': 0xc45,
+        'PID': 0x6366,
+        'device_type': DeviceType.EXPLOREHD
+    },
+    'stellarHD: Leader': {
+        'VID': 0xc45,
+        'PID': 0x6367,
+        'device_type': DeviceType.STELLARHD_LEADER
+    },
+    'stellarHD: Follower': {
+        'VID': 0xc45,
+        'PID': 0x6368,
+        'device_type': DeviceType.STELLARHD_FOLLOWER
+    }
+}
+
+def lookup_pid_vid(vid: int, pid: int) -> Tuple[str, DeviceType]:
+    for name in PID_VIDS:
+        dev = PID_VIDS[name]
+        if dev['VID'] == vid and dev['PID'] == pid:
+            return (name, dev['device_type'])
+    return None
 
 class Camera:
     '''
@@ -34,8 +63,11 @@ class Camera:
     def uvc_get_ctrl(self, unit: xu.Unit, ctrl: xu.Selector, data: bytes, size: int) -> int:
         return camera_helper.uvc_get_ctrl(self._fd, unit, ctrl, data, size)
 
+    def has_format(self, pixformat: str) -> bool:
+        return pixformat in self.formats.keys()
+
     def _get_formats(self):
-        self.formats = {}
+        self.formats: Dict[str,List[FormatSize]] = {}
         for i in range(1000):
             v4l2_fmt = v4l2.v4l2_fmtdesc()
             v4l2_fmt.index = i
@@ -72,7 +104,7 @@ class Camera:
                             format_size.intervals.append(
                                 Interval(frmival.discrete.numerator, frmival.discrete.denominator))
                     format_sizes.append(format_size)
-            self.formats[utils.fourcc2s(v4l2_fmt.pixelformat)] = format_sizes
+            self.formats[fourcc2s(v4l2_fmt.pixelformat)] = format_sizes
 
 
 class Option:
@@ -80,9 +112,15 @@ class Option:
     EHD Option Class
     '''
 
-    def __init__(self, camera: Camera, fmt: str, unit: xu.Unit, ctrl: xu.Selector, command: xu.Command, size=11) -> None:
+    def __init__(self, camera: Camera, fmt: str, unit: xu.Unit, ctrl: xu.Selector, command: xu.Command, 
+                 name: str,
+                 conversion_func_set: Callable[[Any],list|Any] = lambda val : val, 
+                 conversion_func_get: Callable[[list|Any],Any] = lambda val : val, 
+                 size=11) -> None:
         self._camera = camera
         self._fmt = fmt
+        self._conversion_func_set = conversion_func_set
+        self._conversion_func_get = conversion_func_get
 
         self._unit = unit
         self._ctrl = ctrl
@@ -90,8 +128,10 @@ class Option:
         self._size = size
         self._data = b'\x00' * size
 
+        self.name = name;
+    
     # get the control value(s)
-    def get_value(self):
+    def get_value_raw(self):
         self._get_ctrl()
         values = self._unpack(self._fmt)
         self._clear()
@@ -101,10 +141,20 @@ class Option:
         return values
 
     # set the control value
-    def set_value(self, *arg: list):
+    def set_value_raw(self, *arg: list):
         self._pack(self._fmt, *arg)
         self._set_ctrl()
         self._clear()
+
+    def set_value(self, value):
+        converted = self._conversion_func_set(value)
+        if type(converted) == list:
+            self.set_value_raw(*converted)
+        else:
+            self.set_value_raw(converted)
+
+    def get_value(self):
+        return self._conversion_func_get(self.get_value_raw())
 
     # pack data to internal buffer
     def _pack(self, fmt: str, *arg: list) -> None:
@@ -144,32 +194,9 @@ class Option:
         self._data = b'\x00' * self._size
 
 
-def is_ehd(device_info: DeviceInfo):
-    return (
-        device_info.vid == 0xc45 and
-        device_info.pid == 0x6366 and
-        len(device_info.device_paths) == 4
-    )
-
-
-@dataclass
-class OptionValues:
-    bitrate: int
-    gop: int
-    mode: H264Mode
-
-
-class EHDDevice:
-
-    name: str = 'exploreHD'
-    manufacturer: str = 'DeepWater Exploration Inc.'
+class Device:
 
     def __init__(self, device_info: DeviceInfo) -> None:
-        # make sure this is an exploreHD
-        assert (is_ehd(device_info))
-
-        self._options: dict[str, Option] = {}
-
         self.cameras: List[Camera] = []
         for device_path in device_info.device_paths:
             self.cameras.append(Camera(device_path))
@@ -177,126 +204,54 @@ class EHDDevice:
         self.device_info = device_info
         self.vid = device_info.vid
         self.pid = device_info.pid
+        (self.name, self.device_type) = lookup_pid_vid(self.vid, self.pid)
+        if self.name is not None:
+            self.manufacturer = 'DeepWater Exploration Inc.'
+        else:
+            raise Exception()
         self.bus_info = device_info.bus_info
         self.nickname = ''
-        self.controls = []
         self.stream = Stream()
-        self.v4l2_device = Device(self.cameras[0].path)
+
+        # each device has a streamrunner, but not all of them are used if they are a follower (shd)
+        self.stream_runner = StreamRunner(self.stream)
+
+        for camera in self.cameras:
+            for encoding in camera.formats:
+                encode_type = string_to_stream_encode_type(encoding)
+                if encode_type:
+                    self.stream.encode_type = encode_type
+                    # The highest resolution is the default
+                    # Most users will use this, however it is available to be changed in the frontend
+                    self.stream.width = camera.formats[encoding][0].width
+                    self.stream.height = camera.formats[encoding][0].height
+                    self.stream.interval.denominator = camera.formats[encoding][0].intervals[0].denominator
+                    self.stream.interval.numerator = camera.formats[encoding][0].intervals[0].numerator
+                    break
+
+
+        self.v4l2_device = device.Device(self.cameras[0].path) # for control purposes
         self.v4l2_device.open()
 
-        # UVC xu bitrate control
-        self._options['bitrate'] = Option(
-            self.cameras[2], '>I', xu.Unit.USR_ID, xu.Selector.USR_H264_CTRL, xu.Command.H264_BITRATE_CTRL)
+        # This must be configured by the implementing class
+        self._options: Dict[str, Option] = self._get_options()
 
-        # UVC xu gop control
-        self._options['gop'] = Option(
-            self.cameras[2], 'H', xu.Unit.USR_ID, xu.Selector.USR_H264_CTRL, xu.Command.GOP_CTRL)
+        # Options dict
+        # self.options = {}
 
-        # UVC xu H264 mode control
-        self._options['mode'] = Option(
-            self.cameras[2], 'B', xu.Unit.USR_ID, xu.Selector.USR_H264_CTRL, xu.Command.H264_MODE_CTRL)
+        # list the controls and store them
+        self.controls = []
 
-        self.options = OptionValues(
-            self.get_bitrate(),
-            self.get_gop(),
-            self.get_mode()
-        )
+        self._id_counter = 1
 
         self._get_controls()
 
-    def configure_stream(self, encode_type: StreamEncodeTypeEnum, width: int, height: int, interval: Interval, stream_type: StreamTypeEnum, stream_endpoints: List[StreamEndpoint] = []):
-        camera: Camera = None
-        match encode_type:
-            case StreamEncodeTypeEnum.H264:
-                camera = self.cameras[2]
-            case StreamEncodeTypeEnum.MJPEG:
-                camera = self.cameras[0]
-            case _:
-                raise Exception()
-
-        self.stream.device_path = camera.path
-        self.stream.width = width
-        self.stream.height = height
-        self.stream.interval = interval
-        self.stream.endpoints = stream_endpoints
-        self.stream.encode_type = encode_type
-        self.stream.stream_type = stream_type
-        self.stream.configured = True
-
-    def unconfigure_stream(self):
-        self.stream.configured = False
-        self.stream.stop()
-
-    def get_bitrate(self):
-        return self._get_option('bitrate')
-
-    def set_bitrate(self, bitrate: int):
-        self.options.bitrate = bitrate
-        self._set_option('bitrate', bitrate)
-
-    def get_gop(self):
-        return self._get_option('gop')
-
-    def set_gop(self, gop: int):
-        self.options.gop = gop
-        self._set_option('gop', gop)
-
-    def get_mode(self):
-        return H264Mode(self._get_option('mode'))
-
-    def set_mode(self, mode: H264Mode):
-        self.options.mode = mode
-        self._set_option('mode', mode.value)
-
-    def get_pu(self, control_id: int):
-        control = self.v4l2_device.controls[control_id]
-        return control.value
-
-    def set_pu(self, control_id: int, value: int):
-        control = self.v4l2_device.controls[control_id]
-        try:
-            control.value = value
-        except AttributeError:
-            pass
-        for ctrl in self.controls:
-            if ctrl.control_id == control_id:
-                ctrl.value = value
-
-    def load_settings(self, saved_device: SavedDevice):
-        for control in saved_device.controls:
-            try:
-                self.set_pu(control.control_id, control.value)
-            except:
-                continue
-        self.set_bitrate(saved_device.options.bitrate)
-        self.set_gop(saved_device.options.gop)
-        self.set_mode(saved_device.options.mode)
-        self.configure_stream(saved_device.stream.encode_type,
-                              saved_device.stream.width,
-                              saved_device.stream.height,
-                              saved_device.stream.interval,
-                              saved_device.stream.stream_type,
-                              saved_device.stream.endpoints)
-        self.stream.configured = saved_device.stream.configured
-        self.nickname = saved_device.nickname
-        if self.stream.configured:
-            self.stream.start()
-
-    # get an option
-    def _get_option(self, opt: str):
-        if opt in self._options:
-            return self._options[opt].get_value()
-        return None
-
-    # set an option
-    def _set_option(self, opt: str, *arg: list):
-        if opt in self._options:
-            return self._options[opt].set_value(*arg)
-        return None
+    def _get_options(self) -> Dict[str, Option]: 
+        return {}
 
     def _get_controls(self):
         fd = self.cameras[0]._fd
-        self.controls = []
+        self.controls: List[Control] = []
 
         for ctrl in self.v4l2_device.controls.values():
             control = Control(ctrl.id, ctrl.name, ctrl.value)
@@ -325,3 +280,108 @@ class EHDDevice:
                             MenuItem(i, menu_item))
 
             self.controls.append(control)
+
+    def find_camera_with_format(self, fmt: str) -> Camera | None:
+        for cam in self.cameras:
+            if cam.has_format(fmt):
+                return cam
+        return None
+
+    def configure_stream(self, encode_type: StreamEncodeTypeEnum, width: int, height: int, interval: Interval, stream_type: StreamTypeEnum, stream_endpoints: List[StreamEndpoint] = []):
+        camera: Camera = None
+        match encode_type:
+            case StreamEncodeTypeEnum.H264:
+                camera = self.find_camera_with_format('H264')
+            case StreamEncodeTypeEnum.MJPG:
+                camera = self.find_camera_with_format('MJPG')
+            case _:
+                pass
+        
+        if not camera:
+            logging.warn('Attempting to select incompatible encoding type. This is undefined behavior.')
+            return
+        
+
+        self.stream.device_path = camera.path
+        self.stream.width = width
+        self.stream.height = height
+        self.stream.interval = interval
+        self.stream.endpoints = stream_endpoints
+        self.stream.encode_type = encode_type
+        self.stream.stream_type = stream_type
+        self.stream.configured = True
+
+    def add_control_from_option(self, option_name: str, default_value: Any, control_type: ControlTypeEnum, max_value: float = 0, min_value: float = 0, step: float = 0):
+        try:
+            option = self._options[option_name]
+            value = int(option.get_value())
+            self.controls.insert(0, Control(
+                -self._id_counter, option.name, value, ControlFlags(
+                    default_value, max_value, min_value, step, control_type
+                )
+            ))
+            self._id_counter += 1
+        except AttributeError:
+            logging.error(f'Unknown attribute: {self.__class__.__name__}._options[{option_name}]')
+            logging.error('Failed to add option to controls list.')
+        
+    def start_stream(self):
+        self.stream_runner.start()
+
+    def load_settings(self, saved_device: SavedDevice):
+        for control in saved_device.controls:
+            try:
+                self.set_pu(control.control_id, control.value)
+            except:
+                continue
+
+        self.configure_stream(saved_device.stream.encode_type,
+                              saved_device.stream.width,
+                              saved_device.stream.height,
+                              saved_device.stream.interval,
+                              saved_device.stream.stream_type,
+                              saved_device.stream.endpoints)
+        self.stream.configured = saved_device.stream.configured
+        self.nickname = saved_device.nickname
+        if self.stream.configured:
+            self.start_stream()
+
+    def unconfigure_stream(self):
+        self.stream.configured = False
+        self.stream_runner.stop()
+
+    def get_pu(self, control_id: int):
+        control = self.v4l2_device.controls[control_id]
+        return control.value
+
+    def set_pu(self, control_id: int, value: int):
+        if control_id < 0:
+            # DWE control
+            for control in self.controls:
+                if control.control_id == control_id:
+                    control.value = value
+                    for option_name in self._options:
+                        if self._options[option_name].name == control.name:
+                            self.set_option(option_name, value)
+                            return
+
+        control = self.v4l2_device.controls[control_id]
+        try:
+            control.value = value
+        except AttributeError:
+            pass
+        for ctrl in self.controls:
+            if ctrl.control_id == control_id:
+                ctrl.value = value
+
+    # get an option
+    def get_option(self, opt: str) -> Any:
+        if opt in self._options:
+            return self._options[opt].get_value()
+        return None
+
+    # set an option
+    def set_option(self, opt: str, value: Any):
+        if opt in self._options:
+            return self._options[opt].set_value(value)
+        return None

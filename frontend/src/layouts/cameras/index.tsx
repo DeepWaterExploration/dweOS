@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import DeviceCard from "../../components/DeviceCard";
 import { Device } from "../../types/types";
 import { getDevices, DEVICE_API_WS } from "../../utils/api";
+import { deserializeMessage } from "../../utils/utils";
 
 // Global State
 // TODO: use this
@@ -22,28 +23,15 @@ const hash = function (str: string) {
     return hash;
 };
 
-interface Message {
-    event_name: string;
-    data: object;
-}
-
 interface DeviceRemovedInfo {
     bus_info: string;
 }
 
-const deserializeMessage = (message_str: string) => {
-    let parts = message_str.split(": ");
-    let message: Message = {
-        event_name: parts[0],
-        data: JSON.parse(message_str.substring(message_str.indexOf(": ") + 1)),
-    };
-    return message;
-};
-
-const websocket = new WebSocket(DEVICE_API_WS);
+export const websocket = new WebSocket(DEVICE_API_WS);
 
 const CamerasPage: React.FC = () => {
     const [exploreHD_cards, setExploreHD_cards] = useState<JSX.Element[]>([]);
+    const [devices, setDevices] = useState<Device[]>([]);
 
     const addDevices = (devices: Device[]) => {
         setExploreHD_cards((prevCards) => {
@@ -54,6 +42,9 @@ const CamerasPage: React.FC = () => {
                 )),
             ];
         });
+        setDevices((prevDevices) => {
+            return [...prevDevices, ...devices];
+        });
     };
 
     const addDevice = (device: Device) => {
@@ -62,6 +53,9 @@ const CamerasPage: React.FC = () => {
                 ...prevCards,
                 <DeviceCard key={hash(device.bus_info)} device={device} />,
             ];
+        });
+        setDevices((prevDevices) => {
+            return [...prevDevices, device];
         });
     };
 
@@ -72,6 +66,15 @@ const CamerasPage: React.FC = () => {
             });
         });
     };
+
+    useEffect(() => {
+        for (let i in devices) {
+            let device = devices[i];
+            exploreHD_cards[i] = (
+                <DeviceCard key={hash(device.bus_info)} device={device} />
+            );
+        }
+    }, [devices]);
 
     useEffect(() => {
         // Code to run once when the component is defined
@@ -104,15 +107,17 @@ const CamerasPage: React.FC = () => {
                 justifyContent: "space-evenly",
             }}
         >
-            {exploreHD_cards.sort((a, b) => {
-                const regex = /(\/dev\/video)(\d+)/;
-                let pathA = a.props.device.cameras[0].path;
-                let pathB = b.props.device.cameras[0].path;
-                return (
-                    Number(regex.exec(pathA)![2]) -
-                    Number(regex.exec(pathB)![2])
-                );
-            })}
+            <DevicesContext.Provider value={{ devices, setDevices }}>
+                {exploreHD_cards.sort((a, b) => {
+                    const regex = /(\/dev\/video)(\d+)/;
+                    let pathA = a.props.device.cameras[0].path;
+                    let pathB = b.props.device.cameras[0].path;
+                    return (
+                        Number(regex.exec(pathA)![2]) -
+                        Number(regex.exec(pathB)![2])
+                    );
+                })}
+            </DevicesContext.Provider>
         </Grid>
     );
 };

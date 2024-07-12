@@ -18,6 +18,11 @@ export interface Device {
     leader: string | undefined;
 }
 
+export interface Message {
+    event_name: string;
+    data: object;
+}
+
 export interface Camera {
     path: string;
     formats: { [index: string]: CameraFormatSize[] };

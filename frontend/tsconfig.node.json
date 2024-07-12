@@ -16,6 +16,7 @@
         "src/layouts/updater/*",
         "src/layouts/wifi/*",
         "src/types/*",
-        "src/utils/*"
+        "src/utils/*",
+        "src/contexts"
     ]
 }

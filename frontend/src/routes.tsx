@@ -19,6 +19,7 @@ import Updater from "./layouts/updater";
 import WifiPage from "./layouts/wifi";
 import TaskMonitor from "./layouts/task_monitor";
 import { RouteItem, routeType } from "./types/types";
+import React from "react";
 
 export const routes: RouteItem[] = [
     {

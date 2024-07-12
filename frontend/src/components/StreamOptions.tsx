@@ -19,7 +19,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import LinkedCameraIcon from "@mui/icons-material/LinkedCamera";
 import AddIcon from "@mui/icons-material/Add";
 import { useSnackbar } from "notistack";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Stream } from "stream";
 import { styles } from "../style";
 import { Device, StreamEndpoint, encodeType } from "../types/types";
@@ -33,8 +33,14 @@ import {
     restartStream,
 } from "../utils/api";
 import { DeviceSwitch } from "./DeviceSwitch";
-import { useDidMountEffect } from "../utils/utils";
+import { findDeviceWithBusInfo, useDidMountEffect } from "../utils/utils";
 import { DeviceLeader } from "./DeviceLeader";
+import DevicesContext from "../contexts/DevicesContext";
+import {
+    IntercomponentMessage,
+    IntercomponentMessageType,
+} from "../types/types";
+import DeviceContext from "../contexts/DeviceContext";
 
 /*
  * Get the list of resolutions available from the device
@@ -65,6 +71,7 @@ interface StreamOptionsProps {
 
 export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
     const [stream, setStream] = useState(props.device.stream.configured);
+    // const { streamEnabled, setStreamEnabled } = useContext(DeviceContext);
 
     const [host, setHost] = useState("192.168.2.1");
     const [port, setPort] = useState(5600);
@@ -80,7 +87,6 @@ export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
     const [endpoints, setEndpoints] = useState<StreamEndpoint[]>(
         props.device.stream.endpoints ? props.device.stream.endpoints : []
     );
-    // console.log("AODWEJUHQIAWUE " + props.device.stream);
     const defaultResolution = `${props.device.stream.width}x${props.device.stream.height}`;
     const [resolution, setResolution] = useState(defaultResolution);
 
@@ -129,13 +135,6 @@ export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                     encodeFormat,
                     endpoints
                 ).then((value: Stream | undefined) => {
-                    console.log(value);
-                    // TODO: Fix this
-                    // if (value !== undefined) {
-                    //     props.device.stream = value;
-                    //     if (streamUpdatedTimeout)
-                    //         clearTimeout(streamUpdatedTimeout);
-                    // }
                     getNextPort(host).then(setPort);
                 });
             }, 250)

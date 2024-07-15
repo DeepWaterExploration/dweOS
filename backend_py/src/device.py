@@ -3,6 +3,8 @@ import struct
 from dataclasses import dataclass
 from typing import Dict, Callable, Any
 
+import event_emitter as events
+
 from linuxpy.video import device
 from enum import Enum
 
@@ -112,10 +114,10 @@ class Option:
     EHD Option Class
     '''
 
-    def __init__(self, camera: Camera, fmt: str, unit: xu.Unit, ctrl: xu.Selector, command: xu.Command, 
+    def __init__(self, camera: Camera, fmt: str, unit: xu.Unit, ctrl: xu.Selector, command: xu.Command,
                  name: str,
-                 conversion_func_set: Callable[[Any],list|Any] = lambda val : val, 
-                 conversion_func_get: Callable[[list|Any],Any] = lambda val : val, 
+                 conversion_func_set: Callable[[Any],list|Any] = lambda val : val,
+                 conversion_func_get: Callable[[list|Any],Any] = lambda val : val,
                  size=11) -> None:
         self._camera = camera
         self._fmt = fmt
@@ -129,7 +131,7 @@ class Option:
         self._data = b'\x00' * size
 
         self.name = name;
-    
+
     # get the control value(s)
     def get_value_raw(self):
         self._get_ctrl()
@@ -194,9 +196,10 @@ class Option:
         self._data = b'\x00' * self._size
 
 
-class Device:
+class Device(events.EventEmitter):
 
     def __init__(self, device_info: DeviceInfo) -> None:
+        super().__init__()
         self.cameras: List[Camera] = []
         for device_path in device_info.device_paths:
             self.cameras.append(Camera(device_path))
@@ -246,7 +249,7 @@ class Device:
 
         self._get_controls()
 
-    def _get_options(self) -> Dict[str, Option]: 
+    def _get_options(self) -> Dict[str, Option]:
         return {}
 
     def _get_controls(self):
@@ -296,11 +299,11 @@ class Device:
                 camera = self.find_camera_with_format('MJPG')
             case _:
                 pass
-        
+
         if not camera:
             logging.warn('Attempting to select incompatible encoding type. This is undefined behavior.')
             return
-        
+
 
         self.stream.device_path = camera.path
         self.stream.width = width
@@ -324,8 +327,9 @@ class Device:
         except AttributeError:
             logging.error(f'Unknown attribute: {self.__class__.__name__}._options[{option_name}]')
             logging.error('Failed to add option to controls list.')
-        
+
     def start_stream(self):
+        self._emit_device_changed()
         self.stream_runner.start()
 
     def load_settings(self, saved_device: SavedDevice):
@@ -347,8 +351,12 @@ class Device:
             self.start_stream()
 
     def unconfigure_stream(self):
+        # for stream in self.stream_runner.streams:
+        #     stream.configured = False
         self.stream.configured = False
         self.stream_runner.stop()
+
+        self._emit_device_changed()
 
     def get_pu(self, control_id: int):
         control = self.v4l2_device.controls[control_id]
@@ -385,3 +393,6 @@ class Device:
         if opt in self._options:
             return self._options[opt].set_value(value)
         return None
+    
+    def _emit_device_changed(self):
+        self.emit('device_changed', self.bus_info)

@@ -5,13 +5,14 @@ from multiprocessing import Process
 import time
 import shlex
 import threading
+import event_emitter as events
 
 from .camera_types import *
 
 import logging
 
 @dataclass
-class Stream:
+class Stream(events.EventEmitter):
     device_path: str = ''
     encode_type: StreamEncodeTypeEnum = None
     stream_type: StreamTypeEnum = StreamTypeEnum.UDP
@@ -100,5 +101,6 @@ class StreamRunner:
     def _construct_pipeline(self):
         pipeline_strs = []
         for stream in self.streams:
-            pipeline_strs.append(stream._construct_pipeline())
+            if stream.configured:
+                pipeline_strs.append(stream._construct_pipeline())
         return ' '.join(pipeline_strs)

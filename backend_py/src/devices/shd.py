@@ -29,8 +29,9 @@ class SHDDevice(Device):
             leader.stream_runner.streams.append(self.stream)
         else:
             leader.stream_runner.streams[1] = self.stream
-        
+
         # restart leader's stream to now include this device
+        leader.stream.configured = True
         leader.start_stream()
 
     def load_settings(self, saved_device: SavedDevice):
@@ -60,3 +61,8 @@ class SHDDevice(Device):
                 self.leader_device.start_stream()
                 return
         super().start_stream()
+
+    def unconfigure_stream(self):
+        # remove leader when unconfiguring
+        self.remove_leader()
+        return super().unconfigure_stream()

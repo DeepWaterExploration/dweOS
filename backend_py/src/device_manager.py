@@ -3,6 +3,7 @@ import logging
 import time
 import threading
 import re
+import event_emitter as events
 
 from .schemas import *
 from .device import Device, lookup_pid_vid, DeviceInfo, DeviceType
@@ -16,7 +17,7 @@ from .devices.ehd import EHDDevice
 from .devices.shd import SHDDevice
 
 
-class DeviceManager:
+class DeviceManager(events.EventEmitter):
     '''
     Class for interfacing with and monitoring devices
     '''
@@ -40,20 +41,28 @@ class DeviceManager:
         for device in self.devices:
             device.stream.stop()
 
-    @staticmethod
-    def create_device(device_info: DeviceInfo) -> Device | None:
+    def create_device(self, device_info: DeviceInfo) -> Device | None:
         (_, device_type) = lookup_pid_vid(device_info.vid, device_info.pid)
 
+        device = None
         match device_type:
             case DeviceType.EXPLOREHD:
-                return EHDDevice(device_info)
+                device = EHDDevice(device_info)
             case DeviceType.STELLARHD_LEADER:
-                return SHDDevice(device_info)
+                device = SHDDevice(device_info)
             case DeviceType.STELLARHD_FOLLOWER:
-                return SHDDevice(device_info, False)
+                device = SHDDevice(device_info, False)
             case _:
                 # Not a DWE device
                 return None
+        
+        device.on('device_changed', self._device_changed_event)
+        return device
+
+    def _device_changed_event(self, bus_info):
+        print(f'Changed: {bus_info}')
+
+        self.broadcast_server.broadcast(Message('device_changed', DeviceSchema().dump(self._find_device_with_bus_info(bus_info))))
 
     def get_devices(self):
         '''

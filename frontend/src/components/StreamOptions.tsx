@@ -94,6 +94,11 @@ export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
         useState<NodeJS.Timeout>();
 
     useEffect(() => {
+        setStream(props.device.stream.configured);
+    }, [props.device]);
+
+    useEffect(() => {
+        setStream(props.device.stream.configured);
         getNextPort(host).then(setPort);
         setFps(`${props.device.stream.interval.denominator}`);
 

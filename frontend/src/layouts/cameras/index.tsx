@@ -53,6 +53,17 @@ const DevicesContainer = () => {
         });
     };
 
+    const updateDevice = (device: Device) => {
+        setDevices((prevDevices) => {
+            let newDevices = [...prevDevices];
+            newDevices = newDevices.filter(
+                (dev) => dev.bus_info != device.bus_info
+            );
+            newDevices.push(device);
+            return newDevices;
+        });
+    };
+
     useEffect(() => {
         // Code to run once when the component is defined
         getDevices().then((devices) => {
@@ -62,13 +73,15 @@ const DevicesContainer = () => {
 
         websocket.addEventListener("message", (e) => {
             let message = deserializeMessage(e.data);
-            console.log(message.data);
             switch (message.event_name) {
                 case "device_added":
                     addDevice(message.data as Device);
                     break;
                 case "device_removed":
                     removeDevice((message.data as DeviceRemovedInfo).bus_info);
+                    break;
+                case "device_changed":
+                    updateDevice(message.data as Device);
                     break;
             }
         });
@@ -95,7 +108,10 @@ const DevicesContainer = () => {
                     );
                 })
                 .map((device, index) => (
-                    <DeviceCard key={index} device={device} />
+                    <DeviceCard
+                        key={index}
+                        device={device}
+                    />
                 ))}
         </Grid>
     );

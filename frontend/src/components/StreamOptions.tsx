@@ -71,7 +71,10 @@ interface StreamOptionsProps {
 
 export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
     const [stream, setStream] = useState(props.device.stream.configured);
-    // const { streamEnabled, setStreamEnabled } = useContext(DeviceContext);
+    const { device, setDevice } = useContext(DeviceContext) as {
+        device: Device;
+        setDevice: React.Dispatch<React.SetStateAction<Device>>;
+    };
 
     const [host, setHost] = useState("192.168.2.1");
     const [port, setPort] = useState(5600);
@@ -112,6 +115,9 @@ export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
         if (!stream) {
             setStreamUpdatedTimeout(
                 setTimeout(() => {
+                    let newDevice = { ...device };
+                    newDevice.stream.configured = false;
+                    setDevice(newDevice);
                     unconfigureStream(props.device.bus_info);
                 }, 250)
             );
@@ -124,14 +130,25 @@ export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
      * Update the stream
      */
     const streamUpdated = () => {
-        const [width, height] = resolution.split("x");
+        const [widthStr, heightStr] = resolution.split("x");
+        const width = parseInt(widthStr);
+        const height = parseInt(heightStr);
         setStreamUpdatedTimeout(
             setTimeout(() => {
+                let newDevice = { ...device };
+                newDevice.stream.configured = true;
+                newDevice.stream.width = width;
+                newDevice.stream.width = height;
+                newDevice.stream.interval.numerator = 1;
+                newDevice.stream.interval.denominator = parseInt(fps);
+
+                setDevice(newDevice);
+                unconfigureStream(props.device.bus_info);
                 configureStream(
                     props.device.bus_info,
                     {
-                        width: parseInt(width),
-                        height: parseInt(height),
+                        width: width,
+                        height: height,
                         interval: {
                             numerator: 1,
                             denominator: parseInt(fps),

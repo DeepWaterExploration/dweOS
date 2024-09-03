@@ -1,12 +1,11 @@
 import { Card, CardContent, CardHeader, TextField } from "@mui/material";
-import React, { useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 
 import { Device } from "../types/types";
 import { setDeviceNickname } from "../utils/api";
 import { StreamOptions } from "./StreamOptions";
 import { CameraControls } from "./CameraControls";
 import { LineBreak } from "./LineBreak";
-
 import DeviceContext from "../contexts/DeviceContext";
 
 export interface DeviceCardProps {
@@ -15,10 +14,14 @@ export interface DeviceCardProps {
 }
 
 const DeviceCard: React.FC<DeviceCardProps> = (props) => {
-    // const { devices, setDevices } = useContext(DevicesContext);
+    const [device, setDevice] = useState(props.device);
+
+    useEffect(() => {
+        console.log("Device updated");
+    }, [device]);
 
     return (
-        <DeviceContext.Provider value={{}}>
+        <DeviceContext.Provider value={{ device, setDevice }}>
             <Card
                 sx={{
                     minWidth: 512,
@@ -38,7 +41,9 @@ const DeviceCard: React.FC<DeviceCardProps> = (props) => {
                             <TextField
                                 sx={{ top: 10 }}
                                 onChange={(e) => {
-                                    props.device.nickname = e.target.value;
+                                    let newDevice = { ...device };
+                                    newDevice.nickname = e.target.value;
+                                    setDevice(newDevice);
                                     setDeviceNickname(
                                         props.device.bus_info,
                                         e.target.value
@@ -47,7 +52,7 @@ const DeviceCard: React.FC<DeviceCardProps> = (props) => {
                                 helperText='Device Nickname'
                                 placeholder='Device Nickname'
                                 variant='standard'
-                                defaultValue={props.device.nickname}
+                                defaultValue={device.nickname}
                             ></TextField>
                         </>
                     }

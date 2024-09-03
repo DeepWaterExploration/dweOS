@@ -2,11 +2,18 @@ import Grid from "@mui/material/Grid";
 import React, { useContext, useEffect, useState } from "react";
 
 import DeviceCard from "../../components/DeviceCard";
-import { Device, IntercomponentMessage } from "../../types/types";
+import {
+    Device,
+    encodeType,
+    IntercomponentMessage,
+    StreamEndpoint,
+    StreamFormat,
+} from "../../types/types";
 import { getDevices, DEVICE_API_WS } from "../../utils/api";
 import { deserializeMessage, findDeviceWithBusInfo } from "../../utils/utils";
 
 import DevicesContext from "../../contexts/DevicesContext";
+import DeviceContext from "../../contexts/DeviceContext";
 
 const hash = function (str: string) {
     let hash = 0,
@@ -40,9 +47,13 @@ const DevicesContainer = () => {
     };
 
     const addDevice = (device: Device) => {
-        setDevices((prevDevices: Device[]) => {
-            return [...prevDevices, device];
-        });
+        if (devices.find((dev) => dev.bus_info === device.bus_info)) {
+            updateDevice(device);
+        } else {
+            setDevices((prevDevices: Device[]) => {
+                return [...prevDevices, device];
+            });
+        }
     };
 
     const removeDevice = (bus_info: string): void => {
@@ -80,9 +91,9 @@ const DevicesContainer = () => {
                 case "device_removed":
                     removeDevice((message.data as DeviceRemovedInfo).bus_info);
                     break;
-                case "device_changed":
-                    updateDevice(message.data as Device);
-                    break;
+                // case "device_changed":
+                //     updateDevice(message.data as Device);
+                //     break;
             }
         });
     }, []);
@@ -107,12 +118,15 @@ const DevicesContainer = () => {
                         Number(regex.exec(pathB)![2])
                     );
                 })
-                .map((device, index) => (
-                    <DeviceCard
-                        key={index}
-                        device={device}
-                    />
-                ))}
+                .map((dev, index) => {
+                    // const [device, setDevice] = useState(dev);
+
+                    // useEffect(() => {
+                    //     console.log("device changed");
+                    // }, [device]);
+
+                    return <DeviceCard key={index} device={dev} />;
+                })}
         </Grid>
     );
 };

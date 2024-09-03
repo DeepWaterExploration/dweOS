@@ -1,6 +1,8 @@
 # Created by https://www.toptal.com/developers/gitignore/api/python,virtualenv,data,pycharm,powershell
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,virtualenv,data,pycharm,powershell
 
+.directory
+
 ### Data ###
 *.csv
 *.dat

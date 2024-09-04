@@ -16,6 +16,9 @@ class SHDDevice(Device):
         self.leader: str = None
         self.leader_device: 'SHDDevice' = None
 
+        # For backend internal use only
+        self.follower: str = None
+
     def set_leader(self, leader: 'SHDDevice'):
         # We love forward references
         if not leader.is_leader:
@@ -32,6 +35,7 @@ class SHDDevice(Device):
 
         # restart leader's stream to now include this device
         leader.stream.configured = True
+        leader.follower = self.bus_info
         leader.start_stream()
 
     def load_settings(self, saved_device: SavedDevice):
@@ -48,6 +52,7 @@ class SHDDevice(Device):
         # restart the leader device stream to take this device out of it
         if self.leader_device.stream_runner.started:
             self.leader_device.start_stream()
+        self.leader_device.follower = None
         self.leader_device = None
         self.leader = None
         # start the stream if configured

@@ -145,6 +145,10 @@ class DeviceManager(events.EventEmitter):
         device.unconfigure_stream()
 
         self.settings_manager.save_device(device)
+
+        # Remove leader if leader stops stream
+        if (device.device_type == DeviceType.STELLARHD_LEADER):
+            self.remove_leader(cast(SHDDevice, device).follower)
         return True
 
     def set_device_nickname(self, bus_info: str, nickname: str) -> bool:

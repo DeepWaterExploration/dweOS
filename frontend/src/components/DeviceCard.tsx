@@ -10,59 +10,53 @@ import DeviceContext from "../contexts/DeviceContext";
 
 export interface DeviceCardProps {
     key: number;
-    device: Device;
+    // device: Device;
 }
 
 const DeviceCard: React.FC<DeviceCardProps> = (props) => {
-    const [device, setDevice] = useState(props.device);
-
-    useEffect(() => {
-        console.log("Device updated");
-    }, [device]);
+    const { device } = useContext(DeviceContext) as {
+        device: Device;
+    };
 
     return (
-        <DeviceContext.Provider value={{ device, setDevice }}>
-            <Card
-                sx={{
-                    minWidth: 512,
-                    boxShadow: 3,
-                    textAlign: "left",
-                    margin: "20px",
-                }}
-            >
-                <CardHeader
-                    title={props.device.device_info.device_name}
-                    subheader={
-                        <>
-                            {`Manufacturer: ${props.device.manufacturer}`}
-                            <LineBreak />
-                            {`USB ID: ${props.device.bus_info}`}
-                            <LineBreak />
-                            <TextField
-                                sx={{ top: 10 }}
-                                onChange={(e) => {
-                                    let newDevice = { ...device };
-                                    newDevice.nickname = e.target.value;
-                                    setDevice(newDevice);
-                                    setDeviceNickname(
-                                        props.device.bus_info,
-                                        e.target.value
-                                    );
-                                }}
-                                helperText='Device Nickname'
-                                placeholder='Device Nickname'
-                                variant='standard'
-                                defaultValue={device.nickname}
-                            ></TextField>
-                        </>
-                    }
-                />
-                <CardContent>
-                    <StreamOptions device={props.device} />
-                    <CameraControls device={props.device} />
-                </CardContent>
-            </Card>
-        </DeviceContext.Provider>
+        <Card
+            sx={{
+                minWidth: 512,
+                boxShadow: 3,
+                textAlign: "left",
+                margin: "20px",
+            }}
+        >
+            <CardHeader
+                title={device.device_info.device_name}
+                subheader={
+                    <>
+                        {`Manufacturer: ${device.manufacturer}`}
+                        <LineBreak />
+                        {`USB ID: ${device.bus_info}`}
+                        <LineBreak />
+                        <TextField
+                            sx={{ top: 10 }}
+                            onChange={(e) => {
+                                device.nickname = e.target.value;
+                                setDeviceNickname(
+                                    device.bus_info,
+                                    e.target.value
+                                );
+                            }}
+                            helperText='Device Nickname'
+                            placeholder='Device Nickname'
+                            variant='standard'
+                            defaultValue={device.nickname}
+                        ></TextField>
+                    </>
+                }
+            />
+            <CardContent>
+                <StreamOptions device={device} />
+                <CameraControls device={device} />
+            </CardContent>
+        </Card>
     );
 };
 

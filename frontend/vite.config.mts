@@ -13,4 +13,7 @@ const fullReloadAlways: PluginOption = {
 // https://vitejs.dev/config/
 export default defineConfig({
     plugins: [react(), fullReloadAlways],
+    optimizeDeps: {
+        include: ['@mui/material/Tooltip', '@emotion/styled'],
+    },
 });

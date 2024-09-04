@@ -40,6 +40,7 @@ import {
     IntercomponentMessage,
     IntercomponentMessageType,
 } from "../types/types";
+import { proxy, subscribe } from "valtio";
 import DeviceContext from "../contexts/DeviceContext";
 
 /*
@@ -70,92 +71,91 @@ interface StreamOptionsProps {
 }
 
 export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
-    const [stream, setStream] = useState(props.device.stream.configured);
-    const { device, setDevice } = useContext(DeviceContext) as {
+    const {
+        device,
+        devices,
+        enableStreamUpdate,
+        removeLeaderUpdate,
+        setFollowerUpdate,
+    } = useContext(DeviceContext) as {
         device: Device;
-        setDevice: React.Dispatch<React.SetStateAction<Device>>;
+        devices: Device[];
+        enableStreamUpdate: (bus_info: string) => void;
+        removeLeaderUpdate: (bus_info: string) => void;
+        setFollowerUpdate: (
+            leader_bus_info: string,
+            follower_bus_info: string | undefined
+        ) => void;
     };
 
     const [host, setHost] = useState("192.168.2.1");
     const [port, setPort] = useState(5600);
 
+    const [fps, setFps] = useState(device.stream.interval.denominator);
+
     const [leaders, setLeaders] = useState([] as Device[]);
 
     const { enqueueSnackbar } = useSnackbar();
 
-    const [encodeFormat, setEncodeFormat] = useState(
-        props.device.stream.encode_type
-    );
-    const [fps, setFps] = useState("");
-    const [endpoints, setEndpoints] = useState<StreamEndpoint[]>(
-        props.device.stream.endpoints ? props.device.stream.endpoints : []
-    );
-    const defaultResolution = `${props.device.stream.width}x${props.device.stream.height}`;
-    const [resolution, setResolution] = useState(defaultResolution);
-
     const [streamUpdatedTimeout, setStreamUpdatedTimeout] =
         useState<NodeJS.Timeout>();
 
-    useEffect(() => {
-        setStream(props.device.stream.configured);
-    }, [props.device]);
+    // should make more things like this
+    // subscribe(device, () => {
+    //     setStream(device.stream.configured);
+    // });
 
     useEffect(() => {
-        setStream(props.device.stream.configured);
-        getNextPort(host).then(setPort);
-        setFps(`${props.device.stream.interval.denominator}`);
+        console.log("Devices updated");
+        setLeaders(devices.filter((dev) => dev.is_leader));
+    }, [devices]);
 
-        // TODO: use a real global state
-        getLeaders().then((devices) => {
-            setLeaders(devices);
+    useEffect(() => {
+        subscribe(device.stream, () => {
+            console.log(device.stream.configured);
+
+            if (!device.stream.configured) {
+                if (device.leader) device.leader = undefined;
+                else if (device.is_leader && device.follower) {
+                    device.leader = undefined;
+                    removeLeaderUpdate(device.follower);
+                }
+                setStreamUpdatedTimeout(
+                    setTimeout(() => {
+                        unconfigureStream(props.device.bus_info);
+                    }, 250)
+                );
+            } else {
+                streamUpdated();
+            }
         });
     }, []);
-
-    useDidMountEffect(() => {
-        if (!stream) {
-            setStreamUpdatedTimeout(
-                setTimeout(() => {
-                    let newDevice = { ...device };
-                    newDevice.stream.configured = false;
-                    setDevice(newDevice);
-                    unconfigureStream(props.device.bus_info);
-                }, 250)
-            );
-        } else {
-            streamUpdated();
-        }
-    }, [stream, endpoints, resolution, fps, encodeFormat]);
 
     /**
      * Update the stream
      */
     const streamUpdated = () => {
-        const [widthStr, heightStr] = resolution.split("x");
-        const width = parseInt(widthStr);
-        const height = parseInt(heightStr);
+        // device.stream.configured = true;
+        // device.stream.width = resolution.width;
+        // device.stream.width = resolution.height;
+        // device.stream.interval.numerator = 1;
+        // device.stream.interval.denominator = fps;
+
         setStreamUpdatedTimeout(
             setTimeout(() => {
-                let newDevice = { ...device };
-                newDevice.stream.configured = true;
-                newDevice.stream.width = width;
-                newDevice.stream.width = height;
-                newDevice.stream.interval.numerator = 1;
-                newDevice.stream.interval.denominator = parseInt(fps);
-
-                setDevice(newDevice);
-                unconfigureStream(props.device.bus_info);
+                // unconfigureStream(props.device.bus_info);
                 configureStream(
                     props.device.bus_info,
                     {
-                        width: width,
-                        height: height,
+                        width: device.stream.width,
+                        height: device.stream.height,
                         interval: {
                             numerator: 1,
-                            denominator: parseInt(fps),
+                            denominator: fps,
                         },
                     },
-                    encodeFormat,
-                    endpoints
+                    device.stream.encode_type,
+                    device.stream.endpoints
                 ).then((value: Stream | undefined) => {
                     getNextPort(host).then(setPort);
                 });
@@ -179,7 +179,7 @@ export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
             console.log("IP:", host);
             console.log("Port:", port);
             if (
-                endpoints.find(
+                device.stream.endpoints.find(
                     (endpoint) =>
                         endpoint.host === host && endpoint.port === port
                 )
@@ -193,27 +193,27 @@ export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                 enqueueSnackbar(`Endpoint added: ${host}:${port}`, {
                     variant: "info",
                 });
-                setEndpoints((prevEndpoints) =>
-                    [
-                        ...prevEndpoints,
-                        {
-                            host,
-                            port,
-                        },
-                    ].sort((a, b) => {
-                        // Split the IP address string into an array of octets
-                        const ipA = a.host.split(".").map(Number);
-                        const ipB = b.host.split(".").map(Number);
-                        // Compare each octet and return the comparison result
-                        for (let i = 0; i < 4; i++) {
-                            if (ipA[i] !== ipB[i]) {
-                                return ipA[i] - ipB[i];
-                            }
-                        }
-                        // If all octets are equal, compare the port number
-                        return a.port - b.port;
-                    })
-                );
+                device.stream.endpoints.push({ host, port });
+                // (prevEndpoints) =>
+                //     [
+                //         ...prevEndpoints,
+                //         {
+                //             host,
+                //             port,
+                //         },
+                //     ].sort((a, b) => {
+                //         // Split the IP address string into an array of octets
+                //         const ipA = a.host.split(".").map(Number);
+                //         const ipB = b.host.split(".").map(Number);
+                //         // Compare each octet and return the comparison result
+                //         for (let i = 0; i < 4; i++) {
+                //             if (ipA[i] !== ipB[i]) {
+                //                 return ipA[i] - ipB[i];
+                //             }
+                //         }
+                //         // If all octets are equal, compare the port number
+                //         return a.port - b.port;
+                //     });
             }
         }
     };
@@ -222,14 +222,17 @@ export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
     const [intervals, setIntervals] = useState([] as string[]);
 
     const getFormatString = () => {
-        let cameraFormat: string = encodeFormat;
+        let cameraFormat: string = device.stream.encode_type;
         return cameraFormat;
     };
 
     useEffect(() => {
-        let newResolutions = getResolutions(props.device, encodeFormat);
+        let newResolutions = getResolutions(
+            props.device,
+            device.stream.encode_type
+        );
         setResolutions(newResolutions);
-    }, [encodeFormat]);
+    }, [device.stream.encode_type]);
 
     useEffect(() => {
         let cameraFormat = getFormatString();
@@ -276,24 +279,21 @@ export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
             <DeviceSwitch
                 disabled={false}
                 onChange={(e) => {
-                    setStream(e.target.checked);
+                    device.stream.configured = e.target.checked;
                 }}
-                checked={stream}
+                checked={device.stream.configured}
                 name='streamSwitch'
                 text='Stream'
             />
             {(props.device.is_leader === undefined ? true : true) ? ( // TODO: change this but this is just for now until global state exists
-                stream ? (
+                device.stream.configured ? (
                     <>
                         {(
-                            props.device.is_leader === undefined
+                            device.is_leader === undefined
                                 ? false
-                                : !props.device.is_leader
+                                : !device.is_leader
                         ) ? (
-                            <DeviceLeader
-                                device={props.device}
-                                leaders={leaders}
-                            />
+                            <DeviceLeader device={device} leaders={leaders} />
                         ) : undefined}
                         <div style={styles.cardContent.div}>
                             <TextField
@@ -301,10 +301,13 @@ export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                                 select
                                 label='Resolution'
                                 variant='outlined'
-                                defaultValue={defaultResolution}
-                                onChange={(selected) =>
-                                    setResolution(selected.target.value)
-                                }
+                                defaultValue={`${device.stream.width}x${device.stream.height}`}
+                                onChange={(selected) => {
+                                    let [width, height] =
+                                        selected.target.value.split("x");
+                                    device.stream.width = parseInt(width);
+                                    device.stream.height = parseInt(height);
+                                }}
                                 size='small'
                             >
                                 {resolutions.map((resolution) => (
@@ -325,7 +328,7 @@ export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                                     props.device.stream.interval.denominator
                                 }
                                 onChange={(selected) =>
-                                    setFps(selected.target.value)
+                                    setFps(parseInt(selected.target.value))
                                 }
                                 size='small'
                             >
@@ -346,9 +349,8 @@ export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                                         : encodeType.H264
                                 }
                                 onChange={(selected) =>
-                                    setEncodeFormat(
-                                        selected.target.value as encodeType
-                                    )
+                                    (device.stream.encode_type = selected.target
+                                        .value as encodeType)
                                 }
                                 size='small'
                             >
@@ -360,7 +362,7 @@ export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                             </TextField>
                         </div>
                         <Accordion
-                            defaultExpanded={endpoints.length > 0}
+                            defaultExpanded={device.stream.endpoints.length > 0}
                             style={{
                                 width: "100%",
                             }}
@@ -380,7 +382,7 @@ export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                                         backgroundColor: "background.paper",
                                     }}
                                 >
-                                    {endpoints.length === 0 ? (
+                                    {device.stream.endpoints.length === 0 ? (
                                         <Typography
                                             fontWeight='500'
                                             style={{
@@ -393,46 +395,44 @@ export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                                         </Typography>
                                     ) : (
                                         <List dense={true}>
-                                            {endpoints.map((endpoint) => {
-                                                return (
-                                                    <ListItem
-                                                        key={`${endpoint.host}:${endpoint.port}`}
-                                                        secondaryAction={
-                                                            <IconButton
-                                                                edge='end'
-                                                                aria-label='icon
+                                            {device.stream.endpoints.map(
+                                                (endpoint) => {
+                                                    return (
+                                                        <ListItem
+                                                            key={`${endpoint.host}:${endpoint.port}`}
+                                                            secondaryAction={
+                                                                <IconButton
+                                                                    edge='end'
+                                                                    aria-label='icon
                                                                 '
-                                                                onClick={() => {
-                                                                    setEndpoints(
-                                                                        (
-                                                                            prevEndpoints
-                                                                        ) =>
-                                                                            prevEndpoints.filter(
+                                                                    onClick={() => {
+                                                                        device.stream.endpoints =
+                                                                            device.stream.endpoints.filter(
                                                                                 (
                                                                                     e
                                                                                 ) =>
                                                                                     `${e.host}:${e.port}` !==
                                                                                     `${endpoint.host}:${endpoint.port}`
-                                                                            )
-                                                                    );
-                                                                }}
-                                                            >
-                                                                <DeleteIcon />
-                                                            </IconButton>
-                                                        }
-                                                    >
-                                                        <ListItemAvatar>
-                                                            <Avatar>
-                                                                <LinkedCameraIcon />
-                                                            </Avatar>
-                                                        </ListItemAvatar>
-                                                        <ListItemText
-                                                            primary={`IP Address: ${endpoint.host}`}
-                                                            secondary={`Port: ${endpoint.port}`}
-                                                        />
-                                                    </ListItem>
-                                                );
-                                            })}
+                                                                            );
+                                                                    }}
+                                                                >
+                                                                    <DeleteIcon />
+                                                                </IconButton>
+                                                            }
+                                                        >
+                                                            <ListItemAvatar>
+                                                                <Avatar>
+                                                                    <LinkedCameraIcon />
+                                                                </Avatar>
+                                                            </ListItemAvatar>
+                                                            <ListItemText
+                                                                primary={`IP Address: ${endpoint.host}`}
+                                                                secondary={`Port: ${endpoint.port}`}
+                                                            />
+                                                        </ListItem>
+                                                    );
+                                                }
+                                            )}
                                         </List>
                                     )}
                                 </Box>

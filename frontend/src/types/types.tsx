@@ -16,11 +16,16 @@ export interface Device {
     device_type: string | undefined;
     is_leader: boolean | undefined;
     leader: string | undefined;
+    follower: string | undefined;
 }
 
 export interface Message {
     event_name: string;
     data: object;
+}
+
+export interface Log {
+    log: string;
 }
 
 export enum IntercomponentMessageType {

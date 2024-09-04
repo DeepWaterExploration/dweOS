@@ -41,7 +41,8 @@
         "react-router-dom": "^6.24.1",
         "react-xarrows": "^2.0.2",
         "reactflow": "^11.11.4",
-        "socket.io-client": "^4.7.5"
+        "socket.io-client": "^4.7.5",
+        "valtio": "^2.0.0"
     },
     "devDependencies": {
         "@babel/core": "^7.24.7",

@@ -17,7 +17,7 @@ export const DeviceSwitch: React.FC<DeviceSwitchProps> = (props) => {
             control={
                 <Switch
                     name={props.name}
-                    checked={props.checked}
+                    defaultChecked={props.checked}
                     onChange={props.onChange}
                     disabled={props.disabled}
                 />

@@ -16,10 +16,12 @@ import { Box } from "@mui/material";
 
 import CamerasPage from "./layouts/cameras";
 import Updater from "./layouts/updater";
+import LogsPage from "./layouts/logs_page";
 import WifiPage from "./layouts/wifi";
 import TaskMonitor from "./layouts/task_monitor";
 import { RouteItem, routeType } from "./types/types";
 import React from "react";
+import TerminalIcon from "@mui/icons-material/Terminal";
 
 export const routes: RouteItem[] = [
     {
@@ -66,6 +68,18 @@ export const routes: RouteItem[] = [
         type: routeType.COLLAPSE,
         name: "WiFi",
         key: "wifi",
+        default: false,
+    },
+    {
+        route: "/communications/logs",
+        component: <LogsPage />,
+        //  <WiFi />,
+        exact: true,
+        icon: <TerminalIcon />,
+        category: "Communications",
+        type: routeType.COLLAPSE,
+        name: "Logs",
+        key: "logs",
         default: false,
     },
     {

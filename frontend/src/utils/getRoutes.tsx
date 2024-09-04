@@ -4,7 +4,8 @@ import { Route, Routes } from "react-router-dom";
 
 // routes to different pages
 import { routes } from "../routes";
-import { RouteItem } from "../types/types.tsx";
+import { RouteItem } from "../types/types";
+import React from "react";
 
 interface GetRoutesProps {
     routes: RouteItem[];

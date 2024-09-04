@@ -11,11 +11,12 @@ import Button from "@mui/material/Button";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 import PopupState, { bindTrigger } from "material-ui-popup-state";
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { Control, controlType, Device } from "../types/types";
 import { setUVCControl } from "../utils/api";
 import { useDidMountEffect } from "../utils/utils";
 import { LineBreak } from "./LineBreak";
+import DeviceContext from "../contexts/DeviceContext";
 
 interface CameraControlsProps {
     device: Device;
@@ -33,6 +34,8 @@ interface ControlState {
 }
 
 export const CameraControls: React.FC<CameraControlsProps> = (props) => {
+    const { device } = useContext(DeviceContext) as { device: Device };
+
     const controls = props.device.controls;
     const bus_info = props.device.bus_info;
 
@@ -90,6 +93,10 @@ export const CameraControls: React.FC<CameraControlsProps> = (props) => {
                                 } as ControlState);
 
                                 useDidMountEffect(() => {
+                                    device.controls.find(
+                                        (control) =>
+                                            control.control_id == control_id
+                                    ).value = controlValue;
                                     setUVCControl(
                                         bus_info,
                                         controlValue,
@@ -108,11 +115,21 @@ export const CameraControls: React.FC<CameraControlsProps> = (props) => {
                                                 _,
                                                 newValue
                                             ) => {
+                                                device.controls.find(
+                                                    (control) =>
+                                                        control.control_id ==
+                                                        control_id
+                                                ).value = controlValue;
                                                 setControlValue(
                                                     newValue as number
                                                 );
                                             }}
                                             onChange={(_, newValue) => {
+                                                device.controls.find(
+                                                    (control) =>
+                                                        control.control_id ==
+                                                        control_id
+                                                ).value = controlValue;
                                                 setControlValueSlider(
                                                     newValue as number
                                                 );
@@ -158,6 +175,10 @@ export const CameraControls: React.FC<CameraControlsProps> = (props) => {
                                 });
 
                                 useDidMountEffect(() => {
+                                    device.controls.find(
+                                        (control) =>
+                                            control.control_id == control_id
+                                    ).value = controlValue ? 1 : 0;
                                     setUVCControl(
                                         bus_info,
                                         controlValue ? VALUE_TRUE : VALUE_FALSE,
@@ -198,6 +219,10 @@ export const CameraControls: React.FC<CameraControlsProps> = (props) => {
                                 }
 
                                 useDidMountEffect(() => {
+                                    device.controls.find(
+                                        (control) =>
+                                            control.control_id == control_id
+                                    ).value = controlValue;
                                     setUVCControl(
                                         bus_info,
                                         controlValue,

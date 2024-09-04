@@ -94,7 +94,7 @@ class StreamRunner:
 
     def _run_pipeline(self):
         pipeline_str = self._construct_pipeline()
-        print(pipeline_str)
+        logging.info(pipeline_str)
         self._process = subprocess.Popen(
             f'gst-launch-1.0 {pipeline_str}'.split(' '), stdout=subprocess.DEVNULL)
 

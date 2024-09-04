@@ -15,6 +15,7 @@ from .device_utils import list_diff, find_device_with_bus_info
 
 from .devices.ehd import EHDDevice
 from .devices.shd import SHDDevice
+from .logging.log_handler import LogHandler
 
 
 class DeviceManager(events.EventEmitter):
@@ -29,6 +30,10 @@ class DeviceManager(events.EventEmitter):
 
         self._thread = threading.Thread(target=self._monitor)
         self._is_monitoring = False
+
+        self.log_handler = LogHandler(self.broadcast_server)
+        logging.getLogger().addHandler(self.log_handler)
+        logging.info('Log handler started...')
 
     def start_monitoring(self):
         self._is_monitoring = True
@@ -60,7 +65,7 @@ class DeviceManager(events.EventEmitter):
         return device
 
     def _device_changed_event(self, bus_info):
-        print(f'Changed: {bus_info}')
+        logging.info(f'Changed: {bus_info}')
 
         self.broadcast_server.broadcast(Message('device_changed', DeviceSchema().dump(self._find_device_with_bus_info(bus_info))))
 

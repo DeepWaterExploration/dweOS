@@ -173,10 +173,11 @@ const DevicesContainer = () => {
                     let pathB = b.bus_info;
                     return (
                         Number(regex.exec(pathA)![0]) -
-                        Number(regex.exec(pathB)![0])
+                            Number(regex.exec(pathB)![0]) ||
+                        hash(pathA) - hash(pathB)
                     );
                 })
-                .map((dev, index) => {
+                .map((dev) => {
                     const device = proxy(dev);
 
                     subscribe(device, () => {
@@ -186,8 +187,6 @@ const DevicesContainer = () => {
                         );
                         if (index !== -1) {
                             devices.splice(index, 1, device); // Replace the existing device
-                        } else {
-                            devices.push(device); // Add the new device if it doesn't exist
                         }
                     });
 
@@ -200,9 +199,9 @@ const DevicesContainer = () => {
                                 removeLeaderUpdate,
                                 setFollowerUpdate,
                             }}
-                            key={hash(device.bus_info)}
+                            key={device.bus_info}
                         >
-                            <DeviceCard key={hash(device.bus_info)} />
+                            <DeviceCard key={device.bus_info} />
                         </DeviceContext.Provider>
                     );
                 })}

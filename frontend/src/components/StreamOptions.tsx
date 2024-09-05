@@ -111,10 +111,12 @@ export const StreamOptions: React.FC = () => {
             console.log(device.stream.configured);
 
             if (!device.stream.configured) {
-                if (device.leader) device.leader = undefined;
-                else if (device.is_leader && device.follower) {
+                if (device.leader) {
+                    setFollowerUpdate(device.leader, undefined);
                     device.leader = undefined;
+                } else if (device.is_leader && device.follower) {
                     removeLeaderUpdate(device.follower);
+                    device.follower = undefined;
                 }
                 setStreamUpdatedTimeout(
                     setTimeout(() => {

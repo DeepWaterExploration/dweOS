@@ -24,6 +24,12 @@ class SHDDevice(Device):
         if not leader.is_leader:
             logging.warn('Attempting to add follower SHD as a leader. This is undefined behavior and will not be permitted.')
             return
+        if leader.follower:
+            logging.warn('Attempted to add follower to SHD with follower. This is undefined behavior and will not be permitted.')
+            return
+        if self.leader_device:
+            logging.info(self._fmt_log('Setting leader of device with leader. Removing previous leader.'))
+            self.remove_leader()
         self.leader_device = leader
         self.leader = leader.bus_info
         # remember to stop the stream because it is no longer managed by this device
@@ -69,5 +75,6 @@ class SHDDevice(Device):
 
     def unconfigure_stream(self):
         # remove leader when unconfiguring
-        self.remove_leader()
+        if self.leader_device:
+            self.remove_leader()
         return super().unconfigure_stream()

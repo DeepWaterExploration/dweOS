@@ -155,7 +155,7 @@ class DeviceManager(events.EventEmitter):
         self.settings_manager.save_device(device)
 
         # Remove leader if leader stops stream
-        if (device.device_type == DeviceType.STELLARHD_LEADER):
+        if device.device_type == DeviceType.STELLARHD_LEADER and cast(SHDDevice, device).follower:
             self.remove_leader(cast(SHDDevice, device).follower)
         return True
 

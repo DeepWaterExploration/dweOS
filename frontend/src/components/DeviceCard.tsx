@@ -21,6 +21,7 @@ const DeviceCard: React.FC = () => {
                 textAlign: "left",
                 margin: "20px",
             }}
+            key={device.bus_info}
         >
             <CardHeader
                 title={device.device_info.device_name}

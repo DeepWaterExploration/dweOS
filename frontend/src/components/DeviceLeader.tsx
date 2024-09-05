@@ -6,6 +6,7 @@ import { removeLeader, setLeader } from "../utils/api";
 import React, { useContext, useEffect } from "react";
 import { Device } from "../types/types";
 import DeviceContext from "../contexts/DeviceContext";
+import { useSnackbar } from "notistack";
 
 interface DeviceLeaderProps {
     leaders: Device[];
@@ -28,6 +29,8 @@ export const DeviceLeader: React.FC<DeviceLeaderProps> = (props) => {
             follower_bus_info: string | undefined
         ) => void;
     };
+
+    const { enqueueSnackbar } = useSnackbar();
 
     return (
         <div style={styles.cardContent.div}>
@@ -60,7 +63,11 @@ export const DeviceLeader: React.FC<DeviceLeaderProps> = (props) => {
                                 onClick={() => {
                                     popupState.close();
                                     removeLeader(device.bus_info);
-                                    setFollowerUpdate(device.leader, undefined);
+                                    if (device.leader)
+                                        setFollowerUpdate(
+                                            device.leader,
+                                            undefined
+                                        );
                                     device.leader = undefined;
                                 }}
                             >
@@ -73,6 +80,19 @@ export const DeviceLeader: React.FC<DeviceLeaderProps> = (props) => {
                                         value={dev.bus_info}
                                         onClick={() => {
                                             popupState.close();
+                                            if (device.leader)
+                                                setFollowerUpdate(
+                                                    device.leader,
+                                                    undefined
+                                                );
+                                            if (dev.follower) {
+                                                // just ignore the request
+                                                enqueueSnackbar(
+                                                    `Device: ${dev.bus_info} already has a follower.`,
+                                                    { variant: "error" }
+                                                );
+                                                return;
+                                            }
                                             device.leader = dev.bus_info;
                                             setLeader(
                                                 dev.bus_info,

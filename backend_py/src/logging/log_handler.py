@@ -9,8 +9,20 @@ class LogHandler(logging.Handler):
         self.logs = []
 
     def emit(self, record):
+        # ignore the websockets server messages, they just spam
+        if record.name == 'websockets.server':
+            return
+        fmt = self.format(record)
         # print the logs
-        # TODO: format once
-        print(self.format(record))
-        self.server.broadcast(Message('log', {'log': self.format(record)}))
-        self.logs.append(self.format(record))
+        print(fmt)
+        log = {
+            'timestamp': record.asctime, 
+            'level': record.levelname, 
+            'name': record.name, 
+            'filename': record.filename, 
+            'lineno': record.lineno,
+            'function': record.funcName, 
+            'message': record.message
+        }
+        self.logs.append(log)
+        self.server.broadcast(Message('log', log))

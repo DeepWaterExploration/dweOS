@@ -1,5 +1,6 @@
 import {
     Device,
+    Log,
     PortInfo,
     ReleaseList,
     StreamEndpoint,
@@ -67,7 +68,7 @@ export async function setLeader(leader: string, follower: string) {
     return await response.json();
 }
 
-export async function getLogs() {
+export async function getLogs(): Promise<Log[]> {
     const url = `${DEVICE_API_URL}/logs`;
     const response = await getRequest(url);
     return await response.json();

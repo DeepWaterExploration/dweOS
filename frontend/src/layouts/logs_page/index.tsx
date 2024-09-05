@@ -31,23 +31,47 @@ const TerminalView = ({ logs }) => {
                 border: "1px solid #444",
             }}
         >
-            {logs.map((log, index) => (
+            {logs.map((log: Log, index) => (
                 <Typography
                     key={index}
                     sx={{ fontFamily: "Fura Code, monospace", fontSize: 20 }}
                     variant='body2'
                 >
-                    {log}
+                    <span style={{ color: "#FF5555" }}>{log.timestamp}</span>
+                    {/* Red */}
+                    <span> - </span>
+                    <span style={{ color: "#50FA7B" }}>{log.level}</span>
+                    {/* Green */}
+                    <span> - </span>
+                    <span style={{ color: "#FFB86C" }}>{log.name}</span>
+                    {/* Orange */}
+                    <span> - </span>
+                    <span style={{ color: "#BD93F9" }}>
+                        {log.filename}:{log.lineno}
+                    </span>
+                    {/* Purple */}
+                    <span> - </span>
+                    <span style={{ color: "#FF79C6" }}>{log.function}</span>
+                    {/* Magenta */}
+                    <span> - </span>
+                    <span style={{ color: "#8BE9FD" }}>{log.message}</span>
+                    {/* Cyan */}
                 </Typography>
             ))}
         </Box>
     );
 };
 
+const formatLog = (log: Log): string => {
+    return `${log.timestamp} - ${log.level} - ${log.name} - ${log.filename}:${log.lineno} - ${log.function} - ${log.message}`;
+};
+
 const exportToFile = async () => {
     let logs = await getLogs();
 
-    const blob = new Blob([logs.join("\n")], { type: "text/plain" });
+    const blob = new Blob([logs.map(formatLog).join("\n")], {
+        type: "text/plain",
+    });
     const url = URL.createObjectURL(blob);
 
     const link = document.createElement("a");
@@ -62,24 +86,27 @@ const exportToFile = async () => {
 
 const copyToClipboard = async () => {
     let logs = await getLogs();
-    navigator.clipboard.writeText(logs.join("\n"));
+    navigator.clipboard.writeText(logs.map(formatLog).join("\n"));
 };
 
 const LogsPage = () => {
-    const [logs, setLogs] = useState([]);
+    const [logs, setLogs] = useState([] as Log[]);
     const { enqueueSnackbar } = useSnackbar();
 
     useEffect(() => {
-        getLogs().then((log_values) => {
+        getLogs().then((log_values: Log[]) => {
             setLogs(log_values);
 
             websocket.addEventListener("message", (e) => {
                 let message = deserializeMessage(e.data);
+                let log = message.data as Log;
                 switch (message.event_name) {
                     case "log":
                         setLogs((prevLogs) => [
-                            ...prevLogs,
-                            (message.data as Log).log,
+                            ...prevLogs.filter(
+                                (l) => l.timestamp !== log.timestamp // check if it doesn't exist already: this is to prevent double sending the last message
+                            ),
+                            message.data as Log,
                         ]);
                 }
             });

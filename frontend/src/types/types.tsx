@@ -25,7 +25,13 @@ export interface Message {
 }
 
 export interface Log {
-    log: string;
+    timestamp: string;
+    level: string;
+    name: string;
+    filename: string;
+    lineno: number;
+    function: string;
+    message: string;
 }
 
 export enum IntercomponentMessageType {

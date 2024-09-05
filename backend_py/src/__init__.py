@@ -66,6 +66,10 @@ def main():
         device_manager.uncofigure_device_stream(bus_info)
 
         return jsonify({})
+    
+    @app.route('/logs', methods=['GET'])
+    def get_logs():
+        return jsonify(device_manager.get_logs())
 
     @app.route('/devices/set_nickname', methods=['POST'])
     def set_nickname():

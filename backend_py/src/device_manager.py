@@ -46,6 +46,9 @@ class DeviceManager(events.EventEmitter):
         for device in self.devices:
             device.stream.stop()
 
+    def get_logs(self):
+        return self.log_handler.logs
+
     def create_device(self, device_info: DeviceInfo) -> Device | None:
         (_, device_type) = lookup_pid_vid(device_info.vid, device_info.pid)
 

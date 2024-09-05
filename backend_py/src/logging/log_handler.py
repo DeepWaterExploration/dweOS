@@ -6,7 +6,11 @@ class LogHandler(logging.Handler):
         super().__init__(level)
         self.server = server
         self.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - [%(name)s] - %(filename)s:%(lineno)d - %(funcName)s() - %(message)s'))
+        self.logs = []
 
     def emit(self, record):
-        self.server.broadcast(Message('log', {'log': self.format(record)}))
+        # print the logs
+        # TODO: format once
         print(self.format(record))
+        self.server.broadcast(Message('log', {'log': self.format(record)}))
+        self.logs.append(self.format(record))

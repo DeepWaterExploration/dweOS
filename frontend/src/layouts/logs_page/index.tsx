@@ -106,33 +106,37 @@ const LogsPage = () => {
     const { enqueueSnackbar } = useSnackbar();
 
     useEffect(() => {
+        const socketCallback = (e) => {
+            let message = deserializeMessage(e.data);
+            let log = message.data as Log;
+            switch (message.event_name) {
+                case "log":
+                    setLogs((prevLogs) =>
+                        [
+                            ...prevLogs.filter(
+                                (l) => l.timestamp !== log.timestamp // check if it doesn't exist already: this is to prevent double sending the last message
+                            ),
+                            message.data as Log,
+                        ].sort((a, b) => {
+                            const dateA = new Date(
+                                a.timestamp.replace(",", ".")
+                            );
+                            const dateB = new Date(
+                                b.timestamp.replace(",", ".")
+                            );
+                            return dateA.getTime() - dateB.getTime();
+                        })
+                    );
+            }
+        };
+
         getLogs().then((log_values: Log[]) => {
             setLogs(log_values);
 
-            websocket.addEventListener("message", (e) => {
-                let message = deserializeMessage(e.data);
-                let log = message.data as Log;
-                switch (message.event_name) {
-                    case "log":
-                        setLogs((prevLogs) =>
-                            [
-                                ...prevLogs.filter(
-                                    (l) => l.timestamp !== log.timestamp // check if it doesn't exist already: this is to prevent double sending the last message
-                                ),
-                                message.data as Log,
-                            ].sort((a, b) => {
-                                const dateA = new Date(
-                                    a.timestamp.replace(",", ".")
-                                );
-                                const dateB = new Date(
-                                    b.timestamp.replace(",", ".")
-                                );
-                                return dateA.getTime() - dateB.getTime();
-                            })
-                        );
-                }
-            });
+            websocket.addEventListener("message", socketCallback);
         });
+
+        return () => websocket.removeEventListener("message", socketCallback);
     }, []);
     return (
         <Grid2 sx={{ paddingX: 5 }}>

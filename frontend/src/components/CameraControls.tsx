@@ -61,7 +61,7 @@ export const CameraControls: React.FC<CameraControlsProps> = (props) => {
             </AccordionSummary>
             <AccordionDetails>
                 <FormGroup style={{ marginTop: "20px" }}>
-                    {controls.map((control) => {
+                    {controls.map((control, index) => {
                         // Extremely Hacky Fix for Auto Exposure: Change in backend later
                         if (
                             control.name.includes("Auto Exposure") &&
@@ -106,8 +106,8 @@ export const CameraControls: React.FC<CameraControlsProps> = (props) => {
                                 }, [controlValue]);
 
                                 return (
-                                    <>
-                                        <span>
+                                    <React.Fragment key={index}>
+                                        <span key={"label" + index}>
                                             {name}: {controlValueSlider}
                                         </span>
                                         <Slider
@@ -144,8 +144,9 @@ export const CameraControls: React.FC<CameraControlsProps> = (props) => {
                                                 marginLeft: "20px",
                                                 width: "calc(100% - 25px)",
                                             }}
+                                            key={index}
                                         />
-                                    </>
+                                    </React.Fragment>
                                 );
                             }
                             case controlType.BOOLEAN: {
@@ -187,17 +188,19 @@ export const CameraControls: React.FC<CameraControlsProps> = (props) => {
                                 }, [controlValue]);
 
                                 return (
-                                    <>
-                                        <span>{name}</span>
+                                    <React.Fragment key={index}>
+                                        <span key={"label" + control_id}>
+                                            {name}
+                                        </span>
                                         <Switch
                                             checked={controlValue}
                                             onChange={(_, checked) => {
                                                 setControlValue(!controlValue);
                                             }}
                                             name={`control-${control_id}`}
-                                            defaultChecked={value}
+                                            key={index}
                                         />
-                                    </>
+                                    </React.Fragment>
                                 );
                             }
                             case controlType.MENU: {
@@ -231,67 +234,62 @@ export const CameraControls: React.FC<CameraControlsProps> = (props) => {
                                 }, [controlValue]);
 
                                 return (
-                                    <>
-                                        <PopupState
-                                            variant='popover'
-                                            popupId={"" + control_id}
-                                        >
-                                            {(popupState) => (
-                                                <div
+                                    <PopupState
+                                        variant='popover'
+                                        key={index}
+                                        popupId={"" + control_id}
+                                    >
+                                        {(popupState) => (
+                                            <div
+                                                style={{
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                }}
+                                                key={index}
+                                            >
+                                                <span
+                                                    key={"label" + index}
                                                     style={{
-                                                        display: "flex",
-                                                        alignItems: "center",
+                                                        marginRight: "8px",
                                                     }}
                                                 >
-                                                    <span
-                                                        style={{
-                                                            marginRight: "8px",
-                                                        }}
-                                                    >
-                                                        {name}:
-                                                    </span>
-                                                    <TextField
-                                                        variant='standard'
-                                                        select
-                                                        value={controlValue}
-                                                        onChange={(e) => {
-                                                            setControlValue(
-                                                                parseInt(
-                                                                    e.target
-                                                                        .value
-                                                                )
-                                                            );
-                                                            popupState.close();
-                                                        }}
-                                                        {...bindTrigger(
-                                                            popupState
-                                                        )}
-                                                        InputProps={{
-                                                            disableUnderline:
-                                                                true,
-                                                        }}
-                                                    >
-                                                        {menu.map(
-                                                            (menuItem) => (
-                                                                <MenuItem
-                                                                    key={
-                                                                        menuItem.index
-                                                                    }
-                                                                    value={
-                                                                        menuItem.index
-                                                                    }
-                                                                >
-                                                                    {
-                                                                        menuItem.name
-                                                                    }
-                                                                </MenuItem>
+                                                    {name}:
+                                                </span>
+                                                <TextField
+                                                    variant='standard'
+                                                    key={index}
+                                                    select
+                                                    value={controlValue}
+                                                    onChange={(e) => {
+                                                        setControlValue(
+                                                            parseInt(
+                                                                e.target.value
                                                             )
-                                                        )}
-                                                    </TextField>
-                                                </div>
-                                            )}
-                                        </PopupState>
-                                    </>
+                                                        );
+                                                        popupState.close();
+                                                    }}
+                                                    {...bindTrigger(popupState)}
+                                                    InputProps={{
+                                                        disableUnderline: true,
+                                                    }}
+                                                >
+                                                    {menu.map((menuItem) => (
+                                                        <MenuItem
+                                                            key={
+                                                                "Menu" +
+                                                                menuItem.index
+                                                            }
+                                                            value={
+                                                                menuItem.index
+                                                            }
+                                                        >
+                                                            {menuItem.name}
+                                                        </MenuItem>
+                                                    ))}
+                                                </TextField>
+                                            </div>
+                                        )}
+                                    </PopupState>
                                 );
                             }
                         }

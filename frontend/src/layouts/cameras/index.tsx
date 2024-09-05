@@ -92,7 +92,7 @@ const DevicesContainer = () => {
             addDevices(devices);
         });
 
-        websocket.addEventListener("message", (e) => {
+        const socketCallback = (e) => {
             let message = deserializeMessage(e.data);
             switch (message.event_name) {
                 case "device_added": {
@@ -118,7 +118,10 @@ const DevicesContainer = () => {
                 //     updateDevice(message.data as Device);
                 //     break;
             }
-        });
+        };
+
+        websocket.addEventListener("message", socketCallback);
+        return () => websocket.removeEventListener("message", socketCallback);
     }, []);
 
     // The following are util functions as a way for any device to set properties of other devices and rerendering them
@@ -197,6 +200,7 @@ const DevicesContainer = () => {
                                 removeLeaderUpdate,
                                 setFollowerUpdate,
                             }}
+                            key={hash(device.bus_info)}
                         >
                             <DeviceCard key={hash(device.bus_info)} />
                         </DeviceContext.Provider>

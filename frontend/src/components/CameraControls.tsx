@@ -18,10 +18,6 @@ import { useDidMountEffect } from "../utils/utils";
 import { LineBreak } from "./LineBreak";
 import DeviceContext from "../contexts/DeviceContext";
 
-interface CameraControlsProps {
-    device: Device;
-}
-
 interface ControlState {
     control_id: number;
     name: string;
@@ -33,11 +29,11 @@ interface ControlState {
     type: controlType;
 }
 
-export const CameraControls: React.FC<CameraControlsProps> = (props) => {
+export const CameraControls: React.FC = () => {
     const { device } = useContext(DeviceContext) as { device: Device };
 
-    const controls = props.device.controls;
-    const bus_info = props.device.bus_info;
+    const controls = device.controls;
+    const bus_info = device.bus_info;
 
     // FIXME: for default controls
     const setStatesList: ControlState[] = [];

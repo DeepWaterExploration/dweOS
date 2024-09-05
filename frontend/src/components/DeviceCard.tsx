@@ -8,12 +8,7 @@ import { CameraControls } from "./CameraControls";
 import { LineBreak } from "./LineBreak";
 import DeviceContext from "../contexts/DeviceContext";
 
-export interface DeviceCardProps {
-    key: number;
-    // device: Device;
-}
-
-const DeviceCard: React.FC<DeviceCardProps> = (props) => {
+const DeviceCard: React.FC = () => {
     const { device } = useContext(DeviceContext) as {
         device: Device;
     };
@@ -53,8 +48,8 @@ const DeviceCard: React.FC<DeviceCardProps> = (props) => {
                 }
             />
             <CardContent>
-                <StreamOptions device={device} />
-                <CameraControls device={device} />
+                <StreamOptions />
+                <CameraControls />
             </CardContent>
         </Card>
     );

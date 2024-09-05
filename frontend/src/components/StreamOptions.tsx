@@ -66,11 +66,7 @@ const ENCODERS = ["H264", "MJPG"];
 const IP_REGEX =
     /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/;
 
-interface StreamOptionsProps {
-    device: Device;
-}
-
-export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
+export const StreamOptions: React.FC = () => {
     const {
         device,
         devices,
@@ -122,7 +118,7 @@ export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                 }
                 setStreamUpdatedTimeout(
                     setTimeout(() => {
-                        unconfigureStream(props.device.bus_info);
+                        unconfigureStream(device.bus_info);
                     }, 250)
                 );
             } else {
@@ -145,7 +141,7 @@ export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
             setTimeout(() => {
                 // unconfigureStream(props.device.bus_info);
                 configureStream(
-                    props.device.bus_info,
+                    device.bus_info,
                     {
                         width: device.stream.width,
                         height: device.stream.height,
@@ -227,17 +223,14 @@ export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
     };
 
     useEffect(() => {
-        let newResolutions = getResolutions(
-            props.device,
-            device.stream.encode_type
-        );
+        let newResolutions = getResolutions(device, device.stream.encode_type);
         setResolutions(newResolutions);
     }, [device.stream.encode_type]);
 
     useEffect(() => {
         let cameraFormat = getFormatString();
         let newIntervals: string[] = [];
-        for (let camera of props.device.cameras) {
+        for (let camera of device.cameras) {
             let format = camera.formats[cameraFormat];
             if (format) {
                 for (let resolution of format) {
@@ -259,7 +252,7 @@ export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
 
     useEffect(() => {
         let newEncoders = [];
-        for (let camera of props.device.cameras) {
+        for (let camera of device.cameras) {
             for (let format in camera.formats) {
                 if (ENCODERS.includes(format)) {
                     newEncoders.push(format);
@@ -278,14 +271,14 @@ export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
         >
             <DeviceSwitch
                 disabled={false}
-                onChange={(e) => {
-                    device.stream.configured = e.target.checked;
+                onChange={() => {
+                    device.stream.configured = !device.stream.configured;
                 }}
                 checked={device.stream.configured}
                 name='streamSwitch'
                 text='Stream'
             />
-            {(props.device.is_leader === undefined ? true : true) ? ( // TODO: change this but this is just for now until global state exists
+            {(device.is_leader === undefined ? true : true) ? ( // TODO: change this but this is just for now until global state exists
                 device.stream.configured ? (
                     <>
                         {(
@@ -293,7 +286,7 @@ export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                                 ? false
                                 : !device.is_leader
                         ) ? (
-                            <DeviceLeader device={device} leaders={leaders} />
+                            <DeviceLeader leaders={leaders} />
                         ) : undefined}
                         <div style={styles.cardContent.div}>
                             <TextField
@@ -325,7 +318,7 @@ export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                                 label='FPS'
                                 variant='outlined'
                                 defaultValue={
-                                    props.device.stream.interval.denominator
+                                    device.stream.interval.denominator
                                 }
                                 onChange={(selected) =>
                                     setFps(parseInt(selected.target.value))
@@ -344,8 +337,8 @@ export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                                 label='Format'
                                 variant='outlined'
                                 defaultValue={
-                                    props.device.stream.encode_type
-                                        ? props.device.stream.encode_type
+                                    device.stream.encode_type
+                                        ? device.stream.encode_type
                                         : encodeType.H264
                                 }
                                 onChange={(selected) =>
@@ -481,13 +474,11 @@ export const StreamOptions: React.FC<StreamOptionsProps> = (props) => {
                             color='primary'
                             variant='contained'
                             onClick={() => {
-                                restartStream(props.device.bus_info).then(
-                                    () => {
-                                        enqueueSnackbar("Stream restarted", {
-                                            variant: "info",
-                                        });
-                                    }
-                                );
+                                restartStream(device.bus_info).then(() => {
+                                    enqueueSnackbar("Stream restarted", {
+                                        variant: "info",
+                                    });
+                                });
                             }}
                         >
                             Restart Stream

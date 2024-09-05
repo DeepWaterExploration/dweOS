@@ -8,7 +8,6 @@ import { Device } from "../types/types";
 import DeviceContext from "../contexts/DeviceContext";
 
 interface DeviceLeaderProps {
-    device: Device;
     leaders: Device[];
 }
 

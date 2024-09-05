@@ -70,16 +70,19 @@ class Stream(events.EventEmitter):
     def stop(*args):
         pass
 
-class StreamRunner:
+class StreamRunner(events.EventEmitter):
 
     def __init__(self, *streams: Stream) -> None:
+        super().__init__()
         self.streams = [*streams]
         self.pipeline = None
         self.loop = None
         self.started = False
+        self.error_thread = None
 
     def start(self):
         if self.started:
+            self.error_thread.join()
             self.stop()
         self.started = True
         self._run_pipeline()
@@ -96,7 +99,9 @@ class StreamRunner:
         pipeline_str = self._construct_pipeline()
         logging.info(pipeline_str)
         self._process = subprocess.Popen(
-            f'gst-launch-1.0 {pipeline_str}'.split(' '), stdout=subprocess.DEVNULL)
+            f'gst-launch-1.0 {pipeline_str}'.split(' '), stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+        self.error_thread = threading.Thread(target=self._log_errors)
+        self.error_thread.start()
 
     def _construct_pipeline(self):
         pipeline_strs = []
@@ -104,3 +109,19 @@ class StreamRunner:
             if stream.configured:
                 pipeline_strs.append(stream._construct_pipeline())
         return ' '.join(pipeline_strs)
+    
+    def _log_errors(self):
+        error_block = []
+        try:
+            for stderr_line in iter(self._process.stderr.readline, ''):
+                stderr_line = self._process.stderr.readline()
+                if stderr_line:
+                    error_block.append(stderr_line)
+                    logging.error(stderr_line)
+                    self.stop()
+                else:
+                    break
+        except:
+            pass
+        if len(error_block) > 0:
+            self.emit('gst_error', error_block)

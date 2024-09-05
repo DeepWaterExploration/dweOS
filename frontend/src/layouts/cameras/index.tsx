@@ -34,6 +34,11 @@ interface DeviceRemovedInfo {
     bus_info: string;
 }
 
+interface GstErrorMessage {
+    errors: string[];
+    bus_info: string;
+}
+
 export const websocket = new WebSocket(DEVICE_API_WS);
 
 const DevicesContainer = () => {
@@ -114,6 +119,14 @@ const DevicesContainer = () => {
                     removeDevice((message.data as DeviceRemovedInfo).bus_info);
                     break;
                 }
+                case "gst_error":
+                    let gstErrorMessage = message.data as GstErrorMessage;
+                    console.log(gstErrorMessage);
+                    enqueueSnackbar(
+                        `GStreamer Error Occurred: ${gstErrorMessage.bus_info} - This is likely a known issue with the kernel, please read our docs site for more details`,
+                        { variant: "error", autoHideDuration: 5000 }
+                    );
+                    break;
                 // case "device_changed":
                 //     updateDevice(message.data as Device);
                 //     break;

@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+- name: 📚 Documentation
+  url: https://docs.dwe.ai/
+  about: View our Setup Documentation
+- name: 💬 Community Forums
+  url: https://discuss.dwe.ai/
+  about: Join our Forums to ask questions and get help!

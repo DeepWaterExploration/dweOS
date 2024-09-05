@@ -15,6 +15,7 @@ import { deserializeMessage, findDeviceWithBusInfo } from "../../utils/utils";
 import DevicesContext from "../../contexts/DevicesContext";
 import DeviceContext from "../../contexts/DeviceContext";
 import { proxy, subscribe } from "valtio";
+import { useSnackbar } from "notistack";
 
 const hash = function (str: string) {
     let hash = 0,
@@ -36,6 +37,8 @@ interface DeviceRemovedInfo {
 export const websocket = new WebSocket(DEVICE_API_WS);
 
 const DevicesContainer = () => {
+    const { enqueueSnackbar } = useSnackbar();
+
     const { devices, setDevices } = useContext(DevicesContext) as {
         devices: Device[];
         setDevices: React.Dispatch<React.SetStateAction<Device[]>>;
@@ -92,12 +95,25 @@ const DevicesContainer = () => {
         websocket.addEventListener("message", (e) => {
             let message = deserializeMessage(e.data);
             switch (message.event_name) {
-                case "device_added":
+                case "device_added": {
+                    let dev = message.data as Device;
+                    enqueueSnackbar(
+                        `Device added: ${dev.bus_info} - ${dev.nickname || dev.device_type}`,
+                        {
+                            variant: "info",
+                        }
+                    );
                     addDevice(message.data as Device);
                     break;
-                case "device_removed":
+                }
+                case "device_removed": {
+                    let dev = message.data as DeviceRemovedInfo;
+                    enqueueSnackbar(`Device removed: ${dev.bus_info}`, {
+                        variant: "info",
+                    });
                     removeDevice((message.data as DeviceRemovedInfo).bus_info);
                     break;
+                }
                 // case "device_changed":
                 //     updateDevice(message.data as Device);
                 //     break;

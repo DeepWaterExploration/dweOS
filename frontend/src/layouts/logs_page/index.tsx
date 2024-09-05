@@ -66,6 +66,18 @@ const formatLog = (log: Log): string => {
     return `${log.timestamp} - ${log.level} - ${log.name} - ${log.filename}:${log.lineno} - ${log.function} - ${log.message}`;
 };
 
+const createFilename = () => {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const seconds = String(date.getSeconds()).padStart(2, "0");
+
+    return `log_${year}-${month}-${day}_${hours}-${minutes}-${seconds}.txt`;
+};
+
 const exportToFile = async () => {
     let logs = await getLogs();
 
@@ -76,7 +88,7 @@ const exportToFile = async () => {
 
     const link = document.createElement("a");
     link.href = url;
-    link.download = "logs.txt";
+    link.download = createFilename();
     document.body.appendChild(link);
     link.click();
 
@@ -102,12 +114,22 @@ const LogsPage = () => {
                 let log = message.data as Log;
                 switch (message.event_name) {
                     case "log":
-                        setLogs((prevLogs) => [
-                            ...prevLogs.filter(
-                                (l) => l.timestamp !== log.timestamp // check if it doesn't exist already: this is to prevent double sending the last message
-                            ),
-                            message.data as Log,
-                        ]);
+                        setLogs((prevLogs) =>
+                            [
+                                ...prevLogs.filter(
+                                    (l) => l.timestamp !== log.timestamp // check if it doesn't exist already: this is to prevent double sending the last message
+                                ),
+                                message.data as Log,
+                            ].sort((a, b) => {
+                                const dateA = new Date(
+                                    a.timestamp.replace(",", ".")
+                                );
+                                const dateB = new Date(
+                                    b.timestamp.replace(",", ".")
+                                );
+                                return dateA.getTime() - dateB.getTime();
+                            })
+                        );
                 }
             });
         });

@@ -19,11 +19,7 @@ body:
       label: System information
       description: 🖥️ The software and hardware used to produce the bug.
       placeholder: |
-        - OS: Ubuntu 20.04
-        - Browser: [e.g. chrome, safari]
-        - Node.js version: v18.16.0
-        - Npm version: 9.5.1
-        - GPU: Yes
+        - Device: Raspberry Pi 4b
     validations:
       required: false
   - type: textarea
@@ -52,7 +48,7 @@ body:
     id: additional
     attributes:
       label: Additional information
-      description: Additional context about the bug, such as console output with error messages and/or screenshots of the bug.
+      description: Additonal context about the bug, such as console output with error messages and/or screenshots of the bug.
       placeholder: "💡 ProTip! Include as much information as possible (screenshots, logs, tracebacks etc.) to receive the most helpful response."
     validations:
       required: false

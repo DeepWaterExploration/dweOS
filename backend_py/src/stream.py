@@ -82,8 +82,9 @@ class StreamRunner(events.EventEmitter):
 
     def start(self):
         if self.started:
-            self.error_thread.join()
+            logging.info('Joining thread')
             self.stop()
+            self.error_thread.join()
         self.started = True
         self._run_pipeline()
 

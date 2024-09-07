@@ -18,6 +18,7 @@ import CamerasPage from "./layouts/cameras";
 import Updater from "./layouts/updater";
 import LogsPage from "./layouts/logs_page";
 import WifiPage from "./layouts/wifi";
+import Lights from "./layouts/lights";
 import TaskMonitor from "./layouts/task_monitor";
 import { RouteItem, routeType } from "./types/types";
 import React from "react";
@@ -37,7 +38,7 @@ export const routes: RouteItem[] = [
     },
     {
         route: "/devices/lights",
-        component: <Box />,
+        component: <Lights />,
         // <Lights />,
         exact: true,
         icon: <LightbulbIcon />,

@@ -19,6 +19,12 @@ export interface Device {
     follower: string | undefined;
 }
 
+export interface LightDevice {
+    gpio_pin: number;
+    nickname?: string;
+    intensity: number;
+}
+
 export interface Message {
     event_name: string;
     data: object;

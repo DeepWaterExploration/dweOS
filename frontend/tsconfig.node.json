@@ -9,16 +9,6 @@
     },
     "include": [
         "vite.config.mts",
-        "src/*",
-        "src/layouts/wifi/api/*",
-        "src/components/*",
-        "src/layouts/cameras/*",
-        "src/layouts/task_monitor/*",
-        "src/layouts/updater/*",
-        "src/layouts/wifi/*",
-        "src/layouts/logs_page/*",
-        "src/types/*",
-        "src/utils/*",
-        "src/contexts"
+        "src/**/*"
     ]
 }

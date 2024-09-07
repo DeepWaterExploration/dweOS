@@ -7,6 +7,7 @@ import { StreamOptions } from "./StreamOptions";
 import { CameraControls } from "./CameraControls";
 import { LineBreak } from "./LineBreak";
 import DeviceContext from "../contexts/DeviceContext";
+import { styles } from "../style";
 
 const DeviceCard: React.FC = () => {
     const { device } = useContext(DeviceContext) as {
@@ -14,15 +15,7 @@ const DeviceCard: React.FC = () => {
     };
 
     return (
-        <Card
-            sx={{
-                minWidth: 512,
-                boxShadow: 3,
-                textAlign: "left",
-                margin: "20px",
-            }}
-            key={device.bus_info}
-        >
+        <Card sx={styles.card} key={device.bus_info}>
             <CardHeader
                 title={device.device_info.device_name}
                 subheader={

@@ -1,5 +1,6 @@
 import {
     Device,
+    LightDevice,
     Log,
     PortInfo,
     ReleaseList,
@@ -42,6 +43,24 @@ async function postRequest(url: string, body: object = {}): Promise<Response> {
         body: JSON.stringify(body),
     };
     return await fetch(url, config);
+}
+
+export async function getLights(): Promise<LightDevice[]> {
+    const url = `${DEVICE_API_URL}/lights`;
+    const response = await getRequest(url);
+    return await response.json();
+}
+
+export async function setLight(index: number, light: LightDevice) {
+    const url = `${DEVICE_API_URL}/lights/set_light`;
+    const response = await postRequest(url, { index, light });
+    return await response.json();
+}
+
+export async function removeLight(index: number) {
+    const url = `${DEVICE_API_URL}/lights/remove_light`;
+    const response = await postRequest(url, { index });
+    return await response.json();
 }
 
 export async function getDevices(): Promise<Device[]> {

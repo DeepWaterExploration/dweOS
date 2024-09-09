@@ -4,25 +4,39 @@ import LightCard from "../../components/LightCard";
 import { Fab, Tooltip } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { styles } from "../../style";
-import { LightDevice } from "../../types/types";
+import { LightDevice, LightType } from "../../types/types";
 import LightContext from "../../contexts/LightContext";
 import { useProxy } from "valtio/utils";
 import { proxy, subscribe } from "valtio";
 import { useSnackbar } from "notistack";
+import { getLights, removeLight, setLight } from "../../utils/api";
 
 const Lights = () => {
     const { enqueueSnackbar } = useSnackbar();
 
-    const [lights, setLights] = useState([
-        { gpio_pin: 5, intensity: 0.4 },
-    ] as LightDevice[]);
+    const [lights, setLights] = useState([] as LightDevice[]);
 
     const deleteLight = (index: number) => {
+        removeLight(index);
         setLights((prevLights) => prevLights.filter((_, i) => i !== index));
         enqueueSnackbar("Deleted light", {
             variant: "info",
         });
     };
+
+    const addLight = (light: LightDevice) => {
+        setLight(lights.length, light);
+        setLights((prevLights) => [...prevLights, light]);
+        enqueueSnackbar("Added new light", {
+            variant: "info",
+        });
+    };
+
+    useEffect(() => {
+        getLights().then((lights) => {
+            setLights(Object.values(lights));
+        });
+    }, []);
 
     useEffect(() => {
         // console.log(lights.length);
@@ -42,7 +56,9 @@ const Lights = () => {
                 {lights.map((lightValue, index) => {
                     const light = proxy(lightValue);
 
-                    subscribe(light, () => {});
+                    subscribe(light, () => {
+                        setLight(index, light);
+                    });
 
                     return (
                         <LightContext.Provider key={index} value={{ light }}>
@@ -78,12 +94,11 @@ const Lights = () => {
                         color={"info"}
                         aria-label={"Add Light Card Button"}
                         onClick={() => {
-                            setLights((prevLights) => [
-                                ...prevLights,
-                                { gpio_pin: 4, intensity: 1 },
-                            ]);
-                            enqueueSnackbar("Added new light", {
-                                variant: "info",
+                            addLight({
+                                pin: 4,
+                                intensity: 1,
+                                type: LightType.PWM,
+                                nickname: "",
                             });
                         }}
                     >

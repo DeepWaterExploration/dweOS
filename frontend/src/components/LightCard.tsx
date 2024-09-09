@@ -5,6 +5,7 @@ import {
     Grid,
     IconButton,
     MenuItem,
+    Slider,
     TextField,
 } from "@mui/material";
 import React, { useContext, useEffect, useState } from "react";
@@ -16,7 +17,6 @@ import { styles } from "../style";
 import { LightDevice } from "../types/types";
 import LightContext from "../contexts/LightContext";
 import CloseIcon from "@mui/icons-material/Close";
-import Grid2 from "@mui/material/Unstable_Grid2/Grid2";
 
 interface LightCardProps {
     onClose: () => void;
@@ -67,15 +67,37 @@ const LightCard: React.FC<LightCardProps> = (props) => {
                                 label='GPIOPin'
                                 variant='outlined'
                                 size='small'
-                                defaultValue={light.gpio_pin}
+                                defaultValue={light.pin}
                                 onChange={(e) => {
-                                    light.gpio_pin = parseInt(e.target.value);
+                                    light.pin = parseInt(e.target.value);
                                 }}
                                 type='number'
                                 inputProps={{ min: 1, max: 65535 }} // Specify minimum and maximum values
                             />
                         </Grid>
                     </Grid>
+                    <div style={{ marginTop: 10 }}>
+                        <span
+                            style={{
+                                marginRight: "8px",
+                            }}
+                        >
+                            Intensity:
+                        </span>
+                        <Slider
+                            onChangeCommitted={(_, value) =>
+                                (light.intensity = value as number)
+                            }
+                            style={{
+                                marginLeft: "20px",
+                                width: "calc(100% - 25px)",
+                            }}
+                            defaultValue={light.intensity}
+                            min={0}
+                            max={100}
+                            step={0.1}
+                        />
+                    </div>
                 </div>
                 <IconButton
                     sx={{

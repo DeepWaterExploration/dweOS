@@ -19,9 +19,14 @@ export interface Device {
     follower: string | undefined;
 }
 
+export enum LightType {
+    PWM = 0,
+}
+
 export interface LightDevice {
-    gpio_pin: number;
-    nickname?: string;
+    pin: number;
+    nickname: string;
+    type: LightType;
     intensity: number;
 }
 

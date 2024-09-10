@@ -9,6 +9,9 @@ class RaspberryPiPWMController(PWMController):
         GPIO.setmode(GPIO.BCM)
         self.pwm_objects: Dict[int, GPIO.PWM] = {}
     
+    def is_pwm_pin(self, pin: int) -> bool:
+        return True
+
     def set_intensity(self, pin: int, intensity: float):
         # delete the object if intensity is zero and return
         if pin in self.pwm_objects and intensity == 0:

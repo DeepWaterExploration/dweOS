@@ -163,6 +163,8 @@ def main():
     def exit_clean(sig, frame):
         logging.info('Shutting down')
 
+        light_manager.cleanup()
+
         http_server.stop()
         device_manager.stop_monitoring()
         broadcast_server.kill()

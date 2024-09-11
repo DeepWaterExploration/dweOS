@@ -20,14 +20,14 @@ cp -r release/* ${INSTALL_DIR}
 
 cd ${INSTALL_DIR}
 
-sh install_requirements.sh
-
-sh create_venv.sh
+sh install_requirements.sh &&
+sh create_venv.sh &&
 
 echo "Successfully installed DWE_OS_2 ${VERSION}"
 
 cp ${INSTALL_DIR}/service/* /etc/systemd/system/
 systemctl enable dwe_os_2
+systemctl start dwe_os_2
 
 # cleanup
 

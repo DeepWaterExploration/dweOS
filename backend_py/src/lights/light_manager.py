@@ -47,3 +47,7 @@ class LightManager:
     
     def get_pins(self, controller_index: int):
         return self.pwm_controllers[controller_index].get_pins()
+
+    def cleanup(self):
+        for pwm_controller in self.pwm_controllers:
+            pwm_controller.cleanup()

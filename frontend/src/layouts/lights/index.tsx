@@ -4,7 +4,7 @@ import LightCard from "../../components/LightCard";
 import { Fab, Tooltip } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { styles } from "../../style";
-import { LightDevice, LightType } from "../../types/types";
+import { LightDevice } from "../../types/types";
 import LightContext from "../../contexts/LightContext";
 import { useProxy } from "valtio/utils";
 import { proxy, subscribe } from "valtio";
@@ -97,7 +97,7 @@ const Lights = () => {
                             addLight({
                                 pin: 4,
                                 intensity: 1,
-                                type: LightType.PWM,
+                                controller_index: 0,
                                 nickname: "",
                             });
                         }}

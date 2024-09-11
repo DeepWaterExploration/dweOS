@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 import logging
 
 class PWMController(ABC):
+    NAME = 'Abstract Controller'
+
     @abstractmethod
     def set_intensity(self, pin: int, intensity: float):
         logging.info(f'Setting light intensity: {pin} to {intensity}')
@@ -13,3 +15,7 @@ class PWMController(ABC):
     @abstractmethod
     def cleanup(self):
         pass
+
+    @abstractmethod
+    def get_pins(self):
+        return []

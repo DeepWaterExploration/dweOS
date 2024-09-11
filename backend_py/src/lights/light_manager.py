@@ -2,17 +2,24 @@ from typing import List, Dict
 from .pwm_controller import PWMController
 from .light import Light
 from .schemas import LightSchema
+from .light_types import LightType
 import logging
 
 class LightManager:
 
-    def __init__(self, pwm_controller: PWMController) -> None:
-        self.pwm_controller: PWMController = pwm_controller
+    def __init__(self, pwm_controllers: List[PWMController]) -> None:
+        self.pwm_controllers = pwm_controllers
         self.lights: List[Light] = []
 
     def set_light(self, index: int, light: Light):
         logging.info(f'Setting light {index}: {light.pin}, {light.intensity}')
-        self.pwm_controller.set_intensity(light.pin, light.intensity)
+        if light.controller_index >= len(self.pwm_controllers):
+            logging.error('Invalid index given for pwm controller')
+            return
+        
+        pwm_controller = self.pwm_controllers[light.controller_index]
+        pwm_controller.set_intensity(light.pin, light.intensity)
+
         if index >= len(self.lights):
             self.lights.append(light)
         else:
@@ -21,8 +28,22 @@ class LightManager:
     def remove_light(self, index: int):
         logging.info(f'Removing light {index}')
         if len(self.lights) >= index:
-            self.pwm_controller.set_intensity(index, 0)
+            light = self.lights[index]
+            if light.controller_index >= len(self.pwm_controllers):
+                logging.error('Invalid index given for pwm controller')
+                return
+            pwm_controller = self.pwm_controllers[light.controller_index]
+            pwm_controller.set_intensity(light.pin, 0)
             del self.lights[index]
 
     def get_lights(self):
         return LightSchema(many=True).dump(self.lights)
+    
+    def get_pwm_controllers(self):
+        controllers = []
+        for pwm_controller in self.pwm_controllers:
+            controllers.append(pwm_controller.NAME)
+        return controllers
+    
+    def get_pins(self, controller_index: int):
+        return self.pwm_controllers[controller_index].get_pins()

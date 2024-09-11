@@ -18,7 +18,7 @@ from .lights.light_manager import LightManager
 from .lights.fake_pwm import FakePWMController
 from .lights.schemas import LightSchema
 from .lights.light import Light
-from .lights.utils import is_raspberry_pi
+from .lights.utils import create_pwm_controllers
 
 from .devices.shd import SHDDevice
 
@@ -37,16 +37,7 @@ def main():
     device_manager = DeviceManager(
         settings_manager=settings_manager, broadcast_server=broadcast_server)
     
-    pwm_controller = None
-    if is_raspberry_pi():
-        try:
-            from .lights.rpi import RaspberryPiPWMController
-            pwm_controller = RaspberryPiPWMController()
-        except:
-            logging.info('Device is arm, but does not support RPi.GPIO library.')
-    if pwm_controller is None:
-        pwm_controller = FakePWMController()
-    light_manager = LightManager(pwm_controller)
+    light_manager = LightManager(create_pwm_controllers())
 
     @app.route('/devices', methods=['GET'])
     def get_devices():
@@ -143,12 +134,21 @@ def main():
     @app.route('/lights')
     def get_lights():
         return jsonify(light_manager.get_lights())
+    
+    @app.route('/lights/pins')
+    def get_pins():
+        controller_index = int(request.args.get('controller_index'))
+        return jsonify(light_manager.get_pins(controller_index))
+    
+    @app.route('/lights/controllers')
+    def get_pwm_controllers():
+        return jsonify(light_manager.get_pwm_controllers())
 
     @app.route('/lights/set_light', methods=['POST'])
     def set_light():
         req = request.get_json()
         light = LightSchema().load(req['light'])
-        light_manager.set_light(req['index'], Light(light['intensity'], light['pin'], light['type'], light['nickname']))
+        light_manager.set_light(req['index'], Light(light['intensity'], light['pin'], light['controller_index'], light['nickname']))
         return jsonify({})
     
     @app.route('/lights/remove_light', methods=['POST'])

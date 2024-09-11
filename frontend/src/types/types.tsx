@@ -19,14 +19,10 @@ export interface Device {
     follower: string | undefined;
 }
 
-export enum LightType {
-    PWM = 0,
-}
-
 export interface LightDevice {
     pin: number;
     nickname: string;
-    type: LightType;
+    controller_index: number;
     intensity: number;
 }
 

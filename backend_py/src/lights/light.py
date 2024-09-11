@@ -5,6 +5,6 @@ from .light_types import LightType
 class Light:
     intensity: int
     pin: int
-    type: LightType
+    controller_index: int
     nickname: str
     

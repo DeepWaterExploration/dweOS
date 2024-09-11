@@ -1,4 +1,5 @@
 from enum import Enum
 
 class LightType(Enum):
-    PWM=0
+    SOFTWARE_PWM=0
+    HARDWARE_PWM=1

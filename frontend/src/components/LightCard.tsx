@@ -17,6 +17,7 @@ import { styles } from "../style";
 import { LightDevice } from "../types/types";
 import LightContext from "../contexts/LightContext";
 import CloseIcon from "@mui/icons-material/Close";
+import { getPins, getPWMControllers } from "../utils/api";
 
 interface LightCardProps {
     onClose: () => void;
@@ -24,6 +25,19 @@ interface LightCardProps {
 
 const LightCard: React.FC<LightCardProps> = (props) => {
     const { light } = useContext(LightContext) as { light: LightDevice };
+
+    const [pwmControllers, setPwmControllers] = useState([] as string[]);
+    const [pins, setPins] = useState([] as number[]);
+
+    useEffect(() => {
+        getPWMControllers().then((controllers) =>
+            setPwmControllers(controllers)
+        );
+    }, []);
+
+    useEffect(() => {
+        getPins(light.controller_index + "").then((pins) => setPins(pins));
+    }, [light.controller_index, pwmControllers]);
 
     return (
         <Card sx={{ ...styles.card, maxWidth: 400, position: "relative" }}>
@@ -33,13 +47,14 @@ const LightCard: React.FC<LightCardProps> = (props) => {
                     <TextField
                         sx={{ width: "100%", top: 10 }}
                         select
-                        label='Type'
+                        label='Controller'
                         variant='standard'
-                        defaultValue={"PWM"}
-                        onChange={(selected) => {}}
+                        defaultValue={0}
                         size='small'
                     >
-                        <MenuItem value='PWM'>PWM</MenuItem>
+                        {pwmControllers.map((name, index) => (
+                            <MenuItem value={index}>{name}</MenuItem>
+                        ))}
                     </TextField>
                 }
             />
@@ -64,16 +79,20 @@ const LightCard: React.FC<LightCardProps> = (props) => {
                             <TextField
                                 fullWidth
                                 sx={{}}
-                                label='GPIOPin'
+                                label='Pin'
                                 variant='outlined'
                                 size='small'
                                 defaultValue={light.pin}
                                 onChange={(e) => {
                                     light.pin = parseInt(e.target.value);
                                 }}
-                                type='number'
+                                select
                                 inputProps={{ min: 1, max: 65535 }} // Specify minimum and maximum values
-                            />
+                            >
+                                {pins.map((pin, index) => (
+                                    <MenuItem value={pin}>{pin}</MenuItem>
+                                ))}
+                            </TextField>
                         </Grid>
                     </Grid>
                     <div style={{ marginTop: 10 }}>

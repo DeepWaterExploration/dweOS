@@ -51,6 +51,21 @@ export async function getLights(): Promise<LightDevice[]> {
     return await response.json();
 }
 
+export async function getPWMControllers(): Promise<string[]> {
+    const url = `${DEVICE_API_URL}/lights/controllers`;
+    const response = await getRequest(url);
+    return await response.json();
+}
+
+export async function getPins(controller_index: string): Promise<number[]> {
+    const url = `${DEVICE_API_URL}/lights/pins`;
+    const response = await getRequest(
+        url,
+        new URLSearchParams({ controller_index })
+    );
+    return await response.json();
+}
+
 export async function setLight(index: number, light: LightDevice) {
     const url = `${DEVICE_API_URL}/lights/set_light`;
     const response = await postRequest(url, { index, light });

@@ -1,7 +1,7 @@
 import Grid from "@mui/material/Grid";
 import React, { useEffect, useState } from "react";
 import LightCard from "../../components/LightCard";
-import { Fab, Tooltip } from "@mui/material";
+import { Fab, List, Menu, MenuItem, Popover, Tooltip } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { styles } from "../../style";
 import { LightDevice } from "../../types/types";
@@ -9,12 +9,37 @@ import LightContext from "../../contexts/LightContext";
 import { useProxy } from "valtio/utils";
 import { proxy, subscribe } from "valtio";
 import { useSnackbar } from "notistack";
-import { getLights, removeLight, setLight } from "../../utils/api";
+import {
+    getLights,
+    getPins,
+    getPWMControllers,
+    removeLight,
+    setLight,
+} from "../../utils/api";
 
 const Lights = () => {
     const { enqueueSnackbar } = useSnackbar();
 
     const [lights, setLights] = useState([] as LightDevice[]);
+
+    const [pwmControllers, setPwmControllers] = useState([] as string[]);
+    const [pinDict, setPinDict] = useState([] as {});
+
+    const [hover, setHover] = useState(false);
+
+    useEffect(() => {
+        getPWMControllers().then((controllers) =>
+            setPwmControllers(controllers)
+        );
+    }, []);
+
+    useEffect(() => {
+        let pinDictTemp = {};
+        pwmControllers.forEach((name, index) => {
+            getPins(index + "").then((pins) => (pinDictTemp[name] = pins));
+        });
+        setPinDict(pinDictTemp);
+    }, [pwmControllers]);
 
     const deleteLight = (index: number) => {
         removeLight(index);
@@ -80,6 +105,8 @@ const Lights = () => {
                     height: "115px",
                     width: "115px",
                 }}
+                onMouseOver={() => setHover(true)}
+                onMouseLeave={() => setHover(false)}
                 onFocus={() => {}}
             >
                 <Tooltip

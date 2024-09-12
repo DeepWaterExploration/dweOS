@@ -133,12 +133,6 @@ export const StreamOptions: React.FC = () => {
      * Update the stream
      */
     const streamUpdated = () => {
-        // device.stream.configured = true;
-        // device.stream.width = resolution.width;
-        // device.stream.width = resolution.height;
-        // device.stream.interval.numerator = 1;
-        // device.stream.interval.denominator = fps;
-
         setStreamUpdatedTimeout(
             setTimeout(() => {
                 // unconfigureStream(props.device.bus_info);
@@ -149,7 +143,7 @@ export const StreamOptions: React.FC = () => {
                         height: device.stream.height,
                         interval: {
                             numerator: 1,
-                            denominator: fps,
+                            denominator: device.stream.interval.denominator,
                         },
                     },
                     device.stream.encode_type,
@@ -322,9 +316,10 @@ export const StreamOptions: React.FC = () => {
                                 defaultValue={
                                     device.stream.interval.denominator
                                 }
-                                onChange={(selected) =>
-                                    setFps(parseInt(selected.target.value))
-                                }
+                                onChange={(selected) => {
+                                    device.stream.interval.denominator =
+                                        parseInt(selected.target.value);
+                                }}
                                 size='small'
                             >
                                 {intervals.map((interval) => (

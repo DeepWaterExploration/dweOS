@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # install python
-sudo apt-get install python3 -y
+sudo apt-get install python3 python3-venv -y
 
 # install golang
 sudo apt-get install golang -y

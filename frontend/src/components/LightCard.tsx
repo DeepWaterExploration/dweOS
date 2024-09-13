@@ -36,7 +36,7 @@ const LightCard: React.FC<LightCardProps> = (props) => {
     }, []);
 
     useEffect(() => {
-        getPins(light.controller_index + "").then((pins) => setPins(pins));
+        getPins(light.controller_index).then((pins) => setPins(pins));
     }, [light.controller_index, pwmControllers]);
 
     return (
@@ -123,7 +123,6 @@ const LightCard: React.FC<LightCardProps> = (props) => {
                         position: "absolute",
                         top: 5,
                         right: 15,
-                        color: "white",
                     }}
                     edge='end'
                     aria-label='icon'

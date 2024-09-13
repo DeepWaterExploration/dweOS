@@ -57,11 +57,11 @@ export async function getPWMControllers(): Promise<string[]> {
     return await response.json();
 }
 
-export async function getPins(controller_index: string): Promise<number[]> {
+export async function getPins(controller_index: number): Promise<number[]> {
     const url = `${DEVICE_API_URL}/lights/pins`;
     const response = await getRequest(
         url,
-        new URLSearchParams({ controller_index })
+        new URLSearchParams({ controller_index: controller_index + "" })
     );
     return await response.json();
 }

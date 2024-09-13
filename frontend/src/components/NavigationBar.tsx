@@ -2,6 +2,7 @@ import Brightness4Icon from "@mui/icons-material/Brightness4";
 import Brightness7Icon from "@mui/icons-material/Brightness7";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import WarningIcon from "@mui/icons-material/Warning";
 import MenuIcon from "@mui/icons-material/Menu";
 import PowerSettingsNewIcon from "@mui/icons-material/PowerSettingsNew";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
@@ -16,6 +17,7 @@ import {
     Menu,
     MenuItem,
     Toolbar,
+    Tooltip,
 } from "@mui/material";
 // eslint-disable-next-line import/named
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from "@mui/material/AppBar";
@@ -230,8 +232,14 @@ const NavigationBar = () => {
                                     padding: "auto",
                                     justifyContent: "center",
                                 }}
-                                primary={"DWE OS Pre-Alpha"}
-                                secondary={"Version: 0.2.7"}
+                                primary={
+                                    <div>
+                                        <Tooltip title='This is alpha software, there may be unfinished features or bugs.'>
+                                            <span>DWE OS Pre-Alpha</span>
+                                        </Tooltip>
+                                    </div>
+                                }
+                                secondary={"Version: 0.1.2"}
                             />
                             <IconButton onClick={toggleDrawer}>
                                 {theme.direction === "rtl" ? (
@@ -285,7 +293,7 @@ const NavigationBar = () => {
                                         />
                                     </ListItemButton>
                                 </ListItem>
-                                <ListItem
+                                {/* <ListItem
                                     disablePadding
                                     sx={{ display: "block" }}
                                 >
@@ -313,7 +321,7 @@ const NavigationBar = () => {
                                             sx={{ opacity: open ? 1 : 0 }}
                                         />
                                     </ListItemButton>
-                                </ListItem>
+                                </ListItem> */}
                             </React.Fragment>
                         </List>
                     </Drawer>

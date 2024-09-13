@@ -46,6 +46,10 @@ class LightManager:
         return controllers
     
     def get_pins(self, controller_index: int):
+        # Make sure the index is not out of range
+        if controller_index >= len(self.pwm_controllers):
+            logging.warning(f'Attempted to get the pins of controller index: {controller_index}, which does not exist.')
+            return []
         return self.pwm_controllers[controller_index].get_pins()
 
     def cleanup(self):

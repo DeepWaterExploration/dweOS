@@ -15,6 +15,6 @@ def create_pwm_controllers():
         from .rpi_pwm_hardware import RPiHardwarePWMController
         # pwm_controllers.append(RPiSoftwarePWMController())
         pwm_controllers.append(RPiHardwarePWMController())
-    else:
-        pwm_controllers.append(FakePWMController())
+    # else:
+    #     pwm_controllers.append(FakePWMController())
     return pwm_controllers

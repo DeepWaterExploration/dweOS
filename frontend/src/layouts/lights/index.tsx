@@ -23,23 +23,12 @@ const Lights = () => {
     const [lights, setLights] = useState([] as LightDevice[]);
 
     const [pwmControllers, setPwmControllers] = useState([] as string[]);
-    const [pinDict, setPinDict] = useState([] as {});
-
-    const [hover, setHover] = useState(false);
 
     useEffect(() => {
         getPWMControllers().then((controllers) =>
             setPwmControllers(controllers)
         );
     }, []);
-
-    useEffect(() => {
-        let pinDictTemp = {};
-        pwmControllers.forEach((name, index) => {
-            getPins(index + "").then((pins) => (pinDictTemp[name] = pins));
-        });
-        setPinDict(pinDictTemp);
-    }, [pwmControllers]);
 
     const deleteLight = (index: number) => {
         removeLight(index);
@@ -62,10 +51,6 @@ const Lights = () => {
             setLights(Object.values(lights));
         });
     }, []);
-
-    useEffect(() => {
-        // console.log(lights.length);
-    }, [lights]);
 
     return (
         <>
@@ -105,8 +90,6 @@ const Lights = () => {
                     height: "115px",
                     width: "115px",
                 }}
-                onMouseOver={() => setHover(true)}
-                onMouseLeave={() => setHover(false)}
                 onFocus={() => {}}
             >
                 <Tooltip
@@ -121,12 +104,22 @@ const Lights = () => {
                         color={"info"}
                         aria-label={"Add Light Card Button"}
                         onClick={() => {
-                            addLight({
-                                pin: 4,
-                                intensity: 1,
-                                controller_index: 0,
-                                nickname: "",
-                            });
+                            // Check if there are no controllers
+                            if (pwmControllers.length === 0) {
+                                enqueueSnackbar(
+                                    "No supported pwm devices connected.",
+                                    { variant: "warning" }
+                                );
+                            } else {
+                                getPins(0).then((pins) => {
+                                    addLight({
+                                        pin: pins[0], // get the first pin of the first controller
+                                        intensity: 1,
+                                        controller_index: 0,
+                                        nickname: "",
+                                    });
+                                });
+                            }
                         }}
                     >
                         <AddIcon />

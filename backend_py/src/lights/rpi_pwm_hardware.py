@@ -6,18 +6,20 @@ import logging
 class RPiHardwarePWMController(PWMController):
     NAME = 'Hardware PWM Controller'
 
-    PWM_PINS = {
-        18: 0,
-        19: 1
-    }
-
-    def __init__(self) -> None:
+    def __init__(self, chip=0, pins=None) -> None:
         super().__init__()
+
+        if pins is None:
+            pins = {
+                18: 0,
+                19: 1
+            }
+        self.PWM_PINS = pins
 
         self.pwm_objects: Dict[int, HardwarePWM] = {}
 
         for pin in self.PWM_PINS.keys():
-            self.pwm_objects[pin] = HardwarePWM(pwm_channel=self.PWM_PINS[pin], hz=7812.5, chip=0)
+            self.pwm_objects[pin] = HardwarePWM(pwm_channel=self.PWM_PINS[pin], hz=7812.5, chip=chip)
             self.pwm_objects[pin].start(0)
 
     def is_pwm_pin(self, pin: int) -> bool:
@@ -36,4 +38,4 @@ class RPiHardwarePWMController(PWMController):
             pwm.stop()
 
     def get_pins(self):
-        return [18, 19]
+        return self.PWM_PINS.keys()

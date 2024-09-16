@@ -9,6 +9,10 @@ class PWMController(ABC):
         logging.info(f'Setting light intensity: {pin} to {intensity}')
 
     @abstractmethod
+    def disable_pin(self, pin: int):
+        pass
+
+    @abstractmethod
     def is_pwm_pin(self, pin: int) -> bool:
         pass
 

@@ -2,6 +2,7 @@ import {
     Device,
     LightDevice,
     Log,
+    PWMController,
     PortInfo,
     ReleaseList,
     StreamEndpoint,
@@ -51,29 +52,14 @@ export async function getLights(): Promise<LightDevice[]> {
     return await response.json();
 }
 
-export async function getPWMControllers(): Promise<string[]> {
-    const url = `${DEVICE_API_URL}/lights/controllers`;
-    const response = await getRequest(url);
+export async function setIntensity(index: number, intensity: number) {
+    const url = `${DEVICE_API_URL}/lights/set_intensity`;
+    const response = await postRequest(url, { index, intensity });
     return await response.json();
 }
 
-export async function getPins(controller_index: number): Promise<number[]> {
-    const url = `${DEVICE_API_URL}/lights/pins`;
-    const response = await getRequest(
-        url,
-        new URLSearchParams({ controller_index: controller_index + "" })
-    );
-    return await response.json();
-}
-
-export async function setLight(index: number, light: LightDevice) {
-    const url = `${DEVICE_API_URL}/lights/set_light`;
-    const response = await postRequest(url, { index, light });
-    return await response.json();
-}
-
-export async function removeLight(index: number) {
-    const url = `${DEVICE_API_URL}/lights/remove_light`;
+export async function disablePin(index: number) {
+    const url = `${DEVICE_API_URL}/lights/disable_pin`;
     const response = await postRequest(url, { index });
     return await response.json();
 }

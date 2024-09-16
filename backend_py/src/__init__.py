@@ -125,7 +125,7 @@ def main():
         bus_info = StreamInfoSchema(only=['bus_info']).load(request.get_json())['bus_info']
         dev = device_manager._find_device_with_bus_info(bus_info)
         if not dev:
-            logging.warn(f'Unable to find device {bus_info}')
+            logging.warning(f'Unable to find device {bus_info}')
             return jsonify({})
         dev.start_stream()
         return jsonify({})
@@ -135,26 +135,20 @@ def main():
     def get_lights():
         return jsonify(light_manager.get_lights())
     
-    @app.route('/lights/pins')
-    def get_pins():
-        controller_index = int(request.args.get('controller_index'))
-        return jsonify(light_manager.get_pins(controller_index))
-    
     @app.route('/lights/controllers')
     def get_pwm_controllers():
         return jsonify(light_manager.get_pwm_controllers())
 
-    @app.route('/lights/set_light', methods=['POST'])
-    def set_light():
+    @app.route('/lights/set_intensity', methods=['POST'])
+    def set_intensity():
         req = request.get_json()
-        light = LightSchema().load(req['light'])
-        light_manager.set_light(req['index'], Light(light['intensity'], light['pin'], light['controller_index'], light['nickname']))
+        light_manager.set_intensity(req['index'], req['intensity'])
         return jsonify({})
     
-    @app.route('/lights/remove_light', methods=['POST'])
-    def remove_light():
+    @app.route('/lights/disable_pin', methods=['POST'])
+    def disable_light():
         req = request.get_json()
-        light_manager.remove_light(req['index'])
+        light_manager.disable_light(req['controller_index'], req['pin'])
         return jsonify({})
 
     http_server = WSGIServer(('0.0.0.0', 8080), app, log=None)

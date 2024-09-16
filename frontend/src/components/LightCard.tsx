@@ -17,84 +17,36 @@ import { styles } from "../style";
 import { LightDevice } from "../types/types";
 import LightContext from "../contexts/LightContext";
 import CloseIcon from "@mui/icons-material/Close";
-import { getPins, getPWMControllers } from "../utils/api";
 
-interface LightCardProps {
-    onClose: () => void;
-}
-
-const LightCard: React.FC<LightCardProps> = (props) => {
+const LightCard: React.FC = () => {
     const { light } = useContext(LightContext) as { light: LightDevice };
-
-    const [pwmControllers, setPwmControllers] = useState([] as string[]);
-    const [pins, setPins] = useState([] as number[]);
-
-    useEffect(() => {
-        getPWMControllers().then((controllers) =>
-            setPwmControllers(controllers)
-        );
-    }, []);
-
-    useEffect(() => {
-        getPins(light.controller_index).then((pins) => setPins(pins));
-    }, [light.controller_index, pwmControllers]);
 
     return (
         <Card sx={{ ...styles.card, maxWidth: 400, position: "relative" }}>
             <CardHeader
                 title={"Light"}
                 subheader={
-                    <TextField
-                        sx={{ width: "100%", top: 10 }}
-                        select
-                        label='Controller'
-                        variant='standard'
-                        defaultValue={0}
-                        size='small'
-                    >
-                        {pwmControllers.map((name, index) => (
-                            <MenuItem value={index}>{name}</MenuItem>
-                        ))}
-                    </TextField>
+                    <>
+                        <span>{light.controller_name}</span>
+                        <LineBreak />
+                        <span>Pin: {light.pin}</span>
+                        <LineBreak />
+                        <TextField
+                            fullWidth
+                            sx={{}}
+                            onChange={(e) => {
+                                light.nickname = e.target.value;
+                            }}
+                            helperText='Device Nickname'
+                            placeholder='Device Nickname'
+                            variant='standard'
+                            defaultValue={light.nickname || ""}
+                        />
+                    </>
                 }
             />
             <CardContent>
                 <div style={{ paddingBottom: 20, width: "100%" }}>
-                    <LineBreak />
-                    <Grid container spacing={1} width={"100%"}>
-                        <Grid item xs={6}>
-                            <TextField
-                                fullWidth
-                                sx={{}}
-                                onChange={(e) => {
-                                    light.nickname = e.target.value;
-                                }}
-                                helperText='Device Nickname'
-                                placeholder='Device Nickname'
-                                variant='standard'
-                                defaultValue={light.nickname || ""}
-                            />
-                        </Grid>
-                        <Grid item xs={6}>
-                            <TextField
-                                fullWidth
-                                sx={{}}
-                                label='Pin'
-                                variant='outlined'
-                                size='small'
-                                defaultValue={light.pin}
-                                onChange={(e) => {
-                                    light.pin = parseInt(e.target.value);
-                                }}
-                                select
-                                inputProps={{ min: 1, max: 65535 }} // Specify minimum and maximum values
-                            >
-                                {pins.map((pin, index) => (
-                                    <MenuItem value={pin}>{pin}</MenuItem>
-                                ))}
-                            </TextField>
-                        </Grid>
-                    </Grid>
                     <div style={{ marginTop: 10 }}>
                         <span
                             style={{
@@ -126,9 +78,6 @@ const LightCard: React.FC<LightCardProps> = (props) => {
                     }}
                     edge='end'
                     aria-label='icon'
-                    onClick={() => {
-                        props.onClose();
-                    }}
                 >
                     <CloseIcon />
                 </IconButton>

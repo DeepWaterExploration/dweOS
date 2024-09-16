@@ -1,5 +1,5 @@
 import logging
-# from .fake_pwm import FakePWMController
+from .fake_pwm import FakePWMController
 
 def get_rpi_model():
     try:
@@ -30,6 +30,6 @@ def create_pwm_controllers():
             }))
         else:
             pwm_controllers.append(RPiHardwarePWMController())
-    # else:
-    #     pwm_controllers.append(FakePWMController())
+    else:
+        pwm_controllers.append(FakePWMController())
     return pwm_controllers

@@ -18,5 +18,8 @@ class FakePWMController(PWMController):
     def cleanup(self):
         pass
 
+    def disable_pin(self, pin: int):
+        pass
+
     def get_pins(self):
         return [1, 2, 3, 4]

@@ -24,6 +24,10 @@ class RPiHardwarePWMController(PWMController):
 
     def is_pwm_pin(self, pin: int) -> bool:
         return pin in self.PWM_PINS.keys()
+    
+    def disable_pin(self, pin: int):
+        # FIXME: Not implemented
+        pass
 
     def set_intensity(self, pin: int, intensity: float):
         if not self.is_pwm_pin(pin):

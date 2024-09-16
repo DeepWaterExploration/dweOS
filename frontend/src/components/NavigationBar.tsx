@@ -239,7 +239,7 @@ const NavigationBar = () => {
                                         </Tooltip>
                                     </div>
                                 }
-                                secondary={"Version: 0.1.4"}
+                                secondary={"Version: 0.1.5"}
                             />
                             <IconButton onClick={toggleDrawer}>
                                 {theme.direction === "rtl" ? (

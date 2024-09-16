@@ -28,17 +28,29 @@ import logging
 
 
 def main():
+    # Create the flask application
     app = Flask(__name__)
     CORS(app)
+    # avoid sorting the keys to keep the way we sort it in the backend
     app.json.sort_keys = False
 
+    # Create the managers
     settings_manager = SettingsManager()
     broadcast_server = BroadcastServer()
     device_manager = DeviceManager(
         settings_manager=settings_manager, broadcast_server=broadcast_server)
-    
     light_manager = LightManager(create_pwm_controllers())
 
+    '''
+    Logs API
+    '''
+    @app.route('/logs', methods=['GET'])
+    def get_logs():
+        return jsonify(device_manager.get_logs())
+
+    '''
+    Device API
+    '''
     @app.route('/devices', methods=['GET'])
     def get_devices():
         return jsonify(device_manager.get_devices())
@@ -73,10 +85,6 @@ def main():
         device_manager.uncofigure_device_stream(bus_info)
 
         return jsonify({})
-    
-    @app.route('/logs', methods=['GET'])
-    def get_logs():
-        return jsonify(device_manager.get_logs())
 
     @app.route('/devices/set_nickname', methods=['POST'])
     def set_nickname():
@@ -130,7 +138,9 @@ def main():
         dev.start_stream()
         return jsonify({})
     
-    '''Lights'''
+    '''
+    Lights API
+    '''
     @app.route('/lights')
     def get_lights():
         return jsonify(light_manager.get_lights())
@@ -151,6 +161,7 @@ def main():
         light_manager.disable_light(req['controller_index'], req['pin'])
         return jsonify({})
 
+    # create the server and run everything
     http_server = WSGIServer(('0.0.0.0', 8080), app, log=None)
     device_manager.start_monitoring()
 

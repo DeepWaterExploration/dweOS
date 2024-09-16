@@ -36,10 +36,16 @@ class DeviceManager(events.EventEmitter):
         logging.info('Log handler started...')
 
     def start_monitoring(self):
+        '''
+        Begin monitoring for devices in the background
+        '''
         self._is_monitoring = True
         self._thread.start()
 
     def stop_monitoring(self):
+        '''
+        Kill the background monitor thread and stop all streams
+        '''
         self._is_monitoring = False
         self._thread.join()
 
@@ -47,9 +53,15 @@ class DeviceManager(events.EventEmitter):
             device.stream.stop()
 
     def get_logs(self):
+        '''
+        Get the list of logs
+        '''
         return self.log_handler.logs
 
     def create_device(self, device_info: DeviceInfo) -> Device | None:
+        '''
+        Create a new device based on enumerated device info
+        '''
         (_, device_type) = lookup_pid_vid(device_info.vid, device_info.pid)
 
         device = None
@@ -73,6 +85,9 @@ class DeviceManager(events.EventEmitter):
         return device
 
     def _device_changed_event(self, bus_info):
+        '''
+        Unused
+        '''
         logging.info(f'Changed: {bus_info}')
 
         self.broadcast_server.broadcast(Message('device_changed', DeviceSchema().dump(self._find_device_with_bus_info(bus_info))))
@@ -191,6 +206,9 @@ class DeviceManager(events.EventEmitter):
         return True
     
     def set_leader(self, leader_bus_info: str, follower_bus_info: str) -> bool:
+        '''
+        Set the leader_bus_info as the leader for the follower_bus_info device
+        '''
         follower_device = self._find_device_with_bus_info(follower_bus_info)
         leader_device = self._find_device_with_bus_info(leader_bus_info)
         if not leader_device or not follower_device:
@@ -205,6 +223,9 @@ class DeviceManager(events.EventEmitter):
         return True
     
     def remove_leader(self, bus_info: str) -> bool:
+        '''
+        Remove leader from follower
+        '''
         follower_device = self._find_device_with_bus_info(bus_info)
         if not follower_device:
             logging.warn('Unable to find follower device.')
@@ -213,97 +234,87 @@ class DeviceManager(events.EventEmitter):
             cast(SHDDevice, follower_device).remove_leader()
             self.settings_manager.save_device(follower_device)
         else:
-            logging.warn('Attempting to remove leader from a non follower device type.')
+            logging.warning('Attempting to remove leader from a non follower device type.')
             return False
         return True
 
     def _find_device_with_bus_info(self, bus_info: str) -> Device | None:
+        '''
+        Utility to find a device with bus info
+        '''
         device = find_device_with_bus_info(self.devices, bus_info)
         if not device:
             logging.error(f'Device not found: {bus_info}')
         return device
-
-    def _monitor(self):
-        # monitor devices for changes
+    
+    def _get_devices(self, old_devices: List[DeviceInfo]):
+        devices_info = list_devices()
+        # enumerate the devices
         devices_info = list_devices()
 
-        for device_info in devices_info:
+        # find the new devices
+        new_devices = list_diff(devices_info, old_devices)
+
+        # find the removed devices
+        removed_devices = list_diff(old_devices, devices_info)
+
+        # add the new devices
+        for device_info in new_devices:
             device = None
             try:
                 device = self.create_device(device_info)
                 if not device:
                     continue
             except Exception as e:
-                logging.warn(e)
+                logging.warning(e)
                 continue
             # append the device to the device list
             self.devices.append(device)
             # load the settings
             self.settings_manager.load_device(device)
-        
-        # Initialize the leader follower pairs
+
+            # Output device to log (after loading settings)
+            logging.info(f'Device Added: {device_info.bus_info}')
+
+            self.broadcast_server.broadcast(Message(
+                'device_added', DeviceSchema().dump(device)
+            ))
+
+        # make sure to load the leader followers in case there are new ones to check
         self.settings_manager.load_leader_followers(self.devices)
 
-        old_device_list = devices_info
+        # remove the old devices
+        for device_info in removed_devices:
+            for device in self.devices:
+                if device.device_info == device_info:
+                    device.stream_runner.stop()
+                    if device.device_type == DeviceType.STELLARHD_LEADER:
+                        for follower in self.devices:
+                            if follower.device_type == DeviceType.STELLARHD_FOLLOWER:
+                                # remove the leader if its leader is the removed device
+                                # FIXME: This could be cleaner if the leader has a list of followers instead, which it does sorta, but not quite
+                                follower_casted = cast(SHDDevice, follower)
+                                if follower_casted.leader == device.bus_info:
+                                    follower_casted.remove_leader()
+
+                    self.devices.remove(device)
+                    logging.info(f'Device Removed: {device_info.bus_info}')
+
+                    self.broadcast_server.broadcast(Message('device_removed', {
+                        'bus_info': device_info.bus_info
+                    }))
+
+        return devices_info
+
+    def _monitor(self):
+        '''
+        Internal code to monitor devices for changes
+        '''
+        devices_info = self._get_devices([])
 
         while self._is_monitoring:
-            devices_info = list_devices()
-
-            # find the new devices
-            new_devices = list_diff(devices_info, old_device_list)
-
-            # find the removed devices
-            removed_devices = list_diff(old_device_list, devices_info)
-
-            # add the new devices
-            for device_info in new_devices:
-                device = None
-                try:
-                    device = self.create_device(device_info)
-                    if not device:
-                        continue
-                except Exception as e:
-                    logging.warning(e)
-                    continue
-                # append the device to the device list
-                self.devices.append(device)
-                # load the settings
-                self.settings_manager.load_device(device)
-                # add the device info to the device list
-                old_device_list.append(device_info)
-
-                # Output device to log (after loading settings)
-                logging.info(f'Device Added: {device_info.bus_info}')
-
-                self.broadcast_server.broadcast(Message(
-                    'device_added', DeviceSchema().dump(device)
-                ))
-
-            # make sure to load the leader followers in case there are new ones to check
-            self.settings_manager.load_leader_followers(self.devices)
-
-            # remove the old devices
-            for device_info in removed_devices:
-                for device in self.devices:
-                    if device.device_info == device_info:
-                        device.stream_runner.stop()
-                        if device.device_type == DeviceType.STELLARHD_LEADER:
-                            for follower in self.devices:
-                                if follower.device_type == DeviceType.STELLARHD_FOLLOWER:
-                                    # remove the leader if its leader is the removed device
-                                    # FIXME: This could be cleaner if the leader has a list of followers instead, which it does sorta, but not quite
-                                    follower_casted = cast(SHDDevice, follower)
-                                    if follower_casted.leader == device.bus_info:
-                                        follower_casted.remove_leader()
-
-                        self.devices.remove(device)
-                        # remove the device info from the old device list
-                        old_device_list.remove(device_info)
-                        logging.info(f'Device Removed: {device_info.bus_info}')
-
-                        self.broadcast_server.broadcast(Message('device_removed', {
-                            'bus_info': device_info.bus_info
-                        }))
-
             # do not overload the bus
             time.sleep(0.1)
+
+            # get the list of devices and update the internal array
+            devices_info = self._get_devices(devices_info)

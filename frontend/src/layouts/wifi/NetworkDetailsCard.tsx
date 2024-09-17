@@ -1,5 +1,6 @@
 import { Card, CardHeader, Typography } from "@mui/material";
 import { WifiStatus } from "./types";
+import React from "react";
 
 export interface NetworkDetailsCardProps {
     ip_address: string;

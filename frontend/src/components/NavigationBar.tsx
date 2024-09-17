@@ -34,6 +34,8 @@ import NavigationItems from "../utils/getNavigationItems";
 import NavigationRoutes from "../utils/getRoutes";
 import dweTheme from "../utils/themes";
 
+import { VERSION } from "../../version.json";
+
 const drawerWidth = 240;
 
 const openedMixin = (theme: Theme): CSSObject => ({
@@ -239,7 +241,7 @@ const NavigationBar = () => {
                                         </Tooltip>
                                     </div>
                                 }
-                                secondary={"Version: 0.1.5"}
+                                secondary={`Version: ${VERSION}`}
                             />
                             <IconButton onClick={toggleDrawer}>
                                 {theme.direction === "rtl" ? (

@@ -25,7 +25,10 @@ echo "Successfully packaged system backend"
 
 echo "Packaging frontend"
 
+# Update the version string for packaging
+python3 update_versioning.py
 cd frontend
+# Build the frontend
 npm run build
 
 cd ..

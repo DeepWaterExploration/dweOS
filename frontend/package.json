@@ -2,7 +2,7 @@
     "name": "@deepwaterexploration/dwe-controls",
     "version": "2.2.4",
     "description": "Web Based UVC Control Driver for the DeepWater Exploration exploreHD and HDCam",
-    "main": "lib/main.tsx",
+    "main": "src/main.tsx",
     "keywords": [
         "linux",
         "explorehd",
@@ -15,7 +15,7 @@
     "homepage": "https://github.com/DeepwaterExploration/DWE_OS#readme",
     "scripts": {
         "dev": "npx vite --host",
-        "build": "chmod +x ./build_frontend.sh && ./build_frontend.sh",
+        "build": "npx tsc --build && npx vite build",
         "preview": "vite preview --host",
         "format": "npx prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",
         "lint": "npx eslint \"src/**/*.{js,jsx,ts,tsx}\" --report-unused-disable-directives --max-warnings 0",
@@ -77,7 +77,6 @@
         "vitest": "^2.0.1"
     },
     "contributors": [
-        "Brandon Stevens <brandon@dwe.ai> (https://github.com/brandonhs)",
-        "Miguel Villa Floran <miguel@dwe.ai> (https://github.com/Kaweees)"
+        "Brandon Stevens <brandon@dwe.ai> (https://github.com/brandonhs)"
     ]
 }

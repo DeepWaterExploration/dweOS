@@ -1,10 +1,11 @@
 import requests
 import json
-import re
+import pathlib
 
 # Github repo information
+SCRIPT_DIR = pathlib.Path(__file__).parent.resolve()
 GITHUB_API_URL = "https://api.github.com/repos/DeepWaterExploration/DWE_OS_2/tags"
-VERSION_FILE_PATH = "frontend/version.json"
+VERSION_FILE_PATH = f"{SCRIPT_DIR}/frontend/version.json"
 
 def get_latest_tag():
     # Fetch the latest tags from GitHub API
@@ -17,7 +18,7 @@ def get_latest_tag():
     return None
 
 def update_version_json(new_version):
-    data = {'version': new_version}
+    data = {'VERSION': new_version}
 
     # Write the new version back to the json file
     with open(VERSION_FILE_PATH, 'w') as f:

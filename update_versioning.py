@@ -17,12 +17,7 @@ def get_latest_tag():
     return None
 
 def update_version_json(new_version):
-    # Load the current version.json file
-    with open(VERSION_FILE_PATH, 'r') as f:
-        data = json.load(f)
-
-    # Update the version string
-    data['version'] = new_version
+    data = {'version': new_version}
 
     # Write the new version back to the json file
     with open(VERSION_FILE_PATH, 'w') as f:

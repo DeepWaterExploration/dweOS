@@ -9,7 +9,12 @@ import {
     StreamEndpoint,
     StreamFormat,
 } from "../../types/types";
-import { getDevices, DEVICE_API_WS, configureStream } from "../../utils/api";
+import {
+    getDevices,
+    DEVICE_API_WS,
+    configureStream,
+    getNextPort,
+} from "../../utils/api";
 import { deserializeMessage, findDeviceWithBusInfo } from "../../utils/utils";
 
 import DevicesContext from "../../contexts/DevicesContext";
@@ -201,6 +206,7 @@ const DevicesContainer = () => {
                         if (index !== -1) {
                             devices.splice(index, 1, device); // Replace the existing device
                         }
+                        console.log(device.stream.endpoints);
                     });
 
                     return (

@@ -121,24 +121,6 @@ class DeviceManager(events.EventEmitter):
         self.settings_manager.save_device(device)
         return True
 
-    def get_next_port(self, host: str) -> int:
-        '''
-        Get the next available port
-        '''
-        ports = []
-        for device in self.devices:
-            if device.stream:
-                for endpoint in device.stream.endpoints:
-                    if endpoint.host == host:
-                        ports.append(endpoint.port)
-
-        if len(ports) == 0:
-            return 5600  # base port
-
-        ports.sort(reverse=True)
-
-        return ports[0] + 1
-
     def configure_device_stream(self, bus_info: str, stream_info: StreamInfoSchema) -> bool:
         '''
         Configure a device's stream with the given stream info

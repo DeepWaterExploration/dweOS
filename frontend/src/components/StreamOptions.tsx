@@ -61,6 +61,7 @@ export const StreamOptions: React.FC = () => {
         enableStreamUpdate,
         removeLeaderUpdate,
         setFollowerUpdate,
+        nextPort,
     } = useContext(DeviceContext) as {
         device: Device;
         devices: Device[];
@@ -70,6 +71,7 @@ export const StreamOptions: React.FC = () => {
             leader_bus_info: string,
             follower_bus_info: string | undefined
         ) => void;
+        nextPort: number;
     };
 
     const [host, setHost] = useState("192.168.2.1");
@@ -83,6 +85,10 @@ export const StreamOptions: React.FC = () => {
 
     const [streamUpdatedTimeout, setStreamUpdatedTimeout] =
         useState<NodeJS.Timeout>();
+
+    useEffect(() => {
+        setPort(nextPort);
+    }, [nextPort]);
 
     // should make more things like this
     // subscribe(device, () => {

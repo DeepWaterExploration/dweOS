@@ -64,10 +64,6 @@ def main():
 
         return jsonify({})
 
-    @app.route('/devices/get_next_port', methods=['GET'])
-    def get_next_port():
-        return jsonify({'port': device_manager.get_next_port(request.args.get('host'))})
-
     @app.route('/devices/configure_stream', methods=['POST'])
     def configure_stream():
         stream_info = StreamInfoSchema().load(request.get_json())

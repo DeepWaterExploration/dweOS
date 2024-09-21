@@ -2,14 +2,8 @@ import Grid from "@mui/material/Grid";
 import React, { useContext, useEffect, useState } from "react";
 
 import DeviceCard from "../../components/DeviceCard";
-import {
-    Device,
-    encodeType,
-    IntercomponentMessage,
-    StreamEndpoint,
-    StreamFormat,
-} from "../../types/types";
-import { getDevices, DEVICE_API_WS, configureStream } from "../../utils/api";
+import { Device } from "../../types/types";
+import { getDevices, DEVICE_API_WS } from "../../utils/api";
 import { deserializeMessage, findDeviceWithBusInfo } from "../../utils/utils";
 
 import DevicesContext from "../../contexts/DevicesContext";
@@ -48,6 +42,8 @@ const DevicesContainer = () => {
         devices: Device[];
         setDevices: React.Dispatch<React.SetStateAction<Device[]>>;
     };
+
+    const [nextPort, setNextPort] = useState(5600);
 
     const addDevices = (devices: Device[]) => {
         setDevices((prevDevices: Device[]) => {
@@ -133,6 +129,9 @@ const DevicesContainer = () => {
             }
         };
 
+        // Initialie the next port
+        setNextPort(getNextPort());
+
         websocket.addEventListener("message", socketCallback);
         return () => websocket.removeEventListener("message", socketCallback);
     }, []);
@@ -165,6 +164,17 @@ const DevicesContainer = () => {
         let leader = devices[findDeviceWithBusInfo(devices, leader_bus_info)];
         leader.follower = follower_bus_info;
         updateDevice(leader);
+    };
+
+    const getNextPort = () => {
+        let allPorts: number[] = [];
+        devices.forEach((device) => {
+            device.stream.endpoints.forEach((endpoint) =>
+                allPorts.push(endpoint.port)
+            );
+        });
+        console.log(allPorts);
+        return allPorts.length > 0 ? allPorts.sort().reverse()[0] + 1 : 5600; // return the highest port
     };
 
     return (
@@ -201,6 +211,11 @@ const DevicesContainer = () => {
                         if (index !== -1) {
                             devices.splice(index, 1, device); // Replace the existing device
                         }
+
+                        // set the next port
+                        let port = getNextPort();
+                        console.log(port);
+                        setNextPort(port);
                     });
 
                     return (
@@ -211,6 +226,7 @@ const DevicesContainer = () => {
                                 enableStreamUpdate,
                                 removeLeaderUpdate,
                                 setFollowerUpdate,
+                                nextPort,
                             }}
                             key={device.bus_info}
                         >

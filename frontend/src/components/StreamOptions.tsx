@@ -13,34 +13,22 @@ import ListItemAvatar from "@mui/material/ListItemAvatar";
 import Avatar from "@mui/material/Avatar";
 import ListItemText from "@mui/material/ListItemText";
 import Button from "@mui/material/Button";
-import PopupState from "material-ui-popup-state";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import DeleteIcon from "@mui/icons-material/Delete";
 import LinkedCameraIcon from "@mui/icons-material/LinkedCamera";
 import AddIcon from "@mui/icons-material/Add";
 import { useSnackbar } from "notistack";
 import React, { useState, useEffect, useContext } from "react";
-import { Stream } from "stream";
 import { styles } from "../style";
-import { Device, StreamEndpoint, encodeType } from "../types/types";
+import { Device, encodeType } from "../types/types";
 import {
-    getNextPort,
-    getLeaders,
     unconfigureStream,
     configureStream,
-    removeLeader,
-    setLeader,
     restartStream,
 } from "../utils/api";
 import { DeviceSwitch } from "./DeviceSwitch";
-import { findDeviceWithBusInfo, useDidMountEffect } from "../utils/utils";
 import { DeviceLeader } from "./DeviceLeader";
-import DevicesContext from "../contexts/DevicesContext";
-import {
-    IntercomponentMessage,
-    IntercomponentMessageType,
-} from "../types/types";
-import { proxy, subscribe } from "valtio";
+import { subscribe } from "valtio";
 import DeviceContext from "../contexts/DeviceContext";
 
 /*
@@ -73,6 +61,7 @@ export const StreamOptions: React.FC = () => {
         enableStreamUpdate,
         removeLeaderUpdate,
         setFollowerUpdate,
+        nextPort,
     } = useContext(DeviceContext) as {
         device: Device;
         devices: Device[];
@@ -82,6 +71,7 @@ export const StreamOptions: React.FC = () => {
             leader_bus_info: string,
             follower_bus_info: string | undefined
         ) => void;
+        nextPort: number;
     };
 
     const [host, setHost] = useState("192.168.2.1");
@@ -95,6 +85,10 @@ export const StreamOptions: React.FC = () => {
 
     const [streamUpdatedTimeout, setStreamUpdatedTimeout] =
         useState<NodeJS.Timeout>();
+
+    useEffect(() => {
+        setPort(nextPort);
+    }, [nextPort]);
 
     // should make more things like this
     // subscribe(device, () => {
@@ -148,9 +142,7 @@ export const StreamOptions: React.FC = () => {
                     },
                     device.stream.encode_type,
                     device.stream.endpoints
-                ).then((value: Stream | undefined) => {
-                    getNextPort(host).then(setPort);
-                });
+                );
             }, 250)
         );
     };

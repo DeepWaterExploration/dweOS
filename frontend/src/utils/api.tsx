@@ -183,14 +183,3 @@ export async function getReleases(): Promise<ReleaseList> {
     const response = await getRequest(url);
     return await response.json();
 }
-
-export async function getNextPort(host: string): Promise<number> {
-    const url = `${DEVICE_API_URL}/devices/get_next_port`;
-    const response = await getRequest(
-        url,
-        new URLSearchParams({
-            host,
-        })
-    );
-    return ((await response.json()) as PortInfo).port;
-}

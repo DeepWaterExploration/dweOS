@@ -5,7 +5,6 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import WarningIcon from "@mui/icons-material/Warning";
 import MenuIcon from "@mui/icons-material/Menu";
 import PowerSettingsNewIcon from "@mui/icons-material/PowerSettingsNew";
-import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import {
     Box,
     IconButton,

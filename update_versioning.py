@@ -33,7 +33,10 @@ def update_version_json(new_version):
 
     # Write the new version back to the json file
     with open(VERSION_FILE_PATH, 'w') as f:
-        json.dump(data, f, indent=4)
+        # need newline at end of file
+        data_str = json.dumps(data, indent=4) + '\n'
+        f.write(data_str)
+
 
 if __name__ == "__main__":
     # Get a new tag

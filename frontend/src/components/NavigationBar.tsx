@@ -33,7 +33,7 @@ import NavigationItems from "../utils/getNavigationItems";
 import NavigationRoutes from "../utils/getRoutes";
 import dweTheme from "../utils/themes";
 
-import { VERSION } from "../../version.json";
+import { version } from "../../package.json";
 
 const drawerWidth = 240;
 
@@ -236,11 +236,11 @@ const NavigationBar = () => {
                                 primary={
                                     <div>
                                         <Tooltip title='This is alpha software, there may be unfinished features or bugs.'>
-                                            <span>DWE OS Pre-Alpha</span>
+                                            <span>DWE OS Alpha</span>
                                         </Tooltip>
                                     </div>
                                 }
-                                secondary={`Version: ${VERSION}`}
+                                secondary={`Version: ${version}`}
                             />
                             <IconButton onClick={toggleDrawer}>
                                 {theme.direction === "rtl" ? (
@@ -294,35 +294,6 @@ const NavigationBar = () => {
                                         />
                                     </ListItemButton>
                                 </ListItem>
-                                {/* <ListItem
-                                    disablePadding
-                                    sx={{ display: "block" }}
-                                >
-                                    <ListItemButton
-                                        onClick={resetSettings}
-                                        sx={{
-                                            minHeight: 48,
-                                            justifyContent: open
-                                                ? "initial"
-                                                : "center",
-                                            px: 2.5,
-                                        }}
-                                    >
-                                        <ListItemIcon
-                                            sx={{
-                                                minWidth: 0,
-                                                mr: open ? 3 : "auto",
-                                                justifyContent: "center",
-                                            }}
-                                        >
-                                            <RestartAltIcon />
-                                        </ListItemIcon>
-                                        <ListItemText
-                                            primary='Reset Settings'
-                                            sx={{ opacity: open ? 1 : 0 }}
-                                        />
-                                    </ListItemButton>
-                                </ListItem> */}
                             </React.Fragment>
                         </List>
                     </Drawer>

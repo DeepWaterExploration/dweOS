@@ -13,8 +13,6 @@ import {
 } from "@mui/material";
 import React from "react";
 
-import { fPercent } from "../../utils/formatNumber";
-
 interface CPUCardProps {
     totalUsagePercent: number;
     deviceName: string;
@@ -59,9 +57,7 @@ const CPUCard: React.FC<CPUCardProps> = (props) => {
                     </ListItemAvatar>
                     <ListItemText
                         primary='CPU Usage'
-                        secondary={`Total Usage: ${fPercent(
-                            props.totalUsagePercent
-                        )}`}
+                        secondary={`Total Usage: ${props.totalUsagePercent}`}
                     />
                 </ListItem>
                 <ListItem>
@@ -123,7 +119,7 @@ const CPUCard: React.FC<CPUCardProps> = (props) => {
                                                         variant='body1'
                                                         color='text.primary'
                                                     >
-                                                        {fPercent(stat)}
+                                                        {stat}
                                                     </Typography>
                                                 </Grid>
                                             </Grid>

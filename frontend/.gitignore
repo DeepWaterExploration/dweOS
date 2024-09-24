@@ -25,8 +25,6 @@ release
 *.sln
 *.sw?
 
-version.json
-
 **.js
 **.d.ts
 **.mjs

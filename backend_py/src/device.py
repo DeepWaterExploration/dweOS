@@ -399,9 +399,6 @@ class Device(events.EventEmitter):
         if opt in self._options:
             return self._options[opt].set_value(value)
         return None
-    
-    def _emit_device_changed(self):
-        self.emit('device_changed', self.bus_info)
 
     def _fmt_log(self, message: str) -> str:
         return f'{self.bus_info} - {message}'

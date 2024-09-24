@@ -1,17 +1,13 @@
 import Grid from "@mui/material/Grid";
 import React, { useEffect, useState } from "react";
 import LightCard from "../../components/LightCard";
-import { Fab, List, Menu, MenuItem, Popover, Tooltip } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
-import { styles } from "../../style";
 import { LightDevice } from "../../types/types";
 import LightContext from "../../contexts/LightContext";
-import { useProxy } from "valtio/utils";
 import { proxy, subscribe } from "valtio";
 import { useSnackbar } from "notistack";
-import { getLights, disablePin, setIntensity } from "../../utils/api";
+import { getLights, setIntensity } from "../../utils/api";
 
-const Lights = () => {
+const LightsLayout = () => {
     const { enqueueSnackbar } = useSnackbar();
 
     const [lights, setLights] = useState([] as LightDevice[]);
@@ -56,4 +52,4 @@ const Lights = () => {
     );
 };
 
-export default Lights;
+export default LightsLayout;

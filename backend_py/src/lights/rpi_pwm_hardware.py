@@ -41,6 +41,7 @@ class RPiHardwarePWMController(PWMController):
     
     def disable_pin(self, pin: int):
         # FIXME: Not implemented
+        # Planned to be implemented soon
         pass
 
     def set_intensity(self, pin: int, intensity: float):

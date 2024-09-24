@@ -7,7 +7,6 @@ import event_emitter as events
 
 from .schemas import *
 from .device import Device, lookup_pid_vid, DeviceInfo, DeviceType
-from .stream import StreamRunner
 from .settings import SettingsManager
 from .broadcast_server import BroadcastServer, Message
 from .enumeration import list_devices
@@ -75,22 +74,11 @@ class DeviceManager(events.EventEmitter):
             case _:
                 # Not a DWE device
                 return None
-        
-        # this is not currently used, but is helpful in the case the frontend needs new info about a device
-        device.on('device_changed', self._device_changed_event)
 
         # we need to broadcast that there was a gst error so that the frontend knows there may be a kernel issue
         device.stream_runner.on('gst_error', lambda errors: self.broadcast_server.broadcast(Message('gst_error', {'errors': errors, 'bus_info': device.bus_info})))
 
         return device
-
-    def _device_changed_event(self, bus_info):
-        '''
-        Unused
-        '''
-        logging.info(f'Changed: {bus_info}')
-
-        self.broadcast_server.broadcast(Message('device_changed', DeviceSchema().dump(self._find_device_with_bus_info(bus_info))))
 
     def get_devices(self):
         '''

@@ -1,7 +1,7 @@
 {
-    "name": "@deepwaterexploration/dwe_os_2",
-    "version": "2.2.4",
-    "description": "Web Based UVC Control Driver for the DeepWater Exploration exploreHD and HDCam",
+    "name": "@deepwaterexploration/dwe-os-2",
+    "version": "v0.1.7-alpha",
+    "description": "Web-based driver and software interface for DWE.ai cameras",
     "main": "lib/main.tsx",
     "keywords": [
         "linux",

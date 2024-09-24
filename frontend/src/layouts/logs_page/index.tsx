@@ -8,7 +8,7 @@ import { Log } from "../../types/types";
 import { getLogs } from "../../utils/api";
 import { useSnackbar } from "notistack";
 
-const TerminalView = ({ logs }) => {
+const TerminalViewLayout = ({ logs }) => {
     const terminalRef = useRef(null);
 
     // Auto-scroll to the bottom of the terminal when new logs are added
@@ -140,7 +140,7 @@ const LogsPage = () => {
     }, []);
     return (
         <Grid2 sx={{ paddingX: 5 }}>
-            <TerminalView logs={logs} />
+            <TerminalViewLayout logs={logs} />
             <Button
                 onClick={() => {
                     exportToFile();

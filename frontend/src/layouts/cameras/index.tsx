@@ -35,7 +35,7 @@ interface GstErrorMessage {
 
 export const websocket = new WebSocket(DEVICE_API_WS);
 
-const DevicesContainer = () => {
+const DevicesLayout = () => {
     const { enqueueSnackbar } = useSnackbar();
 
     const { devices, setDevices } = useContext(DevicesContext) as {
@@ -123,9 +123,6 @@ const DevicesContainer = () => {
                         { variant: "error", autoHideDuration: 5000 }
                     );
                     break;
-                // case "device_changed":
-                //     updateDevice(message.data as Device);
-                //     break;
             }
         };
 
@@ -189,16 +186,18 @@ const DevicesContainer = () => {
         >
             {devices
                 .sort((a: Device, b: Device) => {
-                    // Sort by the last number in bus info
-                    // TODO: maybe sort by device type too
+                    // Compare devies by type, final number in bus info, and hash of bus info
                     const regex = /\d+(?!.*\d)/;
                     let pathA = a.bus_info;
                     let pathB = b.bus_info;
-                    return (
-                        Number(regex.exec(pathA)![0]) -
-                            Number(regex.exec(pathB)![0]) ||
-                        hash(pathA) - hash(pathB)
-                    );
+
+                    if (a.device_type === b.device_type)
+                        return (
+                            Number(regex.exec(pathA)![0]) -
+                                Number(regex.exec(pathB)![0]) ||
+                            hash(pathA) - hash(pathB)
+                        );
+                    else return hash(a.device_type) - hash(b.device_type);
                 })
                 .map((dev) => {
                     const device = proxy(dev);
@@ -248,7 +247,7 @@ const CamerasPage = () => {
                 setDevices,
             }}
         >
-            <DevicesContainer />
+            <DevicesLayout />
         </DevicesContext.Provider>
     );
 };

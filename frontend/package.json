@@ -15,6 +15,7 @@
     "homepage": "https://github.com/DeepwaterExploration/DWE_OS_2#readme",
     "scripts": {
         "dev": "python3 ../update_versioning.py && npx vite --host",
+        "clean": "npx tsc --build --clean",
         "build": "npx tsc --build && npx vite build",
         "preview": "vite preview --host",
         "format": "npx prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",

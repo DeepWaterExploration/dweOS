@@ -125,4 +125,5 @@ class StreamRunner(events.EventEmitter):
         except:
             pass
         if len(error_block) > 0:
+            self.stop()
             self.emit('gst_error', error_block)

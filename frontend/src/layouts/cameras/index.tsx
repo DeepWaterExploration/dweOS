@@ -118,6 +118,7 @@ const DevicesLayout = () => {
                 case "gst_error":
                     let gstErrorMessage = message.data as GstErrorMessage;
                     console.log(gstErrorMessage);
+                    stopStreamUpdate(gstErrorMessage.bus_info);
                     enqueueSnackbar(
                         `GStreamer Error Occurred: ${gstErrorMessage.bus_info} - This is likely a known issue with the kernel, please read our docs site for more details`,
                         { variant: "error", autoHideDuration: 5000 }
@@ -135,10 +136,24 @@ const DevicesLayout = () => {
 
     // The following are util functions as a way for any device to set properties of other devices and rerendering them
 
-    const enableStreamUpdate = (leader_bus_info: string) => {
-        let leader = devices[findDeviceWithBusInfo(devices, leader_bus_info)];
-        leader.stream.configured = true;
-        updateDevice(leader);
+    const enableStreamUpdate = (bus_info: string) => {
+        setDevices((prevDevices) => {
+            let newDevices = [...prevDevices];
+            let device =
+                newDevices[findDeviceWithBusInfo(newDevices, bus_info)];
+            device.stream.configured = true;
+            return newDevices;
+        });
+    };
+
+    const stopStreamUpdate = (bus_info: string) => {
+        setDevices((prevDevices) => {
+            let newDevices = [...prevDevices];
+            let device =
+                newDevices[findDeviceWithBusInfo(newDevices, bus_info)];
+            device.stream.configured = false;
+            return newDevices;
+        });
     };
 
     const removeLeaderUpdate = (
@@ -170,7 +185,6 @@ const DevicesLayout = () => {
                 allPorts.push(endpoint.port)
             );
         });
-        console.log(allPorts);
         return allPorts.length > 0 ? allPorts.sort().reverse()[0] + 1 : 5600; // return the highest port
     };
 

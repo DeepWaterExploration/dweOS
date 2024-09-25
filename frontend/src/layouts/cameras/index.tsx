@@ -139,8 +139,9 @@ const DevicesLayout = () => {
     const enableStreamUpdate = (bus_info: string) => {
         setDevices((prevDevices) => {
             let newDevices = [...prevDevices];
-            let device =
-                newDevices[findDeviceWithBusInfo(newDevices, bus_info)];
+            let index = findDeviceWithBusInfo(newDevices, bus_info);
+            if (index === -1) return newDevices;
+            let device = newDevices[index];
             device.stream.configured = true;
             return newDevices;
         });
@@ -149,8 +150,9 @@ const DevicesLayout = () => {
     const stopStreamUpdate = (bus_info: string) => {
         setDevices((prevDevices) => {
             let newDevices = [...prevDevices];
-            let device =
-                newDevices[findDeviceWithBusInfo(newDevices, bus_info)];
+            let index = findDeviceWithBusInfo(newDevices, bus_info);
+            if (index === -1) return newDevices;
+            let device = newDevices[index];
             device.stream.configured = false;
             return newDevices;
         });

@@ -355,8 +355,6 @@ class Device(events.EventEmitter):
             self.start_stream()
 
     def unconfigure_stream(self):
-        # for stream in self.stream_runner.streams:
-        #     stream.configured = False
         self.stream.configured = False
         self.stream_runner.stop()
 

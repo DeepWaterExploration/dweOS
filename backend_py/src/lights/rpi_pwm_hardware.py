@@ -6,6 +6,9 @@ import logging
 class RPiHardwarePWMController(PWMController):
     NAME = 'Hardware PWM Controller'
 
+    # Tested working value for frequency
+    PWM_FREQUENCY = 7812.5
+
     def __init__(self, chip=0, pins=None) -> None:
         super().__init__()
 
@@ -22,7 +25,7 @@ class RPiHardwarePWMController(PWMController):
 
         for pin in self.PWM_PINS.keys():
             try:
-                self.pwm_objects[pin] = HardwarePWM(pwm_channel=self.PWM_PINS[pin], hz=7812.5, chip=chip)
+                self.pwm_objects[pin] = HardwarePWM(pwm_channel=self.PWM_PINS[pin], hz=self.PWM_FREQUENCY, chip=chip)
             except HardwarePWMException:
                 logging.warning('Hardware PWM is not enabled. Need to add \'dtoverlay=pwm-2chan\' to /boot/config.txt and reboot.')
                 self.pwm_supported = False

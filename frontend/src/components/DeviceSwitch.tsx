@@ -4,7 +4,7 @@ import Switch from "@mui/material/Switch";
 import React from "react";
 
 interface DeviceSwitchProps {
-    onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    onChange: () => void;
     name: string;
     checked: boolean;
     text: string;
@@ -18,7 +18,7 @@ export const DeviceSwitch: React.FC<DeviceSwitchProps> = (props) => {
                 <Switch
                     name={props.name}
                     checked={props.checked}
-                    onChange={props.onChange}
+                    onClick={props.onChange}
                     disabled={props.disabled}
                 />
             }

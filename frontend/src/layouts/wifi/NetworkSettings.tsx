@@ -27,17 +27,38 @@ import {
     SignalWifi4Bar,
 } from "@mui/icons-material";
 import { WifiStatus, ScannedWifiNetwork } from "./types";
-import { useState } from "react";
-import { connectToWifi, disconnectFromWifi, getWifiStatus } from "./api";
+import { useEffect, useState } from "react";
+import {
+    connectToWifi,
+    disconnectFromWifi,
+    getAvailableWifi,
+    getWifiStatus,
+} from "./api";
 import { useSnackbar } from "notistack";
+import React from "react";
 
 export interface SignalIconProps {
     signal_strength: number;
 }
 
+const thresholds = [-60, -70, -80, -90];
+
+const getSignalStrength = (strength: number) => {
+    if (strength >= thresholds[0]) {
+        return 4;
+    } else if (strength >= thresholds[1]) {
+        return 3;
+    } else if (strength >= thresholds[2]) {
+        return 2;
+    } else if (strength >= thresholds[3]) {
+        return 1;
+    } else {
+        return 0;
+    }
+};
+
 const SignalIcon: React.FC<SignalIconProps> = (props) => {
     // Define the signal strength thresholds for each bar
-    const thresholds = [-60, -70, -80, -90];
 
     // Determine the number of bars based on the signal strength
     if (props.signal_strength >= thresholds[0]) {
@@ -86,8 +107,8 @@ const WifiListItem: React.FC<WifiListItemProps> = (props) => {
                     props.connected
                         ? "Connected"
                         : props.secure
-                        ? "Secured"
-                        : "Unsecured"
+                          ? "Secured"
+                          : "Unsecured"
                 }
                 style={{ width: "200px" }}
             />
@@ -227,6 +248,45 @@ export interface NetworkSettingsCardProps {
 }
 
 const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
+    const [currentNetwork, setCurrentNetwork] = useState({} as WifiStatus);
+    const [currentSSID, setCurrentSSID] = useState("");
+    const [scannedNetworks, setScannedNetworks] = useState(
+        [] as ScannedWifiNetwork[]
+    );
+
+    const update = () => {
+        getAvailableWifi().then((scannedNetworks: ScannedWifiNetwork[]) => {
+            setScannedNetworks(
+                scannedNetworks.sort((networkA, networkB) => {
+                    let strengthA = getSignalStrength(networkA.signal_strength);
+                    let strengthB = getSignalStrength(networkB.signal_strength);
+                    return (
+                        strengthA - strengthB ||
+                        (networkA.ssid || "").localeCompare(networkB.ssid || "")
+                    );
+                })
+            );
+        });
+
+        getWifiStatus().then((status: WifiStatus) => {
+            if (currentNetwork.ssid !== status.ssid) setCurrentNetwork(status);
+        });
+    };
+
+    // Initial request
+    useEffect(() => {
+        setInterval(() => {
+            update();
+        }, 1000);
+
+        update();
+        // Initial wifi status
+    }, []);
+
+    useEffect(() => {
+        setCurrentSSID(currentNetwork.ssid);
+    }, [currentNetwork]);
+
     const [connectDialog, setConnectDialog] = useState(false);
     const [connectNetwork, setConnectNetwork] = useState(
         {} as ScannedWifiNetwork
@@ -239,9 +299,9 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
     };
 
     const handleDisconnect = () => {
-        disconnectFromWifi(props.currentSSID).then(() => {
+        disconnectFromWifi(currentSSID).then(() => {
             enqueueSnackbar(
-                `Successfully disconnected from network: ${props.currentSSID}`,
+                `Successfully disconnected from network: ${currentSSID}`,
                 {
                     variant: "success",
                 }
@@ -251,7 +311,7 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
             // TODO: just constantly check for a new network over an interval
             setTimeout(() => {
                 getWifiStatus().then((status: WifiStatus) => {
-                    props.setCurrentNetwork(status);
+                    setCurrentNetwork(status);
 
                     enqueueSnackbar(
                         `Successfully connected to network: ${status.ssid}`,
@@ -283,7 +343,7 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
                     connectToWifi(connectNetwork.ssid || "", password).then(
                         (success) => {
                             if (success) {
-                                props.setCurrentSSID(connectNetwork.ssid || "");
+                                setCurrentSSID(connectNetwork.ssid || "");
                                 enqueueSnackbar(
                                     `WiFi Network: "${connectNetwork.ssid}" connected successfully`,
                                     {
@@ -311,7 +371,7 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
 
             <List dense={true}>
                 <WifiListItem
-                    ssid={props.currentSSID}
+                    ssid={currentSSID}
                     signal_strength={-60} // signal strength not given by current network
                     connected={true}
                     on_disconnect={() => {
@@ -342,20 +402,18 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
                         dense={true}
                         style={{ maxHeight: 300, overflow: "auto" }}
                     >
-                        {props.scannedNetworks
+                        {scannedNetworks
                             .sort(
                                 (a, b) => b.signal_strength - a.signal_strength
                             )
                             .filter(
                                 (network, index) =>
-                                    props.scannedNetworks.findIndex(
+                                    scannedNetworks.findIndex(
                                         (findNetwork) =>
                                             network.ssid === findNetwork.ssid
                                     ) === index
                             ) // filter out duplicates
-                            .filter(
-                                (network) => network.ssid !== props.currentSSID
-                            ) // filter out current network
+                            .filter((network) => network.ssid !== currentSSID) // filter out current network
                             .map((scanned_network) => {
                                 if (!scanned_network.ssid) return;
                                 else {

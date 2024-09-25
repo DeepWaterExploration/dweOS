@@ -5,12 +5,23 @@ title: "[BUG REPORT]: <title>"
 labels: [bug]
 assignees: []
 body:
-  - type: input
+  - type: checkboxes
     attributes:
-      label: "DWE OS Bug Report"
-      placeholder: ""
+      label: Search before asking
+      description: >
+        🔍 Please search the [issues](https://github.com/DeepwaterExploration/DesktopClient/issues) to see if a similar bug report already exists.
+      options:
+        - label: >
+            I have searched the [project's issues](https://github.com/DeepwaterExploration/DesktopClient/issues) and found no similar bug report.
+          required: true
+  - type: textarea
+    attributes:
+      label: System information
+      description: 🖥️ The software and hardware used to produce the bug.
+      placeholder: |
+        - Device: Raspberry Pi 4b
     validations:
-      required: true
+      required: false
   - type: textarea
     id: bug
     attributes:
@@ -36,7 +47,8 @@ body:
   - type: textarea
     id: additional
     attributes:
-      label: Additional comments
-      description: Additonal context about the bug.
+      label: Additional information
+      description: Additonal context about the bug, such as console output with error messages and/or screenshots of the bug.
+      placeholder: "💡 ProTip! Include as much information as possible (screenshots, logs, tracebacks etc.) to receive the most helpful response."
     validations:
       required: false

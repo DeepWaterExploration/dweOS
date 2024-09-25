@@ -3,6 +3,8 @@ import struct
 from dataclasses import dataclass
 from typing import Dict, Callable, Any
 
+import event_emitter as events
+
 from linuxpy.video import device
 from enum import Enum
 
@@ -112,10 +114,10 @@ class Option:
     EHD Option Class
     '''
 
-    def __init__(self, camera: Camera, fmt: str, unit: xu.Unit, ctrl: xu.Selector, command: xu.Command, 
+    def __init__(self, camera: Camera, fmt: str, unit: xu.Unit, ctrl: xu.Selector, command: xu.Command,
                  name: str,
-                 conversion_func_set: Callable[[Any],list|Any] = lambda val : val, 
-                 conversion_func_get: Callable[[list|Any],Any] = lambda val : val, 
+                 conversion_func_set: Callable[[Any],list|Any] = lambda val : val,
+                 conversion_func_get: Callable[[list|Any],Any] = lambda val : val,
                  size=11) -> None:
         self._camera = camera
         self._fmt = fmt
@@ -129,7 +131,7 @@ class Option:
         self._data = b'\x00' * size
 
         self.name = name;
-    
+
     # get the control value(s)
     def get_value_raw(self):
         self._get_ctrl()
@@ -194,9 +196,10 @@ class Option:
         self._data = b'\x00' * self._size
 
 
-class Device:
+class Device(events.EventEmitter):
 
     def __init__(self, device_info: DeviceInfo) -> None:
+        super().__init__()
         self.cameras: List[Camera] = []
         for device_path in device_info.device_paths:
             self.cameras.append(Camera(device_path))
@@ -208,7 +211,8 @@ class Device:
         if self.name is not None:
             self.manufacturer = 'DeepWater Exploration Inc.'
         else:
-            raise Exception()
+            logging.error('VID/PID not found. Code should not reach here, but will still work.')
+            return
         self.bus_info = device_info.bus_info
         self.nickname = ''
         self.stream = Stream()
@@ -246,7 +250,7 @@ class Device:
 
         self._get_controls()
 
-    def _get_options(self) -> Dict[str, Option]: 
+    def _get_options(self) -> Dict[str, Option]:
         return {}
 
     def _get_controls(self):
@@ -288,6 +292,8 @@ class Device:
         return None
 
     def configure_stream(self, encode_type: StreamEncodeTypeEnum, width: int, height: int, interval: Interval, stream_type: StreamTypeEnum, stream_endpoints: List[StreamEndpoint] = []):
+        logging.info(self._fmt_log('Configuring stream'))
+
         camera: Camera = None
         match encode_type:
             case StreamEncodeTypeEnum.H264:
@@ -296,11 +302,11 @@ class Device:
                 camera = self.find_camera_with_format('MJPG')
             case _:
                 pass
-        
+
         if not camera:
             logging.warn('Attempting to select incompatible encoding type. This is undefined behavior.')
             return
-        
+
 
         self.stream.device_path = camera.path
         self.stream.width = width
@@ -324,11 +330,13 @@ class Device:
         except AttributeError:
             logging.error(f'Unknown attribute: {self.__class__.__name__}._options[{option_name}]')
             logging.error('Failed to add option to controls list.')
-        
+
     def start_stream(self):
         self.stream_runner.start()
 
     def load_settings(self, saved_device: SavedDevice):
+        logging.info(self._fmt_log('Loading device settings'))
+
         for control in saved_device.controls:
             try:
                 self.set_pu(control.control_id, control.value)
@@ -350,6 +358,8 @@ class Device:
         self.stream.configured = False
         self.stream_runner.stop()
 
+        logging.info(self._fmt_log(f'Stream stopped'))
+
     def get_pu(self, control_id: int):
         control = self.v4l2_device.controls[control_id]
         return control.value
@@ -366,6 +376,7 @@ class Device:
                             return
 
         control = self.v4l2_device.controls[control_id]
+        logging.info(self._fmt_log(f'Setting UVC control - {control.name} to {value}'))
         try:
             control.value = value
         except AttributeError:
@@ -382,6 +393,10 @@ class Device:
 
     # set an option
     def set_option(self, opt: str, value: Any):
+        logging.info(self._fmt_log(f'Setting option - {opt} to {value}'))
         if opt in self._options:
             return self._options[opt].set_value(value)
         return None
+
+    def _fmt_log(self, message: str) -> str:
+        return f'{self.bus_info} - {message}'

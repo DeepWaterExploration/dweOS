@@ -13,8 +13,6 @@ import {
 } from "@mui/material";
 import React from "react";
 
-import { fPercent } from "../../utils/formatNumber";
-
 interface DiskCardProps {
     currentDiskUsagePercent: number;
     deviceName: string;
@@ -59,7 +57,7 @@ const DiskCard: React.FC<DiskCardProps> = (props) => {
                     </ListItemAvatar>
                     <ListItemText
                         primary='Current Disk Usage'
-                        secondary={fPercent(props.currentDiskUsagePercent)}
+                        secondary={props.currentDiskUsagePercent}
                     />
                 </ListItem>
                 <ListItem>
@@ -121,7 +119,7 @@ const DiskCard: React.FC<DiskCardProps> = (props) => {
                                                         variant='body1'
                                                         color='text.primary'
                                                     >
-                                                        {fPercent(stat)}
+                                                        {stat}
                                                     </Typography>
                                                 </Grid>
                                             </Grid>

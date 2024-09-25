@@ -1,4 +1,4 @@
-import react from "@vitejs/plugin-react";
+import react from "@vitejs/plugin-react-swc";
 import { PluginOption, defineConfig } from "vite";
 
 // https://stackoverflow.com/a/75689907

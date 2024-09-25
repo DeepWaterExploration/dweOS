@@ -1,5 +1,8 @@
 import {
     Device,
+    LightDevice,
+    Log,
+    PWMController,
     PortInfo,
     ReleaseList,
     StreamEndpoint,
@@ -43,6 +46,24 @@ async function postRequest(url: string, body: object = {}): Promise<Response> {
     return await fetch(url, config);
 }
 
+export async function getLights(): Promise<LightDevice[]> {
+    const url = `${DEVICE_API_URL}/lights`;
+    const response = await getRequest(url);
+    return await response.json();
+}
+
+export async function setIntensity(index: number, intensity: number) {
+    const url = `${DEVICE_API_URL}/lights/set_intensity`;
+    const response = await postRequest(url, { index, intensity });
+    return await response.json();
+}
+
+export async function disablePin(index: number) {
+    const url = `${DEVICE_API_URL}/lights/disable_pin`;
+    const response = await postRequest(url, { index });
+    return await response.json();
+}
+
 export async function getDevices(): Promise<Device[]> {
     const url = `${DEVICE_API_URL}/devices`;
     const response = await getRequest(url);
@@ -64,6 +85,12 @@ export async function unconfigureStream(bus_info: string) {
 export async function setLeader(leader: string, follower: string) {
     const url = `${DEVICE_API_URL}/devices/set_leader`;
     const response = await postRequest(url, { leader, follower });
+    return await response.json();
+}
+
+export async function getLogs(): Promise<Log[]> {
+    const url = `${DEVICE_API_URL}/logs`;
+    const response = await getRequest(url);
     return await response.json();
 }
 
@@ -155,15 +182,4 @@ export async function getReleases(): Promise<ReleaseList> {
     const url = `${UPDATER_API_URL}/releases`;
     const response = await getRequest(url);
     return await response.json();
-}
-
-export async function getNextPort(host: string): Promise<number> {
-    const url = `${DEVICE_API_URL}/devices/get_next_port`;
-    const response = await getRequest(
-        url,
-        new URLSearchParams({
-            host,
-        })
-    );
-    return ((await response.json()) as PortInfo).port;
 }

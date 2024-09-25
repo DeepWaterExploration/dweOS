@@ -1,4 +1,12 @@
 {
   "editor.formatOnSave": true,
-  "python.terminal.activateEnvironment": false
+  "python.terminal.activateEnvironment": false,
+  "LineCount.excludes": [
+    "**/.vscode/**",
+    "**/node_modules/**",
+    "**/.env/**",
+    "**/__pycache__/**",
+    "**/*.json",
+    "**/release/**"
+  ]
 }

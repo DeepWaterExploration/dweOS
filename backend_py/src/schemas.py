@@ -121,6 +121,7 @@ class DeviceSchema(Schema):
     device_type = fields.Enum(DeviceType)
     is_leader = fields.Bool(required=False, allow_none=True)
     leader = fields.Str(required=False, allow_none=True)
+    follower = fields.Str(required=False, allow_none=True)
 
     # @post_dump(pass_original=True)
     # def dump_options(self, data: typing.Dict, original: Any, **kwargs):

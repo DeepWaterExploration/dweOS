@@ -24,7 +24,7 @@ def run_frontend():
     def not_found(e):
         return send_from_directory(FRONTEND_DIR, 'index.html')
 
-    print('Starting client server on http://0.0.0.0:5000')
+    logging.info('Starting client server on http://0.0.0.0:5000')
     http_server = WSGIServer(('0.0.0.0', 5000), app, log=None)
     http_server.serve_forever()
 
@@ -37,7 +37,7 @@ if __name__ == '__main__':
         ['go', 'run', '.'], cwd='./system_api')
 
     def exit_clean(sig, frame):
-        print('Exiting')
+        logging.info('Exiting')
         frontend_thread.kill()
         system_api_process.kill()
         sys.exit(0)

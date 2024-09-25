@@ -16,11 +16,35 @@ export interface Device {
     device_type: string | undefined;
     is_leader: boolean | undefined;
     leader: string | undefined;
+    follower: string | undefined;
+}
+
+export interface LightDevice {
+    pin: number;
+    nickname: string;
+    controller_index: number;
+    controller_name: string;
+    intensity: number;
+}
+
+export interface PWMController {
+    name: string;
+    pins: number[];
 }
 
 export interface Message {
     event_name: string;
     data: object;
+}
+
+export interface Log {
+    timestamp: string;
+    level: string;
+    name: string;
+    filename: string;
+    lineno: number;
+    function: string;
+    message: string;
 }
 
 export enum IntercomponentMessageType {

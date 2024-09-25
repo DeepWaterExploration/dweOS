@@ -24,3 +24,9 @@ release
 *.njsproj
 *.sln
 *.sw?
+
+**.js
+**.d.ts
+**.mjs
+**.d.mts
+**.tsbuildinfo

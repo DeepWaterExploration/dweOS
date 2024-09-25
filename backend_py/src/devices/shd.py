@@ -16,11 +16,20 @@ class SHDDevice(Device):
         self.leader: str = None
         self.leader_device: 'SHDDevice' = None
 
+        # For backend internal use only
+        self.follower: str = None
+
     def set_leader(self, leader: 'SHDDevice'):
         # We love forward references
         if not leader.is_leader:
             logging.warn('Attempting to add follower SHD as a leader. This is undefined behavior and will not be permitted.')
             return
+        if leader.follower:
+            logging.warn('Attempted to add follower to SHD with follower. This is undefined behavior and will not be permitted.')
+            return
+        if self.leader_device:
+            logging.info(self._fmt_log('Setting leader of device with leader. Removing previous leader.'))
+            self.remove_leader()
         self.leader_device = leader
         self.leader = leader.bus_info
         # remember to stop the stream because it is no longer managed by this device
@@ -29,14 +38,13 @@ class SHDDevice(Device):
             leader.stream_runner.streams.append(self.stream)
         else:
             leader.stream_runner.streams[1] = self.stream
-        
+
         # restart leader's stream to now include this device
+        leader.stream.configured = True
+        leader.follower = self.bus_info
         leader.start_stream()
 
     def load_settings(self, saved_device: SavedDevice):
-        if not saved_device.is_leader:
-            # self.set_leader()
-            print(saved_device.leader)
         return super().load_settings(saved_device)
 
     def remove_leader(self):
@@ -47,6 +55,7 @@ class SHDDevice(Device):
         # restart the leader device stream to take this device out of it
         if self.leader_device.stream_runner.started:
             self.leader_device.start_stream()
+        self.leader_device.follower = None
         self.leader_device = None
         self.leader = None
         # start the stream if configured
@@ -60,3 +69,9 @@ class SHDDevice(Device):
                 self.leader_device.start_stream()
                 return
         super().start_stream()
+
+    def unconfigure_stream(self):
+        # remove leader when unconfiguring
+        if self.leader_device:
+            self.remove_leader()
+        return super().unconfigure_stream()

@@ -2,9 +2,31 @@
 
 export const styles = {
     card: {
+        minWidth: 512,
+        boxShadow: 3,
+        textAlign: "left",
         margin: "20px",
-        height: "auto",
-        width: "450px",
+    },
+    addButton: {
+        padding: 0,
+        position: "fixed",
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        bottom: "20px",
+        right: "20px",
+        margin: "50px 0px 0px 50px",
+        height: "50px",
+        width: "50px",
+        "& .MuiSvgIcon-root": {
+            color: "white",
+        },
+        transition: "box-shadow 0.25s ease, filter 0.25s ease",
+        "&:hover": {
+            filter: "brightness(80%)",
+            boxShadow: "0px 0px 10px",
+        },
     },
     cardMediaContainer: {
         position: "relative",

@@ -14,24 +14,36 @@ from .stream import *
 from .settings import SettingsManager
 from .broadcast_server import BroadcastServer
 from .device_manager import DeviceManager
-
-from .devices.shd import SHDDevice
-
-from typing import cast
+from .lights.light_manager import LightManager
+from .lights.utils import create_pwm_controllers
 
 import logging
 
 
 def main():
+    # Create the flask application
     app = Flask(__name__)
     CORS(app)
+    # avoid sorting the keys to keep the way we sort it in the backend
     app.json.sort_keys = False
 
+    # Create the managers
     settings_manager = SettingsManager()
     broadcast_server = BroadcastServer()
     device_manager = DeviceManager(
         settings_manager=settings_manager, broadcast_server=broadcast_server)
+    light_manager = LightManager(create_pwm_controllers())
 
+    '''
+    Logs API
+    '''
+    @app.route('/logs', methods=['GET'])
+    def get_logs():
+        return jsonify(device_manager.get_logs())
+
+    '''
+    Device API
+    '''
     @app.route('/devices', methods=['GET'])
     def get_devices():
         return jsonify(device_manager.get_devices())
@@ -44,10 +56,6 @@ def main():
             option_value['bus_info'], option_value['option'], option_value['value'])
 
         return jsonify({})
-
-    @app.route('/devices/get_next_port', methods=['GET'])
-    def get_next_port():
-        return jsonify({'port': device_manager.get_next_port(request.args.get('host'))})
 
     @app.route('/devices/configure_stream', methods=['POST'])
     def configure_stream():
@@ -114,16 +122,42 @@ def main():
         bus_info = StreamInfoSchema(only=['bus_info']).load(request.get_json())['bus_info']
         dev = device_manager._find_device_with_bus_info(bus_info)
         if not dev:
-            logging.warn(f'Unable to find device {bus_info}')
+            logging.warning(f'Unable to find device {bus_info}')
             return jsonify({})
         dev.start_stream()
         return jsonify({})
+    
+    '''
+    Lights API
+    '''
+    @app.route('/lights')
+    def get_lights():
+        return jsonify(light_manager.get_lights())
+    
+    @app.route('/lights/controllers')
+    def get_pwm_controllers():
+        return jsonify(light_manager.get_pwm_controllers())
 
+    @app.route('/lights/set_intensity', methods=['POST'])
+    def set_intensity():
+        req = request.get_json()
+        light_manager.set_intensity(req['index'], req['intensity'])
+        return jsonify({})
+    
+    @app.route('/lights/disable_pin', methods=['POST'])
+    def disable_light():
+        req = request.get_json()
+        light_manager.disable_light(req['controller_index'], req['pin'])
+        return jsonify({})
+
+    # create the server and run everything
     http_server = WSGIServer(('0.0.0.0', 8080), app, log=None)
     device_manager.start_monitoring()
 
     def exit_clean(sig, frame):
         logging.info('Shutting down')
+
+        light_manager.cleanup()
 
         http_server.stop()
         device_manager.stop_monitoring()

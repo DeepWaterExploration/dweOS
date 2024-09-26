@@ -245,3 +245,7 @@ export interface Release {
 export interface ReleaseList {
     releases: Release[];
 }
+
+export interface SavedPreferences {
+    default_stream: StreamEndpoint;
+}

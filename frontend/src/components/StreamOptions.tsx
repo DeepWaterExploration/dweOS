@@ -30,6 +30,7 @@ import { DeviceSwitch } from "./DeviceSwitch";
 import { DeviceLeader } from "./DeviceLeader";
 import { subscribe } from "valtio";
 import DeviceContext from "../contexts/DeviceContext";
+import { IP_REGEX } from "../utils/utils";
 
 /*
  * Get the list of resolutions available from the device
@@ -51,9 +52,6 @@ const getResolutions = (device: Device, encodeFormat: encodeType) => {
 
 const ENCODERS = ["H264", "MJPG"];
 
-const IP_REGEX =
-    /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/;
-
 export const StreamOptions: React.FC = () => {
     const {
         device,
@@ -62,6 +60,7 @@ export const StreamOptions: React.FC = () => {
         removeLeaderUpdate,
         setFollowerUpdate,
         nextPort,
+        defaultHost,
     } = useContext(DeviceContext) as {
         device: Device;
         devices: Device[];
@@ -72,9 +71,10 @@ export const StreamOptions: React.FC = () => {
             follower_bus_info: string | undefined
         ) => void;
         nextPort: number;
+        defaultHost: string;
     };
 
-    const [host, setHost] = useState("192.168.2.1");
+    const [host, setHost] = useState(defaultHost);
     const [port, setPort] = useState(5600);
 
     const [fps, setFps] = useState(device.stream.interval.denominator);
@@ -89,11 +89,6 @@ export const StreamOptions: React.FC = () => {
     useEffect(() => {
         setPort(nextPort);
     }, [nextPort]);
-
-    // should make more things like this
-    // subscribe(device, () => {
-    //     setStream(device.stream.configured);
-    // });
 
     useEffect(() => {
         console.log("Devices updated");
@@ -178,26 +173,6 @@ export const StreamOptions: React.FC = () => {
                     variant: "info",
                 });
                 device.stream.endpoints.push({ host, port });
-                // (prevEndpoints) =>
-                //     [
-                //         ...prevEndpoints,
-                //         {
-                //             host,
-                //             port,
-                //         },
-                //     ].sort((a, b) => {
-                //         // Split the IP address string into an array of octets
-                //         const ipA = a.host.split(".").map(Number);
-                //         const ipB = b.host.split(".").map(Number);
-                //         // Compare each octet and return the comparison result
-                //         for (let i = 0; i < 4; i++) {
-                //             if (ipA[i] !== ipB[i]) {
-                //                 return ipA[i] - ipB[i];
-                //             }
-                //         }
-                //         // If all octets are equal, compare the port number
-                //         return a.port - b.port;
-                //     });
             }
         }
     };

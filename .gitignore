@@ -327,4 +327,5 @@ pip-selfcheck.json
 release
 release.tar.gz
 **/device_settings.json
+**/server_preferences.json
 .env

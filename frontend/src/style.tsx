@@ -7,6 +7,51 @@ export const styles = {
         textAlign: "left",
         margin: "20px",
     },
+    settingsCard: {
+        card: {
+            margin: "15px",
+            height: "100%",
+            width: "450px",
+        },
+        cardContent: {
+            cardTitle: {
+                fontWeight: "bold",
+            },
+        },
+        select: {
+            color: "white",
+        },
+        options: {
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "start",
+            gap: "20px",
+
+            marginLeft: "20px",
+            marginRight: "20px",
+            marginBottom: "20px",
+        },
+    },
+    settingsButton: {
+        textButtonContainer: {
+            width: "100%",
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: "10px",
+        },
+        textInput: {
+            width: "100%",
+        },
+        button: {
+            width: "100%",
+            height: "40px",
+            color: "white",
+            fontWeight: "bold",
+        },
+    },
     addButton: {
         padding: 0,
         position: "fixed",
@@ -69,17 +114,24 @@ export const styles = {
     portField: {
         width: "170px",
     },
-    settingsButton: {
-        width: "55px",
-        height: "55px",
-        color: "white",
-        borderRadius: 2,
-    },
     recordButton: {
         width: "55px",
         height: "55px",
         bgcolor: "#ff0010 !important",
         color: "white",
         borderRadius: 50,
+    },
+    preferences: {
+        textField: {
+            width: "100%",
+            marginBottom: "16px",
+        },
+        portField: {
+            width: "100%",
+            marginBottom: "16px",
+        },
+        container: {
+            padding: "24px",
+        },
     },
 } as const;

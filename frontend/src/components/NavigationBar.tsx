@@ -28,7 +28,7 @@ import { BrowserRouter as Router } from "react-router-dom";
 
 import { routes } from "../routes";
 import DWELogo_white from "../svg/DWELogo_white.svg";
-import { resetSettings, restartMachine, shutDownMachine } from "../utils/api";
+import { restartMachine, shutDownMachine } from "../utils/api";
 import NavigationItems from "../utils/getNavigationItems";
 import NavigationRoutes from "../utils/getRoutes";
 import dweTheme from "../utils/themes";

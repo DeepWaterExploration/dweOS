@@ -3,6 +3,7 @@ import {
     Lightbulb as LightbulbIcon,
     // SettingsOutlined as SettingsOutlinedIcon,
     SignalWifi0BarOutlined as SignalWifi0BarOutlinedIcon,
+    Settings as SettingsIcon,
     // StorageOutlined as StorageOutlinedIcon,
     // SystemUpdateAlt as SystemUpdateAltIcon,
     VideoCameraBackOutlined as VideoCameraBackOutlinedIcon,
@@ -17,6 +18,7 @@ import { RouteItem, routeType } from "./types/types";
 import React from "react";
 import TerminalIcon from "@mui/icons-material/Terminal";
 import LightsLayout from "./layouts/lights";
+import PreferencesLayout from "./layouts/preferences";
 
 export const routes: RouteItem[] = [
     {
@@ -39,6 +41,16 @@ export const routes: RouteItem[] = [
         type: routeType.COLLAPSE,
         name: "Lights",
         key: "lights",
+        default: false,
+    },
+    {
+        route: "/preferences",
+        component: <PreferencesLayout />,
+        icon: <SettingsIcon />,
+        category: "Options",
+        type: routeType.COLLAPSE,
+        name: "Preferences",
+        key: "preferences",
         default: false,
     },
     // Will be added in future release

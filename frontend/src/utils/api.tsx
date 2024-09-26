@@ -5,6 +5,7 @@ import {
     PWMController,
     PortInfo,
     ReleaseList,
+    SavedPreferences,
     StreamEndpoint,
     StreamFormat,
     encodeType,
@@ -157,11 +158,19 @@ export async function restartStream(bus_info: string) {
     await response.json();
 }
 
-export async function resetSettings() {
-    const url = `${DEVICE_API_URL}/reset_settings`;
-    const response = await postRequest(url);
+export async function getSettings(): Promise<SavedPreferences> {
+    const url = `${DEVICE_API_URL}/preferences`;
+    const response = await getRequest(url);
+    return await response.json();
+}
+
+export async function savePreferences(preferences: SavedPreferences) {
+    const url = `${DEVICE_API_URL}/preferences/save_preferences`;
+    const response = await postRequest(url, preferences);
     await response.json();
 }
+
+// The following is unused for now
 
 export async function shutDownMachine() {
     const url = `${SYSTEM_API_URL}/shutDownMachine`;

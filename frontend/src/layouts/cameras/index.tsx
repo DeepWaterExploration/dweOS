@@ -2,8 +2,8 @@ import Grid from "@mui/material/Grid";
 import React, { useContext, useEffect, useState } from "react";
 
 import DeviceCard from "../../components/DeviceCard";
-import { Device } from "../../types/types";
-import { getDevices, DEVICE_API_WS } from "../../utils/api";
+import { Device, SavedPreferences } from "../../types/types";
+import { getDevices, DEVICE_API_WS, getSettings } from "../../utils/api";
 import { deserializeMessage, findDeviceWithBusInfo } from "../../utils/utils";
 
 import DevicesContext from "../../contexts/DevicesContext";
@@ -43,7 +43,18 @@ const DevicesLayout = () => {
         setDevices: React.Dispatch<React.SetStateAction<Device[]>>;
     };
 
+    const [savedPreferences, setSavedPreferences] = useState({
+        default_stream: { port: 5600, host: "192.168.2.1" },
+    } as SavedPreferences);
+
     const [nextPort, setNextPort] = useState(5600);
+
+    useEffect(() => {
+        getSettings().then((preferences) => {
+            setSavedPreferences(preferences);
+            setNextPort(savedPreferences.default_stream.port);
+        });
+    }, []);
 
     const addDevices = (devices: Device[]) => {
         setDevices((prevDevices: Device[]) => {
@@ -187,7 +198,9 @@ const DevicesLayout = () => {
                 allPorts.push(endpoint.port)
             );
         });
-        return allPorts.length > 0 ? allPorts.sort().reverse()[0] + 1 : 5600; // return the highest port
+        return allPorts.length > 0
+            ? allPorts.sort().reverse()[0] + 1
+            : savedPreferences.default_stream.port; // return the highest port
     };
 
     return (
@@ -242,6 +255,8 @@ const DevicesLayout = () => {
                                 removeLeaderUpdate,
                                 setFollowerUpdate,
                                 nextPort,
+                                defaultHost:
+                                    savedPreferences.default_stream.host,
                             }}
                             key={device.bus_info}
                         >

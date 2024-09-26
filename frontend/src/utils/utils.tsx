@@ -26,3 +26,6 @@ export const useDidMountEffect = (
 export const findDeviceWithBusInfo = (devices: Device[], bus_info: string) => {
     return devices.findIndex((device) => device.bus_info === bus_info);
 };
+
+export const IP_REGEX =
+    /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/;

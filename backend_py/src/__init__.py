@@ -16,6 +16,8 @@ from .broadcast_server import BroadcastServer
 from .device_manager import DeviceManager
 from .lights.light_manager import LightManager
 from .lights.utils import create_pwm_controllers
+from .preferences.preferences_manager import PreferencesManager
+from .preferences.preference_schemas import SavedPrefrencesSchema, SavedPrefrences
 
 import logging
 
@@ -33,6 +35,7 @@ def main():
     device_manager = DeviceManager(
         settings_manager=settings_manager, broadcast_server=broadcast_server)
     light_manager = LightManager(create_pwm_controllers())
+    preferences_manager = PreferencesManager()
 
     '''
     Logs API
@@ -148,6 +151,19 @@ def main():
     def disable_light():
         req = request.get_json()
         light_manager.disable_light(req['controller_index'], req['pin'])
+        return jsonify({})
+    
+    '''
+    Preferences API
+    '''
+    @app.route('/preferences')
+    def get_preferences():
+        return jsonify(preferences_manager.serialize_preferences())
+    
+    @app.route('/preferences/save_preferences', methods=['POST'])
+    def set_preferences():
+        req: SavedPrefrences = SavedPrefrencesSchema().load(request.get_json())
+        preferences_manager.save(req)
         return jsonify({})
 
     # create the server and run everything

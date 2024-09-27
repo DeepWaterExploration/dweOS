@@ -75,9 +75,7 @@ export const StreamOptions: React.FC = () => {
     };
 
     const [host, setHost] = useState(defaultHost);
-    const [port, setPort] = useState(5600);
-
-    const [fps, setFps] = useState(device.stream.interval.denominator);
+    const [port, setPort] = useState(nextPort);
 
     const [leaders, setLeaders] = useState([] as Device[]);
 
@@ -91,18 +89,12 @@ export const StreamOptions: React.FC = () => {
     }, [nextPort]);
 
     useEffect(() => {
-        setHost(defaultHost);
-    }, [defaultHost]);
-
-    useEffect(() => {
         console.log("Devices updated");
         setLeaders(devices.filter((dev) => dev.is_leader));
     }, [devices]);
 
     useEffect(() => {
         subscribe(device.stream, () => {
-            console.log(device.stream.configured);
-
             if (!device.stream.configured) {
                 if (device.leader) {
                     setFollowerUpdate(device.leader, undefined);
@@ -159,8 +151,6 @@ export const StreamOptions: React.FC = () => {
         }
         // Perform necessary actions with the valid IP and port values
         if (validIP && validPort) {
-            console.log("IP:", host);
-            console.log("Port:", port);
             if (
                 device.stream.endpoints.find(
                     (endpoint) =>

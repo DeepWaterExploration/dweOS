@@ -49,13 +49,6 @@ const DevicesLayout = () => {
 
     const [nextPort, setNextPort] = useState(5600);
 
-    useEffect(() => {
-        getSettings().then((preferences) => {
-            setSavedPreferences(preferences);
-            setNextPort(savedPreferences.default_stream.port);
-        });
-    }, []);
-
     const addDevices = (devices: Device[]) => {
         setDevices((prevDevices: Device[]) => {
             return [...prevDevices, ...devices];
@@ -76,7 +69,6 @@ const DevicesLayout = () => {
         setDevices((prevDevices: Device[]) => {
             for (let device of prevDevices) {
                 if (device.bus_info == bus_info && device.follower) {
-                    console.log(device.follower);
                     removeLeaderUpdate(device.follower, prevDevices);
                 }
             }
@@ -97,12 +89,20 @@ const DevicesLayout = () => {
         });
     };
 
+    const getInitialDevices = async () => {
+        let devices = await getDevices();
+        let preferences = await getSettings();
+        let nextPort = getNextPort(devices, preferences);
+        // Initialize the next port
+        setNextPort(nextPort);
+
+        setSavedPreferences(preferences);
+        addDevices(devices);
+    };
+
     useEffect(() => {
         // Code to run once when the component is defined
-        getDevices().then((devices) => {
-            console.log("Devices: ", devices);
-            addDevices(devices);
-        });
+        getInitialDevices();
 
         const socketCallback = (e) => {
             let message = deserializeMessage(e.data);
@@ -128,7 +128,6 @@ const DevicesLayout = () => {
                 }
                 case "gst_error":
                     let gstErrorMessage = message.data as GstErrorMessage;
-                    console.log(gstErrorMessage);
                     stopStreamUpdate(gstErrorMessage.bus_info);
                     enqueueSnackbar(
                         `GStreamer Error Occurred: ${gstErrorMessage.bus_info} - This is likely a known issue with the kernel, please read our docs site for more details`,
@@ -137,9 +136,6 @@ const DevicesLayout = () => {
                     break;
             }
         };
-
-        // Initialie the next port
-        setNextPort(getNextPort());
 
         websocket.addEventListener("message", socketCallback);
         return () => websocket.removeEventListener("message", socketCallback);
@@ -191,16 +187,16 @@ const DevicesLayout = () => {
         updateDevice(leader);
     };
 
-    const getNextPort = () => {
+    const getNextPort = (devs = devices, prefs = savedPreferences) => {
         let allPorts: number[] = [];
-        devices.forEach((device) => {
+        devs.forEach((device) => {
             device.stream.endpoints.forEach((endpoint) =>
                 allPorts.push(endpoint.port)
             );
         });
         return allPorts.length > 0
             ? allPorts.sort().reverse()[0] + 1
-            : savedPreferences.default_stream.port; // return the highest port
+            : prefs.default_stream.port; // return the highest port
     };
 
     return (
@@ -242,7 +238,6 @@ const DevicesLayout = () => {
 
                         // set the next port
                         let port = getNextPort();
-                        console.log(port);
                         setNextPort(port);
                     });
 

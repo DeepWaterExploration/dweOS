@@ -129,9 +129,27 @@ const DevicesLayout = () => {
                 case "gst_error":
                     let gstErrorMessage = message.data as GstErrorMessage;
                     stopStreamUpdate(gstErrorMessage.bus_info);
+                    // enqueueSnackbar(
+                    //     `GStreamer Error Occurred: ${gstErrorMessage.bus_info} - This is likely a known issue with the kernel, please read our docs site for more details`,
+                    //     { variant: "error", autoHideDuration: 5000 }
+                    // );
                     enqueueSnackbar(
-                        `GStreamer Error Occurred: ${gstErrorMessage.bus_info} - This is likely a known issue with the kernel, please read our docs site for more details`,
-                        { variant: "error", autoHideDuration: 5000 }
+                        <span>
+                            GStreamer Error Occurred: {gstErrorMessage.bus_info}{" "}
+                            - This is likely a known issue with the kernel,
+                            please click the following link for more details:
+                            <a
+                                href='https://dwe.ai/kernel-issue'
+                                target='_blank'
+                                style={{ color: "white" }}
+                            >
+                                {" kernel issue link"}
+                            </a>
+                        </span>,
+                        {
+                            variant: "error",
+                            autoHideDuration: 5000,
+                        }
                     );
                     break;
             }

@@ -91,6 +91,10 @@ export const StreamOptions: React.FC = () => {
     }, [nextPort]);
 
     useEffect(() => {
+        setHost(defaultHost);
+    }, [defaultHost]);
+
+    useEffect(() => {
         console.log("Devices updated");
         setLeaders(devices.filter((dev) => dev.is_leader));
     }, [devices]);

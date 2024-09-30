@@ -76,7 +76,7 @@ class DeviceManager(events.EventEmitter):
                 return None
 
         # we need to broadcast that there was a gst error so that the frontend knows there may be a kernel issue
-        device.stream_runner.on('gst_error', lambda errors: self.broadcast_server.broadcast(Message('gst_error', {'errors': errors, 'bus_info': device.bus_info})))
+        device.stream_runner.on('gst_error', lambda errors: self._emit_gst_error(device, errors))
 
         return device
 
@@ -288,3 +288,16 @@ class DeviceManager(events.EventEmitter):
 
             # get the list of devices and update the internal array
             devices_info = self._get_devices(devices_info)
+
+    def _emit_gst_error(self, device: Device, errors: list):
+        '''
+        Emit a gst_error and make sure it is not due to the device being unplugged
+        '''
+        devices_info = list_devices()
+
+        for dev_info in devices_info:
+            if device.bus_info == dev_info.bus_info:
+                self.broadcast_server.broadcast(Message('gst_error', {'errors': errors, 'bus_info': device.bus_info}))
+                return
+
+        logging.info('gst_error ignored due to device unplugged')

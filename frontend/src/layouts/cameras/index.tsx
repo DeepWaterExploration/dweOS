@@ -129,10 +129,6 @@ const DevicesLayout = () => {
                 case "gst_error":
                     let gstErrorMessage = message.data as GstErrorMessage;
                     stopStreamUpdate(gstErrorMessage.bus_info);
-                    // enqueueSnackbar(
-                    //     `GStreamer Error Occurred: ${gstErrorMessage.bus_info} - This is likely a known issue with the kernel, please read our docs site for more details`,
-                    //     { variant: "error", autoHideDuration: 5000 }
-                    // );
                     enqueueSnackbar(
                         <span>
                             GStreamer Error Occurred: {gstErrorMessage.bus_info}{" "}

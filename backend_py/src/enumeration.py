@@ -3,6 +3,8 @@ from . import v4l2
 import fcntl
 import os
 from natsort import natsorted
+import logging
+from typing import List, Dict
 
 
 @dataclass
@@ -30,10 +32,14 @@ def _get_vid_pid(devname):
 
 
 def list_devices():
-    devices_info: list[DeviceInfo] = []
-    devices_map: dict[str, DeviceInfo] = {}
     # traverse the directory that has the list of all devices
-    devnames = os.listdir('/sys/class/video4linux/')
+    devnames: List[str] = []
+    try:
+        devnames = os.listdir('/sys/class/video4linux/')
+    except FileNotFoundError as e:
+        return []
+    devices_info: List[DeviceInfo] = []
+    devices_map: Dict[str, DeviceInfo] = {}
     for devname in devnames:
         devpath = f'/dev/{devname}'
         try:

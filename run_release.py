@@ -5,7 +5,6 @@ import signal
 import os
 from backend_py.src import main
 import multiprocessing
-import subprocess
 import logging
 
 logging.getLogger().setLevel(logging.INFO)
@@ -33,13 +32,9 @@ if __name__ == '__main__':
     frontend_thread = multiprocessing.Process(target=run_frontend)
     frontend_thread.start()
 
-    system_api_process = subprocess.Popen(
-        ['go', 'run', '.'], cwd='./system_api')
-
     def exit_clean(sig, frame):
         logging.info('Exiting')
         frontend_thread.kill()
-        system_api_process.kill()
         sys.exit(0)
 
     signal.signal(signal.SIGINT, exit_clean)

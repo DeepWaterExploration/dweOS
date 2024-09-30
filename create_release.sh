@@ -19,10 +19,6 @@ cp backend_py -r release
 
 echo "Successfully packaged backend"
 
-cp system_api -r release
-
-echo "Successfully packaged system backend"
-
 echo "Packaging frontend"
 
 # Update the version string for packaging

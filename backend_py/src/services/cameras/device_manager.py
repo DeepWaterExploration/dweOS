@@ -8,13 +8,14 @@ import event_emitter as events
 from .schemas import *
 from .device import Device, lookup_pid_vid, DeviceInfo, DeviceType
 from .settings import SettingsManager
-from .broadcast_server import BroadcastServer, Message
+from ...websockets.broadcast_server import BroadcastServer, Message
 from .enumeration import list_devices
 from .device_utils import list_diff, find_device_with_bus_info
 
-from .devices.ehd import EHDDevice
-from .devices.shd import SHDDevice
-from .logging.log_handler import LogHandler
+from .ehd import EHDDevice
+from .shd import SHDDevice
+
+from ...logging.log_handler import LogHandler
 
 
 class DeviceManager(events.EventEmitter):

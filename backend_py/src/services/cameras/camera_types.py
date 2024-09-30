@@ -75,6 +75,9 @@ class H264Mode(Enum):
     MODE_VARIABLE_BITRATE = 2
 
 class DeviceType(Enum):
+    '''
+    Device type Enum
+    '''
     EXPLOREHD = 0
     STELLARHD_LEADER= 1
     STELLARHD_FOLLOWER = 2

@@ -7,7 +7,7 @@ import logging
 from .saved_types import *
 from .schemas import SavedDeviceSchema
 from .device import Device
-from .devices.shd import SHDDevice
+from .shd import SHDDevice
 from .camera_types import DeviceType
 
 from .device_utils import find_device_with_bus_info

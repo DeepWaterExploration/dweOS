@@ -1,6 +1,6 @@
 from marshmallow import Schema, fields, post_load
 from .preference_types import SavedPrefrences
-from ..schemas import StreamEndpointSchema
+from ..cameras.schemas import StreamEndpointSchema
 
 class SavedPrefrencesSchema(Schema):
     default_stream = fields.Nested(StreamEndpointSchema)

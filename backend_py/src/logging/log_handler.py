@@ -1,5 +1,5 @@
 import logging
-from ..broadcast_server import BroadcastServer, Message
+from ..websockets.broadcast_server import BroadcastServer, Message
 
 class LogHandler(logging.Handler):
     def __init__(self, server: BroadcastServer, level: int | str = 0) -> None:

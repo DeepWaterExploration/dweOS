@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from ..camera_types import StreamEndpoint
+from .. import StreamEndpoint
 
 @dataclass
 class SavedPrefrences:

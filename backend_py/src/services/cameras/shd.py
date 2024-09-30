@@ -1,9 +1,9 @@
 import logging
 
-from ..saved_types import SavedDevice
+from .saved_types import SavedDevice
 
-from ..enumeration import DeviceInfo
-from ..device import Device
+from .enumeration import DeviceInfo
+from .device import Device
 
 class SHDDevice(Device):
     '''

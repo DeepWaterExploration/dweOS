@@ -13,7 +13,7 @@ from . import ehd_controls as xu
 
 from .stream_utils import fourcc2s
 from .enumeration import *
-from .camera_helper_loader import *
+from .camera_helper.camera_helper_loader import *
 from .camera_types import *
 from .stream import *
 from .saved_types import *

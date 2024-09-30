@@ -1,7 +1,7 @@
 import json
 from typing import Dict
 from .preference_types import SavedPrefrences, StreamEndpoint
-from .preference_schemas import SavedPrefrencesSchema
+from .schemas import SavedPrefrencesSchema
 
 class DefaultPreferences(SavedPrefrences):
     def __init__(self):

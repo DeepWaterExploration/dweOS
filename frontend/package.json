@@ -1,6 +1,6 @@
 {
     "name": "@deepwaterexploration/dwe-os-2",
-    "version": "v0.2.0-alpha",
+    "version": "v0.2.1-alpha",
     "description": "Web-based driver and software interface for DWE.ai cameras",
     "main": "lib/main.tsx",
     "keywords": [

@@ -9,7 +9,7 @@ from gevent.pywsgi import WSGIServer
 from .websockets.broadcast_server import BroadcastServer
 
 from .services import *
-from .blueprints import cameras_bp, lights_bp, logs_bp, preferences_bp
+from .blueprints import cameras_bp, lights_bp, logs_bp, preferences_bp, wifi_bp
 from .logging import LogHandler
 
 import logging
@@ -29,6 +29,7 @@ def main():
         settings_manager=settings_manager, broadcast_server=broadcast_server)
     light_manager = LightManager(create_pwm_controllers())
     preferences_manager = PreferencesManager()
+    wifi_manager = WiFiManager()
 
     # Create the logging handler
     log_handler = LogHandler(broadcast_server)
@@ -40,16 +41,19 @@ def main():
     app.config['light_manager'] = light_manager
     app.config['preferences_manager'] = preferences_manager
     app.config['log_handler'] = log_handler
+    app.config['wifi_manager'] = wifi_manager
 
     # Register the blueprints
     app.register_blueprint(cameras_bp)
     app.register_blueprint(lights_bp)
     app.register_blueprint(logs_bp)
     app.register_blueprint(preferences_bp)
+    app.register_blueprint(wifi_bp)
 
     # create the server and run everything
     http_server = WSGIServer(('0.0.0.0', 8080), app, log=None)
     device_manager.start_monitoring()
+    wifi_manager.start_scanning()
 
     def exit_clean(sig, frame):
         logging.info('Shutting down')
@@ -59,6 +63,7 @@ def main():
         http_server.stop()
         device_manager.stop_monitoring()
         broadcast_server.kill()
+        wifi_manager.stop_scanning()
 
         sys.exit(0)
 

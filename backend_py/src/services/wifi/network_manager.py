@@ -1,8 +1,11 @@
 import dbus
 from typing import List
 import time
-from wifi_types import Connection, AccessPoint
+from .wifi_types import Connection, AccessPoint
 
+class NMNotSupportedError(Exception):
+    '''Exception raised when NetworkManager is not supported'''
+    pass
 
 class NetworkManager:
     '''
@@ -12,8 +15,89 @@ class NetworkManager:
     def __init__(self) -> None:
         self.bus = dbus.SystemBus()
         self.proxy = self.bus.get_object('org.freedesktop.NetworkManager', '/org/freedesktop/NetworkManager')
+
+        if not self.proxy:
+            raise NMNotSupportedError('NetworkManager is not installed on this system.')
+
         self.interface = dbus.Interface(self.proxy, 'org.freedesktop.NetworkManager')
         self.props = dbus.Interface(self.proxy, 'org.freedesktop.DBus.Properties')
+
+    def connect(self, ssid: str, password='') -> bool:
+        (wifi_dev, dev_proxy) = self._get_wifi_device()
+        if wifi_dev is None:
+            raise Exception('No WiFi device found')
+        
+        wifi_interface = dbus.Interface(dev_proxy, 'org.freedesktop.NetworkManager.Device.Wireless')
+        # Do not need to request a scan since the scan must have happened for the user to know this network exists
+        access_points = wifi_interface.GetAccessPoints()
+
+        ap_path = None
+        ap_requires_password = False
+        for ap in access_points:
+            ap_proxy = self.bus.get_object('org.freedesktop.NetworkManager', ap)
+            ap_props = dbus.Interface(ap_proxy, 'org.freedesktop.DBus.Properties')
+            ap_ssid = ap_props.Get('org.freedesktop.NetworkManager.AccessPoint', 'Ssid')
+            ssid_str = ''.join([chr(byte) for byte in ap_ssid])
+
+            if ssid_str == ssid:
+                ap_path = ap
+
+                # Check the security of the AP
+                flags = ap_props.Get('org.freedesktop.NetworkManager.AccessPoint', 'Flags')
+                wpa_flags = ap_props.Get('org.freedesktop.NetworkManager.AccessPoint', 'WpaFlags')
+                rsn_flags = ap_props.Get('org.freedesktop.NetworkManager.AccessPoint', 'RsnFlags')
+                ap_requires_password = self._ap_requires_password(flags, wpa_flags, rsn_flags)
+                break
+        
+        if ap_path is None:
+            raise Exception(f'Access point with SSID {ssid} not found')
+        
+        # Create the settings object assuming no password is needed
+        connection_settings = {
+            '802-11-wireless': {
+                'ssid': dbus.ByteArray(ssid.encode('utf-8')),
+                'mode': 'infrastructure'
+            },
+            'connection': {
+                'id': ssid,
+                'type': '802-11-wireless'
+            },
+            'ipv4': {
+                'method': 'auto'
+            },
+            'ipv6': {
+                'method': 'ignore'
+            }
+        }
+
+        # Add security settings if the network requires a password
+        if ap_requires_password:
+            connection_settings['802-11-wireless-security'] = {
+                'key-mgmt': 'wpa-psk',
+                'psk': password
+            }
+
+        settings_proxy = self.bus.get_object('org.freedesktop.NetworkManager', '/org/freedesktop/NetworkManager/Settings')
+        settings_interface = dbus.Interface(settings_proxy, 'org.freedesktop.NetworkManager.Settings')
+
+        connection_path = settings_interface.AddConnection(connection_settings)
+        self.interface.ActivateConnection(connection_path, dev_proxy, ap_path)
+    
+    def disconnect(self):
+        (wifi_dev, dev_proxy) = self._get_wifi_device()
+
+        if not wifi_dev:
+            raise Exception('No WiFi device found')
+        
+        # get the device properties (yes this is gotten already in the get_wifi_device function)
+        dev_props = dbus.Interface(dev_proxy, 'org.freedesktop.DBus.Properties')
+        active_connection = dev_props.Get('org.freedesktop.NetworkManager.Device', 'ActiveConnection')
+
+        # Deactivate the current active connection
+        self.interface.DeactivateConnection(active_connection)
+
+        return True
+        
 
     def list_wireless_connections(self) -> List[Connection]:
         '''
@@ -62,10 +146,45 @@ class NetworkManager:
 
         return connections
     
+    def get_access_points(self) -> List[AccessPoint]:
+        '''
+        Get wifi networks without a scan
+        '''
+        (wifi_dev,_) = self._get_wifi_device()
+        return self._get_access_points(wifi_dev)
+
+    
     def scan_wifi(self, timeout=30) -> List[AccessPoint]:
         '''
         Scan wifi networks
         '''
+        (wifi_dev, dev_proxy) = self._get_wifi_device()
+
+        wifi_props = dbus.Interface(dev_proxy, 'org.freedesktop.DBus.Properties')
+
+        # get the timestamp of the last scan
+        last_scan = wifi_props.Get('org.freedesktop.NetworkManager.Device.Wireless', 'LastScan')
+
+        # request a scan
+        wifi_dev.RequestScan({})
+
+        # wait for scan to finish
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            current_scan = wifi_props.Get('org.freedesktop.NetworkManager.Device.Wireless', 'LastScan')
+
+            if current_scan != last_scan:
+                # scan 'd, return the access points
+                return self._get_access_points(wifi_dev)
+            
+            # wait before checking
+            time.sleep(0.1)
+        
+        raise TimeoutError('Request timed out')
+            
+        return []
+    
+    def _get_wifi_device(self):
         devices = self.interface.GetDevices()
         for dev_path in devices:
             dev_proxy = self.bus.get_object('org.freedesktop.NetworkManager', dev_path)
@@ -75,29 +194,8 @@ class NetworkManager:
             # is wifi device
             if dev_type == 2:
                 wifi_dev = dbus.Interface(dev_proxy, 'org.freedesktop.NetworkManager.Device.Wireless')
-                wifi_props = dbus.Interface(dev_proxy, 'org.freedesktop.DBus.Properties')
-
-                # get the timestamp of the last scan
-                last_scan = wifi_props.Get('org.freedesktop.NetworkManager.Device.Wireless', 'LastScan')
-
-                # request a scan
-                wifi_dev.RequestScan({})
-
-                # wait for scan to finish
-                start_time = time.time()
-                while time.time() - start_time < timeout:
-                    current_scan = wifi_props.Get('org.freedesktop.NetworkManager.Device.Wireless', 'LastScan')
-
-                    if current_scan != last_scan:
-                        # scan 'd, return the access points
-                        return self._get_access_points(wifi_dev)
-                    
-                    # wait before checking
-                    time.sleep(0.1)
-                
-                raise TimeoutError('Request timed out')
-            
-        return []
+                return (wifi_dev, dev_proxy)
+        return (None, None)
 
     def _get_access_points(self, wifi_dev) -> List[AccessPoint]:
         '''
@@ -128,18 +226,3 @@ class NetworkManager:
 
         # check the overall flags and additionally check if there are any security flags which would indicate a password is needed
         return flags & NM_802_11_AP_FLAGS_PRIVACY or wpa_flags != 0 or rsn_flags != 0
-
-nm = NetworkManager()
-print ('All Conections')
-for conn in nm.list_wireless_connections():
-    print(f'{conn.id}: {conn.type}')
-
-print()
-
-active_wireless = nm.get_active_wireless_connection()
-print (f'Active Connection: {active_wireless.id} ({active_wireless.type})')
-
-print()
-
-for ap in nm.scan_wifi(timeout=30):
-    print(f'{ap.ssid}: {ap.strength} - {"Password Auth" if ap.requires_password else ""}')

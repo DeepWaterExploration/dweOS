@@ -88,16 +88,10 @@ class NetworkManager:
 
         if not wifi_dev:
             raise Exception('No WiFi device found')
-        
-        # get the device properties (yes this is gotten already in the get_wifi_device function)
+
         dev_props = dbus.Interface(dev_proxy, 'org.freedesktop.DBus.Properties')
         active_connection = dev_props.Get('org.freedesktop.NetworkManager.Device', 'ActiveConnection')
-
-        # Deactivate the current active connection
         self.interface.DeactivateConnection(active_connection)
-
-        return True
-        
 
     def list_wireless_connections(self) -> List[Connection]:
         '''
@@ -181,8 +175,6 @@ class NetworkManager:
             time.sleep(0.1)
         
         raise TimeoutError('Request timed out')
-            
-        return []
     
     def _get_wifi_device(self):
         devices = self.interface.GetDevices()
@@ -226,3 +218,14 @@ class NetworkManager:
 
         # check the overall flags and additionally check if there are any security flags which would indicate a password is needed
         return flags & NM_802_11_AP_FLAGS_PRIVACY or wpa_flags != 0 or rsn_flags != 0
+    
+    def _get_connection_proxy(self, active_connection):
+        # Get the connection details from the active connection
+        connection_proxy = dbus.Interface(self.bus.get_object('org.freedesktop.NetworkManager', active_connection),
+                                        'org.freedesktop.DBus.Properties')
+
+        # Get the connection path (this will give us the object path for the connection)
+        connection_path = connection_proxy.Get('org.freedesktop.NetworkManager.Connection.Active', 'Connection')
+
+        # Return the connection proxy object based on the connection path
+        return self.bus.get_object('org.freedesktop.NetworkManager', connection_path)

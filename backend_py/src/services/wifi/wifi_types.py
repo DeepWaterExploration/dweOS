@@ -1,6 +1,11 @@
 from dataclasses import dataclass
 
 @dataclass
+class NetworkConfig:
+    ssid: str
+    password: str = ''
+
+@dataclass
 class Connection:
     id: str
     type: str

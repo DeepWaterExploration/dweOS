@@ -18,7 +18,11 @@ class WiFiManager:
         self.access_points = self.nm.get_access_points()
 
     def connect(self, ssid: str, password = '') -> bool:
-        return self.nm.connect(ssid, password)
+        try:
+            self.nm.connect(ssid, password)
+        except:
+            return False
+        return True
     
     def disconnect(self):
         self.nm.disconnect()

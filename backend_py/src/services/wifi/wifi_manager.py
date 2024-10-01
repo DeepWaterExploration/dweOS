@@ -5,6 +5,7 @@ import threading
 import time
 import logging
 from .network_manager import NetworkManager
+from dbus import DBusException
 
 class WiFiManager:
 
@@ -25,7 +26,11 @@ class WiFiManager:
         return True
     
     def disconnect(self):
-        self.nm.disconnect()
+        try:
+            self.nm.disconnect()
+        except DBusException as e:
+            # ignore exception
+            pass
 
     def start_scanning(self):
         self._is_scanning = True

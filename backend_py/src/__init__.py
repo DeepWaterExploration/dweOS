@@ -9,6 +9,8 @@ from gevent.pywsgi import WSGIServer
 from .websockets.broadcast_server import BroadcastServer
 
 from .services import *
+from .blueprints import cameras_bp, lights_bp, logs_bp, preferences_bp
+from .logging import LogHandler
 
 import logging
 
@@ -28,134 +30,22 @@ def main():
     light_manager = LightManager(create_pwm_controllers())
     preferences_manager = PreferencesManager()
 
-    '''
-    Logs API
-    '''
-    @app.route('/logs', methods=['GET'])
-    def get_logs():
-        return jsonify(device_manager.get_logs())
+    # Create the logging handler
+    log_handler = LogHandler(broadcast_server)
+    logging.getLogger().addHandler(log_handler)
+    logging.info('Log handler started...')
 
-    '''
-    Device API
-    '''
-    @app.route('/devices', methods=['GET'])
-    def get_devices():
-        return jsonify(device_manager.get_devices())
+    # Set the app configs
+    app.config['device_manager'] = device_manager
+    app.config['light_manager'] = light_manager
+    app.config['preferences_manager'] = preferences_manager
+    app.config['log_handler'] = log_handler
 
-    @app.route('/devices/set_option', methods=['POST'])
-    def set_option():
-        option_value = OptionValueSchema().load(request.get_json())
-
-        device_manager.set_device_option(
-            option_value['bus_info'], option_value['option'], option_value['value'])
-
-        return jsonify({})
-
-    @app.route('/devices/configure_stream', methods=['POST'])
-    def configure_stream():
-        stream_info = StreamInfoSchema().load(request.get_json())
-
-        device_manager.configure_device_stream(
-            stream_info['bus_info'], stream_info)
-
-        return jsonify({})
-
-    @app.route('/devices/unconfigure_stream', methods=['POST'])
-    def unconfigure_stream():
-        bus_info = StreamInfoSchema(only=['bus_info']).load(
-            request.get_json())['bus_info']
-
-        device_manager.uncofigure_device_stream(bus_info)
-
-        return jsonify({})
-
-    @app.route('/devices/set_nickname', methods=['POST'])
-    def set_nickname():
-        device_nickname = DeviceNicknameSchema().load(request.get_json())
-
-        device_manager.set_device_nickname(
-            device_nickname['bus_info'], device_nickname['nickname'])
-
-        return jsonify({})
-
-    @app.route('/devices/set_uvc_control', methods=['POST'])
-    def set_uvc_control():
-        uvc_control = UVCControlSchema().load(request.get_json())
-
-        device_manager.set_device_uvc_control(
-            uvc_control['bus_info'], uvc_control['control_id'], uvc_control['value'])
-
-        return jsonify({})
-
-    @app.route('/devices/leader_bus_infos')
-    def get_leader_bus_infos():
-        bus_infos = []
-        for device in device_manager.devices:
-            if device.device_type == DeviceType.STELLARHD_LEADER:
-                bus_infos.append({
-                    'nickname': device.nickname,
-                    'bus_info': device.bus_info
-                })
-
-        return jsonify(bus_infos)
-
-    @app.route('/devices/set_leader', methods=['POST'])
-    def set_leader():
-        leader_schema = DeviceLeaderSchema().load(request.get_json())
-        device_manager.set_leader(leader_schema['leader'], leader_schema['follower'])
-        return jsonify({})
-
-    @app.route('/devices/remove_leader', methods=['POST'])
-    def remove_leader():
-        leader_schema = DeviceLeaderSchema().load(request.get_json())
-        device_manager.remove_leader(leader_schema['follower'])
-        return jsonify({})
-
-    @app.route('/devices/restart_stream', methods=['POST'])
-    def restart_stream():
-        bus_info = StreamInfoSchema(only=['bus_info']).load(request.get_json())['bus_info']
-        dev = device_manager._find_device_with_bus_info(bus_info)
-        if not dev:
-            logging.warning(f'Unable to find device {bus_info}')
-            return jsonify({})
-        dev.start_stream()
-        return jsonify({})
-    
-    '''
-    Lights API
-    '''
-    @app.route('/lights')
-    def get_lights():
-        return jsonify(light_manager.get_lights())
-    
-    @app.route('/lights/controllers')
-    def get_pwm_controllers():
-        return jsonify(light_manager.get_pwm_controllers())
-
-    @app.route('/lights/set_intensity', methods=['POST'])
-    def set_intensity():
-        req = request.get_json()
-        light_manager.set_intensity(req['index'], req['intensity'])
-        return jsonify({})
-    
-    @app.route('/lights/disable_pin', methods=['POST'])
-    def disable_light():
-        req = request.get_json()
-        light_manager.disable_light(req['controller_index'], req['pin'])
-        return jsonify({})
-    
-    '''
-    Preferences API
-    '''
-    @app.route('/preferences')
-    def get_preferences():
-        return jsonify(preferences_manager.serialize_preferences())
-    
-    @app.route('/preferences/save_preferences', methods=['POST'])
-    def set_preferences():
-        req: SavedPrefrences = SavedPrefrencesSchema().load(request.get_json())
-        preferences_manager.save(req)
-        return jsonify({})
+    # Register the blueprints
+    app.register_blueprint(cameras_bp)
+    app.register_blueprint(lights_bp)
+    app.register_blueprint(logs_bp)
+    app.register_blueprint(preferences_bp)
 
     # create the server and run everything
     http_server = WSGIServer(('0.0.0.0', 8080), app, log=None)

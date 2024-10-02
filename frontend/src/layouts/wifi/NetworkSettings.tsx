@@ -10,6 +10,7 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
+    Divider,
     List,
     ListItem,
     ListItemAvatar,
@@ -17,7 +18,6 @@ import {
     TextField,
     Typography,
 } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 import {
     SignalWifi0Bar,
@@ -265,84 +265,64 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = ({
                 sx={{ paddingBottom: "0px" }}
             />
 
-            <List dense={true}>
-                {currentNetwork ? (
-                    <WifiListItem
-                        ssid={currentNetwork.id}
-                        signal_strength={100} // signal strength not given by current network
-                        connected={true}
-                        on_disconnect={() => {
-                            onDisconnectFromNetwork();
-                        }}
-                    />
-                ) : (
-                    <span>No Networks</span>
-                )}
-            </List>
+            <List dense={true}></List>
 
-            <Accordion
-                defaultExpanded={true}
-                style={{
-                    width: "100%",
+            <Divider />
+
+            <Box
+                sx={{
+                    backgroundColor: "background.paper",
                 }}
             >
-                <AccordionSummary
-                    expandIcon={<ExpandMoreIcon />}
-                    aria-controls='panel2a-content'
-                    id='panel2a-header'
-                >
-                    <Typography fontWeight='800'>Available Networks</Typography>
-                </AccordionSummary>
-                <Box
-                    sx={{
-                        backgroundColor: "background.paper",
-                    }}
-                >
-                    <List
-                        dense={true}
-                        style={{ maxHeight: 300, overflow: "auto" }}
-                    >
-                        {accessPoints
-                            .sort((a, b) => b.strength - a.strength)
-                            .filter(
-                                (network, index) =>
-                                    accessPoints.findIndex(
-                                        (findNetwork) =>
-                                            network.ssid === findNetwork.ssid
-                                    ) === index
-                            ) // filter out duplicates
-                            .filter((network) =>
-                                currentNetwork
-                                    ? network.ssid !== currentNetwork.id
-                                    : true
-                            ) // filter out current network
-                            .map((scanned_network) => {
-                                if (!scanned_network.ssid) return;
-                                else {
-                                    return (
-                                        <WifiListItem
-                                            key={scanned_network.ssid}
-                                            ssid={scanned_network.ssid}
-                                            signal_strength={
-                                                scanned_network.strength
-                                            }
-                                            secure={
-                                                scanned_network.requires_password
-                                            }
-                                            connected={false}
-                                            on_connect={() => {
-                                                setConnectNetwork(
-                                                    scanned_network
-                                                );
-                                                setConnectDialog(true);
-                                            }}
-                                        />
-                                    );
-                                }
-                            })}
-                    </List>
-                </Box>
-            </Accordion>
+                <List dense={true} style={{ maxHeight: 300, overflow: "auto" }}>
+                    {currentNetwork && (
+                        <WifiListItem
+                            ssid={currentNetwork.id}
+                            signal_strength={100} // signal strength not given by current network
+                            connected={true}
+                            on_disconnect={() => {
+                                onDisconnectFromNetwork();
+                            }}
+                        />
+                    )}
+                    {accessPoints
+                        .sort((a, b) => b.strength - a.strength)
+                        .filter(
+                            (network, index) =>
+                                accessPoints.findIndex(
+                                    (findNetwork) =>
+                                        network.ssid === findNetwork.ssid
+                                ) === index
+                        ) // filter out duplicates
+                        .filter((network) =>
+                            currentNetwork
+                                ? network.ssid !== currentNetwork.id
+                                : true
+                        ) // filter out current network
+                        .map((scanned_network) => {
+                            if (!scanned_network.ssid) return;
+                            else {
+                                return (
+                                    <WifiListItem
+                                        key={scanned_network.ssid}
+                                        ssid={scanned_network.ssid}
+                                        signal_strength={
+                                            scanned_network.strength
+                                        }
+                                        secure={
+                                            scanned_network.requires_password
+                                        }
+                                        connected={false}
+                                        on_connect={() => {
+                                            setConnectNetwork(scanned_network);
+                                            setConnectDialog(true);
+                                        }}
+                                    />
+                                );
+                            }
+                        })}
+                </List>
+            </Box>
         </Card>
     );
 };

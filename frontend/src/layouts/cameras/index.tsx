@@ -3,8 +3,12 @@ import React, { useContext, useEffect, useState } from "react";
 
 import DeviceCard from "../../components/DeviceCard";
 import { Device, SavedPreferences } from "../../types/types";
-import { getDevices, DEVICE_API_WS, getSettings } from "../../utils/api";
-import { deserializeMessage, findDeviceWithBusInfo } from "../../utils/utils";
+import { getDevices, getSettings } from "../../utils/api";
+import {
+    BACKEND_API_WS,
+    deserializeMessage,
+    findDeviceWithBusInfo,
+} from "../../utils/utils";
 
 import DevicesContext from "../../contexts/DevicesContext";
 import DeviceContext from "../../contexts/DeviceContext";
@@ -33,7 +37,7 @@ interface GstErrorMessage {
     bus_info: string;
 }
 
-export const websocket = new WebSocket(DEVICE_API_WS);
+export const websocket = new WebSocket(BACKEND_API_WS);
 
 const DevicesLayout = () => {
     const { enqueueSnackbar } = useSnackbar();

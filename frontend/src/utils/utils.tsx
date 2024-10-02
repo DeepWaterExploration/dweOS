@@ -29,3 +29,41 @@ export const findDeviceWithBusInfo = (devices: Device[], bus_info: string) => {
 
 export const IP_REGEX =
     /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/;
+
+// UTILITY FUNCTIONS
+
+export async function getRequest(
+    url: string,
+    url_search_params: URLSearchParams | undefined = undefined
+): Promise<Response> {
+    const config: RequestInit = {
+        mode: "cors",
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    };
+    if (url_search_params) {
+        url = `${url}?${url_search_params}`;
+    }
+    return await fetch(url, config);
+}
+
+export async function postRequest(
+    url: string,
+    body: object = {}
+): Promise<Response> {
+    const config: RequestInit = {
+        mode: "cors",
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+    };
+    return await fetch(url, config);
+}
+
+export const hostAddress: string = window.location.hostname;
+export const BACKEND_API_URL = `http://${hostAddress}:8080`;
+export const BACKEND_API_WS = `ws://${hostAddress}:9002`;

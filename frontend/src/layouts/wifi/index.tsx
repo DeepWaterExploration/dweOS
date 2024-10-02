@@ -1,32 +1,21 @@
-import { Grid } from "@mui/material";
+import Grid from "@mui/material/Grid";
 import React, { useEffect, useState } from "react";
 
-import { getAvailableWifi, getWifiStatus } from "./api";
+import { getAccessPoints, getWiFiStatus } from "./api";
 import NetworkSettingsCard from "./NetworkSettings";
-import { WifiStatus, ScannedWifiNetwork } from "./types";
-import NetworkDetailsCard from "./NetworkDetailsCard";
+import { Connection, AccessPoint } from "./types";
 
 const Wifi: React.FC = () => {
-    const [currentNetwork, setCurrentNetwork] = useState({} as WifiStatus);
-    const [currentSSID, setCurrentSSID] = useState("");
-    const [scannedNetworks, setScannedNetworks] = useState(
-        [] as ScannedWifiNetwork[]
+    const [currentNetwork, setCurrentNetwork] = useState(
+        {} as Connection | undefined
     );
+    const [accessPoints, setAccessPoints] = useState([] as AccessPoint[]);
 
     // Initial request
     useEffect(() => {
-        getWifiStatus().then((status: WifiStatus) => {
-            setCurrentNetwork(status);
-        });
-
-        getAvailableWifi().then((scannedNetworks: ScannedWifiNetwork[]) => {
-            setScannedNetworks(scannedNetworks);
-        });
+        getWiFiStatus().then(setCurrentNetwork);
+        getAccessPoints().then(setAccessPoints);
     }, []);
-
-    useEffect(() => {
-        setCurrentSSID(currentNetwork.ssid);
-    }, [currentNetwork]);
 
     return (
         <Grid
@@ -40,13 +29,10 @@ const Wifi: React.FC = () => {
             }}
         >
             <NetworkSettingsCard
-                currentSSID={currentSSID}
-                setCurrentSSID={setCurrentSSID}
-                scannedNetworks={scannedNetworks}
-                setScannedNetworks={setScannedNetworks}
+                currentNetwork={currentNetwork}
                 setCurrentNetwork={setCurrentNetwork}
+                accessPoints={accessPoints}
             />
-            <NetworkDetailsCard ip_address={currentNetwork.ip_address} />
         </Grid>
     );
 };

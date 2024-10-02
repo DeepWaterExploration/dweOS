@@ -28,7 +28,7 @@ import { BrowserRouter as Router } from "react-router-dom";
 
 import { routes } from "../routes";
 import DWELogo_white from "../svg/DWELogo_white.svg";
-import { restartMachine, shutDownMachine } from "../utils/api";
+// import { restartMachine, shutDownMachine } from "../utils/api";
 import NavigationItems from "../utils/getNavigationItems";
 import NavigationRoutes from "../utils/getRoutes";
 import dweTheme from "../utils/themes";
@@ -203,7 +203,7 @@ const NavigationBar = () => {
                                 <MenuItem
                                     onClick={() => {
                                         handleClose();
-                                        shutDownMachine();
+                                        // TODO: Shut down machine
                                     }}
                                     sx={{
                                         color: "white",
@@ -214,7 +214,7 @@ const NavigationBar = () => {
                                 <MenuItem
                                     onClick={() => {
                                         handleClose();
-                                        restartMachine();
+                                        // TODO: Restart machine
                                     }}
                                     sx={{
                                         color: "white",

@@ -56,7 +56,16 @@ class Server:
         self.http_server = WSGIServer(('0.0.0.0', port), self.app, log=None)
 
         def exit_clean(sig, frame):
-            self._exit_clean()
+            logging.info('Shutting down')
+
+            self.light_manager.cleanup()
+            self.http_server.stop()
+            self.device_manager.stop_monitoring()
+            self.broadcast_server.kill()
+            self.wifi_manager.stop_scanning()
+
+            sys.exit(0)
+
 
         signal.signal(signal.SIGINT, exit_clean)
 
@@ -67,15 +76,3 @@ class Server:
         self.wifi_manager.start_scanning()
         self.broadcast_server.run_in_background()
         self.http_server.serve_forever()
-
-    def _exit_clean(self):
-        logging.info('Shutting down')
-
-        light_manager.cleanup()
-
-        self.http_server.stop()
-        device_manager.stop_monitoring()
-        self.broadcast_server.kill()
-        self.wifi_manager.stop_scanning()
-
-        sys.exit(0)

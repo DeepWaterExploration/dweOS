@@ -1,6 +1,6 @@
 import { Button, InputBaseProps, TextField, Tooltip } from "@mui/material";
 import React, { HTMLInputTypeAttribute } from "react";
-import { styles } from "../style";
+import { styles } from "../../../style";
 
 interface TextInput_ButtonProps {
     textInputLabel: string;

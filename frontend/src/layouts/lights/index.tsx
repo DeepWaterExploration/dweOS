@@ -1,11 +1,11 @@
 import Grid from "@mui/material/Grid";
 import React, { useEffect, useState } from "react";
-import LightCard from "../../components/LightCard";
-import { LightDevice } from "../../types/types";
+import LightCard from "./components/LightCard";
+import { LightDevice } from "./types";
 import LightContext from "../../contexts/LightContext";
 import { proxy, subscribe } from "valtio";
 import { useSnackbar } from "notistack";
-import { getLights, setIntensity } from "../../utils/api";
+import { getLights, setIntensity } from "./api";
 
 const LightsLayout = () => {
     const { enqueueSnackbar } = useSnackbar();

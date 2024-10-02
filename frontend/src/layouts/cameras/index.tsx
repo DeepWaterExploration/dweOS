@@ -1,9 +1,7 @@
 import Grid from "@mui/material/Grid";
 import React, { useContext, useEffect, useState } from "react";
 
-import DeviceCard from "../../components/DeviceCard";
-import { Device, SavedPreferences } from "../../types/types";
-import { getDevices, getSettings } from "../../utils/api";
+import DeviceCard from "./components/DeviceCard";
 import {
     BACKEND_API_WS,
     deserializeMessage,
@@ -14,6 +12,10 @@ import DevicesContext from "../../contexts/DevicesContext";
 import DeviceContext from "../../contexts/DeviceContext";
 import { proxy, subscribe } from "valtio";
 import { useSnackbar } from "notistack";
+import { Device } from "./types";
+import { SavedPreferences } from "../preferences/types";
+import { getSettings } from "../preferences/api";
+import { getDevices } from "./api";
 
 const hash = function (str: string) {
     let hash = 0,

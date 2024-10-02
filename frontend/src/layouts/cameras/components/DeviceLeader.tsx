@@ -1,11 +1,11 @@
 import { TextField, MenuItem } from "@mui/material";
 import PopupState from "material-ui-popup-state";
-import { styles } from "../style";
-import { removeLeader, setLeader } from "../utils/api";
+import { styles } from "../../../style";
+import { removeLeader, setLeader } from "../api";
 
 import React, { useContext, useEffect } from "react";
-import { Device } from "../types/types";
-import DeviceContext from "../contexts/DeviceContext";
+import { Device } from "../types";
+import DeviceContext from "../../../contexts/DeviceContext";
 import { useSnackbar } from "notistack";
 
 interface DeviceLeaderProps {

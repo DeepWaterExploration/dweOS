@@ -12,11 +12,11 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 import PopupState, { bindTrigger } from "material-ui-popup-state";
 import React, { useContext, useState } from "react";
-import { Control, controlType, Device } from "../types/types";
-import { setUVCControl } from "../utils/api";
-import { useDidMountEffect } from "../utils/utils";
-import { LineBreak } from "./LineBreak";
-import DeviceContext from "../contexts/DeviceContext";
+import { Control, controlType, Device } from "../types";
+import { useDidMountEffect } from "../../../utils/utils";
+import { LineBreak } from "../../../components/LineBreak";
+import DeviceContext from "../../../contexts/DeviceContext";
+import { setUVCControl } from "../api";
 
 interface ControlState {
     control_id: number;

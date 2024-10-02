@@ -2,20 +2,16 @@ import {
     Card,
     CardContent,
     CardHeader,
-    Grid,
     IconButton,
-    MenuItem,
     Slider,
     TextField,
 } from "@mui/material";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext } from "react";
 
-import { LineBreak } from "./LineBreak";
-import DeviceContext from "../contexts/DeviceContext";
-import { useTheme } from "@emotion/react";
-import { styles } from "../style";
-import { LightDevice } from "../types/types";
-import LightContext from "../contexts/LightContext";
+import { LineBreak } from "../../../components/LineBreak";
+import { styles } from "../../../style";
+import { LightDevice } from "../types";
+import LightContext from "../../../contexts/LightContext";
 import CloseIcon from "@mui/icons-material/Close";
 
 const LightCard: React.FC = () => {

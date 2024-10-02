@@ -1,13 +1,13 @@
 import { Card, CardContent, CardHeader, TextField } from "@mui/material";
 import React, { useContext, useEffect, useState } from "react";
 
-import { Device } from "../types/types";
-import { setDeviceNickname } from "../utils/api";
+import { Device } from "../types";
+import { setDeviceNickname } from "../api";
 import { StreamOptions } from "./StreamOptions";
 import { CameraControls } from "./CameraControls";
-import { LineBreak } from "./LineBreak";
-import DeviceContext from "../contexts/DeviceContext";
-import { styles } from "../style";
+import { LineBreak } from "../../../components/LineBreak";
+import DeviceContext from "../../../contexts/DeviceContext";
+import { styles } from "../../../style";
 
 const DeviceCard: React.FC = () => {
     const { device } = useContext(DeviceContext) as {

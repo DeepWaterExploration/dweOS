@@ -1,39 +1,12 @@
+import { BACKEND_API_URL, getRequest, postRequest } from "../../utils/utils";
+import { SavedPreferences } from "../preferences/types";
 import {
     Device,
-    LightDevice,
-    Log,
-    PWMController,
-    PortInfo,
-    ReleaseList,
-    SavedPreferences,
-    StreamEndpoint,
-    StreamFormat,
     encodeType,
     optionType,
-} from "../types/types";
-import { BACKEND_API_URL, getRequest, postRequest } from "./utils";
-
-// LIGHTS
-
-export async function getLights(): Promise<LightDevice[]> {
-    const url = `${BACKEND_API_URL}/lights`;
-    const response = await getRequest(url);
-    return await response.json();
-}
-
-export async function setIntensity(index: number, intensity: number) {
-    const url = `${BACKEND_API_URL}/lights/set_intensity`;
-    const response = await postRequest(url, { index, intensity });
-    return await response.json();
-}
-
-export async function disablePin(index: number) {
-    const url = `${BACKEND_API_URL}/lights/disable_pin`;
-    const response = await postRequest(url, { index });
-    return await response.json();
-}
-
-// CAMERAS
+    StreamEndpoint,
+    StreamFormat,
+} from "./types";
 
 export async function getDevices(): Promise<Device[]> {
     const url = `${BACKEND_API_URL}/devices`;
@@ -106,38 +79,8 @@ export async function setUVCControl(
     return await response.json();
 }
 
-export async function setExploreHDOption(
-    bus_info: string,
-    option: optionType,
-    value: number
-) {
-    const url = `${BACKEND_API_URL}/devices/set_option`;
-    const response = await postRequest(url, { bus_info, option, value });
-    await response.json();
-}
-
 export async function restartStream(bus_info: string) {
     const url = `${BACKEND_API_URL}/devices/restart_stream`;
     const response = await postRequest(url, { bus_info });
     await response.json();
-}
-
-export async function getSettings(): Promise<SavedPreferences> {
-    const url = `${BACKEND_API_URL}/preferences`;
-    const response = await getRequest(url);
-    return await response.json();
-}
-
-export async function savePreferences(preferences: SavedPreferences) {
-    const url = `${BACKEND_API_URL}/preferences/save_preferences`;
-    const response = await postRequest(url, preferences);
-    await response.json();
-}
-
-// LOGS
-
-export async function getLogs(): Promise<Log[]> {
-    const url = `${BACKEND_API_URL}/logs`;
-    const response = await getRequest(url);
-    return await response.json();
 }

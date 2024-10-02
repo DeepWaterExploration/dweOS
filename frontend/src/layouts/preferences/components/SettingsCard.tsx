@@ -1,7 +1,7 @@
 import { Card, CardContent, Typography } from "@mui/material";
 import React from "react";
 import { PropsWithChildren } from "react";
-import { styles } from "../style";
+import { styles } from "../../../style";
 
 interface SettingsCardProps extends PropsWithChildren {
     cardTitle: string;

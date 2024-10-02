@@ -19,18 +19,14 @@ import LinkedCameraIcon from "@mui/icons-material/LinkedCamera";
 import AddIcon from "@mui/icons-material/Add";
 import { useSnackbar } from "notistack";
 import React, { useState, useEffect, useContext } from "react";
-import { styles } from "../style";
-import { Device, encodeType } from "../types/types";
-import {
-    unconfigureStream,
-    configureStream,
-    restartStream,
-} from "../utils/api";
+import { styles } from "../../../style";
+import { Device, encodeType } from "../types";
+import { unconfigureStream, configureStream, restartStream } from "../api";
 import { DeviceSwitch } from "./DeviceSwitch";
 import { DeviceLeader } from "./DeviceLeader";
 import { subscribe } from "valtio";
-import DeviceContext from "../contexts/DeviceContext";
-import { IP_REGEX } from "../utils/utils";
+import DeviceContext from "../../../contexts/DeviceContext";
+import { IP_REGEX } from "../../../utils/utils";
 
 /*
  * Get the list of resolutions available from the device

@@ -195,11 +195,7 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = ({}) => {
             />
             <CardContent>
                 <Divider />
-                <Box
-                    sx={{
-                        backgroundColor: "background.paper",
-                    }}
-                >
+                <Box>
                     <List
                         dense={true}
                         style={{ maxHeight: 300, overflow: "auto" }}

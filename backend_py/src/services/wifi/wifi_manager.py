@@ -49,6 +49,9 @@ class WiFiManager:
     def list_connections(self):
         return ConnectionSchema().dump(self.nm.list_wireless_connections(), many=True)
 
+    def forget(self, ssid: str):
+        self.nm.forget(ssid)
+
     def _scan(self):
         start_time = time.time()
         while self._is_scanning:

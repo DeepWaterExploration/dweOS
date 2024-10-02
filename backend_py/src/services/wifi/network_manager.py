@@ -2,6 +2,7 @@ import dbus
 from typing import List
 import time
 from .wifi_types import Connection, AccessPoint
+import logging
 
 class NMNotSupportedError(Exception):
     '''Exception raised when NetworkManager is not supported'''
@@ -119,14 +120,7 @@ class NetworkManager:
         Get a list of all the connections saved
         '''
         connections = []
-        settings_proxy = self.bus.get_object('org.freedesktop.NetworkManager', '/org/freedesktop/NetworkManager/Settings')
-        settings = dbus.Interface(settings_proxy, 'org.freedesktop.NetworkManager.Settings')
-        
-        # List all the connections saved
-        # This will have repeats for some reason, so this needs to be filtered
-        for connection_path in settings.ListConnections():
-            proxy = self.bus.get_object('org.freedesktop.NetworkManager', connection_path)
-            connection = dbus.Interface(proxy, 'org.freedesktop.NetworkManager.Settings.Connection')
+        for connection in self._list_connections():
             config = connection.GetSettings()
             new_connection = Connection(config['connection']['id'], config['connection']['type'])
             # Filter
@@ -189,6 +183,16 @@ class NetworkManager:
         
         raise TimeoutError('Request timed out')
     
+    def forget(self, ssid: str):
+        '''
+        Forget a network
+        '''
+        for connection in self._list_connections():
+            config = connection.GetSettings()
+            if config['connection']['id'] == ssid:
+                connection.Delete()
+        
+    
     def _get_wifi_device(self):
         devices = self.interface.GetDevices()
         for dev_path in devices:
@@ -242,3 +246,18 @@ class NetworkManager:
 
         # Return the connection proxy object based on the connection path
         return self.bus.get_object('org.freedesktop.NetworkManager', connection_path)
+    
+    def _list_connections(self) -> dbus.Interface:
+        connections = []
+
+        settings_proxy = self.bus.get_object('org.freedesktop.NetworkManager', '/org/freedesktop/NetworkManager/Settings')
+        settings = dbus.Interface(settings_proxy, 'org.freedesktop.NetworkManager.Settings')
+
+        # List all the connections saved
+        # This will have repeats for some reason, so this needs to be filtered
+        for connection_path in settings.ListConnections():
+            proxy = self.bus.get_object('org.freedesktop.NetworkManager', connection_path)
+            connection = dbus.Interface(proxy, 'org.freedesktop.NetworkManager.Settings.Connection')
+            connections.append(connection)
+        
+        return connections

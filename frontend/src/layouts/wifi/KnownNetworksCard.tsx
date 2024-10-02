@@ -5,18 +5,27 @@ import {
     CardHeader,
     Divider,
     List,
+    Typography,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { styles } from "../../style";
 import { Connection } from "./types";
-import { getConnections } from "./api";
+import { forgetNetwork, getConnections } from "./api";
 import WifiListItem, { WifiListItemType } from "./WifiListItem";
 
 const KnownNetworksCard = ({}) => {
     const [knownNetworks, setKnownNetworks] = useState([] as Connection[]);
 
-    useEffect(() => {
+    const refreshNetworks = () => {
         getConnections().then(setKnownNetworks);
+    };
+
+    useEffect(() => {
+        const interval = setInterval(() => refreshNetworks(), 500);
+        return () => {
+            clearInterval(interval);
+            console.log("clearing interval");
+        };
     }, []);
 
     return (
@@ -32,14 +41,21 @@ const KnownNetworksCard = ({}) => {
                         dense={true}
                         style={{ maxHeight: 300, overflow: "auto" }}
                     >
-                        {knownNetworks.map((connection, index) => (
-                            <WifiListItem
-                                ssid={connection.id}
-                                key={index}
-                                signal_strength={100}
-                                type={WifiListItemType.KNOWN}
-                            />
-                        ))}
+                        {knownNetworks.length > 0 ? (
+                            knownNetworks.map((connection, index) => (
+                                <WifiListItem
+                                    ssid={connection.id}
+                                    key={index}
+                                    signal_strength={100}
+                                    type={WifiListItemType.KNOWN}
+                                    on_forget={() =>
+                                        forgetNetwork(connection.id)
+                                    }
+                                />
+                            ))
+                        ) : (
+                            <Typography>No known networks.</Typography>
+                        )}
                     </List>
                 </Box>
             </CardContent>

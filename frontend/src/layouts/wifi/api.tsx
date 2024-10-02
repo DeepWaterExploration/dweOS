@@ -30,3 +30,9 @@ export async function disconnectFromNetwork() {
     const response = await postRequest(url);
     return await response.json();
 }
+
+export async function forgetNetwork(ssid: string) {
+    const url = `${BACKEND_API_URL}/wifi/forget`;
+    const response = await postRequest(url, { ssid });
+    return await response.json();
+}

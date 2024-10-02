@@ -38,10 +38,21 @@ def connect():
         network_config: NetworkConfig = NetworkConfigSchema().load(request.get_json())
         return jsonify({'status': wifi_manager.connect(network_config.ssid, network_config.password)})
     except ValidationError as e:
-        return jsonify({'Error': e.messages})
+        return jsonify({'Error': e})
 
 @wifi_bp.route('/wifi/disconnect', methods=['POST'])
 def disconnect():
     wifi_manager: WiFiManager = current_app.config['wifi_manager']
     wifi_manager.disconnect()
+    return jsonify({})
+
+@wifi_bp.route('/wifi/forget', methods=['POST'])
+def forget():
+    try:
+        wifi_manager: WiFiManager = current_app.config['wifi_manager']
+        network_config: NetworkConfig = NetworkConfigSchema(only=['ssid']).load(request.get_json())
+        wifi_manager.forget(network_config.ssid)
+    except:
+        # TODO: Add real error handler :)
+        return jsonify({})
     return jsonify({})

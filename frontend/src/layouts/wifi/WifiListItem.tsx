@@ -63,23 +63,25 @@ export interface WifiListItemProps {
     signal_strength: number;
     on_connect?: () => void;
     on_disconnect?: () => void;
+    on_forget?: () => void;
     secure?: boolean;
     type: WifiListItemType;
 }
 
 const WifiListItem: React.FC<WifiListItemProps> = (props) => {
+    let header = WifiListItemType.CONNECTED
+        ? "Connected"
+        : props.secure
+          ? "Secured"
+          : "Unsecured";
+    if (props.type === WifiListItemType.KNOWN) header = "Saved";
+
     return (
         <ListItem>
             <WifiSignalAvatar signal_strength={props.signal_strength} />
             <ListItemText
                 primary={props.ssid}
-                secondary={
-                    props.type === WifiListItemType.CONNECTED
-                        ? "Connected"
-                        : props.secure
-                          ? "Secured"
-                          : "Unsecured"
-                }
+                secondary={header}
                 style={{ width: "200px" }}
             />
             {(() => {
@@ -118,8 +120,8 @@ const WifiListItem: React.FC<WifiListItemProps> = (props) => {
                                 variant='contained'
                                 style={{ color: "white", fontWeight: "bold" }}
                                 onClick={() => {
-                                    props.on_connect
-                                        ? props.on_connect()
+                                    props.on_forget
+                                        ? props.on_forget()
                                         : undefined;
                                 }}
                             >

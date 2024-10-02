@@ -29,7 +29,7 @@ class NetworkManager:
         
         wifi_interface = dbus.Interface(dev_proxy, 'org.freedesktop.NetworkManager.Device.Wireless')
         # Do not need to request a scan since the scan must have happened for the user to know this network exists
-        access_points = wifi_interface.GetAccessPoints()
+        access_points = wifi_interface.GetAllAccessPoints()
 
         ap_path = None
         ap_requires_password = False

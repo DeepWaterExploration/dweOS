@@ -13,13 +13,18 @@ class NetworkManager:
     '''
 
     def __init__(self) -> None:
+        # Get the system bus
         self.bus = dbus.SystemBus()
+        # Get a local proxy to the NetworkManager object
         self.proxy = self.bus.get_object('org.freedesktop.NetworkManager', '/org/freedesktop/NetworkManager')
 
+        # The proxy does not exist, since NetworkManager does not exist
         if not self.proxy:
             raise NMNotSupportedError('NetworkManager is not installed on this system.')
 
+        # Get an interface to the NetworkManager object from the proxy
         self.interface = dbus.Interface(self.proxy, 'org.freedesktop.NetworkManager')
+        # Get an interface to the properties object
         self.props = dbus.Interface(self.proxy, 'org.freedesktop.DBus.Properties')
 
     def connect(self, ssid: str, password='') -> bool:
@@ -84,6 +89,9 @@ class NetworkManager:
         self.interface.ActivateConnection(connection_path, dev_proxy, ap_path)
     
     def disconnect(self):
+        '''
+        Disconnect from any connected network
+        '''
         (wifi_dev, dev_proxy) = self._get_wifi_device()
 
         if not wifi_dev:

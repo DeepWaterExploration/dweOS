@@ -1,22 +1,9 @@
 import Grid from "@mui/material/Grid";
-import React, { useEffect, useState } from "react";
-
-import { getAccessPoints, getWiFiStatus } from "./api";
+import React from "react";
 import NetworkSettingsCard from "./NetworkSettings";
-import { Connection, AccessPoint } from "./types";
+import KnownNetworksCard from "./KnownNetworksCard";
 
 const Wifi: React.FC = () => {
-    const [currentNetwork, setCurrentNetwork] = useState(
-        {} as Connection | undefined
-    );
-    const [accessPoints, setAccessPoints] = useState([] as AccessPoint[]);
-
-    // Initial request
-    useEffect(() => {
-        getWiFiStatus().then(setCurrentNetwork);
-        getAccessPoints().then(setAccessPoints);
-    }, []);
-
     return (
         <Grid
             container
@@ -28,11 +15,8 @@ const Wifi: React.FC = () => {
                 padding: "0 3em",
             }}
         >
-            <NetworkSettingsCard
-                currentNetwork={currentNetwork}
-                setCurrentNetwork={setCurrentNetwork}
-                accessPoints={accessPoints}
-            />
+            <NetworkSettingsCard />
+            <KnownNetworksCard />
         </Grid>
     );
 };

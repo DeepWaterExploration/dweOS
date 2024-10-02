@@ -4,7 +4,7 @@ import { AccessPoint, Connection } from "./types";
 export async function getWiFiStatus() {
     const url = `${BACKEND_API_URL}/wifi/status`;
     const response = await getRequest(url);
-    return (await response.json()) as Connection;
+    return (await response.json()) as Connection | {};
 }
 
 export async function getAccessPoints() {

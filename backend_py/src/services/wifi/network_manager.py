@@ -122,11 +122,16 @@ class NetworkManager:
         settings_proxy = self.bus.get_object('org.freedesktop.NetworkManager', '/org/freedesktop/NetworkManager/Settings')
         settings = dbus.Interface(settings_proxy, 'org.freedesktop.NetworkManager.Settings')
         
+        # List all the connections saved
+        # This will have repeats for some reason, so this needs to be filtered
         for connection_path in settings.ListConnections():
             proxy = self.bus.get_object('org.freedesktop.NetworkManager', connection_path)
             connection = dbus.Interface(proxy, 'org.freedesktop.NetworkManager.Settings.Connection')
             config = connection.GetSettings()
-            connections.append(Connection(config['connection']['id'], config['connection']['type']))
+            new_connection = Connection(config['connection']['id'], config['connection']['type'])
+            # Filter
+            if not new_connection in connections:
+                connections.append(new_connection)
         return connections
     
     def get_active_connections(self) -> List[Connection]:

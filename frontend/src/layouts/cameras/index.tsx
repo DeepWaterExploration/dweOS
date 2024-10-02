@@ -6,6 +6,7 @@ import {
     BACKEND_API_WS,
     deserializeMessage,
     findDeviceWithBusInfo,
+    hash,
 } from "../../utils/utils";
 
 import DevicesContext from "../../contexts/DevicesContext";
@@ -16,19 +17,6 @@ import { Device } from "./types";
 import { SavedPreferences } from "../preferences/types";
 import { getSettings } from "../preferences/api";
 import { getDevices } from "./api";
-
-const hash = function (str: string) {
-    let hash = 0,
-        i,
-        chr;
-    if (str.length === 0) return hash;
-    for (i = 0; i < str.length; i++) {
-        chr = str.charCodeAt(i);
-        hash = (hash << 5) - hash + chr;
-        hash |= 0;
-    }
-    return hash;
-};
 
 interface DeviceRemovedInfo {
     bus_info: string;

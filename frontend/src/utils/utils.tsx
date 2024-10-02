@@ -1,6 +1,7 @@
 import { useRef, useEffect } from "react";
 
-import { Device, Message } from "../types/types";
+import { Message } from "../types/types";
+import { Device } from "../layouts/cameras/types";
 
 export const deserializeMessage = (message_str: string) => {
     let parts = message_str.split(": ");
@@ -63,6 +64,19 @@ export async function postRequest(
     };
     return await fetch(url, config);
 }
+
+export const hash = function (str: string) {
+    let hash = 0,
+        i,
+        chr;
+    if (str.length === 0) return hash;
+    for (i = 0; i < str.length; i++) {
+        chr = str.charCodeAt(i);
+        hash = (hash << 5) - hash + chr;
+        hash |= 0;
+    }
+    return hash;
+};
 
 export const hostAddress: string = window.location.hostname;
 export const BACKEND_API_URL = `http://${hostAddress}:8080`;

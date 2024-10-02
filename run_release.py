@@ -3,7 +3,7 @@ from gevent.pywsgi import WSGIServer
 import sys
 import signal
 import os
-from backend_py.src import main
+from backend_py.src import Server
 import multiprocessing
 import logging
 
@@ -39,4 +39,5 @@ if __name__ == '__main__':
 
     signal.signal(signal.SIGINT, exit_clean)
 
-    main()
+    server = Server()
+    server.serve()

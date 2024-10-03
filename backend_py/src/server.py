@@ -26,17 +26,16 @@ class Server:
         self.app.json.sort_keys = False
 
         # Create the managers
-        self.settings_manager = SettingsManager()
         self.broadcast_server = BroadcastServer()
+        # Create the logging handler
+        self.log_handler = LogHandler(self.broadcast_server)
+        logging.getLogger().addHandler(self.log_handler)
+        self.settings_manager = SettingsManager()
         self.device_manager = DeviceManager(
             settings_manager=self.settings_manager, broadcast_server=self.broadcast_server)
         self.light_manager = LightManager(create_pwm_controllers())
         self.preferences_manager = PreferencesManager()
         self.wifi_manager = WiFiManager()
-
-        # Create the logging handler
-        self.log_handler = LogHandler(self.broadcast_server)
-        logging.getLogger().addHandler(self.log_handler)
 
         # Set the app configs
         self.app.config['device_manager'] = self.device_manager

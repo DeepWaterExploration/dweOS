@@ -12,9 +12,11 @@ import { styles } from "../../style";
 import { Connection } from "./types";
 import { forgetNetwork, getConnections } from "./api";
 import WifiListItem, { WifiListItemType } from "./WifiListItem";
+import { useSnackbar } from "notistack";
 
 const KnownNetworksCard = ({}) => {
     const [knownNetworks, setKnownNetworks] = useState([] as Connection[]);
+    const { enqueueSnackbar } = useSnackbar();
 
     const refreshNetworks = () => {
         getConnections().then(setKnownNetworks);
@@ -28,6 +30,21 @@ const KnownNetworksCard = ({}) => {
             console.log("clearing interval");
         };
     }, []);
+
+    const onForgetNetwork = async (ssid: string) => {
+        await forgetNetwork(ssid);
+        setTimeout(async () => {
+            let newNetworks = await getConnections();
+            if (newNetworks.find((connection) => connection.id === ssid))
+                enqueueSnackbar("Failed to forget network", {
+                    variant: "error",
+                });
+            else
+                enqueueSnackbar("Successfully forgot network!", {
+                    variant: "success",
+                });
+        }, 250);
+    };
 
     return (
         <Card sx={{ ...styles.card, maxHeight: 450 }}>
@@ -50,7 +67,7 @@ const KnownNetworksCard = ({}) => {
                                     signal_strength={100}
                                     type={WifiListItemType.KNOWN}
                                     on_forget={() =>
-                                        forgetNetwork(connection.id)
+                                        onForgetNetwork(connection.id)
                                     }
                                 />
                             ))

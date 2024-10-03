@@ -34,6 +34,7 @@ import NavigationRoutes from "../utils/getRoutes";
 import dweTheme from "../utils/themes";
 
 import { version } from "../../package.json";
+import { restartMachine, shutdownMachine } from "../layouts/system/api";
 
 const drawerWidth = 240;
 
@@ -203,7 +204,7 @@ const NavigationBar = () => {
                                 <MenuItem
                                     onClick={() => {
                                         handleClose();
-                                        // TODO: Shut down machine
+                                        shutdownMachine();
                                     }}
                                     sx={{
                                         color: "white",
@@ -214,7 +215,7 @@ const NavigationBar = () => {
                                 <MenuItem
                                     onClick={() => {
                                         handleClose();
-                                        // TODO: Restart machine
+                                        restartMachine();
                                     }}
                                     sx={{
                                         color: "white",

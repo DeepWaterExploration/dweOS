@@ -9,7 +9,7 @@ from gevent.pywsgi import WSGIServer
 from .websockets.broadcast_server import BroadcastServer
 
 from .services import *
-from .blueprints import cameras_bp, lights_bp, logs_bp, preferences_bp, wifi_bp
+from .blueprints import cameras_bp, lights_bp, logs_bp, preferences_bp, wifi_bp, system_bp
 from .logging import LogHandler
 
 import logging
@@ -36,6 +36,7 @@ class Server:
         self.light_manager = LightManager(create_pwm_controllers())
         self.preferences_manager = PreferencesManager()
         self.wifi_manager = WiFiManager()
+        self.system_manager = SystemManager()
 
         # Set the app configs
         self.app.config['device_manager'] = self.device_manager
@@ -43,6 +44,7 @@ class Server:
         self.app.config['preferences_manager'] = self.preferences_manager
         self.app.config['log_handler'] = self.log_handler
         self.app.config['wifi_manager'] = self.wifi_manager
+        self.app.config['system_manager'] = self.system_manager
 
         # Register the blueprints
         self.app.register_blueprint(cameras_bp)
@@ -50,6 +52,7 @@ class Server:
         self.app.register_blueprint(logs_bp)
         self.app.register_blueprint(preferences_bp)
         self.app.register_blueprint(wifi_bp)
+        self.app.register_blueprint(system_bp)
 
         # create the server and run everything
         self.http_server = WSGIServer(('0.0.0.0', port), self.app, log=None)

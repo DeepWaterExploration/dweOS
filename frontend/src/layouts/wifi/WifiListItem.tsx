@@ -69,11 +69,12 @@ export interface WifiListItemProps {
 }
 
 const WifiListItem: React.FC<WifiListItemProps> = (props) => {
-    let header = WifiListItemType.CONNECTED
-        ? "Connected"
-        : props.secure
-          ? "Secured"
-          : "Unsecured";
+    let header =
+        props.type === WifiListItemType.CONNECTED
+            ? "Connected"
+            : props.secure
+              ? "Secured"
+              : "Unsecured";
     if (props.type === WifiListItemType.KNOWN) header = "Saved";
 
     return (

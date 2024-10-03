@@ -1,5 +1,5 @@
 import dbus
-from typing import List
+from typing import List, Callable
 import time
 from .wifi_types import Connection, AccessPoint
 import logging
@@ -155,7 +155,7 @@ class NetworkManager:
         return self._get_access_points(wifi_dev)
 
     
-    def scan_wifi(self, timeout=30) -> List[AccessPoint]:
+    def scan_wifi(self, is_scanning_func: Callable[[], bool], timeout=30) -> List[AccessPoint]:
         '''
         Scan wifi networks
         '''
@@ -171,7 +171,7 @@ class NetworkManager:
 
         # wait for scan to finish
         start_time = time.time()
-        while time.time() - start_time < timeout:
+        while is_scanning_func() and time.time() - start_time < timeout:
             current_scan = wifi_props.Get('org.freedesktop.NetworkManager.Device.Wireless', 'LastScan')
 
             if current_scan != last_scan:

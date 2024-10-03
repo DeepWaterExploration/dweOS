@@ -1,28 +1,22 @@
 import Grid from "@mui/material/Grid";
 import React, { useContext, useEffect, useState } from "react";
 
-import DeviceCard from "../../components/DeviceCard";
-import { Device, SavedPreferences } from "../../types/types";
-import { getDevices, DEVICE_API_WS, getSettings } from "../../utils/api";
-import { deserializeMessage, findDeviceWithBusInfo } from "../../utils/utils";
+import DeviceCard from "./components/DeviceCard";
+import {
+    BACKEND_API_WS,
+    deserializeMessage,
+    findDeviceWithBusInfo,
+    hash,
+} from "../../utils/utils";
 
 import DevicesContext from "../../contexts/DevicesContext";
 import DeviceContext from "../../contexts/DeviceContext";
 import { proxy, subscribe } from "valtio";
 import { useSnackbar } from "notistack";
-
-const hash = function (str: string) {
-    let hash = 0,
-        i,
-        chr;
-    if (str.length === 0) return hash;
-    for (i = 0; i < str.length; i++) {
-        chr = str.charCodeAt(i);
-        hash = (hash << 5) - hash + chr;
-        hash |= 0;
-    }
-    return hash;
-};
+import { Device } from "./types";
+import { SavedPreferences } from "../preferences/types";
+import { getSettings } from "../preferences/api";
+import { getDevices } from "./api";
 
 interface DeviceRemovedInfo {
     bus_info: string;
@@ -33,7 +27,7 @@ interface GstErrorMessage {
     bus_info: string;
 }
 
-export const websocket = new WebSocket(DEVICE_API_WS);
+export const websocket = new WebSocket(BACKEND_API_WS);
 
 const DevicesLayout = () => {
     const { enqueueSnackbar } = useSnackbar();

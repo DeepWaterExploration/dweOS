@@ -1,6 +1,7 @@
 import { useRef, useEffect } from "react";
 
-import { Device, Message } from "../types/types";
+import { Message } from "../types/types";
+import { Device } from "../layouts/cameras/types";
 
 export const deserializeMessage = (message_str: string) => {
     let parts = message_str.split(": ");
@@ -29,3 +30,54 @@ export const findDeviceWithBusInfo = (devices: Device[], bus_info: string) => {
 
 export const IP_REGEX =
     /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/;
+
+// UTILITY FUNCTIONS
+
+export async function getRequest(
+    url: string,
+    url_search_params: URLSearchParams | undefined = undefined
+): Promise<Response> {
+    const config: RequestInit = {
+        mode: "cors",
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    };
+    if (url_search_params) {
+        url = `${url}?${url_search_params}`;
+    }
+    return await fetch(url, config);
+}
+
+export async function postRequest(
+    url: string,
+    body: object = {}
+): Promise<Response> {
+    const config: RequestInit = {
+        mode: "cors",
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+    };
+    return await fetch(url, config);
+}
+
+export const hash = function (str: string) {
+    let hash = 0,
+        i,
+        chr;
+    if (str.length === 0) return hash;
+    for (i = 0; i < str.length; i++) {
+        chr = str.charCodeAt(i);
+        hash = (hash << 5) - hash + chr;
+        hash |= 0;
+    }
+    return hash;
+};
+
+export const hostAddress: string = window.location.hostname;
+export const BACKEND_API_URL = `http://${hostAddress}:8080`;
+export const BACKEND_API_WS = `ws://${hostAddress}:9002`;

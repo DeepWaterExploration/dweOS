@@ -1,33 +1,9 @@
-import { Grid } from "@mui/material";
-import React, { useEffect, useState } from "react";
-
-import { getAvailableWifi, getWifiStatus } from "./api";
+import Grid from "@mui/material/Grid";
+import React from "react";
 import NetworkSettingsCard from "./NetworkSettings";
-import { WifiStatus, ScannedWifiNetwork } from "./types";
-import NetworkDetailsCard from "./NetworkDetailsCard";
+import KnownNetworksCard from "./KnownNetworksCard";
 
 const Wifi: React.FC = () => {
-    const [currentNetwork, setCurrentNetwork] = useState({} as WifiStatus);
-    const [currentSSID, setCurrentSSID] = useState("");
-    const [scannedNetworks, setScannedNetworks] = useState(
-        [] as ScannedWifiNetwork[]
-    );
-
-    // Initial request
-    useEffect(() => {
-        getWifiStatus().then((status: WifiStatus) => {
-            setCurrentNetwork(status);
-        });
-
-        getAvailableWifi().then((scannedNetworks: ScannedWifiNetwork[]) => {
-            setScannedNetworks(scannedNetworks);
-        });
-    }, []);
-
-    useEffect(() => {
-        setCurrentSSID(currentNetwork.ssid);
-    }, [currentNetwork]);
-
     return (
         <Grid
             container
@@ -39,14 +15,8 @@ const Wifi: React.FC = () => {
                 padding: "0 3em",
             }}
         >
-            <NetworkSettingsCard
-                currentSSID={currentSSID}
-                setCurrentSSID={setCurrentSSID}
-                scannedNetworks={scannedNetworks}
-                setScannedNetworks={setScannedNetworks}
-                setCurrentNetwork={setCurrentNetwork}
-            />
-            <NetworkDetailsCard ip_address={currentNetwork.ip_address} />
+            <NetworkSettingsCard />
+            <KnownNetworksCard />
         </Grid>
     );
 };

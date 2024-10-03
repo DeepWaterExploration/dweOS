@@ -1,155 +1,31 @@
 import {
-    Accordion,
-    AccordionSummary,
-    Avatar,
     Box,
     Button,
     Card,
+    CardContent,
     CardHeader,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
+    Divider,
     List,
-    ListItem,
-    ListItemAvatar,
-    ListItemText,
     TextField,
-    Typography,
 } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
-import {
-    SignalWifi0Bar,
-    SignalWifi1Bar,
-    SignalWifi2Bar,
-    SignalWifi3Bar,
-    SignalWifi4Bar,
-} from "@mui/icons-material";
-import { WifiStatus, ScannedWifiNetwork } from "./types";
+import { AccessPoint, Connection } from "./types";
 import { useEffect, useState } from "react";
 import {
-    connectToWifi,
-    disconnectFromWifi,
-    getAvailableWifi,
-    getWifiStatus,
+    connectToNetwork,
+    disconnectFromNetwork,
+    getAccessPoints,
+    getWiFiStatus,
 } from "./api";
 import { useSnackbar } from "notistack";
 import React from "react";
-
-export interface SignalIconProps {
-    signal_strength: number;
-}
-
-const thresholds = [-60, -70, -80, -90];
-
-const getSignalStrength = (strength: number) => {
-    if (strength >= thresholds[0]) {
-        return 4;
-    } else if (strength >= thresholds[1]) {
-        return 3;
-    } else if (strength >= thresholds[2]) {
-        return 2;
-    } else if (strength >= thresholds[3]) {
-        return 1;
-    } else {
-        return 0;
-    }
-};
-
-const SignalIcon: React.FC<SignalIconProps> = (props) => {
-    // Define the signal strength thresholds for each bar
-
-    // Determine the number of bars based on the signal strength
-    if (props.signal_strength >= thresholds[0]) {
-        return <SignalWifi4Bar sx={{ fontSize: 22.5, mx: 0.5 }} />;
-    } else if (props.signal_strength >= thresholds[1]) {
-        return <SignalWifi3Bar sx={{ fontSize: 22.5, mx: 0.5 }} />;
-    } else if (props.signal_strength >= thresholds[2]) {
-        return <SignalWifi2Bar sx={{ fontSize: 22.5, mx: 0.5 }} />;
-    } else if (props.signal_strength >= thresholds[3]) {
-        return <SignalWifi1Bar sx={{ fontSize: 22.5, mx: 0.5 }} />;
-    } else {
-        return <SignalWifi0Bar sx={{ fontSize: 22.5, mx: 0.5 }} />;
-    }
-};
-
-export interface WifiSignalAvatarProps {
-    signal_strength: number;
-}
-
-const WifiSignalAvatar: React.FC<WifiSignalAvatarProps> = (props) => {
-    return (
-        <ListItemAvatar>
-            <Avatar>
-                <SignalIcon signal_strength={props.signal_strength} />
-            </Avatar>
-        </ListItemAvatar>
-    );
-};
-
-export interface WifiListItemProps {
-    ssid: string;
-    signal_strength: number;
-    connected: boolean;
-    on_connect?: () => void;
-    on_disconnect?: () => void;
-    secure?: boolean;
-}
-
-const WifiListItem: React.FC<WifiListItemProps> = (props) => {
-    return (
-        <ListItem>
-            <WifiSignalAvatar signal_strength={props.signal_strength} />
-            <ListItemText
-                primary={props.ssid}
-                secondary={
-                    props.connected
-                        ? "Connected"
-                        : props.secure
-                          ? "Secured"
-                          : "Unsecured"
-                }
-                style={{ width: "200px" }}
-            />
-            {props.connected ? (
-                <>
-                    {/* <Button
-                        variant='contained'
-                        style={{
-                            color: "white",
-                            marginRight: "20px",
-                            fontWeight: "bold",
-                        }}
-                    >
-                        Forget
-                    </Button> */}
-                    <Button
-                        variant='contained'
-                        style={{ color: "white", fontWeight: "bold" }}
-                        onClick={() => {
-                            props.on_disconnect
-                                ? props.on_disconnect()
-                                : undefined;
-                        }}
-                    >
-                        Disconnect
-                    </Button>
-                </>
-            ) : (
-                <Button
-                    variant='contained'
-                    style={{ color: "white", fontWeight: "bold" }}
-                    onClick={() => {
-                        props.on_connect ? props.on_connect() : undefined;
-                    }}
-                >
-                    Connect
-                </Button>
-            )}
-        </ListItem>
-    );
-};
+import { styles } from "../../style";
+import { hash } from "../../utils/utils";
+import WifiListItem, { WifiListItemType } from "./WifiListItem";
 
 export interface WifiConnectDialogProps {
     ssid: string;
@@ -236,205 +112,149 @@ const WifiConnectDialog: React.FC<WifiConnectDialogProps> = (props) => {
     );
 };
 
-export interface NetworkSettingsCardProps {
-    currentSSID: string;
-    setCurrentSSID: React.Dispatch<React.SetStateAction<string>>;
-    setCurrentNetwork: React.Dispatch<React.SetStateAction<WifiStatus>>;
+export interface NetworkSettingsCardProps {}
 
-    scannedNetworks: ScannedWifiNetwork[];
-    setScannedNetworks: React.Dispatch<
-        React.SetStateAction<ScannedWifiNetwork[]>
-    >;
-}
-
-const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = (props) => {
-    const [currentNetwork, setCurrentNetwork] = useState({} as WifiStatus);
-    const [currentSSID, setCurrentSSID] = useState("");
-    const [scannedNetworks, setScannedNetworks] = useState(
-        [] as ScannedWifiNetwork[]
+const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = ({}) => {
+    const [currentNetwork, setCurrentNetwork] = useState(
+        undefined as Connection | undefined
     );
+    const [accessPoints, setAccessPoints] = useState([] as AccessPoint[]);
+    const { enqueueSnackbar } = useSnackbar();
 
-    const update = () => {
-        getAvailableWifi().then((scannedNetworks: ScannedWifiNetwork[]) => {
-            setScannedNetworks(
-                scannedNetworks.sort((networkA, networkB) => {
-                    let strengthA = getSignalStrength(networkA.signal_strength);
-                    let strengthB = getSignalStrength(networkB.signal_strength);
-                    return (
-                        strengthA - strengthB ||
-                        (networkA.ssid || "").localeCompare(networkB.ssid || "")
-                    );
-                })
-            );
-        });
+    const refreshNetworks = async () => {
+        let newNetwork = await getWiFiStatus();
+        let newAccessPoints = await getAccessPoints();
 
-        getWifiStatus().then((status: WifiStatus) => {
-            if (currentNetwork.ssid !== status.ssid) setCurrentNetwork(status);
-        });
+        if (newNetwork && Object.keys(newNetwork).length === 0)
+            newNetwork = undefined; // no new network
+
+        setCurrentNetwork(newNetwork as Connection | undefined);
+        setAccessPoints(newAccessPoints);
+
+        return {
+            newNetwork: newNetwork as Connection | undefined,
+            newAccessPoints,
+        };
     };
 
     // Initial request
     useEffect(() => {
-        setInterval(() => {
-            update();
-        }, 1000);
+        refreshNetworks();
 
-        update();
-        // Initial wifi status
+        const interval = setInterval(() => refreshNetworks(), 500);
+        return () => {
+            clearInterval(interval);
+            console.log("clearing interval");
+        };
     }, []);
-
-    useEffect(() => {
-        setCurrentSSID(currentNetwork.ssid);
-    }, [currentNetwork]);
 
     const [connectDialog, setConnectDialog] = useState(false);
     const [connectNetwork, setConnectNetwork] = useState(
-        {} as ScannedWifiNetwork
+        undefined as AccessPoint | undefined
     );
-    const { enqueueSnackbar } = useSnackbar();
 
-    const handleConnect = (network: ScannedWifiNetwork) => {
-        setConnectNetwork(network);
-        setConnectDialog(true);
+    const onConnectToNewNetwork = async (ssid: string, password?: string) => {
+        await connectToNetwork(ssid, password);
+        setTimeout(async () => {
+            const { newNetwork } = await refreshNetworks();
+            if (newNetwork && newNetwork.id === ssid)
+                enqueueSnackbar("Connection Successful!", {
+                    variant: "success",
+                });
+            else enqueueSnackbar("Connection failed", { variant: "error" });
+        }, 500);
     };
 
-    const handleDisconnect = () => {
-        disconnectFromWifi(currentSSID).then(() => {
-            enqueueSnackbar(
-                `Successfully disconnected from network: ${currentSSID}`,
-                {
-                    variant: "success",
-                }
-            );
-
-            // wait for new network to come in if there is one
-            // TODO: just constantly check for a new network over an interval
-            setTimeout(() => {
-                getWifiStatus().then((status: WifiStatus) => {
-                    setCurrentNetwork(status);
-
-                    enqueueSnackbar(
-                        `Successfully connected to network: ${status.ssid}`,
-                        {
-                            variant: "success",
-                        }
-                    );
-                });
-            }, 5000);
-        });
+    const onDisconnectFromNetwork = async () => {
+        await disconnectFromNetwork();
     };
 
     return (
         <Card
             sx={{
-                minWidth: 512,
-                boxShadow: 3,
-                textAlign: "left",
-                margin: "20px",
-                padding: "15px",
+                ...styles.card,
+                position: "relative",
             }}
         >
-            <WifiConnectDialog
-                ssid={connectNetwork.ssid || ""}
-                secure={connectNetwork.secure}
-                dialogOpen={connectDialog}
-                setDialogOpen={setConnectDialog}
-                on_connect={(password) => {
-                    connectToWifi(connectNetwork.ssid || "", password).then(
-                        (success) => {
-                            if (success) {
-                                setCurrentSSID(connectNetwork.ssid || "");
-                                enqueueSnackbar(
-                                    `WiFi Network: "${connectNetwork.ssid}" connected successfully`,
-                                    {
-                                        variant: "success",
-                                    }
-                                );
-                            } else {
-                                enqueueSnackbar(
-                                    `WiFi Network: "${connectNetwork.ssid}" failed to connect`,
-                                    {
-                                        variant: "error",
-                                    }
-                                );
-                            }
-                        }
-                    );
-                    setConnectDialog(false);
-                }}
-            />
-
+            {connectNetwork && (
+                <WifiConnectDialog
+                    ssid={connectNetwork.ssid}
+                    secure={connectNetwork.requires_password}
+                    dialogOpen={connectDialog}
+                    setDialogOpen={setConnectDialog}
+                    on_connect={(password) => {
+                        onConnectToNewNetwork(connectNetwork.ssid, password);
+                        setConnectDialog(false);
+                        setConnectNetwork(undefined);
+                    }}
+                />
+            )}
             <CardHeader
                 title={"Network Settings"}
                 sx={{ paddingBottom: "0px" }}
             />
-
-            <List dense={true}>
-                <WifiListItem
-                    ssid={currentSSID}
-                    signal_strength={-60} // signal strength not given by current network
-                    connected={true}
-                    on_disconnect={() => {
-                        handleDisconnect();
-                    }}
-                />
-            </List>
-
-            <Accordion
-                defaultExpanded={false}
-                style={{
-                    width: "100%",
-                }}
-            >
-                <AccordionSummary
-                    expandIcon={<ExpandMoreIcon />}
-                    aria-controls='panel2a-content'
-                    id='panel2a-header'
-                >
-                    <Typography fontWeight='800'>Available Networks</Typography>
-                </AccordionSummary>
-                <Box
-                    sx={{
-                        backgroundColor: "background.paper",
-                    }}
-                >
+            <CardContent>
+                <Divider />
+                <Box>
                     <List
                         dense={true}
                         style={{ maxHeight: 300, overflow: "auto" }}
                     >
-                        {scannedNetworks
+                        {currentNetwork && (
+                            <WifiListItem
+                                ssid={currentNetwork.id}
+                                signal_strength={100} // signal strength not given by current network
+                                type={WifiListItemType.CONNECTED}
+                                on_disconnect={() => {
+                                    onDisconnectFromNetwork();
+                                }}
+                            />
+                        )}
+                        {accessPoints
                             .sort(
-                                (a, b) => b.signal_strength - a.signal_strength
+                                (a, b) =>
+                                    b.strength - a.strength ||
+                                    hash(a.ssid) - hash(b.ssid)
                             )
                             .filter(
                                 (network, index) =>
-                                    scannedNetworks.findIndex(
+                                    accessPoints.findIndex(
                                         (findNetwork) =>
                                             network.ssid === findNetwork.ssid
                                     ) === index
                             ) // filter out duplicates
-                            .filter((network) => network.ssid !== currentSSID) // filter out current network
+                            .filter((network) =>
+                                currentNetwork
+                                    ? network.ssid !== currentNetwork.id
+                                    : true
+                            ) // filter out current network
                             .map((scanned_network) => {
                                 if (!scanned_network.ssid) return;
                                 else {
                                     return (
                                         <WifiListItem
+                                            key={scanned_network.ssid}
                                             ssid={scanned_network.ssid}
                                             signal_strength={
-                                                scanned_network.signal_strength
+                                                scanned_network.strength
                                             }
-                                            secure={scanned_network.secure}
-                                            connected={false}
-                                            on_connect={() =>
-                                                handleConnect(scanned_network)
+                                            secure={
+                                                scanned_network.requires_password
                                             }
+                                            type={WifiListItemType.DISCONNECTED}
+                                            on_connect={() => {
+                                                setConnectNetwork(
+                                                    scanned_network
+                                                );
+                                                setConnectDialog(true);
+                                            }}
                                         />
                                     );
                                 }
                             })}
                     </List>
                 </Box>
-            </Accordion>
+            </CardContent>
         </Card>
     );
 };

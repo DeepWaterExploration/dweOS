@@ -1,5 +1,6 @@
-from src import main, logging
+from src import Server, logging
 
 logging.getLogger().setLevel(logging.INFO)
 
-main()
+server = Server()
+server.serve()

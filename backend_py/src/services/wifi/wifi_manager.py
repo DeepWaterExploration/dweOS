@@ -31,6 +31,7 @@ class WiFiManager:
         self.to_disconnect = True
 
     def start_scanning(self):
+        logging.info('Starting WiFi Manager...')
         self._is_scanning = True
         self._update_thread.start()
         self._scan_thread.start()
@@ -57,19 +58,21 @@ class WiFiManager:
         self.to_forget = None
 
     def _connect(self):
+        logging.info(f'Connecting to network: {self.to_connect.ssid}')
         try:
             self.nm.connect(self.to_connect.ssid, self.to_connect.password)
         except Exception:
-            pass
+            logging.error(f'Failed to connect to network: {self.to_connect.ssid}')
         self.to_connect = None
 
     def _disconnect(self):
+        logging.info('Disconnecting from network')
         try:
             self.nm.disconnect()
         except DBusException as e:
             # ignore exception
-            pass
-            self.to_disconnect = False
+            logging.error('Failed to disconnect from network')
+        self.to_disconnect = False
 
     def _scan(self):
         start_time = time.time()

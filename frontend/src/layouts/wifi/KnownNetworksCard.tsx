@@ -21,6 +21,7 @@ const KnownNetworksCard = ({}) => {
     };
 
     useEffect(() => {
+        refreshNetworks();
         const interval = setInterval(() => refreshNetworks(), 500);
         return () => {
             clearInterval(interval);

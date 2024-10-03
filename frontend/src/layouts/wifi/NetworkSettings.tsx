@@ -162,7 +162,7 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = ({}) => {
                     variant: "success",
                 });
             else enqueueSnackbar("Connection failed", { variant: "error" });
-        }, 250); // FIXME: the api requires a slight delay after connecting. This should be fixed on the backend side with a timeout
+        }, 500);
     };
 
     const onDisconnectFromNetwork = async () => {

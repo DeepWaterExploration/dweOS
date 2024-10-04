@@ -3,13 +3,16 @@ from .schemas import AccessPointSchema, ConnectionSchema
 import threading
 import time
 import logging
-from .network_manager import NetworkManager
-from dbus import DBusException
+from .network_manager import NetworkManager, NMException, NMNotSupportedError
 
 class WiFiManager:
 
     def __init__(self, scan_interval=10) -> None:
-        self.nm = NetworkManager()
+        try:
+            self.nm = NetworkManager()
+        except NMNotSupportedError:
+            logging.warning('WiFi is not supported because NetworkManager cannot be located.')
+            self.nm = None
         self._update_thread = threading.Thread(target=self._update)
         self._scan_thread = threading.Thread(target=self._scan) # Secondary thread is needed to conduct scans separately
         self._is_scanning = False
@@ -69,7 +72,7 @@ class WiFiManager:
         logging.info('Disconnecting from network')
         try:
             self.nm.disconnect()
-        except DBusException as e:
+        except NMException:
             # ignore exception
             logging.error('Failed to disconnect from network')
         self.to_disconnect = False
@@ -84,7 +87,10 @@ class WiFiManager:
             if elapsed_time >= self.scan_interval:
                 try:
                     # Make sure the scan stops when we are no longer scanning
-                    self.access_points = self.nm.scan_wifi(lambda: self._is_scanning)
+                    try:
+                        self.access_points = self.nm.scan_wifi(lambda: self._is_scanning)
+                    except NMException as e:
+                        logging.error(f'Error occurred while scanning: {e}.')
                 except TimeoutError as e:
                     logging.warning(e)
                 
@@ -94,12 +100,24 @@ class WiFiManager:
             # No reason to check too often
             time.sleep(0.1)
 
+    def _update_connections(self):
+        try:
+            self.connections = self.nm.list_wireless_connections()
+        except NMException as e:
+            logging.error(f'Error occured while fetching cached connections: f{e}')
+
+    def _update_active_connection(self):
+        try:
+            self.active_connection = self.nm.get_active_wireless_connection()
+        except NMException as e:
+            logging.error(f'Error occured while fetching active connection: f{e}')
+
     def _update(self):
         while self._is_scanning:
             # Queue requests to the network manager to avoid issues
 
-            self.connections = self.nm.list_wireless_connections()
-            self.active_connection = self.nm.get_active_wireless_connection()
+            self.connections = self._update_connections()
+            self.active_connection = self._update_active_connection()
 
             if not self.to_forget is None:
                 self._forget()

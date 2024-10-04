@@ -8,6 +8,10 @@ class NMNotSupportedError(Exception):
     '''Exception raised when NetworkManager is not supported'''
     pass
 
+class NMException(dbus.DBusException):
+    '''Exception raised when there is a network manager issue'''
+    pass
+
 class NetworkManager:
     '''
     Class for interfacing with NetworkManager over dbus

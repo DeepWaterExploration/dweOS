@@ -3,7 +3,7 @@
 INSTALL_DIR=/opt/DWE_OS_2
 SCRIPT_RUN_DIR=$PWD
 
-echo "Installing DWE_OS_2 (https://github.com/DeepwaterExploration/DWE_OS_2/releases/latest/download/release.tar.gz)"
+echo "Installing DWE_OS 2 (https://github.com/DeepwaterExploration/DWE_OS_2/releases/latest/download/release.tar.gz)"
 
 wget https://github.com/DeepwaterExploration/DWE_OS_2/releases/latest/download/release.tar.gz
 
@@ -23,7 +23,7 @@ cd ${INSTALL_DIR}
 sh install_requirements.sh &&
 sh create_venv.sh &&
 
-echo "Successfully installed DWE_OS_2 ${VERSION}"
+# copy and enable service
 
 cp ${INSTALL_DIR}/service/* /etc/systemd/system/
 systemctl enable dwe_os_2
@@ -35,3 +35,5 @@ cd $SCRIPT_RUN_DIR
 
 rm -rf release
 rm release.tar.gz
+
+echo "Successfully installed DWE_OS 2 ${VERSION}"

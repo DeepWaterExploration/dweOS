@@ -236,8 +236,8 @@ const NavigationBar = () => {
                                 }}
                                 primary={
                                     <div>
-                                        <Tooltip title='This is alpha software, there may be unfinished features or bugs.'>
-                                            <span>DWE OS Alpha</span>
+                                        <Tooltip title='This is beta software, there may be unfinished features or bugs.'>
+                                            <span>DWE OS 2.0</span>
                                         </Tooltip>
                                     </div>
                                 }

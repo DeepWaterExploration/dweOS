@@ -116,8 +116,8 @@ class WiFiManager:
         while self._is_scanning:
             # Queue requests to the network manager to avoid issues
 
-            self.connections = self._update_connections()
-            self.active_connection = self._update_active_connection()
+            self._update_connections()
+            self._update_active_connection()
 
             if not self.to_forget is None:
                 self._forget()

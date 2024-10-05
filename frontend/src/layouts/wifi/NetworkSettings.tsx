@@ -4,6 +4,7 @@ import {
     Card,
     CardContent,
     CardHeader,
+    CircularProgress,
     Dialog,
     DialogActions,
     DialogContent,
@@ -115,24 +116,26 @@ const WifiConnectDialog: React.FC<WifiConnectDialogProps> = (props) => {
 export interface NetworkSettingsCardProps {}
 
 const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = ({}) => {
-    const [currentNetwork, setCurrentNetwork] = useState(
-        undefined as Connection | undefined
-    );
+    const [currentNetwork, setCurrentNetwork] = useState({
+        id: "",
+        type: "",
+    } as Connection);
+    const [connected, setConnected] = useState(false);
+    const [finishedFirstScan, setFinishedFirstScan] = useState(false);
     const [accessPoints, setAccessPoints] = useState([] as AccessPoint[]);
     const { enqueueSnackbar } = useSnackbar();
 
     const refreshNetworks = async () => {
-        let newNetwork = await getWiFiStatus();
+        let status = await getWiFiStatus();
         let newAccessPoints = await getAccessPoints();
 
-        if (newNetwork && Object.keys(newNetwork).length === 0)
-            newNetwork = undefined; // no new network
-
-        setCurrentNetwork(newNetwork as Connection | undefined);
+        setFinishedFirstScan(status.finished_first_scan);
+        setConnected(status.connected);
+        setCurrentNetwork(status.connection);
         setAccessPoints(newAccessPoints);
 
         return {
-            newNetwork: newNetwork as Connection | undefined,
+            newNetwork: status.connection,
             newAccessPoints,
         };
     };
@@ -209,6 +212,16 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = ({}) => {
                                     onDisconnectFromNetwork();
                                 }}
                             />
+                        )}
+                        {/* Display a loading circle when waiting for the first scan to complete */}
+                        {accessPoints.length === 0 && !finishedFirstScan && (
+                            <Box
+                                display='flex'
+                                justifyContent='center'
+                                alignItems='center'
+                            >
+                                <CircularProgress />
+                            </Box>
                         )}
                         {accessPoints
                             .sort(

@@ -10,7 +10,7 @@ def wifi_status():
     # NOTE: try/except blocks are placed for each function in WiFi manager that can throw errors
     # If there is an error, the API would benefit from trying again at a later time, the device may just be busy
     try:
-        active_connection = wifi_manager.get_active_connection()
+        active_connection = wifi_manager.get_status()
         return jsonify(active_connection)
     except:
         return jsonify({})

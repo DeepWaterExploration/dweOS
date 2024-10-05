@@ -4,8 +4,14 @@ export interface NetworkConfig {
 }
 
 export interface Connection {
-    id: string;
-    type: string;
+    id: string | undefined;
+    type: string | undefined;
+}
+
+export interface Status {
+    connection: Connection;
+    finished_first_scan: boolean;
+    connected: boolean;
 }
 
 export interface AccessPoint {

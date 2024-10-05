@@ -1,5 +1,5 @@
-from .wifi_types import NetworkConfig
-from .schemas import AccessPointSchema, ConnectionSchema
+from .wifi_types import NetworkConfig, Status, Connection
+from .schemas import AccessPointSchema, ConnectionSchema, StatusSchema
 import threading
 import time
 import logging
@@ -12,24 +12,26 @@ class WiFiManager:
             self.nm = NetworkManager()
         except NMNotSupportedError:
             logging.warning('WiFi is not supported because NetworkManager cannot be located.')
-            self.nm = None
+            return
         self._update_thread = threading.Thread(target=self._update)
         self._scan_thread = threading.Thread(target=self._scan) # Secondary thread is needed to conduct scans separately
         self._is_scanning = False
         self.scan_interval = scan_interval
         self.connections = []
-        self.active_connection = {}
 
-        self.to_forget: str = None
+        self.to_forget: str | None = None
         self.to_disconnect = False
-        self.to_connect: NetworkConfig = None
+        self.to_connect: NetworkConfig | None = None
+
+        # Changed to true after successfully completed a scan
+        self.status = Status(connection=Connection(), finished_first_scan=False, connected=False)
 
         # get initial access points before scan
         self.access_points = self.nm.get_access_points()
 
-    def connect(self, ssid: str, password = '') -> bool:
+    def connect(self, ssid: str, password = ''):
         self.to_connect = NetworkConfig(ssid, password)
-    
+
     def disconnect(self):
         self.to_disconnect = True
 
@@ -46,10 +48,10 @@ class WiFiManager:
 
     def get_access_points(self):
         return AccessPointSchema().dump(self.access_points, many=True)
-    
-    def get_active_connection(self):
-        return ConnectionSchema().dump(self.active_connection)
-    
+
+    def get_status(self):
+        return StatusSchema().dump(self.status)
+
     def list_connections(self):
         return ConnectionSchema().dump(self.connections, many=True)
 
@@ -57,16 +59,20 @@ class WiFiManager:
         self.to_forget = ssid
 
     def _forget(self):
-        self.nm.forget(self.to_forget)
+        if self.to_forget is not None:
+            self.nm.forget(self.to_forget)
         self.to_forget = None
 
     def _connect(self):
-        logging.info(f'Connecting to network: {self.to_connect.ssid}')
-        try:
-            self.nm.connect(self.to_connect.ssid, self.to_connect.password)
-        except Exception:
-            logging.error(f'Failed to connect to network: {self.to_connect.ssid}')
-        self.to_connect = None
+        if self.to_connect is not None:
+            logging.info(f'Connecting to network: {self.to_connect.ssid}')
+            try:
+                self.nm.connect(self.to_connect.ssid, self.to_connect.password)
+            except Exception:
+                logging.error(f'Failed to connect to network: {self.to_connect.ssid}')
+            self.to_connect = None
+        else:
+            logging.warning('Attempting to connect to network of value None.')
 
     def _disconnect(self):
         logging.info('Disconnecting from network')
@@ -89,11 +95,12 @@ class WiFiManager:
                     # Make sure the scan stops when we are no longer scanning
                     try:
                         self.access_points = self.nm.scan_wifi(lambda: self._is_scanning)
+                        self.status.finished_first_scan = True
                     except NMException as e:
                         logging.error(f'Error occurred while scanning: {e}.')
                 except TimeoutError as e:
                     logging.warning(e)
-                
+
                 # reset the counter
                 start_time = current_time
 
@@ -108,7 +115,13 @@ class WiFiManager:
 
     def _update_active_connection(self):
         try:
-            self.active_connection = self.nm.get_active_wireless_connection()
+            connection = self.nm.get_active_wireless_connection()
+            if connection is not None:
+                self.status.connection = connection
+                self.status.connected = True
+            else:
+                self.status.connection = Connection()
+                self.status.connected = False
         except NMException as e:
             logging.error(f'Error occured while fetching active connection: f{e}')
 

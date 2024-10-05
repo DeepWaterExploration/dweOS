@@ -7,8 +7,14 @@ class NetworkConfig:
 
 @dataclass
 class Connection:
-    id: str
-    type: str
+    id: str | None = None
+    type: str | None = None
+
+@dataclass
+class Status:
+    connection: Connection
+    finished_first_scan: bool
+    connected: bool
 
 @dataclass
 class AccessPoint:

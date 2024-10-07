@@ -5,6 +5,11 @@ class ConnectionSchema(Schema):
     id = fields.Str(required=True)
     type = fields.Str(required=True)
 
+class StatusSchema(Schema):
+    connection = fields.Nested(ConnectionSchema, required=True)
+    finished_first_scan = fields.Bool(required=True)
+    connected = fields.Bool(required=True)
+
 class AccessPointSchema(Schema):
     ssid = fields.Str(required=True)
     strength = fields.Int(required=True)

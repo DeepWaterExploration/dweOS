@@ -8,12 +8,6 @@ def get_lights():
     light_manager: LightManager = current_app.config['light_manager']
 
     return jsonify(light_manager.get_lights())
-    
-@lights_bp.route('/lights/controllers')
-def get_pwm_controllers():
-    light_manager: LightManager = current_app.config['light_manager']
-
-    return jsonify(light_manager.get_pwm_controllers())
 
 @lights_bp.route('/lights/set_intensity', methods=['POST'])
 def set_intensity():
@@ -22,7 +16,7 @@ def set_intensity():
     req = request.get_json()
     light_manager.set_intensity(req['index'], req['intensity'])
     return jsonify({})
-    
+
 @lights_bp.route('/lights/disable_pin', methods=['POST'])
 def disable_light():
     light_manager: LightManager = current_app.config['light_manager']

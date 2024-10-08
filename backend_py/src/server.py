@@ -12,8 +12,9 @@ from .services import *
 from .blueprints import cameras_bp, lights_bp, logs_bp, preferences_bp, wifi_bp, system_bp
 from .logging import LogHandler
 
-import logging
+from marshmallow import ValidationError
 
+import logging
 
 class Server:
 
@@ -21,6 +22,10 @@ class Server:
         # Create the flask application
         self.app = Flask(__name__)
         CORS(self.app)
+
+        self.app.register_error_handler(ValidationError, self._handle_validation_error)
+        self.app.register_error_handler(DeviceNotFoundException, self._handle_device_not_found)
+        self.app.register_error_handler(Exception, self._handle_server_error)
 
         # avoid sorting the keys to keep the way we sort it in the backend
         self.app.json.sort_keys = False
@@ -78,3 +83,28 @@ class Server:
         self.wifi_manager.start_scanning()
         self.broadcast_server.run_in_background()
         self.http_server.serve_forever()
+
+    def _handle_validation_error(self, e: ValidationError):
+        logging.warning('Internal error occurred due to a malformed input.')
+        response = {
+            'error': 'Malformed input',
+            'message': str(e.messages)
+        }
+        
+        return jsonify(response), 400 # 400: Bad Request
+    
+    def _handle_device_not_found(self, e: DeviceNotFoundException):
+        logging.warning(e)
+        response = {
+            'error': 'Device not found',
+            'message': str(e)
+        }
+        return jsonify(response), 400 # 400: Bad Request
+    
+    def _handle_server_error(self, e: Exception):
+        logging.error(e)
+        response = {
+            'error': 'Unhandled exception occurred within the server',
+            'message': str(e)
+        }
+        return jsonify(response), 500

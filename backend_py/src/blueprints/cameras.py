@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app
-from ..services import DeviceManager, OptionValueSchema, StreamInfoSchema, DeviceNicknameSchema, UVCControlSchema, DeviceType, DeviceLeaderSchema
+from ..services import DeviceManager, StreamInfoSchema, DeviceNicknameSchema, UVCControlSchema, DeviceType, DeviceLeaderSchema
 import logging
 
 cameras_bp = Blueprint('cameras', __name__)
@@ -9,17 +9,6 @@ def get_devices():
     device_manager: DeviceManager = current_app.config['device_manager']
 
     return jsonify(device_manager.get_devices())
-
-@cameras_bp.route('/devices/set_option', methods=['POST'])
-def set_option():
-    device_manager: DeviceManager = current_app.config['device_manager']
-
-    option_value = OptionValueSchema().load(request.get_json())
-
-    device_manager.set_device_option(
-    option_value['bus_info'], option_value['option'], option_value['value'])
-
-    return jsonify({})
 
 @cameras_bp.route('/devices/configure_stream', methods=['POST'])
 def configure_stream():
@@ -65,20 +54,6 @@ def set_uvc_control():
 
     return jsonify({})
 
-@cameras_bp.route('/devices/leader_bus_infos')
-def get_leader_bus_infos():
-    device_manager: DeviceManager = current_app.config['device_manager']
-
-    bus_infos = []
-    for device in device_manager.devices:
-        if device.device_type == DeviceType.STELLARHD_LEADER:
-            bus_infos.cameras_bpend({
-            'nickname': device.nickname,
-            'bus_info': device.bus_info
-            })
-
-    return jsonify(bus_infos)
-
 @cameras_bp.route('/devices/set_leader', methods=['POST'])
 def set_leader():
     device_manager: DeviceManager = current_app.config['device_manager']
@@ -100,10 +75,7 @@ def restart_stream():
     device_manager: DeviceManager = current_app.config['device_manager']
 
     bus_info = StreamInfoSchema(only=['bus_info']).load(request.get_json())['bus_info']
+    # will raise DeviceNotFoundException which will be handled by server
     dev = device_manager._find_device_with_bus_info(bus_info)
-    if not dev:
-        logging.warning(f'Unable to find device {bus_info}')
-        return jsonify({})
-    
     dev.start_stream()
     return jsonify({})

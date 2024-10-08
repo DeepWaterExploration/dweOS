@@ -203,7 +203,7 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = ({}) => {
                         dense={true}
                         style={{ maxHeight: 300, overflow: "auto" }}
                     >
-                        {currentNetwork && (
+                        {currentNetwork.id && currentNetwork.type && (
                             <WifiListItem
                                 ssid={currentNetwork.id}
                                 signal_strength={100} // signal strength not given by current network

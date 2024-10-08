@@ -96,42 +96,38 @@ class StreamEndpointSchema(Schema):
 
 
 class StreamSchema(Schema):
-    device_path = fields.Str()
-    encode_type = fields.Enum(StreamEncodeTypeEnum)
-    stream_type = fields.Enum(StreamTypeEnum)
-    endpoints = fields.Nested(StreamEndpointSchema, many=True)
-    width = fields.Int()
-    height = fields.Int()
-    interval = fields.Nested(CameraIntervalSchema)
-    started = fields.Bool()
-    configured = fields.Bool()
+    device_path = fields.Str(required=True)
+    encode_type = fields.Enum(StreamEncodeTypeEnum, required=True)
+    stream_type = fields.Enum(StreamTypeEnum, required=True)
+    endpoints = fields.Nested(StreamEndpointSchema, many=True, required=True)
+    width = fields.Int(required=True)
+    height = fields.Int(required=True)
+    interval = fields.Nested(CameraIntervalSchema, required=True)
+    started = fields.Bool(required=True)
+    configured = fields.Bool(required=True)
 
 
 class DeviceSchema(Schema):
-    cameras = fields.Nested(CameraSchema, many=True)
-    controls = fields.Nested(ControlSchema, many=True)
-    stream = fields.Nested(StreamSchema)
-    name = fields.Str()
-    vid = fields.Int()
-    pid = fields.Int()
-    bus_info = fields.Str()
-    manufacturer = fields.Str()
-    nickname = fields.Str()
-    device_info = fields.Nested(DeviceInfoSchema)
-    device_type = fields.Enum(DeviceType)
+    cameras = fields.Nested(CameraSchema, many=True, required=False)
+    controls = fields.Nested(ControlSchema, many=True, required=True)
+    stream = fields.Nested(StreamSchema, required=True)
+    name = fields.Str(required=False)
+    vid = fields.Int(required=True)
+    pid = fields.Int(required=True)
+    bus_info = fields.Str(required=True)
+    manufacturer = fields.Str(required=False)
+    nickname = fields.Str(required=True)
+    device_info = fields.Nested(DeviceInfoSchema, required=False)
+    device_type = fields.Enum(DeviceType, required=True)
     is_leader = fields.Bool(required=False, allow_none=True)
     leader = fields.Str(required=False, allow_none=True)
     follower = fields.Str(required=False, allow_none=True)
 
-    # @post_dump(pass_original=True)
-    # def dump_options(self, data: typing.Dict, original: Any, **kwargs):
-    #     return data
-
 
 class SavedDeviceSchema(DeviceSchema):
-    controls = fields.Nested(ControlSchema, exclude=['flags'], many=True)
-    stream = fields.Nested(StreamSchema, exclude=['device_path', 'started'])
-    device_type = fields.Enum(DeviceType)
+    controls = fields.Nested(ControlSchema, exclude=['flags'], many=True, required=True)
+    stream = fields.Nested(StreamSchema, exclude=['device_path', 'started'], required=True)
+    device_type = fields.Enum(DeviceType, required=True)
 
     @post_load()
     def make_saved_device(self, data: typing.Dict, **kwargs):
@@ -154,43 +150,25 @@ class SavedDeviceSchema(DeviceSchema):
 
 # API SCHEMAS
 
-class OptionTypeEnum(Enum):
-    BITRATE = 'bitrate'
-    GOP = 'gop'
-    MODE = 'mode'
-
-
-class OptionValueSchema(Schema):
-    bus_info = fields.Str()
-    option = fields.Enum(OptionTypeEnum)
-    value = fields.Int()
-
-    @post_load()
-    def dump_options(self, data: typing.Dict, **kwargs):
-        if data['option'] is OptionTypeEnum.MODE:
-            data['value'] = H264Mode(data['value'])
-        return data
-
-
 class StreamInfoSchema(Schema):
-    bus_info = fields.Str()
+    bus_info = fields.Str(required=True)
     stream_format = fields.Nested(
-        StreamSchema, only=['width', 'height', 'interval'])
-    encode_type = fields.Enum(StreamEncodeTypeEnum)
-    endpoints = fields.Nested(StreamEndpointSchema, many=True)
+        StreamSchema, only=['width', 'height', 'interval'], required=True)
+    encode_type = fields.Enum(StreamEncodeTypeEnum, required=True)
+    endpoints = fields.Nested(StreamEndpointSchema, many=True, required=True)
 
 
 class DeviceNicknameSchema(Schema):
-    bus_info = fields.Str()
-    nickname = fields.Str()
+    bus_info = fields.Str(required=True)
+    nickname = fields.Str(required=True)
 
 
 class UVCControlSchema(Schema):
-    bus_info = fields.Str()
-    control_id = fields.Int()
-    value = fields.Int()
+    bus_info = fields.Str(required=True)
+    control_id = fields.Int(required=True)
+    value = fields.Int(required=True)
 
 class DeviceLeaderSchema(Schema):
-    follower = fields.Str()
+    follower = fields.Str(required=True)
     # not required in case of removing leader
     leader = fields.Str(required=False, allow_none=True)

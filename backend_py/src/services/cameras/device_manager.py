@@ -11,10 +11,10 @@ from .settings import SettingsManager
 from ...websockets.broadcast_server import BroadcastServer, Message
 from .enumeration import list_devices
 from .device_utils import list_diff, find_device_with_bus_info
+from .exceptions import DeviceNotFoundException
 
 from .ehd import EHDDevice
 from .shd import SHDDevice
-
 
 class DeviceManager(events.EventEmitter):
     '''
@@ -91,8 +91,7 @@ class DeviceManager(events.EventEmitter):
         Set a device option
         '''
         device = self._find_device_with_bus_info(bus_info)
-        if not device:
-            return False
+
         device.set_option(option, option_value)
 
         self.settings_manager.save_device(device)
@@ -103,8 +102,6 @@ class DeviceManager(events.EventEmitter):
         Configure a device's stream with the given stream info
         '''
         device = self._find_device_with_bus_info(bus_info)
-        if not device:
-            return False
 
         stream_format = stream_info['stream_format']
         width: int = stream_format['width']
@@ -143,8 +140,6 @@ class DeviceManager(events.EventEmitter):
         Set a device nickname
         '''
         device = self._find_device_with_bus_info(bus_info)
-        if not device:
-            return False
 
         device.nickname = nickname
 
@@ -156,8 +151,6 @@ class DeviceManager(events.EventEmitter):
         Set a device UVC control
         '''
         device = self._find_device_with_bus_info(bus_info)
-        if not device:
-            return False
 
         device.set_pu(control_id, control_value)
 
@@ -170,9 +163,7 @@ class DeviceManager(events.EventEmitter):
         '''
         follower_device = self._find_device_with_bus_info(follower_bus_info)
         leader_device = self._find_device_with_bus_info(leader_bus_info)
-        if not leader_device or not follower_device:
-            logging.warn('Unable to find leader or follower device.')
-            return False
+
         if follower_device.device_type == DeviceType.STELLARHD_FOLLOWER:
             cast(SHDDevice, follower_device).set_leader(leader_device)
             self.settings_manager.save_device(follower_device)
@@ -186,9 +177,6 @@ class DeviceManager(events.EventEmitter):
         Remove leader from follower
         '''
         follower_device = self._find_device_with_bus_info(bus_info)
-        if not follower_device:
-            logging.warn('Unable to find follower device.')
-            return False
         if follower_device.device_type == DeviceType.STELLARHD_FOLLOWER:
             cast(SHDDevice, follower_device).remove_leader()
             self.settings_manager.save_device(follower_device)
@@ -203,7 +191,7 @@ class DeviceManager(events.EventEmitter):
         '''
         device = find_device_with_bus_info(self.devices, bus_info)
         if not device:
-            logging.error(f'Device not found: {bus_info}')
+            raise DeviceNotFoundException(bus_info)
         return device
     
     def _get_devices(self, old_devices: List[DeviceInfo]):

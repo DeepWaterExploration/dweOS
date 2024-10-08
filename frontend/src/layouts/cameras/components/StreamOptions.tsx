@@ -17,6 +17,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import DeleteIcon from "@mui/icons-material/Delete";
 import LinkedCameraIcon from "@mui/icons-material/LinkedCamera";
 import AddIcon from "@mui/icons-material/Add";
+import Paper from "@mui/material/Paper";
 import { useSnackbar } from "notistack";
 import React, { useState, useEffect, useContext } from "react";
 import { styles } from "../../../style";
@@ -308,83 +309,60 @@ export const StreamOptions: React.FC = () => {
                                 ))}
                             </TextField>
                         </div>
-                        <Accordion
-                            defaultExpanded={device.stream.endpoints.length > 0}
-                            style={{
-                                width: "100%",
-                            }}
-                        >
-                            <AccordionSummary
-                                expandIcon={<ExpandMoreIcon />}
-                                aria-controls='panel2a-content'
-                                id='panel2a-header'
-                            >
-                                <Typography fontWeight='800'>
-                                    Stream Endpoints
-                                </Typography>
-                            </AccordionSummary>
-                            <AccordionDetails>
-                                <Box
-                                    sx={{
-                                        backgroundColor: "background.paper",
+                        <Paper sx={{ marginBottom: "10px" }}>
+                            {device.stream.endpoints.length === 0 ? (
+                                <Typography
+                                    fontWeight='500'
+                                    style={{
+                                        width: "100%",
+                                        textAlign: "center",
+                                        padding: "25px",
                                     }}
                                 >
-                                    {device.stream.endpoints.length === 0 ? (
-                                        <Typography
-                                            fontWeight='500'
-                                            style={{
-                                                width: "100%",
-                                                textAlign: "center",
-                                                padding: "25px",
-                                            }}
-                                        >
-                                            No stream endpoint added
-                                        </Typography>
-                                    ) : (
-                                        <List dense={true}>
-                                            {device.stream.endpoints.map(
-                                                (endpoint) => {
-                                                    return (
-                                                        <ListItem
-                                                            key={`${endpoint.host}:${endpoint.port}`}
-                                                            secondaryAction={
-                                                                <IconButton
-                                                                    edge='end'
-                                                                    aria-label='icon
+                                    No stream endpoint added
+                                </Typography>
+                            ) : (
+                                <List
+                                    dense={true}
+                                    sx={{ maxHeight: 200, overflow: "auto" }}
+                                >
+                                    {device.stream.endpoints.map((endpoint) => {
+                                        return (
+                                            <ListItem
+                                                key={`${endpoint.host}:${endpoint.port}`}
+                                                secondaryAction={
+                                                    <IconButton
+                                                        edge='end'
+                                                        aria-label='icon
                                                                 '
-                                                                    onClick={() => {
-                                                                        device.stream.endpoints =
-                                                                            device.stream.endpoints.filter(
-                                                                                (
-                                                                                    e
-                                                                                ) =>
-                                                                                    `${e.host}:${e.port}` !==
-                                                                                    `${endpoint.host}:${endpoint.port}`
-                                                                            );
-                                                                    }}
-                                                                >
-                                                                    <DeleteIcon />
-                                                                </IconButton>
-                                                            }
-                                                        >
-                                                            <ListItemAvatar>
-                                                                <Avatar>
-                                                                    <LinkedCameraIcon />
-                                                                </Avatar>
-                                                            </ListItemAvatar>
-                                                            <ListItemText
-                                                                primary={`IP Address: ${endpoint.host}`}
-                                                                secondary={`Port: ${endpoint.port}`}
-                                                            />
-                                                        </ListItem>
-                                                    );
+                                                        onClick={() => {
+                                                            device.stream.endpoints =
+                                                                device.stream.endpoints.filter(
+                                                                    (e) =>
+                                                                        `${e.host}:${e.port}` !==
+                                                                        `${endpoint.host}:${endpoint.port}`
+                                                                );
+                                                        }}
+                                                    >
+                                                        <DeleteIcon />
+                                                    </IconButton>
                                                 }
-                                            )}
-                                        </List>
-                                    )}
-                                </Box>
-                            </AccordionDetails>
-                        </Accordion>
+                                            >
+                                                <ListItemAvatar>
+                                                    <Avatar>
+                                                        <LinkedCameraIcon />
+                                                    </Avatar>
+                                                </ListItemAvatar>
+                                                <ListItemText
+                                                    primary={`IP Address: ${endpoint.host}`}
+                                                    secondary={`Port: ${endpoint.port}`}
+                                                />
+                                            </ListItem>
+                                        );
+                                    })}
+                                </List>
+                            )}
+                        </Paper>
                         {/* Container for User Input and Interaction */}
                         <div style={styles.cardContent.div}>
                             {/* IP Address input */}

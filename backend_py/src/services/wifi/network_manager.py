@@ -8,7 +8,7 @@ class NMNotSupportedError(Exception):
     '''Exception raised when NetworkManager is not supported'''
     pass
 
-class NMException(dbus.DBusException):
+class NMException(Exception):
     '''Exception raised when there is a network manager issue'''
     pass
 
@@ -166,32 +166,35 @@ class NetworkManager:
         '''
         Scan wifi networks
         '''
-        (wifi_dev, dev_proxy) = self._get_wifi_device()
+        try:
+            (wifi_dev, dev_proxy) = self._get_wifi_device()
 
-        if not wifi_dev:
-            raise Exception('No WiFi device found')
+            if not wifi_dev:
+                raise NMException('No WiFi device found')
 
-        wifi_props = dbus.Interface(dev_proxy, 'org.freedesktop.DBus.Properties')
+            wifi_props = dbus.Interface(dev_proxy, 'org.freedesktop.DBus.Properties')
 
-        # get the timestamp of the last scan
-        last_scan = wifi_props.Get('org.freedesktop.NetworkManager.Device.Wireless', 'LastScan')
+            # get the timestamp of the last scan
+            last_scan = wifi_props.Get('org.freedesktop.NetworkManager.Device.Wireless', 'LastScan')
 
-        # request a scan
-        wifi_dev.RequestScan({})
+            # request a scan
+            wifi_dev.RequestScan({})
 
-        # wait for scan to finish
-        start_time = time.time()
-        while is_scanning_func() and time.time() - start_time < timeout:
-            current_scan = wifi_props.Get('org.freedesktop.NetworkManager.Device.Wireless', 'LastScan')
+            # wait for scan to finish
+            start_time = time.time()
+            while is_scanning_func() and time.time() - start_time < timeout:
+                current_scan = wifi_props.Get('org.freedesktop.NetworkManager.Device.Wireless', 'LastScan')
 
-            if current_scan != last_scan:
-                # scan 'd, return the access points
-                return self._get_access_points(wifi_dev)
+                if current_scan != last_scan:
+                    # scan 'd, return the access points
+                    return self._get_access_points(wifi_dev)
 
-            # wait before checking
-            time.sleep(0.1)
+                # wait before checking
+                time.sleep(0.1)
 
-        raise TimeoutError('Request timed out')
+            raise NMException('Request timed out')
+        except dbus.DBusException as e:
+            raise NMException(f'DBusException occurred: {str(e)}') from e # give context as e
 
     def forget(self, ssid: str):
         '''

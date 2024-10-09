@@ -10,7 +10,7 @@ def restart():
     system_manager.restart_system()
     return jsonify({})
 
-@system_bp.route('/system/restart', methods=['SHUTDOWN'])
+@system_bp.route('/system/shutdown', methods=['POST'])
 def shutdown():
     system_manager: SystemManager = current_app.config['system_manager']
     system_manager.shutdown_system()

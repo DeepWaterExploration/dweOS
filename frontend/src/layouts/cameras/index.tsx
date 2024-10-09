@@ -17,6 +17,8 @@ import { Device } from "./types";
 import { SavedPreferences } from "../preferences/types";
 import { getSettings } from "../preferences/api";
 import { getDevices } from "./api";
+import { Box, Card, CardContent, Paper, Typography } from "@mui/material";
+import { styles } from "../../style";
 
 interface DeviceRemovedInfo {
     bus_info: string;
@@ -36,6 +38,8 @@ const DevicesLayout = () => {
         devices: Device[];
         setDevices: React.Dispatch<React.SetStateAction<Device[]>>;
     };
+
+    const [hasRequestedDevices, setHasRequestedDevices] = useState(false);
 
     const [savedPreferences, setSavedPreferences] = useState({
         default_stream: { port: 5600, host: "192.168.2.1" },
@@ -92,6 +96,8 @@ const DevicesLayout = () => {
 
         setSavedPreferences(preferences);
         addDevices(devices);
+
+        setHasRequestedDevices(true);
     };
 
     useEffect(() => {
@@ -225,6 +231,36 @@ const DevicesLayout = () => {
                 justifyContent: "space-evenly",
             }}
         >
+            {devices.length === 0 && hasRequestedDevices && (
+                <Grid
+                    container
+                    spacing={0}
+                    direction='column'
+                    alignItems='center'
+                    justifyContent='center'
+                    sx={{ height: "60vh" }}
+                >
+                    <Grid item xs={3}>
+                        <Paper
+                            elevation={1}
+                            sx={{
+                                padding: "50px",
+                                textAlign: "center",
+                                display: "flex",
+                                flexDirection: "column",
+                                justifyContent: "center",
+                                alignItems: "center",
+                                borderRadius: "15px",
+                                ...styles.card,
+                            }}
+                        >
+                            <Typography variant='h4' component='div'>
+                                No Cameras Detected
+                            </Typography>
+                        </Paper>
+                    </Grid>
+                </Grid>
+            )}
             {devices
                 .sort((a: Device, b: Device) => {
                     // Compare devies by type, final number in bus info, and hash of bus info

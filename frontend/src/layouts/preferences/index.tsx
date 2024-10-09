@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Grid, Typography, TextField, Box, Button } from "@mui/material";
+import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
 import { getSettings, savePreferences } from "./api";
 import { styles } from "../../style";
 import { IP_REGEX } from "../../utils/utils";
 import SettingsCard from "./components/SettingsCard";
-import TextFieldButton from "./components/TextFieldButton";
 import { useSnackbar } from "notistack";
+import Grid from "@mui/material/Grid";
 
 const PreferencesLayout = () => {
     const { enqueueSnackbar } = useSnackbar();

@@ -1,5 +1,5 @@
 import { Button } from "@mui/material";
-import Grid2 from "@mui/material/Unstable_Grid2/Grid2";
+import Grid from "@mui/material/Grid";
 
 import React, { useEffect, useState } from "react";
 import { websocket } from "../cameras";
@@ -86,7 +86,7 @@ const LogsPage = () => {
         return () => websocket.removeEventListener("message", socketCallback);
     }, []);
     return (
-        <Grid2 sx={{ paddingX: 5 }}>
+        <Grid sx={{ paddingX: 5 }}>
             <TerminalViewLayout logs={logs} />
             <Button
                 onClick={() => {
@@ -103,7 +103,7 @@ const LogsPage = () => {
             >
                 Copy Text
             </Button>
-        </Grid2>
+        </Grid>
     );
 };
 

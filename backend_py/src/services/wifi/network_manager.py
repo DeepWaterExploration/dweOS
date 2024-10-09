@@ -7,7 +7,7 @@ class NMException(Exception):
     '''Exception raised when there is a network manager issue'''
     pass
 
-class NMNotSupportedError(Exception):
+class NMNotSupportedError(NMException):
     '''Exception raised when NetworkManager is not supported'''
     pass
 

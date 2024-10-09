@@ -91,15 +91,12 @@ class WiFiManager:
 
             # this is used so the server does not hang on close
             if elapsed_time >= self.scan_interval:
+                # Make sure the scan stops when we are no longer scanning
                 try:
-                    # Make sure the scan stops when we are no longer scanning
-                    try:
-                        self.access_points = self.nm.scan_wifi(lambda: self._is_scanning)
-                        self.status.finished_first_scan = True
-                    except NMException as e:
-                        logging.error(f'Error occurred while scanning: {e}.')
-                except TimeoutError as e:
-                    logging.warning(e)
+                    self.access_points = self.nm.scan_wifi(lambda: self._is_scanning)
+                    self.status.finished_first_scan = True
+                except NMException as e:
+                    logging.error(f'Error occurred while scanning: {e}.')
 
                 # reset the counter
                 start_time = current_time

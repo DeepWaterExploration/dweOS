@@ -40,7 +40,11 @@ class Server:
             settings_manager=self.settings_manager, broadcast_server=self.broadcast_server)
         self.light_manager = LightManager(create_pwm_controllers())
         self.preferences_manager = PreferencesManager()
-        self.wifi_manager = WiFiManager()
+        try:
+            self.wifi_manager = WiFiManager()
+        except WiFiException as e:
+            logging.error(f'Error occurred while initializing WiFi: {e}')
+            raise Exception('This system is not supported because WiFi is not supported.')
         self.system_manager = SystemManager()
 
         # Set the app configs

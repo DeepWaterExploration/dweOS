@@ -3,20 +3,33 @@ from typing import List, Callable
 import time
 from .wifi_types import Connection, AccessPoint
 import logging
-
-class NMNotSupportedError(Exception):
-    '''Exception raised when NetworkManager is not supported'''
-    pass
-
 class NMException(Exception):
     '''Exception raised when there is a network manager issue'''
     pass
+
+class NMNotSupportedError(NMException):
+    '''Exception raised when NetworkManager is not supported'''
+    pass
+
+def handle_dbus_exceptions(func: Callable):
+    '''
+    Decorator to handle dbus exceptions, raising NMExceptions for more verbosity
+    '''
+
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except dbus.DBusException as e:
+            raise NMException(f'DBusException occurred: {str(e)}') from e
+        
+    return wrapper
 
 class NetworkManager:
     '''
     Class for interfacing with NetworkManager over dbus
     '''
 
+    @handle_dbus_exceptions
     def __init__(self) -> None:
         # Get the system bus
         self.bus = dbus.SystemBus()
@@ -32,10 +45,11 @@ class NetworkManager:
         # Get an interface to the properties object
         self.props = dbus.Interface(self.proxy, 'org.freedesktop.DBus.Properties')
 
+    @handle_dbus_exceptions
     def connect(self, ssid: str, password=''):
         (wifi_dev, dev_proxy) = self._get_wifi_device()
         if wifi_dev is None:
-            raise Exception('No WiFi device found')
+            raise NMException('No WiFi device found')
 
         wifi_interface = dbus.Interface(dev_proxy, 'org.freedesktop.NetworkManager.Device.Wireless')
         # Do not need to request a scan since the scan must have happened for the user to know this network exists
@@ -60,7 +74,7 @@ class NetworkManager:
                 break
 
         if ap_path is None:
-            raise Exception(f'Access point with SSID {ssid} not found')
+            raise NMException(f'Access point with SSID {ssid} not found')
 
         # Create the settings object assuming no password is needed
         connection_settings = {
@@ -93,6 +107,7 @@ class NetworkManager:
         connection_path = settings_interface.AddConnection(connection_settings)
         self.interface.ActivateConnection(connection_path, dev_proxy, ap_path)
 
+    @handle_dbus_exceptions
     def disconnect(self):
         '''
         Disconnect from any connected network
@@ -106,12 +121,14 @@ class NetworkManager:
         active_connection = dev_props.Get('org.freedesktop.NetworkManager.Device', 'ActiveConnection')
         self.interface.DeactivateConnection(active_connection)
 
+    @handle_dbus_exceptions
     def list_wireless_connections(self) -> List[Connection]:
         '''
         Get a list of the active wireless connections
         '''
         return self.list_connections()
 
+    @handle_dbus_exceptions
     def get_active_wireless_connection(self) -> Connection | None:
         '''
         Get the first active wireless connection
@@ -119,6 +136,7 @@ class NetworkManager:
         active_wireless_conections = list(self.get_active_connections())
         return None if len(active_wireless_conections) == 0 else active_wireless_conections[0]
 
+    @handle_dbus_exceptions
     def list_connections(self, only_wireless=True) -> List[Connection]:
         '''
         Get a list of all the connections saved
@@ -132,6 +150,7 @@ class NetworkManager:
                 connections.append(new_connection)
         return connections
 
+    @handle_dbus_exceptions
     def get_active_connections(self, wireless_only=True) -> List[Connection]:
         '''
         Get a list of active connections, including wired
@@ -152,6 +171,7 @@ class NetworkManager:
 
         return connections
 
+    @handle_dbus_exceptions
     def get_access_points(self) -> List[AccessPoint]:
         '''
         Get wifi networks without a scan
@@ -162,52 +182,66 @@ class NetworkManager:
         return self._get_access_points(wifi_dev)
 
 
+    @handle_dbus_exceptions
     def scan_wifi(self, is_scanning_func: Callable[[], bool], timeout=30) -> List[AccessPoint]:
         '''
         Scan wifi networks
         '''
-        try:
-            (wifi_dev, dev_proxy) = self._get_wifi_device()
+        (wifi_dev, dev_proxy) = self._get_wifi_device()
 
-            if not wifi_dev:
-                raise NMException('No WiFi device found')
+        if not wifi_dev:
+            raise NMException('No WiFi device found')
 
-            wifi_props = dbus.Interface(dev_proxy, 'org.freedesktop.DBus.Properties')
+        wifi_props = dbus.Interface(dev_proxy, 'org.freedesktop.DBus.Properties')
 
-            # get the timestamp of the last scan
-            last_scan = wifi_props.Get('org.freedesktop.NetworkManager.Device.Wireless', 'LastScan')
+        # get the timestamp of the last scan
+        last_scan = wifi_props.Get('org.freedesktop.NetworkManager.Device.Wireless', 'LastScan')
 
-            # request a scan
-            wifi_dev.RequestScan({})
+        # request a scan
+        wifi_dev.RequestScan({})
 
-            # wait for scan to finish
-            start_time = time.time()
-            while is_scanning_func() and time.time() - start_time < timeout:
-                current_scan = wifi_props.Get('org.freedesktop.NetworkManager.Device.Wireless', 'LastScan')
+        # wait for scan to finish
+        start_time = time.time()
+        # Check if it is still allowed to complete the scan, is_scanning_func should return false when the program is killed
+        while is_scanning_func() and time.time() - start_time < timeout:
+            current_scan = wifi_props.Get('org.freedesktop.NetworkManager.Device.Wireless', 'LastScan')
 
-                if current_scan != last_scan:
-                    # scan 'd, return the access points
-                    return self._get_access_points(wifi_dev)
+            if current_scan != last_scan:
+                # scan 'd, return the access points
+                return self._get_access_points(wifi_dev)
 
-                # wait before checking
-                time.sleep(0.1)
+            # wait before checking
+            time.sleep(0.1)
 
-            raise NMException('Request timed out')
-        except dbus.DBusException as e:
-            raise NMException(f'DBusException occurred: {str(e)}') from e # give context as e
+        # Took too long to complete scan
+        raise NMException('Request timed out')
 
+    @handle_dbus_exceptions
     def forget(self, ssid: str):
         '''
         Forget a network
         '''
         for connection in self._list_connections():
             config = connection.GetSettings()
-            if config['connection']['id'] == ssid:
-                connection.Delete()
+            # ensure config being None cannot cause issues
+            if config == None:
+                logging.warning('Failed to get config from connection')
+                continue
+            try:
+                if config['connection']['id'] == ssid:
+                    connection.Delete()
+            except KeyError as e:
+                raise NMException(f'Error occurred when attempting to forget network: {str(e)}')
 
+    '''
+    NOTE: All private functions should not have DBusException error handling
+    '''
 
     def _get_wifi_device(self):
         devices = self.interface.GetDevices()
+        if devices == None:
+            logging.warning('Failed to retrieve device list')
+            devices = []
         for dev_path in devices:
             dev_proxy = self.bus.get_object('org.freedesktop.NetworkManager', dev_path)
             dev_props = dbus.Interface(dev_proxy, 'org.freedesktop.DBus.Properties')
@@ -224,7 +258,10 @@ class NetworkManager:
         Get a list of access points. Should only be called after scanning for networks
         '''
         access_points: List[AccessPoint] = []
-        for ap_path in wifi_dev.GetAccessPoints():
+        wifi_access_points = wifi_dev.GetAccessPoints()
+        if wifi_access_points == None:
+            return []
+        for ap_path in wifi_access_points:
             ap_proxy = self.bus.get_object('org.freedesktop.NetworkManager', ap_path)
             ap_props = dbus.Interface(ap_proxy, 'org.freedesktop.DBus.Properties')
 
@@ -267,8 +304,11 @@ class NetworkManager:
         settings = dbus.Interface(settings_proxy, 'org.freedesktop.NetworkManager.Settings')
 
         # List all the connections saved
-        # This will have repeats for some reason, so this needs to be filtered
-        for connection_path in settings.ListConnections():
+        # This might have repeats for some reason, so this needs to be filtered
+        connections_list = settings.ListConnections()
+        if connections_list == None:
+            return []
+        for connection_path in connections_list:
             proxy = self.bus.get_object('org.freedesktop.NetworkManager', connection_path)
             connection = dbus.Interface(proxy, 'org.freedesktop.NetworkManager.Settings.Connection')
             connections.append(connection)

@@ -4,15 +4,15 @@ import threading
 import time
 import logging
 from .network_manager import NetworkManager, NMException, NMNotSupportedError
+from .exceptions import WiFiException
 
 class WiFiManager:
 
     def __init__(self, scan_interval=10) -> None:
         try:
             self.nm = NetworkManager()
-        except NMNotSupportedError:
-            logging.warning('WiFi is not supported because NetworkManager cannot be located.')
-            return
+        except NMException:
+            raise WiFiException('NetworkManager is not supported')
         self._update_thread = threading.Thread(target=self._update)
         self._scan_thread = threading.Thread(target=self._scan) # Secondary thread is needed to conduct scans separately
         self._is_scanning = False
@@ -27,7 +27,10 @@ class WiFiManager:
         self.status = Status(connection=Connection(), finished_first_scan=False, connected=False)
 
         # get initial access points before scan
-        self.access_points = self.nm.get_access_points()
+        try:
+            self.access_points = self.nm.get_access_points()
+        except NMException as e:
+            raise WiFiException(f'Error occurred while initializing access points {e}') from e
 
     def connect(self, ssid: str, password = ''):
         self.to_connect = NetworkConfig(ssid, password)
@@ -129,14 +132,20 @@ class WiFiManager:
             self._update_connections()
             self._update_active_connection()
 
-            if not self.to_forget is None:
-                self._forget()
+            try:
+                if not self.to_forget is None:
+                    self._forget()
 
-            if not self.to_connect is None:
-                self._connect()
+                if not self.to_connect is None:
+                    self._connect()
 
-            if self.to_disconnect:
-                self._disconnect()
+                if self.to_disconnect:
+                    self._disconnect()
+            except NMException as e:
+                logging.error(f'Error occurred while updating network information: {str(e)}')
+                self.to_forget = None
+                self.to_disconnect = False
+                self.to_connect = None
 
             # No reason to check too often
             time.sleep(0.1)

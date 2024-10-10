@@ -1,4 +1,7 @@
-import { Card, CardContent, Typography } from "@mui/material";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Typography from "@mui/material/Typography";
+
 import React from "react";
 import { PropsWithChildren } from "react";
 import { styles } from "../../../style";

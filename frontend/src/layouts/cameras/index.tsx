@@ -1,9 +1,11 @@
 import Grid from "@mui/material/Grid";
+import Paper from "@mui/material/Paper";
+import Typography from "@mui/material/Typography";
+
 import React, { useContext, useEffect, useState } from "react";
 
 import DeviceCard from "./components/DeviceCard";
 import {
-    BACKEND_API_WS,
     deserializeMessage,
     findDeviceWithBusInfo,
     hash,
@@ -17,6 +19,8 @@ import { Device } from "./types";
 import { SavedPreferences } from "../preferences/types";
 import { getSettings } from "../preferences/api";
 import { getDevices } from "./api";
+import { styles } from "../../style";
+import WebsocketContext from "../../contexts/WebsocketContext";
 
 interface DeviceRemovedInfo {
     bus_info: string;
@@ -27,8 +31,6 @@ interface GstErrorMessage {
     bus_info: string;
 }
 
-export const websocket = new WebSocket(BACKEND_API_WS);
-
 const DevicesLayout = () => {
     const { enqueueSnackbar } = useSnackbar();
 
@@ -36,6 +38,10 @@ const DevicesLayout = () => {
         devices: Device[];
         setDevices: React.Dispatch<React.SetStateAction<Device[]>>;
     };
+
+    const websocket = useContext(WebsocketContext) as WebSocket;
+
+    const [hasRequestedDevices, setHasRequestedDevices] = useState(false);
 
     const [savedPreferences, setSavedPreferences] = useState({
         default_stream: { port: 5600, host: "192.168.2.1" },
@@ -91,71 +97,82 @@ const DevicesLayout = () => {
         setNextPort(nextPort);
 
         setSavedPreferences(preferences);
-        addDevices(devices);
+        setDevices(devices);
+
+        setHasRequestedDevices(true);
+    };
+
+    const socketCallback = (e) => {
+        let message = deserializeMessage(e.data);
+        switch (message.event_name) {
+            case "device_added": {
+                let dev = message.data as Device;
+                enqueueSnackbar(
+                    `Device added: ${dev.bus_info} - ${dev.nickname || dev.device_type}`,
+                    {
+                        variant: "info",
+                    }
+                );
+                addDevice(message.data as Device);
+                break;
+            }
+            case "device_removed": {
+                let dev = message.data as DeviceRemovedInfo;
+                enqueueSnackbar(`Device removed: ${dev.bus_info}`, {
+                    variant: "info",
+                });
+                removeDevice((message.data as DeviceRemovedInfo).bus_info);
+                break;
+            }
+            case "gst_error":
+                let gstErrorMessage = message.data as GstErrorMessage;
+                stopStreamUpdate(gstErrorMessage.bus_info);
+                enqueueSnackbar(
+                    <span>
+                        GStreamer Error Occurred: {gstErrorMessage.bus_info} -
+                        This is likely a known issue with the kernel, please
+                        click for more details.
+                    </span>,
+                    {
+                        variant: "error",
+                        autoHideDuration: 5000,
+                        action: () => (
+                            <a
+                                href='https://dwe.ai/kernel-issue'
+                                target='_blank'
+                                style={{
+                                    color: "white",
+                                    textDecoration: "none",
+                                    padding: "8px 16px",
+                                    display: "block",
+                                    width: "100%",
+                                }}
+                            >
+                                Learn More
+                            </a>
+                        ),
+                    }
+                );
+                break;
+        }
+    };
+
+    const closeCallback = (_) => {
+        setDevices([]);
     };
 
     useEffect(() => {
-        // Code to run once when the component is defined
+        // Code to run once when the component is defined and websocket connects
         getInitialDevices();
 
-        const socketCallback = (e) => {
-            let message = deserializeMessage(e.data);
-            switch (message.event_name) {
-                case "device_added": {
-                    let dev = message.data as Device;
-                    enqueueSnackbar(
-                        `Device added: ${dev.bus_info} - ${dev.nickname || dev.device_type}`,
-                        {
-                            variant: "info",
-                        }
-                    );
-                    addDevice(message.data as Device);
-                    break;
-                }
-                case "device_removed": {
-                    let dev = message.data as DeviceRemovedInfo;
-                    enqueueSnackbar(`Device removed: ${dev.bus_info}`, {
-                        variant: "info",
-                    });
-                    removeDevice((message.data as DeviceRemovedInfo).bus_info);
-                    break;
-                }
-                case "gst_error":
-                    let gstErrorMessage = message.data as GstErrorMessage;
-                    stopStreamUpdate(gstErrorMessage.bus_info);
-                    enqueueSnackbar(
-                        <span>
-                            GStreamer Error Occurred: {gstErrorMessage.bus_info}{" "}
-                            - This is likely a known issue with the kernel,
-                            please click for more details.
-                        </span>,
-                        {
-                            variant: "error",
-                            autoHideDuration: 5000,
-                            action: () => (
-                                <a
-                                    href='https://dwe.ai/kernel-issue'
-                                    target='_blank'
-                                    style={{
-                                        color: "white",
-                                        textDecoration: "none",
-                                        padding: "8px 16px",
-                                        display: "block",
-                                        width: "100%",
-                                    }}
-                                >
-                                    Learn More
-                                </a>
-                            ),
-                        }
-                    );
-                    break;
-            }
-        };
+        websocket.addEventListener("close", closeCallback);
 
         websocket.addEventListener("message", socketCallback);
-        return () => websocket.removeEventListener("message", socketCallback);
-    }, []);
+        return () => {
+            websocket.removeEventListener("message", socketCallback);
+            websocket.removeEventListener("close", closeCallback);
+        };
+    }, [websocket]);
 
     // The following are util functions as a way for any device to set properties of other devices and rerendering them
 
@@ -225,6 +242,36 @@ const DevicesLayout = () => {
                 justifyContent: "space-evenly",
             }}
         >
+            {devices.length === 0 && hasRequestedDevices && (
+                <Grid
+                    container
+                    spacing={0}
+                    direction='column'
+                    alignItems='center'
+                    justifyContent='center'
+                    sx={{ height: "60vh" }}
+                >
+                    <Grid item xs={3}>
+                        <Paper
+                            elevation={1}
+                            sx={{
+                                padding: "50px",
+                                textAlign: "center",
+                                display: "flex",
+                                flexDirection: "column",
+                                justifyContent: "center",
+                                alignItems: "center",
+                                borderRadius: "15px",
+                                ...styles.card,
+                            }}
+                        >
+                            <Typography variant='h4' component='div'>
+                                No Cameras Detected
+                            </Typography>
+                        </Paper>
+                    </Grid>
+                </Grid>
+            )}
             {devices
                 .sort((a: Device, b: Device) => {
                     // Compare devies by type, final number in bus info, and hash of bus info

@@ -1,5 +1,5 @@
 import "../main.css";
-import { createTheme } from "@mui/material/styles";
+import createTheme from "@mui/material/styles/createTheme";
 
 const themeOptions = (mode: "light" | "dark") => ({
     palette: {

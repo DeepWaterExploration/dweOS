@@ -2,39 +2,36 @@ import Brightness4Icon from "@mui/icons-material/Brightness4";
 import Brightness7Icon from "@mui/icons-material/Brightness7";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import WarningIcon from "@mui/icons-material/Warning";
 import MenuIcon from "@mui/icons-material/Menu";
 import PowerSettingsNewIcon from "@mui/icons-material/PowerSettingsNew";
-import {
-    Box,
-    IconButton,
-    List,
-    ListItem,
-    ListItemButton,
-    ListItemIcon,
-    ListItemText,
-    Menu,
-    MenuItem,
-    Toolbar,
-    Tooltip,
-} from "@mui/material";
-// eslint-disable-next-line import/named
+import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemButton from "@mui/material/ListItemButton";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import Toolbar from "@mui/material/Toolbar";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from "@mui/material/AppBar";
 import MuiDrawer from "@mui/material/Drawer";
-// eslint-disable-next-line import/named
 import { CSSObject, Theme, ThemeProvider, styled } from "@mui/material/styles";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router } from "react-router-dom";
 
 import { routes } from "../routes";
 import DWELogo_white from "../svg/DWELogo_white.svg";
-// import { restartMachine, shutDownMachine } from "../utils/api";
 import NavigationItems from "../utils/getNavigationItems";
 import NavigationRoutes from "../utils/getRoutes";
 import dweTheme from "../utils/themes";
 
 import { version } from "../../package.json";
 import { restartMachine, shutdownMachine } from "../layouts/system/api";
+import WebsocketContext from "../contexts/WebsocketContext";
+import { BACKEND_API_WS } from "../utils/utils";
 
 const drawerWidth = 240;
 
@@ -117,6 +114,29 @@ const NavigationBar = () => {
             : dweTheme("dark")
     );
 
+    const [websocket, setWebsocket] = useState<WebSocket | undefined>(
+        new WebSocket(BACKEND_API_WS)
+    );
+
+    const [connected, setConnected] = useState(false);
+
+    const connectWebsocket = () => {
+        // websocket
+        setWebsocket(new WebSocket(BACKEND_API_WS));
+    };
+
+    useEffect(() => {
+        websocket.onopen = () => {
+            console.log("Websocket reopened.");
+            setConnected(true);
+        };
+
+        websocket.onclose = () => {
+            setConnected(false);
+            setTimeout(connectWebsocket, 1000);
+        };
+    }, [websocket]);
+
     const toggleTheme = () => {
         const newTheme =
             theme.palette.mode === "dark"
@@ -140,167 +160,204 @@ const NavigationBar = () => {
 
     return (
         <ThemeProvider theme={theme}>
-            <Router>
-                <React.Fragment>
-                    <AppBar position='absolute' open={open} enableColorOnDark>
-                        <Toolbar>
-                            <IconButton
-                                color='inherit'
-                                aria-label='open drawer'
-                                onClick={toggleDrawer}
-                                edge='start'
-                                sx={{
-                                    marginRight: 5,
-                                    ...(open && { display: "none" }),
-                                }}
-                            >
-                                <MenuIcon />
-                            </IconButton>
-                            <Box
-                                component='div'
-                                display='flex'
-                                flexDirection='row'
-                                alignItems='center'
-                                sx={{ width: "100%", gap: 2 }}
-                            >
+            <WebsocketContext.Provider value={websocket}>
+                <Router>
+                    <React.Fragment>
+                        <AppBar
+                            position='absolute'
+                            open={open}
+                            enableColorOnDark
+                        >
+                            <Toolbar>
+                                <IconButton
+                                    color='inherit'
+                                    aria-label='open drawer'
+                                    onClick={toggleDrawer}
+                                    edge='start'
+                                    sx={{
+                                        marginRight: 5,
+                                        ...(open && { display: "none" }),
+                                    }}
+                                >
+                                    <MenuIcon />
+                                </IconButton>
                                 <Box
-                                    style={{ marginTop: "5px" }}
-                                    sx={{ pr: 3 }}
+                                    component='div'
+                                    display='flex'
+                                    flexDirection='row'
+                                    alignItems='center'
+                                    sx={{ width: "100%", gap: 2 }}
                                 >
-                                    <img
-                                        src={DWELogo_white}
-                                        style={{ height: 30 }}
-                                        alt='DWE Logo'
-                                    />
+                                    <Box
+                                        style={{ marginTop: "5px" }}
+                                        sx={{ pr: 3 }}
+                                    >
+                                        <img
+                                            src={DWELogo_white}
+                                            style={{ height: 30 }}
+                                            alt='DWE Logo'
+                                        />
+                                    </Box>
                                 </Box>
-                            </Box>
-                            <IconButton
-                                aria-controls={
-                                    menuOpen ? "basic-menu" : undefined
-                                }
-                                aria-haspopup='true'
-                                aria-expanded={menuOpen ? "true" : undefined}
-                                onClick={handleClick}
-                            >
-                                <PowerSettingsNewIcon
+
+                                {/* {!connected && (
+                                    
+                                )} */}
+
+                                <Box
                                     sx={{
-                                        color: "white",
-                                    }}
-                                />
-                            </IconButton>
-                            <Menu
-                                anchorEl={anchorEl}
-                                open={menuOpen}
-                                onClose={handleClose}
-                                sx={{
-                                    "& .MuiMenu-paper": {
-                                        backgroundColor:
-                                            theme.palette.mode === "dark"
-                                                ? "black"
-                                                : theme.palette.primary.main,
-                                    },
-                                }}
-                            >
-                                <MenuItem
-                                    onClick={() => {
-                                        handleClose();
-                                        shutdownMachine();
-                                    }}
-                                    sx={{
-                                        color: "white",
+                                        display: "inline-block",
+                                        padding: "8px 16px",
+                                        backgroundColor: connected
+                                            ? theme.palette.success.main
+                                            : theme.palette.error.main, // MUI's error color
+                                        color: theme.palette.error.contrastText, // Contrast text for error button
+                                        borderRadius: "6px",
+                                        textAlign: "center",
+                                        userSelect: "none", // Prevent text selection
+                                        marginRight: "10px",
                                     }}
                                 >
-                                    Shut Down
-                                </MenuItem>
-                                <MenuItem
-                                    onClick={() => {
-                                        handleClose();
-                                        restartMachine();
-                                    }}
-                                    sx={{
-                                        color: "white",
-                                    }}
+                                    <Typography>
+                                        {connected
+                                            ? "Connected"
+                                            : "Disconnected"}
+                                    </Typography>
+                                </Box>
+                                <IconButton
+                                    aria-controls={
+                                        menuOpen ? "basic-menu" : undefined
+                                    }
+                                    aria-haspopup='true'
+                                    aria-expanded={
+                                        menuOpen ? "true" : undefined
+                                    }
+                                    onClick={handleClick}
                                 >
-                                    Restart
-                                </MenuItem>
-                            </Menu>
-                        </Toolbar>
-                    </AppBar>
-                    <Drawer variant='permanent' open={open}>
-                        <DrawerHeader>
-                            <ListItemText
-                                style={{
-                                    textAlign: "center",
-                                    padding: "auto",
-                                    justifyContent: "center",
-                                }}
-                                primary={
-                                    <div>
-                                        <Tooltip title='This is beta software, there may be unfinished features or bugs.'>
-                                            <span>DWE OS 2.0</span>
-                                        </Tooltip>
-                                    </div>
-                                }
-                                secondary={`Version: ${version}`}
-                            />
-                            <IconButton onClick={toggleDrawer}>
-                                {theme.direction === "rtl" ? (
-                                    <ChevronRightIcon />
-                                ) : (
-                                    <ChevronLeftIcon />
-                                )}
-                            </IconButton>
-                        </DrawerHeader>
-                        <List component='nav'>
-                            <NavigationItems
-                                routes={routes}
-                                open={open}
-                                theme={theme}
-                            />
-                            <React.Fragment>
-                                <ListItem
-                                    disablePadding
-                                    sx={{ display: "block" }}
-                                >
-                                    <ListItemButton
-                                        onClick={toggleTheme}
+                                    <PowerSettingsNewIcon
                                         sx={{
-                                            minHeight: 48,
-                                            justifyContent: open
-                                                ? "initial"
-                                                : "center",
-                                            px: 2.5,
+                                            color: "white",
+                                        }}
+                                    />
+                                </IconButton>
+
+                                <Menu
+                                    anchorEl={anchorEl}
+                                    open={menuOpen}
+                                    onClose={handleClose}
+                                    sx={{
+                                        "& .MuiMenu-paper": {
+                                            backgroundColor:
+                                                theme.palette.mode === "dark"
+                                                    ? "black"
+                                                    : theme.palette.primary
+                                                          .main,
+                                        },
+                                    }}
+                                >
+                                    <MenuItem
+                                        onClick={() => {
+                                            handleClose();
+                                            shutdownMachine();
+                                        }}
+                                        sx={{
+                                            color: "white",
                                         }}
                                     >
-                                        <ListItemIcon
+                                        Shut Down
+                                    </MenuItem>
+                                    <MenuItem
+                                        onClick={() => {
+                                            handleClose();
+                                            restartMachine();
+                                        }}
+                                        sx={{
+                                            color: "white",
+                                        }}
+                                    >
+                                        Restart
+                                    </MenuItem>
+                                </Menu>
+                            </Toolbar>
+                        </AppBar>
+                        <Drawer variant='permanent' open={open}>
+                            <DrawerHeader>
+                                <ListItemText
+                                    style={{
+                                        textAlign: "center",
+                                        padding: "auto",
+                                        justifyContent: "center",
+                                    }}
+                                    primary={
+                                        <div>
+                                            <Tooltip title='This is beta software, there may be unfinished features or bugs.'>
+                                                <span>DWE OS 2.0</span>
+                                            </Tooltip>
+                                        </div>
+                                    }
+                                    secondary={`Version: ${version}`}
+                                />
+                                <IconButton onClick={toggleDrawer}>
+                                    {theme.direction === "rtl" ? (
+                                        <ChevronRightIcon />
+                                    ) : (
+                                        <ChevronLeftIcon />
+                                    )}
+                                </IconButton>
+                            </DrawerHeader>
+                            <List component='nav'>
+                                <NavigationItems
+                                    routes={routes}
+                                    open={open}
+                                    theme={theme}
+                                />
+                                <React.Fragment>
+                                    <ListItem
+                                        disablePadding
+                                        sx={{ display: "block" }}
+                                    >
+                                        <ListItemButton
+                                            onClick={toggleTheme}
                                             sx={{
-                                                minWidth: 0,
-                                                mr: open ? 3 : "auto",
-                                                justifyContent: "center",
+                                                minHeight: 48,
+                                                justifyContent: open
+                                                    ? "initial"
+                                                    : "center",
+                                                px: 2.5,
                                             }}
                                         >
-                                            {theme.palette.mode === "light" ? (
-                                                <Brightness7Icon />
-                                            ) : (
-                                                <Brightness4Icon />
-                                            )}
-                                        </ListItemIcon>
-                                        <ListItemText
-                                            primary={
-                                                theme.palette.mode === "light"
-                                                    ? "Light Theme"
-                                                    : "Dark Theme"
-                                            }
-                                            sx={{ opacity: open ? 1 : 0 }}
-                                        />
-                                    </ListItemButton>
-                                </ListItem>
-                            </React.Fragment>
-                        </List>
-                    </Drawer>
-                    <NavigationRoutes theme={theme.palette.mode} />
-                </React.Fragment>
-            </Router>
+                                            <ListItemIcon
+                                                sx={{
+                                                    minWidth: 0,
+                                                    mr: open ? 3 : "auto",
+                                                    justifyContent: "center",
+                                                }}
+                                            >
+                                                {theme.palette.mode ===
+                                                "light" ? (
+                                                    <Brightness7Icon />
+                                                ) : (
+                                                    <Brightness4Icon />
+                                                )}
+                                            </ListItemIcon>
+                                            <ListItemText
+                                                primary={
+                                                    theme.palette.mode ===
+                                                    "light"
+                                                        ? "Light Theme"
+                                                        : "Dark Theme"
+                                                }
+                                                sx={{ opacity: open ? 1 : 0 }}
+                                            />
+                                        </ListItemButton>
+                                    </ListItem>
+                                </React.Fragment>
+                            </List>
+                        </Drawer>
+                        <NavigationRoutes theme={theme.palette.mode} />
+                    </React.Fragment>
+                </Router>
+            </WebsocketContext.Provider>
         </ThemeProvider>
     );
 };

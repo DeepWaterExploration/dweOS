@@ -1,9 +1,10 @@
-import { TextField, MenuItem } from "@mui/material";
+import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
 import PopupState from "material-ui-popup-state";
 import { styles } from "../../../style";
 import { removeLeader, setLeader } from "../api";
 
-import React, { useContext, useEffect } from "react";
+import React, { useContext } from "react";
 import { Device } from "../types";
 import DeviceContext from "../../../contexts/DeviceContext";
 import { useSnackbar } from "notistack";
@@ -13,13 +14,9 @@ interface DeviceLeaderProps {
 }
 
 export const DeviceLeader: React.FC<DeviceLeaderProps> = (props) => {
-    const {
-        device,
-        devices,
-        enableStreamUpdate,
-        removeLeaderUpdate,
-        setFollowerUpdate,
-    } = useContext(DeviceContext) as {
+    const { device, enableStreamUpdate, setFollowerUpdate } = useContext(
+        DeviceContext
+    ) as {
         device: Device;
         devices: Device[];
         enableStreamUpdate: (bus_info: string) => void;

@@ -1,11 +1,10 @@
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    IconButton,
-    Slider,
-    TextField,
-} from "@mui/material";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardHeader from "@mui/material/CardHeader";
+import IconButton from "@mui/material/IconButton";
+import Slider from "@mui/material/Slider";
+import TextField from "@mui/material/TextField";
+
 import React, { useContext } from "react";
 
 import { LineBreak } from "../../../components/LineBreak";

@@ -1,18 +1,16 @@
-import {
-    Box,
-    Button,
-    Card,
-    CardContent,
-    CardHeader,
-    CircularProgress,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    Divider,
-    List,
-    TextField,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardHeader from "@mui/material/CardHeader";
+import CircularProgress from "@mui/material/CircularProgress";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import Divider from "@mui/material/Divider";
+import List from "@mui/material/List";
+import TextField from "@mui/material/TextField";
 
 import { AccessPoint, Connection } from "./types";
 import { useEffect, useState } from "react";

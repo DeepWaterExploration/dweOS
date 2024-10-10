@@ -1,13 +1,9 @@
 // Import Material-UI components and icons
-import {
-    Lightbulb as LightbulbIcon,
-    // SettingsOutlined as SettingsOutlinedIcon,
-    SignalWifi0BarOutlined as SignalWifi0BarOutlinedIcon,
-    Settings as SettingsIcon,
-    // StorageOutlined as StorageOutlinedIcon,
-    // SystemUpdateAlt as SystemUpdateAltIcon,
-    VideoCameraBackOutlined as VideoCameraBackOutlinedIcon,
-} from "@mui/icons-material";
+import LightbulbIcon from "@mui/icons-material/Lightbulb";
+import SignalWifi0BarOutlinedIcon from "@mui/icons-material/SignalWifi0BarOutlined";
+import SettingsIcon from "@mui/icons-material/Settings";
+import VideoCameraBackOutlinedIcon from "@mui/icons-material/VideoCameraBackOutlined";
+import TerminalIcon from "@mui/icons-material/Terminal";
 
 import CamerasPage from "./layouts/cameras";
 // import Updater from "./layouts/updater";
@@ -16,7 +12,6 @@ import LogsPage from "./layouts/logs_page";
 import WifiPage from "./layouts/wifi";
 import { RouteItem, routeType } from "./types/types";
 import React from "react";
-import TerminalIcon from "@mui/icons-material/Terminal";
 import LightsLayout from "./layouts/lights";
 import PreferencesLayout from "./layouts/preferences";
 

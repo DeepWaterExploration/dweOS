@@ -1,5 +1,7 @@
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+
 import React, { useEffect, useRef } from "react";
-import { Box, Typography } from "@mui/material";
 import { Log } from "../types";
 
 const TerminalViewLayout = ({ logs }) => {

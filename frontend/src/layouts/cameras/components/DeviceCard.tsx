@@ -1,5 +1,9 @@
-import { Card, CardContent, CardHeader, TextField } from "@mui/material";
-import React, { useContext, useEffect, useState } from "react";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardHeader from "@mui/material/CardHeader";
+import TextField from "@mui/material/TextField";
+
+import React, { useContext } from "react";
 
 import { Device } from "../types";
 import { setDeviceNickname } from "../api";

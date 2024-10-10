@@ -1,4 +1,5 @@
-import { Box, CssBaseline } from "@mui/material";
+import Box from "@mui/material/Box";
+import CssBaseline from "@mui/material/CssBaseline";
 import "./App.css";
 import "./main.css";
 import { SnackbarProvider } from "notistack";

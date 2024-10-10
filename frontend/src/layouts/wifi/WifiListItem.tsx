@@ -1,18 +1,15 @@
-import {
-    Avatar,
-    Button,
-    ListItem,
-    ListItemAvatar,
-    ListItemText,
-} from "@mui/material";
+import Avatar from "@mui/material/Avatar";
+import Button from "@mui/material/Button";
+import ListItem from "@mui/material/ListItem";
+import ListItemAvatar from "@mui/material/ListItemAvatar";
+import ListItemText from "@mui/material/ListItemText";
 
-import {
-    SignalWifi0Bar,
-    SignalWifi1Bar,
-    SignalWifi2Bar,
-    SignalWifi3Bar,
-    SignalWifi4Bar,
-} from "@mui/icons-material";
+import SignalWifi0Bar from "@mui/icons-material/SignalWifi0Bar";
+import SignalWifi1Bar from "@mui/icons-material/SignalWifi1Bar";
+import SignalWifi2Bar from "@mui/icons-material/SignalWifi2Bar";
+import SignalWifi3Bar from "@mui/icons-material/SignalWifi3Bar";
+import SignalWifi4Bar from "@mui/icons-material/SignalWifi4Bar";
+
 import React from "react";
 
 export interface SignalIconProps {

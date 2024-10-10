@@ -1,4 +1,7 @@
 import Grid from "@mui/material/Grid";
+import Paper from "@mui/material/Paper";
+import Typography from "@mui/material/Typography";
+
 import React, { useContext, useEffect, useState } from "react";
 
 import DeviceCard from "./components/DeviceCard";
@@ -17,7 +20,6 @@ import { Device } from "./types";
 import { SavedPreferences } from "../preferences/types";
 import { getSettings } from "../preferences/api";
 import { getDevices } from "./api";
-import { Box, Card, CardContent, Paper, Typography } from "@mui/material";
 import { styles } from "../../style";
 
 interface DeviceRemovedInfo {

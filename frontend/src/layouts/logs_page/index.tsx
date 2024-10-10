@@ -1,13 +1,13 @@
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 
-import React, { useEffect, useState } from "react";
-import { websocket } from "../cameras";
+import React, { useContext, useEffect, useState } from "react";
 import { deserializeMessage } from "../../utils/utils";
 import { getLogs } from "./api";
 import { useSnackbar } from "notistack";
 import { Log } from "./types";
 import TerminalViewLayout from "./components/TerminalView";
+import WebsocketContext from "../../contexts/WebsocketContext";
 
 const formatLog = (log: Log): string => {
     return `${log.timestamp} - ${log.level} - ${log.name} - ${log.filename}:${log.lineno} - ${log.function} - ${log.message}`;
@@ -51,6 +51,8 @@ const copyToClipboard = async () => {
 const LogsPage = () => {
     const [logs, setLogs] = useState([] as Log[]);
     const { enqueueSnackbar } = useSnackbar();
+
+    const websocket = useContext(WebsocketContext) as WebSocket;
 
     useEffect(() => {
         const socketCallback = (e) => {

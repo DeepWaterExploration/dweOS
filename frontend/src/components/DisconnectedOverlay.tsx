@@ -5,11 +5,15 @@ import Box from "@mui/material/Box";
 
 interface DisconnectedOverlayProps {
     open: boolean;
+    zIndex: number;
 }
 
-const DisconnectedOverlay: React.FC<DisconnectedOverlayProps> = ({ open }) => {
+const DisconnectedOverlay: React.FC<DisconnectedOverlayProps> = ({
+    open,
+    zIndex,
+}) => {
     return (
-        <Backdrop open={open}>
+        <Backdrop open={open} sx={{ zIndex }}>
             <Box
                 sx={{
                     display: "flex",

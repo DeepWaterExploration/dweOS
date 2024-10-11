@@ -134,6 +134,10 @@ const NavigationBar = () => {
             setConnected(true);
         };
 
+        websocket.onerror = () => {
+            websocket.close();
+        };
+
         websocket.onclose = () => {
             setConnected(false);
             setTimeout(connectWebsocket, 1000);
@@ -163,7 +167,7 @@ const NavigationBar = () => {
 
     return (
         <ThemeProvider theme={theme}>
-            <WebsocketContext.Provider value={websocket}>
+            <WebsocketContext.Provider value={{ websocket, connected }}>
                 <Router>
                     <React.Fragment>
                         <AppBar
@@ -227,7 +231,10 @@ const NavigationBar = () => {
                                             : "Disconnected"}
                                     </Typography>
                                 </Box>
-                                <DisconnectedOverlay open={!connected} />
+                                <DisconnectedOverlay
+                                    open={!connected}
+                                    zIndex={theme.zIndex.drawer + 1}
+                                />
                                 <IconButton
                                     aria-controls={
                                         menuOpen ? "basic-menu" : undefined

@@ -52,7 +52,9 @@ const LogsPage = () => {
     const [logs, setLogs] = useState([] as Log[]);
     const { enqueueSnackbar } = useSnackbar();
 
-    const websocket = useContext(WebsocketContext) as WebSocket;
+    const { websocket } = useContext(WebsocketContext) as {
+        websocket: WebSocket;
+    };
 
     useEffect(() => {
         const socketCallback = (e) => {

@@ -22,16 +22,19 @@ import { CSSObject, Theme, ThemeProvider, styled } from "@mui/material/styles";
 import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router } from "react-router-dom";
 
-import { routes } from "../routes";
-import DWELogo_white from "../svg/DWELogo_white.svg";
-import NavigationItems from "../utils/getNavigationItems";
-import NavigationRoutes from "../utils/getRoutes";
-import dweTheme from "../utils/themes";
+import { routes } from "../../routes";
+import DWELogo_white from "../../svg/DWELogo_white.svg";
+import NavigationItems from "../../utils/getNavigationItems";
+import NavigationRoutes from "../../utils/getRoutes";
+import dweTheme from "../../utils/themes";
 
-import { version } from "../../package.json";
-import { restartMachine, shutdownMachine } from "../layouts/system/api";
-import WebsocketContext from "../contexts/WebsocketContext";
-import { BACKEND_API_WS } from "../utils/utils";
+import { version } from "../../../package.json";
+import { restartMachine, shutdownMachine } from "../../layouts/system/api";
+import WebsocketContext from "../../contexts/WebsocketContext";
+import { BACKEND_API_WS } from "../../utils/utils";
+import DisconnectedOverlay from "./DisconnectedOverlay";
+import { useSnackbar } from "notistack";
+import { getStatus } from "./api";
 
 const drawerWidth = 240;
 
@@ -108,6 +111,7 @@ const NavigationBar = () => {
     const [open, setOpen] = useState(true);
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const menuOpen = Boolean(anchorEl);
+    const { enqueueSnackbar } = useSnackbar();
     const [theme, setTheme] = useState(
         localStorage.getItem("theme") == "light"
             ? dweTheme("light")
@@ -126,14 +130,32 @@ const NavigationBar = () => {
     };
 
     useEffect(() => {
+        if (!connected) {
+            const interval = setInterval(() => {
+                getStatus()
+                    .then(() => {
+                        setConnected(true);
+                        clearInterval(interval);
+                    })
+                    .catch(() => {});
+            }, 1000);
+        } else {
+            connectWebsocket();
+        }
+    }, [connected]);
+
+    useEffect(() => {
         websocket.onopen = () => {
             console.log("Websocket reopened.");
             setConnected(true);
         };
 
+        websocket.onerror = () => {
+            websocket.close();
+        };
+
         websocket.onclose = () => {
             setConnected(false);
-            setTimeout(connectWebsocket, 1000);
         };
     }, [websocket]);
 
@@ -160,7 +182,7 @@ const NavigationBar = () => {
 
     return (
         <ThemeProvider theme={theme}>
-            <WebsocketContext.Provider value={websocket}>
+            <WebsocketContext.Provider value={{ websocket, connected }}>
                 <Router>
                     <React.Fragment>
                         <AppBar
@@ -224,6 +246,10 @@ const NavigationBar = () => {
                                             : "Disconnected"}
                                     </Typography>
                                 </Box>
+                                <DisconnectedOverlay
+                                    open={!connected}
+                                    zIndex={theme.zIndex.drawer + 1}
+                                />
                                 <IconButton
                                     aria-controls={
                                         menuOpen ? "basic-menu" : undefined
@@ -259,6 +285,10 @@ const NavigationBar = () => {
                                         onClick={() => {
                                             handleClose();
                                             shutdownMachine();
+                                            enqueueSnackbar(
+                                                "System shutting down!",
+                                                { variant: "info" }
+                                            );
                                         }}
                                         sx={{
                                             color: "white",
@@ -270,6 +300,10 @@ const NavigationBar = () => {
                                         onClick={() => {
                                             handleClose();
                                             restartMachine();
+                                            enqueueSnackbar(
+                                                "System restarting!",
+                                                { variant: "info" }
+                                            );
                                         }}
                                         sx={{
                                             color: "white",

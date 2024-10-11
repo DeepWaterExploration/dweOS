@@ -18,10 +18,13 @@ def get_latest_tag():
     return None
 
 def get_new_tag():
-    new_tag = input('Enter a new tag name: ')
-    if new_tag == "":
+    try:
+        new_tag = input('Enter a new tag name: ')
+        if new_tag == "":
+            return None
+        return new_tag
+    except EOFError:
         return None
-    return new_tag
 
 def update_version_json(new_version):
     # Load the current package.json file

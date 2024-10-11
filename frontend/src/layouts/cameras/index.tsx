@@ -39,7 +39,10 @@ const DevicesLayout = () => {
         setDevices: React.Dispatch<React.SetStateAction<Device[]>>;
     };
 
-    const websocket = useContext(WebsocketContext) as WebSocket;
+    const { websocket, connected } = useContext(WebsocketContext) as {
+        websocket: WebSocket;
+        connected: boolean;
+    };
 
     const [hasRequestedDevices, setHasRequestedDevices] = useState(false);
 
@@ -157,22 +160,20 @@ const DevicesLayout = () => {
         }
     };
 
-    const closeCallback = (_) => {
-        setDevices([]);
-    };
-
     useEffect(() => {
-        // Code to run once when the component is defined and websocket connects
-        getInitialDevices();
+        if (!connected) {
+            setDevices([]);
+            setHasRequestedDevices(true);
+        } else {
+            // Code to run once when the component is defined and websocket connects
+            getInitialDevices();
 
-        websocket.addEventListener("close", closeCallback);
-
-        websocket.addEventListener("message", socketCallback);
-        return () => {
-            websocket.removeEventListener("message", socketCallback);
-            websocket.removeEventListener("close", closeCallback);
-        };
-    }, [websocket]);
+            websocket.addEventListener("message", socketCallback);
+            return () => {
+                websocket.removeEventListener("message", socketCallback);
+            };
+        }
+    }, [connected]);
 
     // The following are util functions as a way for any device to set properties of other devices and rerendering them
 

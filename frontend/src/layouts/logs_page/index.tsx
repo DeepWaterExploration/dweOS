@@ -52,40 +52,49 @@ const LogsPage = () => {
     const [logs, setLogs] = useState([] as Log[]);
     const { enqueueSnackbar } = useSnackbar();
 
-    const { websocket } = useContext(WebsocketContext) as {
+    const { websocket, connected } = useContext(WebsocketContext) as {
         websocket: WebSocket;
+        connected: boolean;
     };
 
-    useEffect(() => {
-        const socketCallback = (e) => {
-            let message = deserializeMessage(e.data);
-            let log = message.data as Log;
-            switch (message.event_name) {
-                case "log":
-                    setLogs((prevLogs) =>
-                        [
-                            ...prevLogs.filter(
-                                (l) => l.timestamp !== log.timestamp // check if it doesn't exist already: this is to prevent double sending the last message
-                            ),
-                            message.data as Log,
-                        ].sort((a, b) => {
-                            const dateA = new Date(
-                                a.timestamp.replace(",", ".")
-                            );
-                            const dateB = new Date(
-                                b.timestamp.replace(",", ".")
-                            );
-                            return dateA.getTime() - dateB.getTime();
-                        })
-                    );
-            }
-        };
+    const socketCallback = (e: WebSocketEventMap["message"]) => {
+        let message = deserializeMessage(e.data);
+        let log = message.data as Log;
+        switch (message.event_name) {
+            case "log":
+                setLogs((prevLogs) =>
+                    [
+                        ...prevLogs.filter(
+                            (l) => l.timestamp !== log.timestamp // check if it doesn't exist already: this is to prevent double sending the last message
+                        ),
+                        message.data as Log,
+                    ].sort((a, b) => {
+                        const dateA = new Date(a.timestamp.replace(",", "."));
+                        const dateB = new Date(b.timestamp.replace(",", "."));
+                        return dateA.getTime() - dateB.getTime();
+                    })
+                );
+        }
+    };
 
+    const getInitialLogs = () => {
         getLogs().then((log_values: Log[]) => {
             setLogs(log_values);
 
             websocket.addEventListener("message", socketCallback);
         });
+    };
+
+    useEffect(() => {
+        if (!connected) {
+            setLogs([]);
+        } else {
+            getInitialLogs();
+        }
+    }, [connected]);
+
+    useEffect(() => {
+        getInitialLogs();
 
         return () => websocket.removeEventListener("message", socketCallback);
     }, []);

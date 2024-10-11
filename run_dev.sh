@@ -3,7 +3,7 @@
 cd frontend
 npm run dev &
 
-cd ../backend_py
-python3 run.py &
+cd ..
+.env/bin/python3 backend_py/run.py &
 
 wait

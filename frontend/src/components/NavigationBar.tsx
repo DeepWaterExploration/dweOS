@@ -31,7 +31,9 @@ import dweTheme from "../utils/themes";
 import { version } from "../../package.json";
 import { restartMachine, shutdownMachine } from "../layouts/system/api";
 import WebsocketContext from "../contexts/WebsocketContext";
-import { BACKEND_API_WS } from "../utils/utils";
+import { BACKEND_API_WS, useDidMountEffect } from "../utils/utils";
+import DisconnectedOverlay from "./DisconnectedOverlay";
+import { useSnackbar } from "notistack";
 
 const drawerWidth = 240;
 
@@ -108,6 +110,7 @@ const NavigationBar = () => {
     const [open, setOpen] = useState(true);
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const menuOpen = Boolean(anchorEl);
+    const { enqueueSnackbar } = useSnackbar();
     const [theme, setTheme] = useState(
         localStorage.getItem("theme") == "light"
             ? dweTheme("light")
@@ -136,6 +139,12 @@ const NavigationBar = () => {
             setTimeout(connectWebsocket, 1000);
         };
     }, [websocket]);
+
+    useDidMountEffect(() => {
+        if (!connected)
+            enqueueSnackbar("System disconnected!", { variant: "error" });
+        else enqueueSnackbar("System connected!", { variant: "success" });
+    }, [connected]);
 
     const toggleTheme = () => {
         const newTheme =
@@ -224,6 +233,7 @@ const NavigationBar = () => {
                                             : "Disconnected"}
                                     </Typography>
                                 </Box>
+                                <DisconnectedOverlay open={!connected} />
                                 <IconButton
                                     aria-controls={
                                         menuOpen ? "basic-menu" : undefined
@@ -259,6 +269,10 @@ const NavigationBar = () => {
                                         onClick={() => {
                                             handleClose();
                                             shutdownMachine();
+                                            enqueueSnackbar(
+                                                "System shutting down!",
+                                                { variant: "info" }
+                                            );
                                         }}
                                         sx={{
                                             color: "white",
@@ -270,6 +284,10 @@ const NavigationBar = () => {
                                         onClick={() => {
                                             handleClose();
                                             restartMachine();
+                                            enqueueSnackbar(
+                                                "System restarting!",
+                                                { variant: "info" }
+                                            );
                                         }}
                                         sx={{
                                             color: "white",

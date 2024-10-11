@@ -65,7 +65,9 @@ const LogsPage = () => {
                 setLogs((prevLogs) =>
                     [
                         ...prevLogs.filter(
-                            (l) => l.timestamp !== log.timestamp // check if it doesn't exist already: this is to prevent double sending the last message
+                            (l) =>
+                                l.timestamp !== log.timestamp &&
+                                l.message != log.message
                         ),
                         message.data as Log,
                     ].sort((a, b) => {
@@ -86,18 +88,12 @@ const LogsPage = () => {
     };
 
     useEffect(() => {
-        if (!connected) {
-            setLogs([]);
-        } else {
+        if (connected) {
             getInitialLogs();
         }
-    }, [connected]);
-
-    useEffect(() => {
-        getInitialLogs();
 
         return () => websocket.removeEventListener("message", socketCallback);
-    }, []);
+    }, [connected]);
     return (
         <Grid sx={{ paddingX: 5 }}>
             <TerminalViewLayout logs={logs} />

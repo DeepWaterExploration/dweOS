@@ -22,18 +22,19 @@ import { CSSObject, Theme, ThemeProvider, styled } from "@mui/material/styles";
 import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router } from "react-router-dom";
 
-import { routes } from "../routes";
-import DWELogo_white from "../svg/DWELogo_white.svg";
-import NavigationItems from "../utils/getNavigationItems";
-import NavigationRoutes from "../utils/getRoutes";
-import dweTheme from "../utils/themes";
+import { routes } from "../../routes";
+import DWELogo_white from "../../svg/DWELogo_white.svg";
+import NavigationItems from "../../utils/getNavigationItems";
+import NavigationRoutes from "../../utils/getRoutes";
+import dweTheme from "../../utils/themes";
 
-import { version } from "../../package.json";
-import { restartMachine, shutdownMachine } from "../layouts/system/api";
-import WebsocketContext from "../contexts/WebsocketContext";
-import { BACKEND_API_WS, useDidMountEffect } from "../utils/utils";
+import { version } from "../../../package.json";
+import { restartMachine, shutdownMachine } from "../../layouts/system/api";
+import WebsocketContext from "../../contexts/WebsocketContext";
+import { BACKEND_API_WS } from "../../utils/utils";
 import DisconnectedOverlay from "./DisconnectedOverlay";
 import { useSnackbar } from "notistack";
+import { getStatus } from "./api";
 
 const drawerWidth = 240;
 
@@ -129,6 +130,21 @@ const NavigationBar = () => {
     };
 
     useEffect(() => {
+        if (!connected) {
+            const interval = setInterval(() => {
+                getStatus()
+                    .then(() => {
+                        setConnected(true);
+                        clearInterval(interval);
+                    })
+                    .catch(() => {});
+            }, 1000);
+        } else {
+            connectWebsocket();
+        }
+    }, [connected]);
+
+    useEffect(() => {
         websocket.onopen = () => {
             console.log("Websocket reopened.");
             setConnected(true);
@@ -140,7 +156,6 @@ const NavigationBar = () => {
 
         websocket.onclose = () => {
             setConnected(false);
-            setTimeout(connectWebsocket, 1000);
         };
     }, [websocket]);
 

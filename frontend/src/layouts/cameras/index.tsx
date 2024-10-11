@@ -162,8 +162,8 @@ const DevicesLayout = () => {
 
     useEffect(() => {
         if (!connected) {
-            setHasRequestedDevices(true);
             setDevices([]);
+            setHasRequestedDevices(true);
         } else {
             // Code to run once when the component is defined and websocket connects
             getInitialDevices();

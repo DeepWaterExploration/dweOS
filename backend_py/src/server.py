@@ -2,14 +2,14 @@ from ctypes import *
 import sys
 import signal
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify
 from flask_cors import CORS
 from gevent.pywsgi import WSGIServer
 
 from .websockets.broadcast_server import BroadcastServer
 
 from .services import *
-from .blueprints import cameras_bp, lights_bp, logs_bp, preferences_bp, wifi_bp, system_bp
+from .blueprints import *
 from .logging import LogHandler
 
 from marshmallow import ValidationError
@@ -62,6 +62,7 @@ class Server:
         self.app.register_blueprint(preferences_bp)
         self.app.register_blueprint(wifi_bp)
         self.app.register_blueprint(system_bp)
+        self.app.register_blueprint(status_bp)
 
         # create the server and run everything
         self.http_server = WSGIServer(('0.0.0.0', port), self.app, log=None)

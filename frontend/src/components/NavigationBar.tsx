@@ -140,12 +140,6 @@ const NavigationBar = () => {
         };
     }, [websocket]);
 
-    useDidMountEffect(() => {
-        if (!connected)
-            enqueueSnackbar("System disconnected!", { variant: "error" });
-        else enqueueSnackbar("System connected!", { variant: "success" });
-    }, [connected]);
-
     const toggleTheme = () => {
         const newTheme =
             theme.palette.mode === "dark"

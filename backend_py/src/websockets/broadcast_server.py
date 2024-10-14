@@ -14,31 +14,14 @@ import asyncio
 import json
 import logging
 import threading
-from dataclasses import dataclass
-from typing import Dict, List
+from typing import List
 
 from websockets.server import serve
-from websockets import broadcast, ConnectionClosed, WebSocketServerProtocol
+from websockets import ConnectionClosed, WebSocketServerProtocol
+from .websocket_types import Message
+from .schemas import MessageSchema
 
-
-@dataclass
-class Message:
-    """
-    Represents a message containing an event name and associated data.
-
-    Attributes:
-        event_name (str): The name of the event associated with the message.
-        data (Dict): A dictionary containing the data associated with the message.
-
-    Methods:
-        __repr__: Returns a string representation of the message in the format "<event_name>: <data_as_json>".
-    """
-    event_name: str
-    data: Dict
-
-    def __repr__(self) -> str:
-        return f'{self.event_name}: {json.dumps(self.data)}'
-
+from marshmallow import ValidationError
 
 class BroadcastServer:
     """
@@ -115,7 +98,17 @@ class BroadcastServer:
         """
         self.clients.append(websocket)
         try:
-            await websocket.wait_closed()
+            async for message in websocket:
+                try:
+                    message_data = json.loads(message)
+                    try:
+                        msg: Message = MessageSchema().load(message_data)
+                        if msg.event_name == 'ping':
+                            await websocket.send(json.dumps(Message('pong', msg.data).to_dict()))
+                    except ValidationError as e:
+                        logging.warning(f'ValidationError from marshmallow due to malformed input over websocket. {e}')
+                except json.JSONDecodeError:
+                    logging.warning('Error decoding JSON due to malformed input over websocket.')
         finally:
             self.clients.remove(websocket)
 
@@ -132,7 +125,7 @@ class BroadcastServer:
             message (Message): The message to be sent to the WebSocket client.
         """
         try:
-            await websocket.send(repr(message))
+            await websocket.send(json.dumps(message.to_dict()))
         except ConnectionClosed:
             pass
 

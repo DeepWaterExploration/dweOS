@@ -4,12 +4,7 @@ import { Message } from "../types/types";
 import { Device } from "../layouts/cameras/types";
 
 export const deserializeMessage = (message_str: string) => {
-    let parts = message_str.split(": ");
-    let message: Message = {
-        event_name: parts[0],
-        data: JSON.parse(message_str.substring(message_str.indexOf(": ") + 1)),
-    };
-    return message;
+    return JSON.parse(message_str) as Message;
 };
 
 export const useDidMountEffect = (
@@ -79,5 +74,6 @@ export const hash = function (str: string) {
 };
 
 export const hostAddress: string = window.location.hostname;
+// export const hostAddress: string = "dweos.local"; // for dev purposes
 export const BACKEND_API_URL = `http://${hostAddress}:8080`;
 export const BACKEND_API_WS = `ws://${hostAddress}:9002`;

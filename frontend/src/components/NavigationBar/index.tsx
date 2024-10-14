@@ -31,7 +31,7 @@ import dweTheme from "../../utils/themes";
 import { version } from "../../../package.json";
 import { restartMachine, shutdownMachine } from "../../layouts/system/api";
 import WebsocketContext from "../../contexts/WebsocketContext";
-import { BACKEND_API_WS } from "../../utils/utils";
+import { BACKEND_API_WS, deserializeMessage } from "../../utils/utils";
 import DisconnectedOverlay from "./DisconnectedOverlay";
 import { useSnackbar } from "notistack";
 import { getStatus } from "./api";
@@ -124,6 +124,10 @@ const NavigationBar = () => {
 
     const [connected, setConnected] = useState(false);
 
+    const [pingInterval, setPingInterval] = useState<NodeJS.Timeout>();
+
+    const pingTimeouts = {};
+
     const connectWebsocket = () => {
         // websocket
         setWebsocket(new WebSocket(BACKEND_API_WS));
@@ -131,24 +135,62 @@ const NavigationBar = () => {
 
     useEffect(() => {
         if (!connected) {
+            websocket.close();
+            clearInterval(pingInterval);
+            Object.keys(pingTimeouts).forEach((id) => {
+                clearTimeout(pingTimeouts[id]);
+                delete pingTimeouts[id];
+            });
             const interval = setInterval(() => {
                 getStatus()
                     .then(() => {
                         setConnected(true);
+                        connectWebsocket();
                         clearInterval(interval);
                     })
                     .catch(() => {});
             }, 1000);
-        } else {
-            connectWebsocket();
         }
     }, [connected]);
 
     useEffect(() => {
         websocket.onopen = () => {
-            console.log("Websocket reopened.");
+            console.log("WebSocket opened.");
             setConnected(true);
+
+            // Start pinging every 3 seconds
+            setPingInterval(
+                setInterval(() => {
+                    if (websocket.readyState === WebSocket.OPEN) {
+                        const pingId = Date.now();
+
+                        websocket.send(
+                            JSON.stringify({
+                                event_name: "ping",
+                                data: { id: pingId },
+                            })
+                        );
+
+                        pingTimeouts[pingId] = setTimeout(() => {
+                            console.log("missed timeout");
+                            setConnected(false);
+                        }, 1000);
+                    }
+                }, 3000)
+            );
         };
+
+        websocket.addEventListener("message", (e) => {
+            let msg = deserializeMessage(e.data);
+            if (msg.event_name === "pong") {
+                let id = msg.data["id"];
+
+                if (pingTimeouts[id]) {
+                    clearTimeout(pingTimeouts[id]);
+                    delete pingTimeouts[id]; // Remove the timeout for this pong
+                }
+            }
+        });
 
         websocket.onerror = () => {
             websocket.close();
@@ -156,6 +198,8 @@ const NavigationBar = () => {
 
         websocket.onclose = () => {
             setConnected(false);
+
+            clearInterval(pingInterval);
         };
     }, [websocket]);
 

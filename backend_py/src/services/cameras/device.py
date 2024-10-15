@@ -377,11 +377,11 @@ class Device(events.EventEmitter):
             return # in case the id does not exist in controls
 
         control = self.v4l2_device.controls[control_id]
-        logging.info(self._fmt_log(f'Setting UVC control - {control.name} to {value}'))
+        logging.debug(self._fmt_log(f'Setting UVC control - {control.name} to {value}'))
         try:
             control.value = value
         except (AttributeError, PermissionError) as e:
-            logging.warning(f'Error setting control value: {e.strerror}')
+            logging.debug(f'Error setting control value: {e.strerror}')
         for ctrl in self.controls:
             if ctrl.control_id == control_id:
                 ctrl.value = value
@@ -394,7 +394,7 @@ class Device(events.EventEmitter):
 
     # set an option
     def set_option(self, opt: str, value: Any):
-        logging.info(self._fmt_log(f'Setting option - {opt} to {value}'))
+        logging.debug(self._fmt_log(f'Setting option - {opt} to {value}'))
         if opt in self._options:
             return self._options[opt].set_value(value)
         return None

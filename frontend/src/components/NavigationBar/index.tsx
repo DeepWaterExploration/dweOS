@@ -19,7 +19,7 @@ import Typography from "@mui/material/Typography";
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from "@mui/material/AppBar";
 import MuiDrawer from "@mui/material/Drawer";
 import { CSSObject, Theme, ThemeProvider, styled } from "@mui/material/styles";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { BrowserRouter as Router } from "react-router-dom";
 
 import { routes } from "../../routes";
@@ -118,28 +118,104 @@ const NavigationBar = () => {
             : dweTheme("dark")
     );
 
-    const [websocket, setWebsocket] = useState<WebSocket | undefined>(
-        new WebSocket(BACKEND_API_WS)
-    );
+    const websocket = useRef<WebSocket | undefined>(undefined);
 
     const [connected, setConnected] = useState(false);
 
-    const [pingInterval, setPingInterval] = useState<NodeJS.Timeout>();
+    const connectedRef = useRef(false);
 
-    const pingTimeouts = {};
+    const pingValues = useRef([]);
+
+    const pingTimeouts = useRef({});
 
     const connectWebsocket = () => {
         // websocket
-        setWebsocket(new WebSocket(BACKEND_API_WS));
+        if (websocket.current) delete websocket.current;
+        websocket.current = new WebSocket(BACKEND_API_WS);
+
+        websocket.current.onopen = () => {
+            console.log("WebSocket opened.");
+            setConnected(true);
+        };
+
+        websocket.current.addEventListener("message", (e) => {
+            let msg = deserializeMessage(e.data);
+            if (msg.event_name === "pong") {
+                let id = msg.data["id"];
+
+                if (pingTimeouts.current[id]) {
+                    let ping = Date.now() - id;
+                    pingValues.current.push(ping);
+                    if (pingValues.current.length > 5)
+                        pingValues.current.shift();
+                    clearTimeout(pingTimeouts.current[id]);
+                    delete pingTimeouts.current[id]; // Remove the timeout for this pong
+                }
+            }
+        });
+
+        websocket.current.onerror = () => {
+            websocket.current.close();
+        };
+
+        websocket.current.onclose = () => {
+            setConnected(false);
+        };
     };
 
     useEffect(() => {
+        connectWebsocket();
+    }, []);
+
+    const calculateTimeout = () => {
+        if (pingValues.current.length === 0) return 5000; // Default timeout if no ping values yet
+
+        const sum = pingValues.current.reduce((a, b) => a + b, 0);
+        const avgPing = sum / pingValues.current.length;
+        const buffer = Math.log(avgPing + 1) * 1000;
+
+        console.log(`AVG: ${avgPing}`);
+
+        // Add a buffer to avoid premature timeouts
+        return avgPing + buffer;
+    };
+
+    const ping = () => {
+        const timeout = calculateTimeout();
+
+        if (
+            websocket.current &&
+            websocket.current.readyState === WebSocket.OPEN
+        ) {
+            const pingId = Date.now();
+
+            websocket.current.send(
+                JSON.stringify({
+                    event_name: "ping",
+                    data: { id: pingId },
+                })
+            );
+
+            console.log(timeout);
+
+            pingTimeouts.current[pingId] = setTimeout(() => {
+                setConnected(false);
+                console.error("timed out");
+            }, timeout);
+        }
+
+        if (connectedRef.current) setTimeout(() => ping(), timeout * 1.2);
+    };
+
+    useEffect(() => {
+        // hacky fix for timeouts
+        connectedRef.current = connected;
+
         if (!connected) {
-            websocket.close();
-            clearInterval(pingInterval);
-            Object.keys(pingTimeouts).forEach((id) => {
-                clearTimeout(pingTimeouts[id]);
-                delete pingTimeouts[id];
+            websocket.current.close();
+            Object.keys(pingTimeouts.current).forEach((id) => {
+                clearTimeout(pingTimeouts.current[id]);
+                delete pingTimeouts.current[id];
             });
             const interval = setInterval(() => {
                 getStatus()
@@ -150,58 +226,11 @@ const NavigationBar = () => {
                     })
                     .catch(() => {});
             }, 1000);
+        } else {
+            // Start pinging every 3 seconds
+            ping();
         }
     }, [connected]);
-
-    useEffect(() => {
-        websocket.onopen = () => {
-            console.log("WebSocket opened.");
-            setConnected(true);
-
-            // Start pinging every 3 seconds
-            setPingInterval(
-                setInterval(() => {
-                    if (websocket.readyState === WebSocket.OPEN) {
-                        const pingId = Date.now();
-
-                        websocket.send(
-                            JSON.stringify({
-                                event_name: "ping",
-                                data: { id: pingId },
-                            })
-                        );
-
-                        pingTimeouts[pingId] = setTimeout(() => {
-                            console.log("missed timeout");
-                            setConnected(false);
-                        }, 1000);
-                    }
-                }, 3000)
-            );
-        };
-
-        websocket.addEventListener("message", (e) => {
-            let msg = deserializeMessage(e.data);
-            if (msg.event_name === "pong") {
-                let id = msg.data["id"];
-
-                if (pingTimeouts[id]) {
-                    clearTimeout(pingTimeouts[id]);
-                    delete pingTimeouts[id]; // Remove the timeout for this pong
-                }
-            }
-        });
-
-        websocket.onerror = () => {
-            websocket.close();
-        };
-
-        websocket.onclose = () => {
-            setConnected(false);
-
-            clearInterval(pingInterval);
-        };
-    }, [websocket]);
 
     const toggleTheme = () => {
         const newTheme =
@@ -226,7 +255,9 @@ const NavigationBar = () => {
 
     return (
         <ThemeProvider theme={theme}>
-            <WebsocketContext.Provider value={{ websocket, connected }}>
+            <WebsocketContext.Provider
+                value={{ websocket: websocket.current, connected }}
+            >
                 <Router>
                     <React.Fragment>
                         <AppBar

@@ -1,8 +1,7 @@
-import { BACKEND_API_URL, getRequest } from "../../utils/utils";
+import { getRequest } from "../../utils/utils";
 import { Log } from "./types";
 
 export async function getLogs(): Promise<Log[]> {
-    const url = `${BACKEND_API_URL}/logs`;
-    const response = await getRequest(url);
+    const response = await getRequest("/logs");
     return await response.json();
 }

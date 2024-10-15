@@ -1,7 +1,6 @@
-import { BACKEND_API_URL, getRequest } from "../../utils/utils";
+import { getRequest } from "../../utils/utils";
 
 export async function getStatus() {
-    const url = `${BACKEND_API_URL}/wifi/status`;
-    const response = await getRequest(url);
+    const response = await getRequest("/wifi/status");
     return (await response.json()) as { status: string };
 }

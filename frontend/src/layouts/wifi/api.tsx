@@ -1,38 +1,32 @@
-import { BACKEND_API_URL, getRequest, postRequest } from "../../utils/utils";
+import { getRequest, postRequest } from "../../utils/utils";
 import { AccessPoint, Connection, Status } from "./types";
 
 export async function getWiFiStatus() {
-    const url = `${BACKEND_API_URL}/wifi/status`;
-    const response = await getRequest(url);
+    const response = await getRequest("/wifi/status");
     return (await response.json()) as Status;
 }
 
 export async function getAccessPoints() {
-    const url = `${BACKEND_API_URL}/wifi/access_points`;
-    const response = await getRequest(url);
+    const response = await getRequest("/wifi/access_points");
     return (await response.json()) as AccessPoint[];
 }
 
 export async function getConnections() {
-    const url = `${BACKEND_API_URL}/wifi/connections`;
-    const response = await getRequest(url);
+    const response = await getRequest("/wifi/connections");
     return (await response.json()) as Connection[];
 }
 
 export async function connectToNetwork(ssid: string, password?: string) {
-    const url = `${BACKEND_API_URL}/wifi/connect`;
-    const response = await postRequest(url, { ssid, password });
+    const response = await postRequest("/wifi/connect", { ssid, password });
     return await response.json();
 }
 
 export async function disconnectFromNetwork() {
-    const url = `${BACKEND_API_URL}/wifi/disconnect`;
-    const response = await postRequest(url);
+    const response = await postRequest("/wifi/disconnect");
     return await response.json();
 }
 
 export async function forgetNetwork(ssid: string) {
-    const url = `${BACKEND_API_URL}/wifi/forget`;
-    const response = await postRequest(url, { ssid });
+    const response = await postRequest("/wifi/forget", { ssid });
     return await response.json();
 }

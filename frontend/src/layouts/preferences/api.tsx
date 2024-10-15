@@ -1,14 +1,15 @@
-import { BACKEND_API_URL, getRequest, postRequest } from "../../utils/utils";
+import { getRequest, postRequest } from "../../utils/utils";
 import { SavedPreferences } from "./types";
 
 export async function getSettings(): Promise<SavedPreferences> {
-    const url = `${BACKEND_API_URL}/preferences`;
-    const response = await getRequest(url);
+    const response = await getRequest("/preferences");
     return await response.json();
 }
 
 export async function savePreferences(preferences: SavedPreferences) {
-    const url = `${BACKEND_API_URL}/preferences/save_preferences`;
-    const response = await postRequest(url, preferences);
+    const response = await postRequest(
+        "/preferences/save_preferences",
+        preferences
+    );
     await response.json();
 }

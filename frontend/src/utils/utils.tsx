@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useContext } from "react";
 
 import { Message } from "../types/types";
 import { Device } from "../layouts/cameras/types";
@@ -29,9 +29,10 @@ export const IP_REGEX =
 // UTILITY FUNCTIONS
 
 export async function getRequest(
-    url: string,
+    path: string,
     url_search_params: URLSearchParams | undefined = undefined
 ): Promise<Response> {
+    let url = `${BACKEND_API_URL()}${path}`;
     const config: RequestInit = {
         mode: "cors",
         method: "GET",
@@ -46,9 +47,10 @@ export async function getRequest(
 }
 
 export async function postRequest(
-    url: string,
+    path: string,
     body: object = {}
 ): Promise<Response> {
+    const url = `${BACKEND_API_URL()}${path}`;
     const config: RequestInit = {
         mode: "cors",
         method: "POST",
@@ -75,5 +77,7 @@ export const hash = function (str: string) {
 
 export const hostAddress: string = window.location.hostname;
 // export const hostAddress: string = "dweos.local"; // for dev purposes
-export const BACKEND_API_URL = `http://${hostAddress}:8080`;
-export const BACKEND_API_WS = `ws://${hostAddress}:9002`;
+export const BACKEND_API_URL = (hostname?: string) =>
+    `http://${hostname || window.location.hostname}:8080`;
+export const BACKEND_API_WS = (hostname?: string) =>
+    `ws://${hostname || window.location.hostname}:9002`;

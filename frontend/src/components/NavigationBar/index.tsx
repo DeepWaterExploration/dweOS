@@ -131,7 +131,8 @@ const NavigationBar = () => {
     const connectWebsocket = () => {
         // websocket
         if (websocket.current) delete websocket.current;
-        websocket.current = new WebSocket(BACKEND_API_WS);
+
+        websocket.current = new WebSocket(BACKEND_API_WS());
 
         websocket.current.onopen = () => {
             console.log("WebSocket opened.");
@@ -157,15 +158,7 @@ const NavigationBar = () => {
         websocket.current.onerror = () => {
             websocket.current.close();
         };
-
-        websocket.current.onclose = () => {
-            setConnected(false);
-        };
     };
-
-    useEffect(() => {
-        connectWebsocket();
-    }, []);
 
     const calculateTimeout = () => {
         if (pingValues.current.length === 0) return 5000; // Default timeout if no ping values yet
@@ -183,10 +176,15 @@ const NavigationBar = () => {
     const ping = () => {
         const timeout = calculateTimeout();
 
-        if (
-            websocket.current &&
-            websocket.current.readyState === WebSocket.OPEN
-        ) {
+        if (connected) {
+            // instead of using the onclose event, just check here to be sure
+            if (websocket.current.readyState === WebSocket.CLOSED) {
+                setConnected(false);
+                return;
+            }
+
+            if (websocket.current.readyState !== WebSocket.OPEN) return; // wait till
+
             const pingId = Date.now();
 
             websocket.current.send(
@@ -212,7 +210,7 @@ const NavigationBar = () => {
         connectedRef.current = connected;
 
         if (!connected) {
-            websocket.current.close();
+            if (websocket.current) websocket.current.close();
             Object.keys(pingTimeouts.current).forEach((id) => {
                 clearTimeout(pingTimeouts.current[id]);
                 delete pingTimeouts.current[id];
@@ -220,8 +218,7 @@ const NavigationBar = () => {
             const interval = setInterval(() => {
                 getStatus()
                     .then(() => {
-                        setConnected(true);
-                        connectWebsocket();
+                        if (!connectedRef.current) connectWebsocket();
                         clearInterval(interval);
                     })
                     .catch(() => {});

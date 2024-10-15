@@ -145,7 +145,6 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = ({}) => {
         const interval = setInterval(() => refreshNetworks(), 500);
         return () => {
             clearInterval(interval);
-            console.log("clearing interval");
         };
     }, []);
 

@@ -63,7 +63,12 @@ const LogsPage = () => {
         switch (message.event_name) {
             case "log":
                 setLogs((prevLogs) =>
-                    [...prevLogs, message.data as Log].sort((a, b) => {
+                    [
+                        ...prevLogs.filter(
+                            (l) => JSON.stringify(l) != JSON.stringify(log)
+                        ),
+                        log,
+                    ].sort((a, b) => {
                         const dateA = new Date(a.timestamp.replace(",", "."));
                         const dateB = new Date(b.timestamp.replace(",", "."));
                         return dateA.getTime() - dateB.getTime();

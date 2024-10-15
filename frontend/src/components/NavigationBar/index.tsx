@@ -167,8 +167,6 @@ const NavigationBar = () => {
         const avgPing = sum / pingValues.current.length;
         const buffer = Math.log(avgPing + 1) * 1000;
 
-        console.log(`AVG: ${avgPing}`);
-
         // Add a buffer to avoid premature timeouts
         return avgPing + buffer;
     };
@@ -193,8 +191,6 @@ const NavigationBar = () => {
                     data: { id: pingId },
                 })
             );
-
-            console.log(timeout);
 
             pingTimeouts.current[pingId] = setTimeout(() => {
                 setConnected(false);

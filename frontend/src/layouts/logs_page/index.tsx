@@ -63,14 +63,7 @@ const LogsPage = () => {
         switch (message.event_name) {
             case "log":
                 setLogs((prevLogs) =>
-                    [
-                        ...prevLogs.filter(
-                            (l) =>
-                                l.timestamp !== log.timestamp &&
-                                l.message != log.message
-                        ),
-                        message.data as Log,
-                    ].sort((a, b) => {
+                    [...prevLogs, message.data as Log].sort((a, b) => {
                         const dateA = new Date(a.timestamp.replace(",", "."));
                         const dateB = new Date(b.timestamp.replace(",", "."));
                         return dateA.getTime() - dateB.getTime();
@@ -92,7 +85,10 @@ const LogsPage = () => {
             getInitialLogs();
         }
 
-        return () => websocket.removeEventListener("message", socketCallback);
+        return () => {
+            if (websocket)
+                websocket.removeEventListener("message", socketCallback);
+        };
     }, [connected]);
     return (
         <Grid sx={{ paddingX: 5 }}>

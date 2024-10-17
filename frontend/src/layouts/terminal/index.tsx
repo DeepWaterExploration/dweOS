@@ -10,8 +10,8 @@ const TerminalLayout = () => {
     const xterm = useRef(
         new Xterm(
             {
-                wsUrl: "ws://localhost:8000/ws",
-                tokenUrl: "htpp://localhost:8000/token",
+                wsUrl: `ws://${window.location.hostname}:7681/ws`,
+                tokenUrl: `http://${window.location.hostname}:7681/token`,
                 flowControl: { limit: 100000, highWater: 10, lowWater: 4 },
                 clientOptions: {
                     rendererType: "webgl",

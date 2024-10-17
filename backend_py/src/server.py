@@ -47,6 +47,9 @@ class Server:
             raise Exception('This system is not supported because WiFi is not supported.')
         self.system_manager = SystemManager()
 
+        # TTYD
+        self.ttyd_manager = TTYDManager()
+
         # Set the app configs
         self.app.config['device_manager'] = self.device_manager
         self.app.config['light_manager'] = self.light_manager
@@ -75,6 +78,7 @@ class Server:
             self.device_manager.stop_monitoring()
             self.broadcast_server.kill()
             self.wifi_manager.stop_scanning()
+            self.ttyd_manager.kill()
 
             sys.exit(0)
 
@@ -87,6 +91,7 @@ class Server:
         self.device_manager.start_monitoring()
         self.wifi_manager.start_scanning()
         self.broadcast_server.run_in_background()
+        self.ttyd_manager.start()
         self.http_server.serve_forever()
 
     def _handle_validation_error(self, e: ValidationError):

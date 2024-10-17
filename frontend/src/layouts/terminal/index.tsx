@@ -1,17 +1,21 @@
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
-import React, { useEffect, useRef } from "react";
+import React, { useContext, useEffect, useRef } from "react";
 import { styles } from "../../style";
 import { ClientOptions, Xterm } from "./xterm";
+import WebsocketContext from "../../contexts/WebsocketContext";
+import { TTYD_TOKEN_URL, TTYD_WS } from "../../utils/utils";
 
 const TerminalLayout = () => {
     const container = useRef<HTMLDivElement>();
 
+    const { connected } = useContext(WebsocketContext);
+
     const xterm = useRef(
         new Xterm(
             {
-                wsUrl: `ws://${window.location.hostname}:7681/ws`,
-                tokenUrl: `http://${window.location.hostname}:7681/token`,
+                wsUrl: TTYD_WS(),
+                tokenUrl: TTYD_TOKEN_URL(),
                 flowControl: { limit: 100000, highWater: 10, lowWater: 4 },
                 clientOptions: {
                     rendererType: "webgl",
@@ -57,10 +61,14 @@ const TerminalLayout = () => {
     );
 
     useEffect(() => {
-        xterm.current.connect();
-
-        xterm.current.open(container.current);
-    }, []);
+        if (connected) {
+            xterm.current.connect();
+            xterm.current.open(container.current);
+        } else {
+            container.current.innerHTML = "";
+            xterm.current.dispose();
+        }
+    }, [connected]);
 
     return (
         <Grid

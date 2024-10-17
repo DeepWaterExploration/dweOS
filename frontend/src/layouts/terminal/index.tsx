@@ -19,10 +19,8 @@ const TerminalLayout = () => {
                 flowControl: { limit: 100000, highWater: 10, lowWater: 4 },
                 clientOptions: {
                     rendererType: "webgl",
-                    disableLeaveAlert: false,
+                    disableLeaveAlert: true,
                     disableResizeOverlay: false,
-                    enableZmodem: false,
-                    enableTrzsz: false,
                     enableSixel: false,
                     isWindows: false,
                     unicodeVersion: "11",
@@ -62,10 +60,10 @@ const TerminalLayout = () => {
 
     useEffect(() => {
         if (connected) {
+            container.current.innerHTML = "";
             xterm.current.connect();
             xterm.current.open(container.current);
         } else {
-            container.current.innerHTML = "";
             xterm.current.dispose();
         }
     }, [connected]);

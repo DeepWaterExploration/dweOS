@@ -1,9 +1,8 @@
 import subprocess
-import pwd
 
 class TTYDManager:
 
-    TTYD_CMD = ['ttyd', '-p', '7681', '-u', '1000', '-g', '1000', 'bash', '--rcfile', f'/home/{pwd.getpwuid(1000).pw_name}/.bashrc']
+    TTYD_CMD = ['ttyd', '-p', '7681', 'login']
 
     def __init__(self) -> None:
         self._process: subprocess.Popen | None = None
@@ -12,7 +11,7 @@ class TTYDManager:
         if self._process:
             return
 
-        self._process = subprocess.Popen(self.TTYD_CMD, user=1000, group=1000, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self._process = subprocess.Popen(self.TTYD_CMD, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def kill(self):
         self._process.kill()

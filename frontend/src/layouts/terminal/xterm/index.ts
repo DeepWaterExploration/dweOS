@@ -1,5 +1,5 @@
 /**
- * Based on https://github.com/tsl0922/ttyd/blob/main/html/src/components/terminal/index.tsx
+ * Based on https://github.com/tsl0922/ttyd/blob/main/html/src/components/terminal/xterm/index.ts
  */
 
 import type { IDisposable, ITerminalOptions } from '@xterm/xterm';
@@ -11,7 +11,6 @@ import { WebLinksAddon } from '@xterm/addon-web-links';
 import { ImageAddon } from '@xterm/addon-image';
 import { Unicode11Addon } from '@xterm/addon-unicode11';
 import { OverlayAddon } from './addons/overlay';
-import { ZmodemAddon } from './addons/zmodem';
 
 import '@xterm/xterm/css/xterm.css';
 
@@ -45,8 +44,6 @@ export interface ClientOptions {
     rendererType: RendererType;
     disableLeaveAlert: boolean;
     disableResizeOverlay: boolean;
-    enableZmodem: boolean;
-    enableTrzsz: boolean;
     enableSixel: boolean;
     titleFixed?: string;
     isWindows: boolean;
@@ -89,7 +86,6 @@ export class Xterm {
     private overlayAddon = new OverlayAddon();
     private webglAddon?: WebglAddon;
     private canvasAddon?: CanvasAddon;
-    private zmodemAddon?: ZmodemAddon;
 
     private socket?: WebSocket;
     private token: string;
@@ -107,7 +103,6 @@ export class Xterm {
         private sendCb: () => void
     ) {
         this.register = this.register.bind(this);
-        this.sendFile = this.sendFile.bind(this);
         this.refreshToken = this.refreshToken.bind(this);
         this.onWindowUnload = this.onWindowUnload.bind(this);
         this.open = this.open.bind(this);
@@ -135,10 +130,6 @@ export class Xterm {
         return d;
     }
 
-    public sendFile(files: FileList) {
-        this.zmodemAddon?.sendFile(files);
-    }
-
     public async refreshToken() {
         try {
             const resp = await fetch(this.options.tokenUrl);
@@ -152,6 +143,12 @@ export class Xterm {
     }
 
     private onWindowUnload(event: BeforeUnloadEvent) {
+        event.preventDefault();
+        if (this.socket?.readyState === WebSocket.OPEN) {
+            const message = 'Close terminal? this will also terminate the command.';
+            event.returnValue = message;
+            return message;
+        }
         return undefined;
     }
 
@@ -361,19 +358,6 @@ export class Xterm {
 
     private applyPreferences(prefs: Preferences) {
         const { terminal, fitAddon, register } = this;
-        if (prefs.enableZmodem || prefs.enableTrzsz) {
-            this.zmodemAddon = new ZmodemAddon({
-                zmodem: prefs.enableZmodem,
-                trzsz: prefs.enableTrzsz,
-                windows: prefs.isWindows,
-                trzszDragInitTimeout: prefs.trzszDragInitTimeout,
-                onSend: this.sendCb,
-                sender: this.sendData,
-                writer: this.writeData,
-            });
-            this.writeFunc = data => this.zmodemAddon?.consume(data);
-            terminal.loadAddon(register(this.zmodemAddon));
-        }
 
         for (const [key, value] of Object.entries(prefs)) {
             switch (key) {
@@ -398,12 +382,6 @@ export class Xterm {
                         this.reconnect = false;
                         this.doReconnect = false;
                     }
-                    break;
-                case 'enableZmodem':
-                    if (value) console.log('[ttyd] Zmodem enabled');
-                    break;
-                case 'enableTrzsz':
-                    if (value) console.log('[ttyd] trzsz enabled');
                     break;
                 case 'trzszDragInitTimeout':
                     if (value) console.log(`[ttyd] trzsz drag init timeout: ${value}`);

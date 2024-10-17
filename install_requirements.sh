@@ -8,3 +8,5 @@ sudo apt-get install -y libglib2.0-dev libgstreamer1.0-dev libgstreamer-plugins-
 
 # ttyd
 sudo apt-get install -y ttyd
+# we want control over the service
+sudo systemctl disable ttyd

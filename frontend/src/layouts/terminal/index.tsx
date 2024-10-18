@@ -1,10 +1,11 @@
-import Card from "@mui/material/Card";
+import Paper from "@mui/material/Paper";
 import Grid from "@mui/material/Grid";
 import React, { useContext, useEffect, useRef } from "react";
 import { styles } from "../../style";
 import { ClientOptions, Xterm } from "./xterm";
 import WebsocketContext from "../../contexts/WebsocketContext";
 import { TTYD_TOKEN_URL, TTYD_WS } from "../../utils/utils";
+import CardContent from "@mui/material/CardContent";
 
 const TerminalLayout = () => {
     const container = useRef<HTMLDivElement>();
@@ -18,7 +19,7 @@ const TerminalLayout = () => {
                 tokenUrl: TTYD_TOKEN_URL(),
                 flowControl: { limit: 100000, highWater: 10, lowWater: 4 },
                 clientOptions: {
-                    rendererType: "webgl",
+                    rendererType: "dom",
                     disableLeaveAlert: true,
                     disableResizeOverlay: false,
                     enableSixel: false,
@@ -79,19 +80,34 @@ const TerminalLayout = () => {
                 height: "100%",
             }}
         >
-            <Card
+            <Paper
                 sx={{
                     ...styles.card,
-                    height: "90%",
                     width: "90%",
+                    height: "90%",
                     boxShadow: 20,
+                    padding: 0,
                 }}
             >
                 <div
-                    ref={container}
-                    style={{ width: "100%", height: "100%", padding: 0 }}
-                ></div>
-            </Card>
+                    style={{
+                        height: "100%",
+                        backgroundColor: "#2b2b2b",
+                        padding: 5,
+                    }}
+                >
+                    <div
+                        ref={container}
+                        style={{
+                            width: "100%",
+                            height: "100%",
+                            justifyContent: "center",
+                            display: "flex",
+                            alignItems: "center",
+                        }}
+                    ></div>
+                </div>
+            </Paper>
         </Grid>
     );
 };

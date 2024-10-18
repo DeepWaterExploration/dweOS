@@ -13,6 +13,7 @@ import { Unicode11Addon } from '@xterm/addon-unicode11';
 import { OverlayAddon } from './addons/overlay';
 
 import '@xterm/xterm/css/xterm.css';
+import '../xterm.css';
 
 interface TtydTerminal extends Terminal {
     fit(): void;

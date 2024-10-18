@@ -4,6 +4,7 @@ import SignalWifi0BarOutlinedIcon from "@mui/icons-material/SignalWifi0BarOutlin
 import SettingsIcon from "@mui/icons-material/Settings";
 import VideoCameraBackOutlinedIcon from "@mui/icons-material/VideoCameraBackOutlined";
 import TerminalIcon from "@mui/icons-material/Terminal";
+import StorageIcon from "@mui/icons-material/Storage";
 
 import CamerasPage from "./layouts/cameras";
 // import Updater from "./layouts/updater";
@@ -14,6 +15,7 @@ import { RouteItem, routeType } from "./types/types";
 import React from "react";
 import LightsLayout from "./layouts/lights";
 import PreferencesLayout from "./layouts/preferences";
+import TerminalLayout from "./layouts/terminal";
 
 export const routes: RouteItem[] = [
     {
@@ -75,7 +77,7 @@ export const routes: RouteItem[] = [
         route: "/communications/logs",
         component: <LogsPage />,
         exact: true,
-        icon: <TerminalIcon />,
+        icon: <StorageIcon />,
         category: "Communications",
         type: routeType.COLLAPSE,
         name: "Logs",
@@ -83,17 +85,17 @@ export const routes: RouteItem[] = [
         default: false,
     },
     // Will be added in future release
-    // {
-    //     route: "/communications/wired",
-    //     component: <Box />,
-    //     exact: true,
-    //     icon: <StorageOutlinedIcon />,
-    //     category: "Communications",
-    //     type: routeType.COLLAPSE,
-    //     name: "Wired",
-    //     key: "wired",
-    //     default: false,
-    // },
+    {
+        route: "/communications/terminal",
+        component: <TerminalLayout />,
+        exact: true,
+        icon: <TerminalIcon />,
+        category: "Communications",
+        type: routeType.COLLAPSE,
+        name: "Terminal",
+        key: "terminal",
+        default: false,
+    },
     // Will be added in future release
     // {
     //     route: "/options/updater",

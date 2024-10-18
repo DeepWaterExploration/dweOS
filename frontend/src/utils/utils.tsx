@@ -81,3 +81,7 @@ export const BACKEND_API_URL = (hostname?: string) =>
     `http://${hostname || window.location.hostname}:8080`;
 export const BACKEND_API_WS = (hostname?: string) =>
     `ws://${hostname || window.location.hostname}:9002`;
+export const TTYD_TOKEN_URL = (hostname?: string) =>
+    `http://${hostname || window.location.hostname}:7681/token`;
+export const TTYD_WS = (hostname?: string) =>
+    `ws://${hostname || window.location.hostname}:7681/ws`;

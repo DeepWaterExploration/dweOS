@@ -155,6 +155,10 @@ const NavigationBar = () => {
             }
         });
 
+        websocket.current.onclose = () => {
+            setConnected(false);
+        };
+
         websocket.current.onerror = () => {
             websocket.current.close();
         };

@@ -6,6 +6,11 @@ export async function getSettings(): Promise<SavedPreferences> {
     return await response.json();
 }
 
+export async function getRecommendedHost(): Promise<string> {
+    const response = await getRequest("/preferences/get_recommended_host");
+    return ((await response.json()) as { host: string }).host;
+}
+
 export async function savePreferences(preferences: SavedPreferences) {
     const response = await postRequest(
         "/preferences/save_preferences",

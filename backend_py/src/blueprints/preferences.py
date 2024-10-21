@@ -17,3 +17,8 @@ def set_preferences():
     req: SavedPrefrences = cast(SavedPrefrences, SavedPrefrencesSchema().load(request.get_json()))
     preferences_manager.save(req)
     return jsonify({})
+
+@preferences_bp.route('/preferences/get_recommended_host', methods=['GET'])
+def get_recommended_host():
+    host = request.remote_addr
+    return jsonify({'host': host})

@@ -6,14 +6,17 @@ import Divider from "@mui/material/Divider";
 import List from "@mui/material/List";
 import Typography from "@mui/material/Typography";
 
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { styles } from "../../style";
 import { Connection } from "./types";
 import { forgetNetwork, getConnections } from "./api";
 import WifiListItem, { WifiListItemType } from "./WifiListItem";
 import { useSnackbar } from "notistack";
+import WebsocketContext from "../../contexts/WebsocketContext";
 
 const KnownNetworksCard = ({}) => {
+    const { connected } = useContext(WebsocketContext);
+
     const [knownNetworks, setKnownNetworks] = useState([] as Connection[]);
     const { enqueueSnackbar } = useSnackbar();
 
@@ -22,12 +25,14 @@ const KnownNetworksCard = ({}) => {
     };
 
     useEffect(() => {
-        refreshNetworks();
-        const interval = setInterval(() => refreshNetworks(), 500);
-        return () => {
-            clearInterval(interval);
-        };
-    }, []);
+        if (connected) {
+            refreshNetworks();
+            const interval = setInterval(() => refreshNetworks(), 500);
+            return () => {
+                clearInterval(interval);
+            };
+        }
+    }, [connected]);
 
     const onForgetNetwork = async (ssid: string) => {
         await forgetNetwork(ssid);

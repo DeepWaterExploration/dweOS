@@ -4,6 +4,6 @@ cd frontend
 npm run dev &
 
 cd ..
-.env/bin/python3 backend_py/run.py &
+sudo .env/bin/python3 backend_py/run.py &
 
 wait

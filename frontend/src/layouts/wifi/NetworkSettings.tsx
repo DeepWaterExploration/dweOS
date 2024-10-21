@@ -13,7 +13,7 @@ import List from "@mui/material/List";
 import TextField from "@mui/material/TextField";
 
 import { AccessPoint, Connection } from "./types";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import {
     connectToNetwork,
     disconnectFromNetwork,
@@ -25,6 +25,7 @@ import React from "react";
 import { styles } from "../../style";
 import { hash } from "../../utils/utils";
 import WifiListItem, { WifiListItemType } from "./WifiListItem";
+import WebsocketContext from "../../contexts/WebsocketContext";
 
 export interface WifiConnectDialogProps {
     ssid: string;
@@ -114,11 +115,13 @@ const WifiConnectDialog: React.FC<WifiConnectDialogProps> = (props) => {
 export interface NetworkSettingsCardProps {}
 
 const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = ({}) => {
+    const { connected } = useContext(WebsocketContext);
+
     const [currentNetwork, setCurrentNetwork] = useState({
         id: "",
         type: "",
     } as Connection);
-    const [connected, setConnected] = useState(false);
+    const [wifiConnected, setConnected] = useState(false);
     const [finishedFirstScan, setFinishedFirstScan] = useState(false);
     const [accessPoints, setAccessPoints] = useState([] as AccessPoint[]);
     const { enqueueSnackbar } = useSnackbar();
@@ -140,13 +143,15 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = ({}) => {
 
     // Initial request
     useEffect(() => {
-        refreshNetworks();
+        if (connected) {
+            refreshNetworks();
 
-        const interval = setInterval(() => refreshNetworks(), 500);
-        return () => {
-            clearInterval(interval);
-        };
-    }, []);
+            const interval = setInterval(() => refreshNetworks(), 500);
+            return () => {
+                clearInterval(interval);
+            };
+        }
+    }, [connected]);
 
     const [connectDialog, setConnectDialog] = useState(false);
     const [connectNetwork, setConnectNetwork] = useState(

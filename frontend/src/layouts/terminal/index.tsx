@@ -6,9 +6,12 @@ import { ClientOptions, Xterm } from "./xterm";
 import WebsocketContext from "../../contexts/WebsocketContext";
 import { TTYD_TOKEN_URL, TTYD_WS } from "../../utils/utils";
 import CardContent from "@mui/material/CardContent";
+import { ITerminalOptions } from "@xterm/xterm";
 
 const TerminalLayout = () => {
     const container = useRef<HTMLDivElement>();
+
+    const originalTitle = useRef(document.title);
 
     const { connected } = useContext(WebsocketContext);
 
@@ -53,7 +56,7 @@ const TerminalLayout = () => {
                         brightWhite: "#f1f1f0",
                     },
                     allowProposedApi: true,
-                },
+                } as ITerminalOptions,
             },
             () => {}
         )
@@ -67,6 +70,10 @@ const TerminalLayout = () => {
         } else {
             xterm.current.dispose();
         }
+
+        return () => {
+            document.title = originalTitle.current;
+        };
     }, [connected]);
 
     return (

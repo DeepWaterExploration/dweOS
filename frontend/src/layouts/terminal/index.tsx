@@ -70,11 +70,13 @@ const TerminalLayout = () => {
         } else {
             xterm.current.dispose();
         }
+    }, [connected]);
 
+    useEffect(() => {
         return () => {
             document.title = originalTitle.current;
         };
-    }, [connected]);
+    }, []);
 
     return (
         <Grid

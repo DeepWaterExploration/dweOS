@@ -65,17 +65,6 @@ const LightCard: React.FC = () => {
                         />
                     </div>
                 </div>
-                <IconButton
-                    sx={{
-                        position: "absolute",
-                        top: 5,
-                        right: 15,
-                    }}
-                    edge='end'
-                    aria-label='icon'
-                >
-                    <CloseIcon />
-                </IconButton>
             </CardContent>
         </Card>
     );

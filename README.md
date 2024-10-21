@@ -34,5 +34,6 @@ cd DWE_OS_2
 cd frontend
 npm install
 cd ..
+sudo chmod -R 777 ./
 ./create_release.sh
 ```

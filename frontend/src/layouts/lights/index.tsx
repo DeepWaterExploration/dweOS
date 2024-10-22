@@ -23,11 +23,6 @@ const LightsLayout = () => {
     useEffect(() => {
         if (connected) {
             getLights().then((lights) => {
-                if (lights.length === 0) {
-                    enqueueSnackbar("No PWM Devices Detected", {
-                        variant: "warning",
-                    });
-                }
                 setHasRequestedLights(true);
                 setLights(lights);
             });

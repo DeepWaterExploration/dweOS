@@ -85,7 +85,7 @@ install_ttyd() {
 # Install python and gstreamer dependencies
 echo "Installing Python dependencies..."
 sudo apt-get install python3 python3-venv -y
-sudo apt-get install libdbus-glib-1-dev libdbus-1-dev -y
+sudo apt-get install libdbus-glib-1-dev libdbus-1-dev libpython3-dev -y
 
 echo "Installing GStreamer dependencies..."
 sudo apt-get install -y libglib2.0-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \

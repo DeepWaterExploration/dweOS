@@ -22,7 +22,7 @@ if [ "$VERSION" == "latest" ]; then
     echo "Installing DWE_OS 2 (latest release)"
     DOWNLOAD_URL="https://github.com/DeepwaterExploration/DWE_OS_2/releases/latest/download/release.tar.gz"
 else
-    echo "Installing DWE_OS 2 version $VERSION"
+    echo "Installing DWE_OS 2 ($VERSION)"
     DOWNLOAD_URL="https://github.com/DeepwaterExploration/DWE_OS_2/releases/download/$VERSION/release.tar.gz"
 fi
 
@@ -43,6 +43,12 @@ cd ${INSTALL_DIR}
 
 sh install_requirements.sh &&
 sh create_venv.sh &&
+
+# check if the service is already running, and stop it if necessary
+if systemctl is-active --quiet dwe_os_2; then
+    echo "Stopping currently running dwe_os_2 service..."
+    systemctl stop dwe_os_2
+fi
 
 # copy and enable service
 cp ${INSTALL_DIR}/service/* /etc/systemd/system/

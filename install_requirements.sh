@@ -85,6 +85,7 @@ install_ttyd() {
 # Install python and gstreamer dependencies
 echo "Installing Python dependencies..."
 sudo apt-get install python3 python3-venv -y
+# For dbus-python
 sudo apt-get install libdbus-glib-1-dev libdbus-1-dev libpython3-dev -y
 
 echo "Installing GStreamer dependencies..."
@@ -92,7 +93,7 @@ sudo apt-get install -y libglib2.0-dev libgstreamer1.0-dev libgstreamer-plugins-
     gstreamer1.0-tools gstreamer1.0-x gstreamer1.0-plugins-base \
     gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-libav
 
-# Attempt to install ttyd through apt, if it fails, download from GitHub
+# Attempt to install ttyd through apt. If it fails, download from GitHub
 echo "Installing ttyd..."
 if ! sudo apt-get install -y ttyd; then
     echo "ttyd not available in repositories, downloading from GitHub..."
@@ -103,4 +104,4 @@ else
     echo "ttyd installed from repositories"
 fi
 
-echo "Installation complete!"
+echo "Requirements installed."

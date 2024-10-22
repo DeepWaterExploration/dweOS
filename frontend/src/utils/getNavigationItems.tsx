@@ -22,6 +22,8 @@ interface CreateRouteItemProps {
 }
 
 const CreateRouteItem: React.FC<CreateRouteItemProps> = (props) => {
+    let hasDefault = false;
+    props.routes.forEach((route) => route.default && (hasDefault = true));
     return (
         <React.Fragment>
             <Divider sx={{ my: 1 }} />
@@ -38,7 +40,8 @@ const CreateRouteItem: React.FC<CreateRouteItemProps> = (props) => {
                         color: `${
                             props.locationName.includes(
                                 props.category.toLowerCase()
-                            )
+                            ) ||
+                            (props.locationName == "/" && hasDefault)
                                 ? props.theme.palette.primary.main
                                 : "inherit"
                         } !important`,

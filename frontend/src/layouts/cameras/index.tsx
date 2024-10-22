@@ -17,7 +17,7 @@ import { proxy, subscribe } from "valtio";
 import { useSnackbar } from "notistack";
 import { Device } from "./types";
 import { SavedPreferences } from "../preferences/types";
-import { getSettings } from "../preferences/api";
+import { getRecommendedHost, getSettings } from "../preferences/api";
 import { getDevices } from "./api";
 import { styles } from "../../style";
 import WebsocketContext from "../../contexts/WebsocketContext";
@@ -95,6 +95,9 @@ const DevicesLayout = () => {
     const getInitialDevices = async () => {
         let devices = await getDevices();
         let preferences = await getSettings();
+        if (preferences.suggest_host) {
+            preferences.default_stream.host = await getRecommendedHost(); // recommend host based on IP
+        }
         let nextPort = getNextPort(devices, preferences);
         // Initialize the next port
         setNextPort(nextPort);

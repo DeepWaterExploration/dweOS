@@ -5,7 +5,7 @@ from .schemas import SavedPrefrencesSchema
 
 class DefaultPreferences(SavedPrefrences):
     def __init__(self):
-        super().__init__(StreamEndpoint('192.168.2.1', 5600))
+        super().__init__(StreamEndpoint('192.168.2.1', 5600), True)
 
 class PreferencesManager:
 

@@ -41,7 +41,8 @@ export const routes: RouteItem[] = [
         default: false,
     },
     {
-        route: "/preferences",
+        route: "/options/preferences",
+        exact: true,
         component: <PreferencesLayout />,
         icon: <SettingsIcon />,
         category: "Options",
@@ -84,7 +85,6 @@ export const routes: RouteItem[] = [
         key: "logs",
         default: false,
     },
-    // Will be added in future release
     {
         route: "/communications/terminal",
         component: <TerminalLayout />,

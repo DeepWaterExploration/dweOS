@@ -82,6 +82,9 @@ install_ttyd() {
     fi
 }
 
+# update dependencies
+sudo apt-get update -y
+
 # Install python and gstreamer dependencies
 echo "Installing Python dependencies..."
 sudo apt-get install python3 python3-venv -y

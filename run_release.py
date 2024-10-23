@@ -3,9 +3,10 @@ from gevent.pywsgi import WSGIServer
 import sys
 import signal
 import os
-from backend_py.src import Server
+from backend_py.src import Server, ServerOptions
 import multiprocessing
 import logging
+import argparse
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -29,6 +30,11 @@ def run_frontend():
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Run the server with parameters')
+    parser.add_argument('--no-ttyd', action='store_true', help='Disable ttyd server')
+
+    args = parser.parse_args()
+
     frontend_thread = multiprocessing.Process(target=run_frontend)
     frontend_thread.start()
 
@@ -39,5 +45,5 @@ if __name__ == '__main__':
 
     signal.signal(signal.SIGINT, exit_clean)
 
-    server = Server()
+    server = Server(server_options=ServerOptions(no_ttyd=args.no_ttyd))
     server.serve()

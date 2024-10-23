@@ -14,4 +14,5 @@ class TTYDManager:
         self._process = subprocess.Popen(self.TTYD_CMD, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def kill(self):
-        self._process.kill()
+        if self._process:
+            self._process.kill()

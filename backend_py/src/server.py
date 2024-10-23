@@ -11,6 +11,7 @@ from .websockets.broadcast_server import BroadcastServer
 from .services import *
 from .blueprints import *
 from .logging import LogHandler
+from .types import ServerOptions
 
 from marshmallow import ValidationError
 
@@ -18,7 +19,7 @@ import logging
 
 class Server:
 
-    def __init__(self, port=8080) -> None:
+    def __init__(self, server_options: ServerOptions, port=8080) -> None:
         # Create the flask application
         self.app = Flask(__name__)
         CORS(self.app)
@@ -26,6 +27,8 @@ class Server:
         self.app.register_error_handler(ValidationError, self._handle_validation_error)
         self.app.register_error_handler(DeviceNotFoundException, self._handle_device_not_found)
         self.app.register_error_handler(Exception, self._handle_server_error)
+
+        self.server_options = server_options
 
         # avoid sorting the keys to keep the way we sort it in the backend
         self.app.json.sort_keys = False
@@ -91,7 +94,10 @@ class Server:
         self.device_manager.start_monitoring()
         self.wifi_manager.start_scanning()
         self.broadcast_server.run_in_background()
-        self.ttyd_manager.start()
+        if not self.server_options.no_ttyd:
+            self.ttyd_manager.start()
+        else:
+            logging.info('Running without TTYD')
         self.http_server.serve_forever()
 
     def _handle_validation_error(self, e: ValidationError):

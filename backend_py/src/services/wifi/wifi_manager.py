@@ -11,8 +11,12 @@ class WiFiManager:
     def __init__(self, scan_interval=10) -> None:
         try:
             self.nm = NetworkManager()
+            raise NMException()
         except NMException:
-            raise WiFiException('NetworkManager is not supported')
+            # raise WiFiException('NetworkManager is not supported')
+            logging.warning('NetworkManager is not supported.')
+            self.nm = None
+        
         self._update_thread = threading.Thread(target=self._update)
         self._scan_thread = threading.Thread(target=self._scan) # Secondary thread is needed to conduct scans separately
         self._is_scanning = False
@@ -27,10 +31,13 @@ class WiFiManager:
         self.status = Status(connection=Connection(), finished_first_scan=False, connected=False)
 
         # get initial access points before scan
-        try:
-            self.access_points = self.nm.get_access_points()
-        except NMException as e:
-            raise WiFiException(f'Error occurred while initializing access points {e}') from e
+        if self.nm is not None:
+            try:
+                self.access_points = self.nm.get_access_points()
+            except NMException as e:
+                raise WiFiException(f'Error occurred while initializing access points {e}') from e
+        else:
+            self.access_points = []
 
     def connect(self, ssid: str, password = ''):
         self.to_connect = NetworkConfig(ssid, password)
@@ -39,12 +46,16 @@ class WiFiManager:
         self.to_disconnect = True
 
     def start_scanning(self):
+        if not self.nm:
+            return
         logging.info('Starting WiFi Manager...')
         self._is_scanning = True
         self._update_thread.start()
         self._scan_thread.start()
 
     def stop_scanning(self):
+        if not self.nm:
+            return
         self._is_scanning = False
         self._update_thread.join()
         self._scan_thread.join()
@@ -62,11 +73,15 @@ class WiFiManager:
         self.to_forget = ssid
 
     def _forget(self):
+        if self.nm is None:
+            return
         if self.to_forget is not None:
             self.nm.forget(self.to_forget)
         self.to_forget = None
 
     def _connect(self):
+        if self.nm is None:
+            return
         if self.to_connect is not None:
             logging.info(f'Connecting to network: {self.to_connect.ssid}')
             try:
@@ -78,6 +93,8 @@ class WiFiManager:
             logging.warning('Attempting to connect to network of value None.')
 
     def _disconnect(self):
+        if self.nm is None:
+            return
         logging.info('Disconnecting from network')
         try:
             self.nm.disconnect()
@@ -108,12 +125,16 @@ class WiFiManager:
             time.sleep(0.1)
 
     def _update_connections(self):
+        if self.nm is None:
+            return
         try:
             self.connections = self.nm.list_wireless_connections()
         except NMException as e:
             logging.error(f'Error occured while fetching cached connections: f{e}')
 
     def _update_active_connection(self):
+        if self.nm is None:
+            return
         try:
             connection = self.nm.get_active_wireless_connection()
             if connection is not None:

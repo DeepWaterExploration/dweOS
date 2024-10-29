@@ -11,7 +11,6 @@ class WiFiManager:
     def __init__(self, scan_interval=10) -> None:
         try:
             self.nm = NetworkManager()
-            raise NMException()
         except NMException:
             # raise WiFiException('NetworkManager is not supported')
             logging.warning('NetworkManager is not supported.')
@@ -46,7 +45,7 @@ class WiFiManager:
         self.to_disconnect = True
 
     def start_scanning(self):
-        if not self.nm:
+        if self.nm is None:
             return
         logging.info('Starting WiFi Manager...')
         self._is_scanning = True
@@ -54,7 +53,7 @@ class WiFiManager:
         self._scan_thread.start()
 
     def stop_scanning(self):
-        if not self.nm:
+        if self.nm is None:
             return
         self._is_scanning = False
         self._update_thread.join()

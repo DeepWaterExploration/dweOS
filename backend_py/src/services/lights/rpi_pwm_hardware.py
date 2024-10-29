@@ -27,7 +27,13 @@ class RPiHardwarePWMController(PWMController):
             try:
                 self.pwm_objects[pin] = HardwarePWM(pwm_channel=self.PWM_PINS[pin], hz=self.PWM_FREQUENCY, chip=chip)
             except HardwarePWMException:
-                logging.warning('Hardware PWM is not enabled. Need to add \'dtoverlay=pwm-2chan\' to /boot/config.txt and reboot.')
+                logging.warning(
+                    "Hardware PWM is not enabled. Please add 'dtoverlay=pwm-2chan' to /boot/firmware/config.txt and reboot."
+                )
+                self.pwm_supported = False
+                break
+            except OSError as e:
+                logging.warning(f"An OSError occurred with Hardware PWM: {e}")
                 self.pwm_supported = False
                 break
             self.pwm_objects[pin].start(0)

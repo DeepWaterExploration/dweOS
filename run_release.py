@@ -46,7 +46,7 @@ def run_frontend(port):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run the server with parameters')
     parser.add_argument('--no-ttyd', action='store_true', help='Disable ttyd server')
-    parser.add_argument('--port', type=int, default=5000, help='Set the port of the server')
+    parser.add_argument('--port', type=int, default=80, help='Set the port of the server')
 
     args = parser.parse_args()
 

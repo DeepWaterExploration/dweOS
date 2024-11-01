@@ -8,5 +8,16 @@
     "**/__pycache__/**",
     "**/*.json",
     "**/release/**"
+  ],
+  "shellformat.effectLanguages": [
+    "shellscript",
+    "dotenv",
+    "hosts",
+    "jvmoptions",
+    "ignore",
+    "gitignore",
+    "properties",
+    "spring-boot-properties",
+    "azcli"
   ]
 }

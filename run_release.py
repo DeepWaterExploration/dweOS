@@ -23,7 +23,7 @@ def run_frontend(port):
     blueos_extension = {
         'name': 'dwe_os_2',
         'description': 'Web-based driver and software interface for DWE.ai cameras',
-        'icon': 'mdi-camera-gopro',
+        'icon': 'mdi-camera-plus',
         'company': 'DeepWater Exploration',
         'version': '1.0.0',
         'webpage': 'https://dwe.ai/products/dwe-os',

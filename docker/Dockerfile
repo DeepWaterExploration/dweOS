@@ -1,0 +1,107 @@
+# Base image
+FROM python:3.10-slim-bullseye
+
+# Install dependencies
+RUN apt-get update -y && apt-get upgrade -y &&\
+    apt-get install -y curl dbus wget sudo &&\
+    apt-get clean
+
+RUN apt-get install -y \
+    build-essential \
+    gcc \
+    libdbus-1-dev \
+    libglib2.0-dev \
+    python3-dev \
+    pkg-config \
+    dbus \
+    dbus-x11
+
+# Copy requirements.txt with cache
+COPY release/backend_py/requirements.txt .
+
+# Copy apt requirements with cache
+COPY release/install_requirements.sh .
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+RUN sh install_requirements.sh
+
+LABEL authors='[\
+    {\
+    "name": "Brandon Stevens",\
+    "email": "brandon@dwe.ai"\
+    }\
+    ]'
+
+LABEL company='{\
+    "about": "",\
+    "name": "DeepWater Exploration",\
+    "email": "support@dwe.ai"\
+    }'
+
+LABEL permissions='{ \
+    "ExposedPorts": { \
+    "8000/tcp": {}, \
+    "9002/tcp": {}, \
+    "8080/tcp": {} \
+    }, \
+    "HostConfig": { \
+    "Privileged": true, \
+    "Binds": [ \
+    "/run/dbus/system_dbus_socket:/run/dbus/system_bus_socket", \
+    "/var/run/dbus/system_dbus_socket:/var/run/dbus/system_bus_socket", \
+    "/sys/class/video4linux:/sys/class/video4linux", \
+    "/dev:/dev" \
+    ], \
+    "PortBindings": { \
+    "8000/tcp": [ \
+    { "HostPort": "" } \
+    ], \
+    "9002/tcp": [ \
+    { "HostPort": "9002" } \
+    ], \
+    "8080/tcp": [ \
+    { "HostPort": "8080" } \
+    ], \
+    "7681/tcp": [ \
+    { "HostPort": "7681" } \
+    ] \
+    } \
+    } \
+    }'
+
+LABEL type="device-integration"
+
+LABEL tags='[\
+    "cameras",\
+    "dwe-ai",\
+    "exporehd",\
+    "stellarhd",\
+    "deepwater-exploration"\
+    ]'
+
+LABEL links='{\
+    "support": "https://dwe.ai/pages/contact"\
+    }'
+
+LABEL readme="https://github.com/DeepwaterExploration/DWE_OS_2/blob/main/README.md"
+
+# Expose required ports
+EXPOSE 8000
+EXPOSE 8080
+EXPOSE 9002
+EXPOSE 7681
+
+# Mount required host directories (for dbus, video4linux, and dev access)
+VOLUME ["/sys/class/video4linux", "/dev", "/run/dbus", "/var/run/dbus"]
+
+# Set the environment to enable dbus
+ENV DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
+
+# Install DWE_OS_2
+COPY release /opt/DWE_OS_2
+
+WORKDIR /opt/DWE_OS_2
+
+# Run DWE_OS_2
+CMD ["python3", "/opt/DWE_OS_2/run_release.py", "--no-ttyd", "--port", "8000"]

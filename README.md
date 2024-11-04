@@ -37,3 +37,13 @@ cd ..
 sudo chmod -R 777 ./
 ./create_release.sh
 ```
+
+## Building the RPi Image
+
+```
+git clone https://github.com/DeepwaterExploration/pi-gen
+cd pi-gen
+sudo ./build.sh -c config
+```
+
+The image will be found in the deploy folder. The latest release from github will be used for building the image.

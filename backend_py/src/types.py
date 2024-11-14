@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
 @dataclass
-class ServerOptions:
-    no_ttyd: bool = False
+class FeatureSupport:
+    ttyd: bool
+    wifi: bool

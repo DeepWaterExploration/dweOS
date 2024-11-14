@@ -12,9 +12,7 @@ class WiFiManager:
         try:
             self.nm = NetworkManager()
         except NMException:
-            # raise WiFiException('NetworkManager is not supported')
-            logging.warning('NetworkManager is not supported.')
-            self.nm = None
+            raise WiFiException('NetworkManager is not supported')
         
         self._update_thread = threading.Thread(target=self._update)
         self._scan_thread = threading.Thread(target=self._scan) # Secondary thread is needed to conduct scans separately

@@ -3,7 +3,7 @@ from gevent.pywsgi import WSGIServer
 import sys
 import signal
 import os
-from backend_py.src import Server, ServerOptions
+from backend_py.src import Server, FeatureSupport
 import multiprocessing
 import logging
 import argparse
@@ -46,6 +46,7 @@ def run_frontend(port):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run the server with parameters')
     parser.add_argument('--no-ttyd', action='store_true', help='Disable ttyd server')
+    parser.add_argument('--no-wifi', action='store_true', help='Disable WiFi')
     parser.add_argument('--port', type=int, default=80, help='Set the port of the server')
 
     args = parser.parse_args()
@@ -60,5 +61,5 @@ if __name__ == '__main__':
 
     signal.signal(signal.SIGINT, exit_clean)
 
-    server = Server(server_options=ServerOptions(no_ttyd=args.no_ttyd))
+    server = Server(FeatureSupport(ttyd=not args.no_ttyd, wifi=not args.no_wifi))
     server.serve()

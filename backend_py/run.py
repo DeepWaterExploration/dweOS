@@ -1,6 +1,6 @@
-from src import Server, logging, ServerOptions
+from src import Server, logging, FeatureSupport
 
 logging.getLogger().setLevel(logging.INFO)
 
-server = Server(server_options=ServerOptions(False))
+server = Server(FeatureSupport(wifi=False, ttyd=False))
 server.serve()

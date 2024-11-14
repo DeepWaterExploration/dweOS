@@ -22,7 +22,25 @@ import { CSSObject, Theme, ThemeProvider, styled } from "@mui/material/styles";
 import React, { useEffect, useRef, useState } from "react";
 import { BrowserRouter as Router } from "react-router-dom";
 
-import { routes } from "../../routes";
+// Import Material-UI components and icons
+import LightbulbIcon from "@mui/icons-material/Lightbulb";
+import SignalWifi0BarOutlinedIcon from "@mui/icons-material/SignalWifi0BarOutlined";
+import SettingsIcon from "@mui/icons-material/Settings";
+import VideoCameraBackOutlinedIcon from "@mui/icons-material/VideoCameraBackOutlined";
+import TerminalIcon from "@mui/icons-material/Terminal";
+import StorageIcon from "@mui/icons-material/Storage";
+
+// import Updater from "./layouts/updater";
+// import TaskMonitor from "./layouts/task_monitor";
+import CamerasPage from "../../layouts/cameras";
+import LogsPage from "../../layouts/logs_page";
+import WifiPage from "../../layouts/wifi";
+import { RouteItem, routeType } from "../../types/types";
+import LightsLayout from "../../layouts/lights";
+import PreferencesLayout from "../../layouts/preferences";
+import TerminalLayout from "../../layouts/terminal";
+
+// import { routes } from "../../routes";
 import DWELogo_white from "../../svg/DWELogo_white.svg";
 import NavigationItems from "../../utils/getNavigationItems";
 import NavigationRoutes from "../../utils/getRoutes";
@@ -35,6 +53,8 @@ import { BACKEND_API_WS, deserializeMessage } from "../../utils/utils";
 import DisconnectedOverlay from "./DisconnectedOverlay";
 import { useSnackbar } from "notistack";
 import { getStatus } from "./api";
+import { FeatureSupport } from "../../utils/types";
+import { getFeatureSupport } from "../../utils/api";
 
 const drawerWidth = 240;
 
@@ -107,6 +127,85 @@ const Drawer = styled(MuiDrawer, {
     }),
 }));
 
+const generateRoutes = (features: FeatureSupport) => {
+    return [
+        {
+            route: "/devices/cameras",
+            component: <CamerasPage />,
+            exact: true,
+            icon: <VideoCameraBackOutlinedIcon />,
+            category: "Devices",
+            type: routeType.COLLAPSE,
+            name: "Cameras",
+            key: "cameras",
+            default: true,
+        },
+        {
+            route: "/devices/lights",
+            component: <LightsLayout />,
+            exact: true,
+            icon: <LightbulbIcon />,
+            category: "Devices",
+            type: routeType.COLLAPSE,
+            name: "Lights",
+            key: "lights",
+            default: false,
+        },
+        {
+            route: "/options/preferences",
+            exact: true,
+            component: <PreferencesLayout />,
+            icon: <SettingsIcon />,
+            category: "Options",
+            type: routeType.COLLAPSE,
+            name: "Preferences",
+            key: "preferences",
+            default: false,
+        },
+        ...(features.wifi
+            ? [
+                  {
+                      route: "/communications/wifi",
+                      component: <WifiPage />,
+                      exact: true,
+                      icon: <SignalWifi0BarOutlinedIcon />,
+                      category: "Communications",
+                      type: routeType.COLLAPSE,
+                      name: "WiFi",
+                      key: "wifi",
+                      default: false,
+                  },
+              ]
+            : []),
+        {
+            route: "/communications/logs",
+            component: <LogsPage />,
+            exact: true,
+            icon: <StorageIcon />,
+            category: "Communications",
+            type: routeType.COLLAPSE,
+            name: "Logs",
+            key: "logs",
+            default: false,
+        },
+        ...(features.ttyd
+            ? [
+                  {
+                      route: "/communications/terminal",
+                      component: <TerminalLayout />,
+                      exact: true,
+                      icon: <TerminalIcon />,
+                      category: "Communications",
+                      type: routeType.COLLAPSE,
+                      name: "Terminal",
+                      key: "terminal",
+                      default: false,
+                  },
+              ]
+            : []),
+    ];
+};
+
 const NavigationBar = () => {
     const [open, setOpen] = useState(true);
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -127,6 +226,13 @@ const NavigationBar = () => {
     const pingValues = useRef([]);
 
     const pingTimeouts = useRef({});
+
+    const [features, setFeatures] = useState({
+        ttyd: true,
+        wifi: true,
+    } as FeatureSupport);
+
+    const [routes, setRoutes] = useState(generateRoutes(features));
 
     const connectWebsocket = () => {
         // websocket
@@ -226,8 +332,15 @@ const NavigationBar = () => {
         } else {
             // Start pinging every 3 seconds
             ping();
+
+            // get the supported features
+            getFeatureSupport().then(setFeatures);
         }
     }, [connected]);
+
+    useEffect(() => {
+        setRoutes(generateRoutes(features));
+    }, [features]);
 
     const toggleTheme = () => {
         const newTheme =
@@ -460,7 +573,10 @@ const NavigationBar = () => {
                                 </React.Fragment>
                             </List>
                         </Drawer>
-                        <NavigationRoutes theme={theme.palette.mode} />
+                        <NavigationRoutes
+                            theme={theme.palette.mode}
+                            routes={routes}
+                        />
                     </React.Fragment>
                 </Router>
             </WebsocketContext.Provider>

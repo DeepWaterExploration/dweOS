@@ -4,7 +4,6 @@ import { ReactNode } from "react";
 import { Route, Routes } from "react-router-dom";
 
 // routes to different pages
-import { routes } from "../routes";
 import { RouteItem } from "../types/types";
 import React from "react";
 
@@ -37,9 +36,10 @@ const GetRoutes: React.FC<GetRoutesProps> = (props): ReactNode => {
 
 interface NavigationRoutesProps {
     theme: string;
+    routes: RouteItem[];
 }
 
-const NavigationRoutes: React.FC<NavigationRoutesProps> = () => {
+const NavigationRoutes: React.FC<NavigationRoutesProps> = ({ routes }) => {
     return (
         <Box
             component='main'

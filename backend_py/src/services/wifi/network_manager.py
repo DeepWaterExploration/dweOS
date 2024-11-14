@@ -178,7 +178,7 @@ class NetworkManager:
         '''
         (wifi_dev,_) = self._get_wifi_device()
         if not wifi_dev:
-            raise Exception('No WiFi device found')
+            raise NMException('No WiFi device found')
         return self._get_access_points(wifi_dev)
 
 

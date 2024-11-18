@@ -104,4 +104,4 @@ COPY release /opt/DWE_OS_2
 WORKDIR /opt/DWE_OS_2
 
 # Run DWE_OS_2
-CMD ["python3", "/opt/DWE_OS_2/run_release.py", "--no-ttyd", "--port", "8000"]
+CMD ["python3", "/opt/DWE_OS_2/run_release.py", "--no-ttyd", "--port", "8000", "--no-wifi"]

@@ -9,12 +9,13 @@ class DefaultPreferences(SavedPrefrences):
 
 class PreferencesManager:
 
-    def __init__(self) -> None:
+    def __init__(self, settings_path: str = '.') -> None:
+        path = f'{settings_path}/server_preferences.json'
         try:
-            self.file_object = open('./server_preferences.json', 'r+')
+            self.file_object = open(path, 'r+')
         except FileNotFoundError:
-            open('./server_preferences.json', 'w').close()
-            self.file_object = open('./server_preferences.json', 'r+')
+            open(path, 'w').close()
+            self.file_object = open(path, 'r+')
         
         try:
             settings: list[Dict] = json.loads(self.file_object.read())

@@ -51,6 +51,7 @@ LABEL permissions='{ \
     "/run/dbus/system_dbus_socket:/run/dbus/system_bus_socket", \
     "/var/run/dbus/system_dbus_socket:/var/run/dbus/system_bus_socket", \
     "/sys/class/video4linux:/sys/class/video4linux", \
+    "dweos-settings:/settings", \
     "/dev:/dev" \
     ], \
     "PortBindings": { \
@@ -84,7 +85,7 @@ LABEL links='{\
     "support": "https://dwe.ai/pages/contact"\
     }'
 
-LABEL readme="https://github.com/DeepwaterExploration/DWE_OS_2/blob/main/README.md"
+LABEL readme="https://raw.githubusercontent.com/DeepwaterExploration/DWE_OS_2/main/README.md"
 
 # Expose required ports
 EXPOSE 8000
@@ -103,5 +104,7 @@ COPY release /opt/DWE_OS_2
 
 WORKDIR /opt/DWE_OS_2
 
+RUN mkdir /settings
+
 # Run DWE_OS_2
-CMD ["python3", "/opt/DWE_OS_2/run_release.py", "--no-ttyd", "--port", "8000", "--no-wifi"]
+CMD ["python3", "/opt/DWE_OS_2/run_release.py", "--no-ttyd", "--port", "8000", "--no-wifi", "--settings-path", "/settings"]

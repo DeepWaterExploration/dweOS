@@ -14,12 +14,13 @@ from .device_utils import find_device_with_bus_info
 
 class SettingsManager:
 
-    def __init__(self) -> None:
+    def __init__(self, settings_path: str = '.') -> None:
+        path = f'{settings_path}/device_settings.json'
         try:
-            self.file_object = open('./device_settings.json', 'r+')
+            self.file_object = open(path, 'r+')
         except FileNotFoundError:
-            open('./device_settings.json', 'w').close()
-            self.file_object = open('./device_settings.json', 'r+')
+            open(path, 'w').close()
+            self.file_object = open(path, 'r+')
         self.to_save: List[SavedDevice] = []
         self.thread = threading.Thread(target=self._run_settings_sync)
         self.thread.start()

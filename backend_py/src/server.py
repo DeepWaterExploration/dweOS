@@ -22,7 +22,7 @@ import logging
 
 class Server:
 
-    def __init__(self, feature_support: FeatureSupport, port=8080) -> None:
+    def __init__(self, settings_path: str, feature_support: FeatureSupport, port=8080) -> None:
         # Create the flask application
         self.app = Flask(__name__)
         # TODO: restrict origins
@@ -43,11 +43,17 @@ class Server:
         # Create the logging handler
         self.log_handler = LogHandler(self.broadcast_server)
         logging.getLogger().addHandler(self.log_handler)
-        self.settings_manager = SettingsManager()
+
+        # Settings
+        self.settings_manager = SettingsManager(settings_path)
+        self.preferences_manager = PreferencesManager(settings_path)
+
+        # Device Manager
         self.device_manager = DeviceManager(
             settings_manager=self.settings_manager, broadcast_server=self.broadcast_server)
+        
+        # Lights
         self.light_manager = LightManager(create_pwm_controllers())
-        self.preferences_manager = PreferencesManager()
 
         # Wifi support
         if self.feature_support.wifi:

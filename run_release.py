@@ -48,6 +48,7 @@ if __name__ == '__main__':
     parser.add_argument('--no-ttyd', action='store_true', help='Disable ttyd server')
     parser.add_argument('--no-wifi', action='store_true', help='Disable WiFi')
     parser.add_argument('--port', type=int, default=80, help='Set the port of the server')
+    parser.add_argument('--settings-path', type=str, default='.', help='The path for the settings file (for docker use)')
 
     args = parser.parse_args()
 
@@ -61,5 +62,5 @@ if __name__ == '__main__':
 
     signal.signal(signal.SIGINT, exit_clean)
 
-    server = Server(FeatureSupport(ttyd=not args.no_ttyd, wifi=not args.no_wifi))
+    server = Server(args.settings_path, FeatureSupport(ttyd=not args.no_ttyd, wifi=not args.no_wifi))
     server.serve()

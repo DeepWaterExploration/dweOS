@@ -48,8 +48,6 @@ LABEL permissions='{ \
     "HostConfig": { \
     "Privileged": true, \
     "Binds": [ \
-    "/run/dbus/system_dbus_socket:/run/dbus/system_bus_socket", \
-    "/var/run/dbus/system_dbus_socket:/var/run/dbus/system_bus_socket", \
     "/sys/class/video4linux:/sys/class/video4linux", \
     "dweos-settings:/settings", \
     "/dev:/dev" \
@@ -63,9 +61,7 @@ LABEL permissions='{ \
     ], \
     "8080/tcp": [ \
     { "HostPort": "8080" } \
-    ], \
-    "7681/tcp": [ \
-    { "HostPort": "7681" } \
+    ] \
     ] \
     } \
     } \

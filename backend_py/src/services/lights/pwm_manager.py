@@ -120,13 +120,3 @@ class PWMManager:
                     channels.append(PWMChannel(channel_number))
 
                 self.chips.append(PWMChip(chip=chip_number, channels=channels))
-
-pwm_manager = PWMManager()
-
-pwm_manager.set_channel_frequency(2, 0, 60)
-pwm_manager.set_channel_duty_cycle(2, 0, 50)
-pwm_manager.enable_channel(2, 0)
-
-time.sleep(15)
-
-pwm_manager.disable_channel(2, 0)

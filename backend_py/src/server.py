@@ -17,12 +17,13 @@ from .types import FeatureSupport
 from .schemas import FeatureSupportSchema
 
 from marshmallow import ValidationError
+from flask_socketio import SocketIO
 
 import logging
 
 class Server:
 
-    def __init__(self, feature_support: FeatureSupport, app = None, settings_path: str = '/', port=8080) -> None:
+    def __init__(self, feature_support: FeatureSupport, socketio: SocketIO, app = None, settings_path: str = '/', port=8080) -> None:
         # Create the flask application
         if app is not None:
             self.app = app
@@ -43,7 +44,7 @@ class Server:
         self.app.json.sort_keys = False
 
         # Create the managers
-        self.broadcast_server = BroadcastServer(port if app is not None else 9002)
+        self.broadcast_server = BroadcastServer(socketio)
         # Create the logging handler
         self.log_handler = LogHandler(self.broadcast_server)
         logging.getLogger().addHandler(self.log_handler)
@@ -104,7 +105,6 @@ class Server:
             if self.http_server is not None:
                 self.http_server.stop()
             self.device_manager.stop_monitoring()
-            self.broadcast_server.kill()
 
             if self.feature_support.ttyd:
                 self.ttyd_manager.kill()
@@ -123,7 +123,6 @@ class Server:
         self.device_manager.start_monitoring()
         if self.feature_support.wifi:
             self.wifi_manager.start_scanning()
-        self.broadcast_server.run_in_background()
         if self.feature_support.ttyd:
             self.ttyd_manager.start()
         else:

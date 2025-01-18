@@ -4,6 +4,7 @@ import sys
 import signal
 import os
 from backend_py.src import Server, FeatureSupport
+from flask_socketio import SocketIO
 import multiprocessing
 import logging
 import argparse
@@ -11,6 +12,8 @@ import argparse
 logging.getLogger().setLevel(logging.INFO)
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'secret!'
+socketio = SocketIO(app)
 
 def run_frontend(port):
     FRONTEND_DIR = os.path.abspath('./frontend/dist')
@@ -39,8 +42,9 @@ def run_frontend(port):
         return send_from_directory(FRONTEND_DIR, 'index.html')
 
     logging.info(f'Starting client server on http://0.0.0.0:{port}')
-    http_server = WSGIServer(('0.0.0.0', port), app, log=None)
-    http_server.serve_forever()
+    # http_server = WSGIServer(('0.0.0.0', port), app, log=None)
+    # http_server.serve_forever()
+    socketio.run(app, host='0.0.0.0', port=port)
 
 
 if __name__ == '__main__':
@@ -52,7 +56,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    server = Server(app=app, settings_path=args.settings_path, feature_support=FeatureSupport(ttyd=not args.no_ttyd, wifi=not args.no_wifi), port=args.port)
+    server = Server(app=app, socketio=socketio, settings_path=args.settings_path, feature_support=FeatureSupport(ttyd=not args.no_ttyd, wifi=not args.no_wifi), port=args.port)
     server.serve()
     run_frontend(args.port)
 

@@ -21,7 +21,7 @@ class DeviceManager(events.EventEmitter):
     Class for interfacing with and monitoring devices
     '''
 
-    def __init__(self, broadcast_server=BroadcastServer(), settings_manager=SettingsManager()) -> None:
+    def __init__(self, broadcast_server, settings_manager=SettingsManager()) -> None:
         self.devices: List[Device] = []
         self.broadcast_server = broadcast_server
         self.settings_manager = settings_manager

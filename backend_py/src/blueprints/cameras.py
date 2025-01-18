@@ -2,15 +2,15 @@ from flask import Blueprint, request, jsonify, current_app
 from ..services import DeviceManager, StreamInfoSchema, DeviceNicknameSchema, UVCControlSchema, DeviceType, DeviceLeaderSchema
 import logging
 
-cameras_bp = Blueprint('cameras', __name__)
+cameras_bp = Blueprint('cameras', __name__, url_prefix='/api/devices')
 
-@cameras_bp.route('/devices', methods=['GET'])
+@cameras_bp.route('/', methods=['GET'])
 def get_devices():
     device_manager: DeviceManager = current_app.config['device_manager']
 
     return jsonify(device_manager.get_devices())
 
-@cameras_bp.route('/devices/configure_stream', methods=['POST'])
+@cameras_bp.route('/configure_stream', methods=['POST'])
 def configure_stream():
     device_manager: DeviceManager = current_app.config['device_manager']
 
@@ -21,7 +21,7 @@ def configure_stream():
 
     return jsonify({})
 
-@cameras_bp.route('/devices/unconfigure_stream', methods=['POST'])
+@cameras_bp.route('/unconfigure_stream', methods=['POST'])
 def unconfigure_stream():
     device_manager: DeviceManager = current_app.config['device_manager']
 
@@ -32,7 +32,7 @@ def unconfigure_stream():
 
     return jsonify({})
 
-@cameras_bp.route('/devices/set_nickname', methods=['POST'])
+@cameras_bp.route('/set_nickname', methods=['POST'])
 def set_nickname():
     device_manager: DeviceManager = current_app.config['device_manager']
     
@@ -43,7 +43,7 @@ def set_nickname():
 
     return jsonify({})
 
-@cameras_bp.route('/devices/set_uvc_control', methods=['POST'])
+@cameras_bp.route('/set_uvc_control', methods=['POST'])
 def set_uvc_control():
     device_manager: DeviceManager = current_app.config['device_manager']
 
@@ -54,7 +54,7 @@ def set_uvc_control():
 
     return jsonify({})
 
-@cameras_bp.route('/devices/set_leader', methods=['POST'])
+@cameras_bp.route('/set_leader', methods=['POST'])
 def set_leader():
     device_manager: DeviceManager = current_app.config['device_manager']
 
@@ -62,7 +62,7 @@ def set_leader():
     device_manager.set_leader(leader_schema['leader'], leader_schema['follower'])
     return jsonify({})
 
-@cameras_bp.route('/devices/remove_leader', methods=['POST'])
+@cameras_bp.route('/remove_leader', methods=['POST'])
 def remove_leader():
     device_manager: DeviceManager = current_app.config['device_manager']
 
@@ -70,7 +70,7 @@ def remove_leader():
     device_manager.remove_leader(leader_schema['follower'])
     return jsonify({})
 
-@cameras_bp.route('/devices/restart_stream', methods=['POST'])
+@cameras_bp.route('/restart_stream', methods=['POST'])
 def restart_stream():
     device_manager: DeviceManager = current_app.config['device_manager']
 

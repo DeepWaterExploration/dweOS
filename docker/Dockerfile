@@ -55,13 +55,8 @@ LABEL permissions='{ \
     "PortBindings": { \
     "8000/tcp": [ \
     { "HostPort": "" } \
-    ], \
-    "9002/tcp": [ \
-    { "HostPort": "9002" } \
-    ], \
-    "8080/tcp": [ \
-    { "HostPort": "8080" } \
-    ] \
+    ]
+] \
     ] \
     } \
     } \
@@ -85,9 +80,6 @@ LABEL readme="https://raw.githubusercontent.com/DeepwaterExploration/DWE_OS_2/ma
 
 # Expose required ports
 EXPOSE 8000
-EXPOSE 8080
-EXPOSE 9002
-EXPOSE 7681
 
 # Mount required host directories (for dbus, video4linux, and dev access)
 VOLUME ["/sys/class/video4linux", "/dev", "/run/dbus", "/var/run/dbus"]

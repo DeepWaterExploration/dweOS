@@ -10,9 +10,9 @@ import argparse
 
 logging.getLogger().setLevel(logging.INFO)
 
+app = Flask(__name__)
 
 def run_frontend(port):
-    app = Flask(__name__)
     FRONTEND_DIR = os.path.abspath('./frontend/dist')
 
     @app.route('/',  defaults={'path': 'index.html'})
@@ -52,15 +52,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    frontend_thread = multiprocessing.Process(target=run_frontend, args=[args.port])
-    frontend_thread.start()
-
-    def exit_clean(sig, frame):
-        logging.info('Exiting')
-        frontend_thread.kill()
-        sys.exit(0)
-
-    signal.signal(signal.SIGINT, exit_clean)
-
-    server = Server(args.settings_path, FeatureSupport(ttyd=not args.no_ttyd, wifi=not args.no_wifi))
+    server = Server(app=app, settings_path=args.settings_path, feature_support=FeatureSupport(ttyd=not args.no_ttyd, wifi=not args.no_wifi), port=args.port)
     server.serve()
+    run_frontend(args.port)
+

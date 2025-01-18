@@ -22,9 +22,13 @@ import logging
 
 class Server:
 
-    def __init__(self, settings_path: str, feature_support: FeatureSupport, port=8080) -> None:
+    def __init__(self, feature_support: FeatureSupport, app = None, settings_path: str = '/', port=8080) -> None:
         # Create the flask application
-        self.app = Flask(__name__)
+        if app is not None:
+            self.app = app
+        else:
+            self.app = Flask(__name__)
+
         # TODO: restrict origins
         CORS(self.app)
 
@@ -39,7 +43,7 @@ class Server:
         self.app.json.sort_keys = False
 
         # Create the managers
-        self.broadcast_server = BroadcastServer()
+        self.broadcast_server = BroadcastServer(port if app is not None else 9002)
         # Create the logging handler
         self.log_handler = LogHandler(self.broadcast_server)
         logging.getLogger().addHandler(self.log_handler)
@@ -88,14 +92,17 @@ class Server:
 
         self.app.add_url_rule('/features', endpoint='features', methods=['GET'], view_func=lambda: jsonify(FeatureSupportSchema().dump(self.feature_support)))
 
-        # create the server and run everything
-        self.http_server = WSGIServer(('0.0.0.0', port), self.app, log=None)
+        # create the server and run everything (only if it is not being hosted elsewhere)
+        self.http_server = None
+        if app is None:
+            self.http_server = WSGIServer(('0.0.0.0', port), self.app, log=None)
 
         def exit_clean(sig, frame):
             logging.info('Shutting down')
 
             self.light_manager.cleanup()
-            self.http_server.stop()
+            if self.http_server is not None:
+                self.http_server.stop()
             self.device_manager.stop_monitoring()
             self.broadcast_server.kill()
 
@@ -121,7 +128,9 @@ class Server:
             self.ttyd_manager.start()
         else:
             logging.info('Running without TTYD')
-        self.http_server.serve_forever()
+
+        if self.http_server is not None:
+            self.http_server.serve_forever()
 
     def _handle_validation_error(self, e: ValidationError):
         logging.warning('Internal error occurred due to a malformed input.')

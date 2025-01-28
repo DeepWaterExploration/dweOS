@@ -2,13 +2,9 @@ from ctypes import *
 import sys
 import signal
 
-from dataclasses import dataclass
-
 from flask import Flask, jsonify
 from flask_cors import CORS
 from gevent.pywsgi import WSGIServer
-
-from .websockets.broadcast_server import BroadcastServer
 
 from .services import *
 from .blueprints import *
@@ -17,21 +13,20 @@ from .types import FeatureSupport
 from .schemas import FeatureSupportSchema
 
 from marshmallow import ValidationError
-from flask_socketio import SocketIO
+import socketio
 
 import logging
 
 class Server:
 
-    def __init__(self, feature_support: FeatureSupport, socketio: SocketIO, app = None, settings_path: str = '/', port=8080) -> None:
+    def __init__(self, feature_support: FeatureSupport, sio: socketio.Server, app = None, settings_path: str = '/', port=8080) -> None:
         # Create the flask application
         if app is not None:
             self.app = app
         else:
             self.app = Flask(__name__)
-
-        # TODO: restrict origins
-        CORS(self.app)
+            # TODO: restrict origins
+            CORS(self.app)
 
         # initialize features
         self.feature_support = feature_support
@@ -44,9 +39,9 @@ class Server:
         self.app.json.sort_keys = False
 
         # Create the managers
-        self.broadcast_server = BroadcastServer(socketio)
+        self.sio = sio
         # Create the logging handler
-        self.log_handler = LogHandler(self.broadcast_server)
+        self.log_handler = LogHandler(self.sio)
         logging.getLogger().addHandler(self.log_handler)
 
         # Settings
@@ -55,7 +50,7 @@ class Server:
 
         # Device Manager
         self.device_manager = DeviceManager(
-            settings_manager=self.settings_manager, broadcast_server=self.broadcast_server)
+            settings_manager=self.settings_manager, sio=self.sio)
         
         # Lights
         self.light_manager = LightManager(create_pwm_controllers())
@@ -116,8 +111,6 @@ class Server:
 
 
         signal.signal(signal.SIGINT, exit_clean)
-
-        logging.info('Starting backend server on http://0.0.0.0:8080')
 
     def serve(self):
         self.device_manager.start_monitoring()

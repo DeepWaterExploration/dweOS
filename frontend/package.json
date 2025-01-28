@@ -46,6 +46,7 @@
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
         "react-router-dom": "^6.24.1",
+        "socket.io-client": "^4.8.1",
         "trzsz": "^1.1.5",
         "valtio": "^2.0.0"
     },

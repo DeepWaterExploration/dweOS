@@ -8,6 +8,7 @@ import { useSnackbar } from "notistack";
 import { Log } from "./types";
 import TerminalViewLayout from "./components/TerminalView";
 import WebsocketContext from "../../contexts/WebsocketContext";
+import { Socket } from "socket.io-client";
 
 const formatLog = (log: Log): string => {
     return `${log.timestamp} - ${log.level} - ${log.name} - ${log.filename}:${log.lineno} - ${log.function} - ${log.message}`;
@@ -52,36 +53,31 @@ const LogsPage = () => {
     const [logs, setLogs] = useState([] as Log[]);
     const { enqueueSnackbar } = useSnackbar();
 
-    const { websocket, connected } = useContext(WebsocketContext) as {
-        websocket: WebSocket;
+    const { socket, connected } = useContext(WebsocketContext) as {
+        socket: Socket;
         connected: boolean;
     };
 
-    const socketCallback = (e: WebSocketEventMap["message"]) => {
-        let message = deserializeMessage(e.data);
-        let log = message.data as Log;
-        switch (message.event_name) {
-            case "log":
-                setLogs((prevLogs) =>
-                    [
-                        ...prevLogs.filter(
-                            (l) => JSON.stringify(l) != JSON.stringify(log)
-                        ),
-                        log,
-                    ].sort((a, b) => {
-                        const dateA = new Date(a.timestamp.replace(",", "."));
-                        const dateB = new Date(b.timestamp.replace(",", "."));
-                        return dateA.getTime() - dateB.getTime();
-                    })
-                );
-        }
+    const socketCallback = (log: Log) => {
+        setLogs((prevLogs) =>
+            [
+                ...prevLogs.filter(
+                    (l) => JSON.stringify(l) != JSON.stringify(log)
+                ),
+                log,
+            ].sort((a, b) => {
+                const dateA = new Date(a.timestamp.replace(",", "."));
+                const dateB = new Date(b.timestamp.replace(",", "."));
+                return dateA.getTime() - dateB.getTime();
+            })
+        );
     };
 
     const getInitialLogs = () => {
         getLogs().then((log_values: Log[]) => {
             setLogs(log_values);
 
-            websocket.addEventListener("message", socketCallback);
+            socket.on("log", socketCallback);
         });
     };
 

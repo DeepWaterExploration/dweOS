@@ -29,7 +29,7 @@ RUN sh install_requirements.sh
 LABEL authors='[\
     {\
     "name": "Brandon Stevens",\
-    "email": "brandon@dwe.ai"\
+    "email": "support@dwe.ai"\
     }\
     ]'
 
@@ -42,8 +42,6 @@ LABEL company='{\
 LABEL permissions='{ \
     "ExposedPorts": { \
     "8000/tcp": {}, \
-    "9002/tcp": {}, \
-    "8080/tcp": {} \
     }, \
     "HostConfig": { \
     "Privileged": true, \
@@ -55,10 +53,7 @@ LABEL permissions='{ \
     "PortBindings": { \
     "8000/tcp": [ \
     { "HostPort": "" } \
-    ]
-] \
-    ] \
-    } \
+    ], \
     } \
     }'
 
@@ -83,9 +78,6 @@ EXPOSE 8000
 
 # Mount required host directories (for dbus, video4linux, and dev access)
 VOLUME ["/sys/class/video4linux", "/dev", "/run/dbus", "/var/run/dbus"]
-
-# Set the environment to enable dbus
-ENV DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
 
 # Install DWE_OS_2
 COPY release /opt/DWE_OS_2

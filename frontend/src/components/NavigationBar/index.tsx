@@ -49,12 +49,13 @@ import dweTheme from "../../utils/themes";
 import { version } from "../../../package.json";
 import { restartMachine, shutdownMachine } from "../../layouts/system/api";
 import WebsocketContext from "../../contexts/WebsocketContext";
-import { BACKEND_API_WS, deserializeMessage } from "../../utils/utils";
+import { deserializeMessage } from "../../utils/utils";
 import DisconnectedOverlay from "./DisconnectedOverlay";
 import { useSnackbar } from "notistack";
 import { getStatus } from "./api";
 import { FeatureSupport } from "../../utils/types";
 import { getFeatureSupport } from "../../utils/api";
+import { io, Socket } from "socket.io-client";
 
 const drawerWidth = 240;
 
@@ -217,7 +218,7 @@ const NavigationBar = () => {
             : dweTheme("dark")
     );
 
-    const websocket = useRef<WebSocket | undefined>(undefined);
+    const socket = useRef<Socket | undefined>(undefined);
 
     const [connected, setConnected] = useState(false);
 
@@ -235,80 +236,21 @@ const NavigationBar = () => {
     const [routes, setRoutes] = useState(generateRoutes(features));
 
     const connectWebsocket = () => {
-        // websocket
-        if (websocket.current) delete websocket.current;
+        if (socket.current) delete socket.current;
 
-        websocket.current = new WebSocket(BACKEND_API_WS());
+        socket.current = io(
+            import.meta.env.DEV ? "http://localhost:5000" : undefined,
+            { transports: ["websocket"] }
+        );
 
-        websocket.current.onopen = () => {
-            console.log("WebSocket opened.");
+        socket.current.on("connect", () => {
+            console.log(socket.current.id);
             setConnected(true);
-        };
-
-        websocket.current.addEventListener("message", (e) => {
-            let msg = deserializeMessage(e.data);
-            if (msg.event_name === "pong") {
-                let id = msg.data["id"];
-
-                if (pingTimeouts.current[id]) {
-                    let ping = Date.now() - id;
-                    pingValues.current.push(ping);
-                    if (pingValues.current.length > 5)
-                        pingValues.current.shift();
-                    clearTimeout(pingTimeouts.current[id]);
-                    delete pingTimeouts.current[id]; // Remove the timeout for this pong
-                }
-            }
         });
 
-        websocket.current.onclose = () => {
-            setConnected(false);
-        };
-
-        websocket.current.onerror = () => {
-            websocket.current.close();
-        };
-    };
-
-    const calculateTimeout = () => {
-        if (pingValues.current.length === 0) return 5000; // Default timeout if no ping values yet
-
-        const sum = pingValues.current.reduce((a, b) => a + b, 0);
-        const avgPing = sum / pingValues.current.length;
-        const buffer = Math.log(avgPing + 1) * 1000;
-
-        // Add a buffer to avoid premature timeouts
-        return avgPing + buffer;
-    };
-
-    const ping = () => {
-        const timeout = calculateTimeout();
-
-        if (connected) {
-            // instead of using the onclose event, just check here to be sure
-            if (websocket.current.readyState === WebSocket.CLOSED) {
-                setConnected(false);
-                return;
-            }
-
-            if (websocket.current.readyState !== WebSocket.OPEN) return; // wait till
-
-            const pingId = Date.now();
-
-            websocket.current.send(
-                JSON.stringify({
-                    event_name: "ping",
-                    data: { id: pingId },
-                })
-            );
-
-            pingTimeouts.current[pingId] = setTimeout(() => {
-                setConnected(false);
-                console.error("timed out");
-            }, timeout);
-        }
-
-        if (connectedRef.current) setTimeout(() => ping(), timeout * 1.2);
+        socket.current.on("asdf", () => {
+            console.log("asdf");
+        });
     };
 
     useEffect(() => {
@@ -316,22 +258,10 @@ const NavigationBar = () => {
         connectedRef.current = connected;
 
         if (!connected) {
-            if (websocket.current) websocket.current.close();
-            Object.keys(pingTimeouts.current).forEach((id) => {
-                clearTimeout(pingTimeouts.current[id]);
-                delete pingTimeouts.current[id];
-            });
-            const interval = setInterval(() => {
-                getStatus()
-                    .then(() => {
-                        if (!connectedRef.current) connectWebsocket();
-                        clearInterval(interval);
-                    })
-                    .catch(() => {});
-            }, 1000);
+            connectWebsocket();
         } else {
             // Start pinging every 3 seconds
-            ping();
+            // ping();
 
             // get the supported features
             getFeatureSupport().then(setFeatures);
@@ -366,7 +296,7 @@ const NavigationBar = () => {
     return (
         <ThemeProvider theme={theme}>
             <WebsocketContext.Provider
-                value={{ websocket: websocket.current, connected }}
+                value={{ socket: socket.current, connected }}
             >
                 <Router>
                     <React.Fragment>

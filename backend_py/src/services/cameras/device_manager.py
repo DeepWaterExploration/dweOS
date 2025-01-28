@@ -4,14 +4,16 @@ import time
 import threading
 import re
 import event_emitter as events
+import asyncio
 
 from .schemas import *
 from .device import Device, lookup_pid_vid, DeviceInfo, DeviceType
 from .settings import SettingsManager
-from ...websockets.broadcast_server import BroadcastServer, Message
 from .enumeration import list_devices
 from .device_utils import list_diff, find_device_with_bus_info
 from .exceptions import DeviceNotFoundException
+
+import socketio
 
 from .ehd import EHDDevice
 from .shd import SHDDevice
@@ -21,9 +23,9 @@ class DeviceManager(events.EventEmitter):
     Class for interfacing with and monitoring devices
     '''
 
-    def __init__(self, broadcast_server, settings_manager=SettingsManager()) -> None:
+    def __init__(self, sio: socketio.Server, settings_manager=SettingsManager()) -> None:
         self.devices: List[Device] = []
-        self.broadcast_server = broadcast_server
+        self.sio = sio
         self.settings_manager = settings_manager
 
         self._thread = threading.Thread(target=self._monitor)
@@ -194,7 +196,7 @@ class DeviceManager(events.EventEmitter):
             raise DeviceNotFoundException(bus_info)
         return device
     
-    def _get_devices(self, old_devices: List[DeviceInfo]):
+    async def _get_devices(self, old_devices: List[DeviceInfo]):
         devices_info = list_devices()
         # enumerate the devices
         devices_info = list_devices()
@@ -223,9 +225,7 @@ class DeviceManager(events.EventEmitter):
             # Output device to log (after loading settings)
             logging.info(f'Device Added: {device_info.bus_info}')
 
-            self.broadcast_server.broadcast(Message(
-                'device_added', DeviceSchema().dump(device)
-            ))
+            await self.sio.emit('device_added', DeviceSchema().dump(device))
 
         # make sure to load the leader followers in case there are new ones to check
         self.settings_manager.load_leader_followers(self.devices)
@@ -247,24 +247,23 @@ class DeviceManager(events.EventEmitter):
                     self.devices.remove(device)
                     logging.info(f'Device Removed: {device_info.bus_info}')
 
-                    self.broadcast_server.broadcast(Message('device_removed', {
-                        'bus_info': device_info.bus_info
-                    }))
+                    await self.sio.emit('device_removed', device_info.bus_info)
 
         return devices_info
 
-    def _monitor(self):
+    async def _monitor(self):
         '''
         Internal code to monitor devices for changes
         '''
-        devices_info = self._get_devices([])
+        devices_info = await self._get_devices([])
+
 
         while self._is_monitoring:
             # do not overload the bus
-            time.sleep(0.1)
+            await asyncio.sleep(0.1)
 
             # get the list of devices and update the internal array
-            devices_info = self._get_devices(devices_info)
+            devices_info = await self._get_devices(devices_info)
 
     def _emit_gst_error(self, device: Device, errors: list):
         '''
@@ -274,7 +273,7 @@ class DeviceManager(events.EventEmitter):
 
         for dev_info in devices_info:
             if device.bus_info == dev_info.bus_info:
-                self.broadcast_server.broadcast(Message('gst_error', {'errors': errors, 'bus_info': device.bus_info}))
+                self.sio.broadcast('gst_error', {'errors': errors, 'bus_info': device.bus_info})
                 return
 
         logging.info('gst_error ignored due to device unplugged')

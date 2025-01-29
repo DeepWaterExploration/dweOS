@@ -1,5 +1,6 @@
 import logging
 import socketio
+import asyncio
 
 class LogHandler(logging.Handler):
     def __init__(self, sio: socketio.Server, level: int | str = 0) -> None:
@@ -22,4 +23,4 @@ class LogHandler(logging.Handler):
             'message': record.message
         }
         self.logs.append(log)
-        self.sio.emit('log', log)
+        asyncio.create_task(self.sio.emit('log', log))

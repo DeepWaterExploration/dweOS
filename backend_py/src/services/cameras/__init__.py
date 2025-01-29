@@ -7,6 +7,7 @@ from .ehd import *
 from .enumeration import *
 from .saved_types import *
 from .schemas import *
+from .pydantic_schemas import *
 from .settings import *
 from .shd import *
 from .stream import *

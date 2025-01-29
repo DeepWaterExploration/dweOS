@@ -1,27 +1,29 @@
-from flask import Blueprint, request, jsonify, current_app
+from fastapi import APIRouter, Depends, Request
 from ..services import DeviceManager, StreamInfoSchema, DeviceNicknameSchema, UVCControlSchema, DeviceType, DeviceLeaderSchema
+from pydantic import BaseModel
 import logging
 
-cameras_bp = Blueprint('cameras', __name__)
+from typing import List
 
-@cameras_bp.route('/devices', methods=['GET'])
-def get_devices():
-    device_manager: DeviceManager = current_app.config['device_manager']
+from ..services.cameras.pydantic_schemas import StreamInfoSchema, DeviceNicknameSchema, UVCControlSchema, DeviceLeaderSchema, DeviceSchema
 
-    return jsonify(device_manager.get_devices())
+camera_router = APIRouter()
 
-@cameras_bp.route('/devices/configure_stream', methods=['POST'])
-def configure_stream():
-    device_manager: DeviceManager = current_app.config['device_manager']
+@camera_router.get('/devices')
+def get_devices(request: Request) -> List[DeviceSchema]:
+    device_manager: DeviceManager = request.app.state.device_manager
 
-    stream_info = StreamInfoSchema().load(request.get_json())
+    return device_manager.get_devices()
 
-    device_manager.configure_device_stream(
-    stream_info['bus_info'], stream_info)
+@camera_router.post('/devices/configure_stream')
+async def configure_stream(request: Request, stream_info: StreamInfoSchema):
+    device_manager: DeviceManager = request.app.state.device_manager
 
-    return jsonify({})
+    device_manager.configure_device_stream(stream_info)
 
-@cameras_bp.route('/devices/unconfigure_stream', methods=['POST'])
+    return {}
+
+@camera_router.post('/devices/unconfigure_stream')
 def unconfigure_stream():
     device_manager: DeviceManager = current_app.config['device_manager']
 
@@ -32,7 +34,7 @@ def unconfigure_stream():
 
     return jsonify({})
 
-@cameras_bp.route('/devices/set_nickname', methods=['POST'])
+@camera_router.post('/devices/set_nickname')
 def set_nickname():
     device_manager: DeviceManager = current_app.config['device_manager']
     
@@ -43,7 +45,7 @@ def set_nickname():
 
     return jsonify({})
 
-@cameras_bp.route('/devices/set_uvc_control', methods=['POST'])
+@camera_router.post('/devices/set_uvc_control')
 def set_uvc_control():
     device_manager: DeviceManager = current_app.config['device_manager']
 
@@ -54,7 +56,7 @@ def set_uvc_control():
 
     return jsonify({})
 
-@cameras_bp.route('/devices/set_leader', methods=['POST'])
+@camera_router.post('/devices/set_leader')
 def set_leader():
     device_manager: DeviceManager = current_app.config['device_manager']
 
@@ -62,7 +64,7 @@ def set_leader():
     device_manager.set_leader(leader_schema['leader'], leader_schema['follower'])
     return jsonify({})
 
-@cameras_bp.route('/devices/remove_leader', methods=['POST'])
+@camera_router.post('/devices/remove_leader')
 def remove_leader():
     device_manager: DeviceManager = current_app.config['device_manager']
 
@@ -70,7 +72,7 @@ def remove_leader():
     device_manager.remove_leader(leader_schema['follower'])
     return jsonify({})
 
-@cameras_bp.route('/devices/restart_stream', methods=['POST'])
+@camera_router.post('/devices/restart_stream')
 def restart_stream():
     device_manager: DeviceManager = current_app.config['device_manager']
 

@@ -1,4 +1,4 @@
-from src import DeviceManager
+from src import DeviceManager, Server, FeatureSupport
 import socketio
 from fastapi import FastAPI
 from flask_cors import CORS
@@ -6,6 +6,11 @@ import threading
 import time
 import asyncio
 import IPython
+from contextlib import asynccontextmanager
+import logging
+
+logging.getLogger().setLevel(logging.INFO)
+
 
 # Use AsyncServer
 sio = socketio.AsyncServer(
@@ -14,26 +19,18 @@ sio = socketio.AsyncServer(
     transports=['websocket']
 )
 
-device_manager = DeviceManager(sio)
-device_manager._is_monitoring = True
-
+# Define events
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    server.serve()
+    yield
+    print('Shutting down server...')
 
 # FastAPI application
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
-# test sending message to client
-async def send_message():
-    await device_manager._monitor()
-
-@app.on_event("startup")
-async def startup_event():
-    asyncio.create_task(send_message())
-
-# Define events
-@sio.event
-async def connect(sid, environ):
-    print(f"Client connected: {sid}")
-    await sio.emit('welcome', {'message': 'Hello, client!'}, room=sid)
+# Server instance
+server = Server(FeatureSupport.all(), sio, app)
 
 # Combine FastAPI and Socket.IO ASGI apps
 app = socketio.ASGIApp(sio, other_asgi_app=app)

@@ -6,7 +6,7 @@ import re
 import event_emitter as events
 import asyncio
 
-from .schemas import *
+from .pydantic_schemas import *
 from .device import Device, lookup_pid_vid, DeviceInfo, DeviceType
 from .settings import SettingsManager
 from .enumeration import list_devices
@@ -27,8 +27,6 @@ class DeviceManager(events.EventEmitter):
         self.devices: List[Device] = []
         self.sio = sio
         self.settings_manager = settings_manager
-
-        self._thread = threading.Thread(target=self._monitor)
         self._is_monitoring = False
 
     def start_monitoring(self):
@@ -36,14 +34,13 @@ class DeviceManager(events.EventEmitter):
         Begin monitoring for devices in the background
         '''
         self._is_monitoring = True
-        self._thread.start()
+        asyncio.create_task(self._monitor())
 
     def stop_monitoring(self):
         '''
-        Kill the background monitor thread and stop all streams
+        Stop monitoring for devices
         '''
         self._is_monitoring = False
-        self._thread.join()
 
         for device in self.devices:
             device.stream.stop()
@@ -75,17 +72,7 @@ class DeviceManager(events.EventEmitter):
         '''
         Compile and sort a list of devices for jsonifcation
         '''
-        device_list = DeviceSchema().dump(self.devices, many=True)
-        key_pattern = re.compile(r'^(\D+)(\d+)$')
-
-        def key(item: Dict):
-            # Get the integer at the end of the path
-            try:
-                m = key_pattern.match(item['cameras'][0]['path'])
-                return int(m.group(2))
-            except:
-                return -1
-        device_list.sort(key=key)
+        device_list = [DeviceSchema.model_validate(device) for device in self.devices]
         return device_list
 
     def set_device_option(self, bus_info: str, option: str, option_value: int | bool) -> bool:
@@ -99,11 +86,11 @@ class DeviceManager(events.EventEmitter):
         self.settings_manager.save_device(device)
         return True
 
-    def configure_device_stream(self, bus_info: str, stream_info: StreamInfoSchema) -> bool:
+    def configure_device_stream(self, stream_info: StreamInfoSchema) -> bool:
         '''
         Configure a device's stream with the given stream info
         '''
-        device = self._find_device_with_bus_info(bus_info)
+        device = self._find_device_with_bus_info(stream_info.bus_info)
 
         stream_format = stream_info['stream_format']
         width: int = stream_format['width']
@@ -120,7 +107,7 @@ class DeviceManager(events.EventEmitter):
         self.settings_manager.save_device(device)
         return True
 
-    def uncofigure_device_stream(self, bus_info: str) -> bool:
+    def unconfigure_device_stream(self, bus_info: str) -> bool:
         '''
         Remove a device stream (unconfigure)
         '''
@@ -197,7 +184,6 @@ class DeviceManager(events.EventEmitter):
         return device
     
     async def _get_devices(self, old_devices: List[DeviceInfo]):
-        devices_info = list_devices()
         # enumerate the devices
         devices_info = list_devices()
 
@@ -225,7 +211,7 @@ class DeviceManager(events.EventEmitter):
             # Output device to log (after loading settings)
             logging.info(f'Device Added: {device_info.bus_info}')
 
-            await self.sio.emit('device_added', DeviceSchema().dump(device))
+            # await self.sio.emit('device_added', DeviceSchema.model_validate(device, from_attributes=True))
 
         # make sure to load the leader followers in case there are new ones to check
         self.settings_manager.load_leader_followers(self.devices)
@@ -256,7 +242,6 @@ class DeviceManager(events.EventEmitter):
         Internal code to monitor devices for changes
         '''
         devices_info = await self._get_devices([])
-
 
         while self._is_monitoring:
             # do not overload the bus

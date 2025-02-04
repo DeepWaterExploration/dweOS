@@ -1,24 +1,23 @@
-from flask import Blueprint, request, jsonify, current_app
-from typing import cast
-from ..services import PreferencesManager, SavedPrefrences, SavedPrefrencesSchema
+from fastapi import APIRouter, Depends, Request
+from typing import Dict
+from ..services import PreferencesManager, SavedPrefrences, SavedPreferencesSchema
 
-preferences_bp = Blueprint('preferences', __name__)
+preferences_router = APIRouter(tags=['preferences'])
 
-@preferences_bp.route('/preferences')
-def get_preferences():
-    preferences_manager: PreferencesManager = current_app.config['preferences_manager']
+@preferences_router.get('/preferences')
+def get_preferences(request: Request) -> SavedPreferencesSchema:
+    preferences_manager: PreferencesManager = request.app.state.preferences_manager
+ 
+    return preferences_manager.serialize_preferences()
 
-    return jsonify(preferences_manager.serialize_preferences())
+@preferences_router.post('/preferences/save_preferences')
+def set_preferences(request: Request, preferences: SavedPreferencesSchema):
+    preferences_manager: PreferencesManager = request.app.state.preferences_manager
 
-@preferences_bp.route('/preferences/save_preferences', methods=['POST'])
-def set_preferences():
-    preferences_manager: PreferencesManager = current_app.config['preferences_manager']
+    preferences_manager.save(preferences)
 
-    req: SavedPrefrences = cast(SavedPrefrences, SavedPrefrencesSchema().load(request.get_json()))
-    preferences_manager.save(req)
-    return jsonify({})
+    return {}
 
-@preferences_bp.route('/preferences/get_recommended_host', methods=['GET'])
-def get_recommended_host():
-    host = request.remote_addr
-    return jsonify({'host': host})
+@preferences_router.get('/preferences/get_recommended_host')
+def get_recommended_host(request: Request) -> Dict[str, str]:
+    return {'host': request.client.host}

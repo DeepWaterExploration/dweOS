@@ -52,13 +52,13 @@ class Control:
     flags: ControlFlags = field(default_factory=ControlFlags)
 
 
-class StreamEncodeTypeEnum(Enum):
-    MJPG = 0
-    H264 = 1
+class StreamEncodeTypeEnum(str, Enum):
+    MJPG = 'MJPG'
+    H264 = 'H264'
 
 
-class StreamTypeEnum(Enum):
-    UDP = 0
+class StreamTypeEnum(str, Enum):
+    UDP = 'UDP'
 
 
 @dataclass

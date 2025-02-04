@@ -1,24 +1,20 @@
-from marshmallow import Schema, fields, post_load
-from .wifi_types import NetworkConfig
+from pydantic import BaseModel
+from typing import Optional
 
-class ConnectionSchema(Schema):
-    id = fields.Str(required=True)
-    type = fields.Str(required=True)
+class ConnectionSchema(BaseModel):
+    id: str
+    type: str
 
-class StatusSchema(Schema):
-    connection = fields.Nested(ConnectionSchema, required=True)
-    finished_first_scan = fields.Bool(required=True)
-    connected = fields.Bool(required=True)
+class StatusSchema(BaseModel):
+    connection: Optional[ConnectionSchema] = None
+    finished_first_scan: bool
+    connected: bool
 
-class AccessPointSchema(Schema):
-    ssid = fields.Str(required=True)
-    strength = fields.Int(required=True)
-    requires_password = fields.Bool(required=True)
+class AccessPointSchema(BaseModel):
+    ssid: str
+    strength: int
+    requires_password: bool
 
-class NetworkConfigSchema(Schema):
-    ssid = fields.Str(required=True)
-    password = fields.Str(required=False)
-
-    @post_load
-    def make_network_config(self, data, **kwargs):
-        return NetworkConfig(**data)
+class NetworkConfigSchema(BaseModel):
+    ssid: str
+    password: str = None

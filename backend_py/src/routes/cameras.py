@@ -1,21 +1,20 @@
 from fastapi import APIRouter, Depends, Request
-from ..services import DeviceManager, StreamInfoSchema, DeviceNicknameSchema, UVCControlSchema, DeviceType, DeviceLeaderSchema
-from pydantic import BaseModel
+from ..services import DeviceManager, StreamInfoSchema, DeviceNicknameSchema, UVCControlSchema, DeviceDescriptorSchema, DeviceLeaderSchema
 import logging
 
 from typing import List
 
 from ..services.cameras.pydantic_schemas import StreamInfoSchema, DeviceNicknameSchema, UVCControlSchema, DeviceLeaderSchema, DeviceSchema
 
-camera_router = APIRouter()
+camera_router = APIRouter(tags=['cameras'])
 
-@camera_router.get('/devices')
+@camera_router.get('/devices', response_model=List[DeviceSchema], summary='Get all devices')
 def get_devices(request: Request) -> List[DeviceSchema]:
     device_manager: DeviceManager = request.app.state.device_manager
 
     return device_manager.get_devices()
 
-@camera_router.post('/devices/configure_stream')
+@camera_router.post('/devices/configure_stream', summary='Configure a stream')
 async def configure_stream(request: Request, stream_info: StreamInfoSchema):
     device_manager: DeviceManager = request.app.state.device_manager
 
@@ -23,61 +22,53 @@ async def configure_stream(request: Request, stream_info: StreamInfoSchema):
 
     return {}
 
-@camera_router.post('/devices/unconfigure_stream')
-def unconfigure_stream():
-    device_manager: DeviceManager = current_app.config['device_manager']
+@camera_router.post('/devices/unconfigure_stream', summary='Unconfigure a stream')
+def unconfigure_stream(request: Request, device_descriptor: DeviceDescriptorSchema):
+    device_manager: DeviceManager = request.app.state.device_manager
 
-    bus_info = StreamInfoSchema(only=['bus_info']).load(
-    request.get_json())['bus_info']
+    bus_info = device_descriptor.bus_info
 
-    device_manager.uncofigure_device_stream(bus_info)
+    device_manager.unconfigure_device_stream(bus_info)
 
-    return jsonify({})
+    return {}
 
-@camera_router.post('/devices/set_nickname')
-def set_nickname():
-    device_manager: DeviceManager = current_app.config['device_manager']
-    
-    device_nickname = DeviceNicknameSchema().load(request.get_json())
+@camera_router.post('/devices/set_nickname', summary='Set a device nickname')
+def set_nickname(request: Request, device_nickname: DeviceNicknameSchema):
+    device_manager: DeviceManager = request.app.state.device_manager
 
     device_manager.set_device_nickname(
-    device_nickname['bus_info'], device_nickname['nickname'])
+    device_nickname.bus_info, device_nickname.nickname)
 
-    return jsonify({})
+    return {}
 
-@camera_router.post('/devices/set_uvc_control')
-def set_uvc_control():
-    device_manager: DeviceManager = current_app.config['device_manager']
-
-    uvc_control = UVCControlSchema().load(request.get_json())
+@camera_router.post('/devices/set_uvc_control', summary='Set a UVC control')
+def set_uvc_control(request: Request, uvc_control: UVCControlSchema):
+    device_manager: DeviceManager = request.app.state.device_manager
 
     device_manager.set_device_uvc_control(
-    uvc_control['bus_info'], uvc_control['control_id'], uvc_control['value'])
+    uvc_control.bus_info, uvc_control.control_id, uvc_control.value)
 
-    return jsonify({})
+    return {}
 
-@camera_router.post('/devices/set_leader')
-def set_leader():
-    device_manager: DeviceManager = current_app.config['device_manager']
+@camera_router.post('/devices/set_leader', summary='Set a device as a leader')
+def set_leader(request: Request, device_leader: DeviceLeaderSchema):
+    device_manager: DeviceManager = request.app.state.device_manager
 
-    leader_schema = DeviceLeaderSchema().load(request.get_json())
-    device_manager.set_leader(leader_schema['leader'], leader_schema['follower'])
-    return jsonify({})
+    device_manager.set_leader(device_leader.leader, device_leader.follower)
+    return {}
 
-@camera_router.post('/devices/remove_leader')
-def remove_leader():
-    device_manager: DeviceManager = current_app.config['device_manager']
+@camera_router.post('/devices/remove_leader', summary='Remove a device as a leader')
+def remove_leader(request: Request, device_leader: DeviceLeaderSchema):
+    device_manager: DeviceManager = request.app.state.device_manager
 
-    leader_schema = DeviceLeaderSchema().load(request.get_json())
-    device_manager.remove_leader(leader_schema['follower'])
-    return jsonify({})
+    device_manager.remove_leader(device_leader.follower)
+    return {}
 
-@camera_router.post('/devices/restart_stream')
-def restart_stream():
-    device_manager: DeviceManager = current_app.config['device_manager']
+@camera_router.post('/devices/restart_stream', summary='Restart a stream')
+def restart_stream(request: Request, device_descriptor: DeviceDescriptorSchema):
+    device_manager: DeviceManager = request.app.state.device_manager
 
-    bus_info = StreamInfoSchema(only=['bus_info']).load(request.get_json())['bus_info']
     # will raise DeviceNotFoundException which will be handled by server
-    dev = device_manager._find_device_with_bus_info(bus_info)
+    dev = device_manager._find_device_with_bus_info(device_descriptor.bus_info)
     dev.start_stream()
-    return jsonify({})
+    return {}

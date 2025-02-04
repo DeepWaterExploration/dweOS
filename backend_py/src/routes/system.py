@@ -1,17 +1,17 @@
-from flask import Blueprint, request, jsonify, current_app
+from fastapi import APIRouter, Request
 from ..services import SystemManager
 import logging
 
-system_bp = Blueprint('system', __name__)
+system_router = APIRouter(tags=['system'])
 
-@system_bp.route('/system/restart', methods=['POST'])
-def restart():
-    system_manager: SystemManager = current_app.config['system_manager']
+@system_router.post('/system/restart')
+def restart(request: Request):
+    system_manager: SystemManager = request.app.state.system_manager
     system_manager.restart_system()
-    return jsonify({})
+    return {}
 
-@system_bp.route('/system/shutdown', methods=['POST'])
-def shutdown():
-    system_manager: SystemManager = current_app.config['system_manager']
+@system_router.post('/system/shutdown')
+def shutdown(request: Request):
+    system_manager: SystemManager = request.app.state.system_manager
     system_manager.shutdown_system()
-    return jsonify({})
+    return {}

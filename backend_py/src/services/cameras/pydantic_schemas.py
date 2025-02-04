@@ -9,21 +9,33 @@ class CameraIntervalSchema(BaseModel):
     numerator: int
     denominator: int
 
+    class Config:
+        from_attributes = True
+
 
 class CameraFormatSizeSchema(BaseModel):
     width: int
     height: int
     intervals: List[CameraIntervalSchema]
 
+    class Config:
+        from_attributes = True
+
 
 class CameraSchema(BaseModel):
     path: str
     formats: Dict[str, List[CameraFormatSizeSchema]]
 
+    class Config:
+        from_attributes = True
+
 
 class MenuItemSchema(BaseModel):
     index: int
     name: str
+
+    class Config:
+        from_attributes = True
 
 
 class ControlFlagsSchema(BaseModel):
@@ -34,12 +46,19 @@ class ControlFlagsSchema(BaseModel):
     control_type: ControlTypeEnum
     menu: List[MenuItemSchema]
 
+    class Config:
+        from_attributes = True
+        use_enum_values = True
+
 
 class ControlSchema(BaseModel):
     flags: ControlFlagsSchema
     control_id: int
     name: str
     value: float
+
+    class Config:
+        from_attributes = True
 
 
 class DeviceInfoSchema(BaseModel):
@@ -49,16 +68,25 @@ class DeviceInfoSchema(BaseModel):
     vid: int
     pid: int
 
+    class Config:
+        from_attributes = True
+
 
 class DeviceOptionsSchema(BaseModel):
     bitrate: int
     gop: int
     mode: H264Mode
 
+    class Config:
+        from_attributes = True
+
 
 class StreamEndpointSchema(BaseModel):
     host: str
     port: int
+
+    class Config:
+        from_attributes = True
 
 
 class StreamSchema(BaseModel):
@@ -69,8 +97,10 @@ class StreamSchema(BaseModel):
     width: int
     height: int
     interval: CameraIntervalSchema
-    started: bool
     configured: bool
+
+    class Config:
+        from_attributes = True
 
 
 class DeviceSchema(BaseModel):
@@ -89,11 +119,17 @@ class DeviceSchema(BaseModel):
     leader: Optional[str] = None
     follower: Optional[str] = None
 
+    class Config:
+        from_attributes = True
+        use_enum_values = True
 
 class SavedDeviceSchema(DeviceSchema):
     controls: List[ControlSchema]
     stream: StreamSchema
     device_type: DeviceType
+
+    class Config:
+        from_attributes = True
 
 
 # API SCHEMAS
@@ -103,16 +139,25 @@ class StreamFormatSchema(BaseModel):
     height: int
     interval: CameraIntervalSchema
 
+    class Config:
+        from_attributes = True
+
 class StreamInfoSchema(BaseModel):
     bus_info: str
     stream_format: StreamFormatSchema
     encode_type: StreamEncodeTypeEnum
     endpoints: List[StreamEndpointSchema]
 
+    class Config:
+        from_attributes = True
+
 
 class DeviceNicknameSchema(BaseModel):
     bus_info: str
     nickname: str
+
+    class Config:
+        from_attributes = True
 
 
 class UVCControlSchema(BaseModel):
@@ -120,7 +165,16 @@ class UVCControlSchema(BaseModel):
     control_id: int
     value: int
 
+    class Config:
+        from_attributes = True
+
 
 class DeviceLeaderSchema(BaseModel):
     follower: str
     leader: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+class DeviceDescriptorSchema(BaseModel):
+    bus_info: str

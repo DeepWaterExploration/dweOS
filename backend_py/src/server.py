@@ -1,15 +1,9 @@
 from ctypes import *
-import sys
-import signal
-
-from flask_cors import CORS
-from gevent.pywsgi import WSGIServer
 
 from .services import *
-from .routes.cameras import camera_router
+from .routes import *
 from .logging import LogHandler
-from .types import FeatureSupport
-from .schemas import FeatureSupportSchema
+from .schemas import FeatureSupport
 
 from marshmallow import ValidationError
 from fastapi import FastAPI, Request
@@ -22,7 +16,7 @@ class Server:
     Server singleton
     '''
 
-    def __init__(self, feature_support: FeatureSupport, sio: socketio.Server, app: FastAPI, settings_path: str = '/') -> None:
+    def __init__(self, feature_support: FeatureSupport, sio: socketio.Server, app: FastAPI, settings_path: str = '/') -> None:        
         # initialize the app
         self.app = app
 
@@ -31,6 +25,8 @@ class Server:
 
         # Create the managers
         self.sio = sio
+
+        self.log_handler = LogHandler(self.sio)
 
         # Settings
         self.settings_manager = SettingsManager(settings_path)
@@ -59,6 +55,7 @@ class Server:
 
         # FAST API
         self.app.state.device_manager = self.device_manager
+        self.app.state.log_handler = self.log_handler
         self.app.state.light_manager = self.light_manager
         self.app.state.settings_manager = self.settings_manager
         self.app.state.preferences_manager = self.preferences_manager
@@ -67,6 +64,18 @@ class Server:
         self.app.state.wifi_manager = self.wifi_manager if self.feature_support.wifi else None
 
         self.app.include_router(camera_router)
+        self.app.include_router(preferences_router)
+        self.app.include_router(system_router)
+        self.app.include_router(wifi_router)
+        self.app.include_router(lights_router)
+        self.app.include_router(logs_router)
+
+        self.app.add_api_route('/features', 
+                               lambda: self.feature_support.model_dump(), 
+                               methods=['GET'], 
+                               summary='Get supported features', 
+                               tags=['features'],
+                               response_model=FeatureSupport)
 
         # Error handling
         self.app.add_exception_handler(ValidationError, self._handle_validation_error)
@@ -75,7 +84,6 @@ class Server:
 
     def serve(self):
         # Create the logging handler
-        self.log_handler = LogHandler(self.sio)
         logging.getLogger().addHandler(self.log_handler)
 
         self.device_manager.start_monitoring()

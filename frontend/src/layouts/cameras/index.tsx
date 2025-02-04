@@ -95,15 +95,15 @@ const DevicesLayout = () => {
 
     const getInitialDevices = async () => {
         let devices = await getDevices();
-        let preferences = await getSettings();
-        if (preferences.suggest_host) {
-            preferences.default_stream.host = await getRecommendedHost(); // recommend host based on IP
-        }
-        let nextPort = getNextPort(devices, preferences);
-        // Initialize the next port
-        setNextPort(nextPort);
+        // let preferences = await getSettings();
+        // if (preferences.suggest_host) {
+        //     preferences.default_stream.host = await getRecommendedHost(); // recommend host based on IP
+        // }
+        // let nextPort = getNextPort(devices, preferences);
+        // // Initialize the next port
+        // setNextPort(nextPort);
 
-        setSavedPreferences(preferences);
+        // setSavedPreferences(preferences);
         setDevices(devices);
 
         setHasRequestedDevices(true);

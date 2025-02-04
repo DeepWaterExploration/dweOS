@@ -1,26 +1,24 @@
-from flask import Blueprint, request, jsonify, current_app
-from ..services import LightManager
+from fastapi import APIRouter, Depends, Request
+from typing import List
+from ..services import LightManager, Light, DisableLightInfo, SetLightInfo
 
-lights_bp = Blueprint('lights', __name__)
+lights_router = APIRouter(tags=['lights'])
 
-@lights_bp.route('/lights/')
-def get_lights():
-    light_manager: LightManager = current_app.config['light_manager']
+@lights_router.get('/lights/')
+def get_lights(request: Request) -> List[Light]:
+    light_manager: LightManager = request.app.state.light_manager
 
-    return jsonify(light_manager.get_lights())
+    return light_manager.get_lights()
 
-@lights_bp.route('/lights/set_intensity', methods=['POST'])
-def set_intensity():
-    light_manager: LightManager = current_app.config['light_manager']
+@lights_router.post('/lights/set_intensity')
+def set_intensity(request: Request, set_light_info: SetLightInfo):
+    light_manager: LightManager = request.app.state.light_manager
 
-    req = request.get_json()
-    light_manager.set_intensity(req['index'], req['intensity'])
-    return jsonify({})
+    light_manager.set_intensity(set_light_info.index, set_light_info.intensity)
+    return {}
 
-@lights_bp.route('/lights/disable_pin', methods=['POST'])
-def disable_light():
-    light_manager: LightManager = current_app.config['light_manager']
-
-    req = request.get_json()
-    light_manager.disable_light(req['controller_index'], req['pin'])
-    return jsonify({})
+@lights_router.route('/lights/disable_pin', methods=['POST'])
+def disable_light(request: Request, disable_light_info: DisableLightInfo):
+    light_manager: LightManager = request.app.state.light_manager
+    light_manager.disable_light(disable_light_info.controller_index, disable_light_info.pin)
+    return {}

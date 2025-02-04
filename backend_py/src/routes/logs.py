@@ -1,10 +1,11 @@
-from flask import Blueprint, jsonify, current_app
-from ..logging import LogHandler
+from fastapi import APIRouter, Depends, Request
+from typing import List
+from ..logging import LogSchema, LogHandler
 
-logs_bp = Blueprint('logs', __name__)
+logs_router = APIRouter(tags=['logs'])
 
-@logs_bp.route('/logs', methods=['GET'])
-def get_logs():
-    log_handler: LogHandler = current_app.config['log_handler']
+@logs_router.get('/logs')
+def get_logs(request: Request) -> List[LogSchema]:
+    log_handler: LogHandler = request.app.state.log_handler
 
-    return jsonify(log_handler.logs)
+    return log_handler.logs

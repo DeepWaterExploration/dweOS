@@ -1,40 +1,40 @@
-from flask import Blueprint, request, jsonify, current_app
-from ..services import WiFiManager, NetworkConfigSchema, NetworkConfig
-from marshmallow import ValidationError
+from fastapi import APIRouter, Depends, Request
+from typing import List
+from ..services import WiFiManager, NetworkConfigSchema, NetworkConfig, Status, AccessPoint, Connection
 
-wifi_bp = Blueprint('wifi', __name__)
+wifi_router = APIRouter(tags=['wifi'])
 
-@wifi_bp.route('/wifi/status')
-def wifi_status():
-    wifi_manager: WiFiManager = current_app.config['wifi_manager']
+@wifi_router.get('/wifi/status', response_class=Status)
+def wifi_status(request: Request):
+    wifi_manager: WiFiManager = request.app.state.wifi_manager
     active_connection = wifi_manager.get_status()
-    return jsonify(active_connection)
+    return active_connection
 
-@wifi_bp.route('/wifi/access_points')
-def access_points():
-    wifi_manager: WiFiManager = current_app.config['wifi_manager']
-    return jsonify(wifi_manager.get_access_points())
+@wifi_router.get('/wifi/access_points', response_model=List[AccessPoint])
+def access_points(request: Request):
+    wifi_manager: WiFiManager = request.app.state.wifi_manager
+    return wifi_manager.get_access_points()
 
-@wifi_bp.route('/wifi/connections')
-def list_wifi_connections():
-    wifi_manager: WiFiManager = current_app.config['wifi_manager']
-    return jsonify(wifi_manager.list_connections())
+@wifi_router.get('/wifi/connections', response_model=List[Connection])
+def list_wifi_connections(request: Request):
+    wifi_manager: WiFiManager = request.app.state.wifi_manager
+    return wifi_manager.list_connections()
 
-@wifi_bp.route('/wifi/connect', methods=['POST'])
-def connect():
-    wifi_manager: WiFiManager = current_app.config['wifi_manager']
-    network_config: NetworkConfig = NetworkConfigSchema().load(request.get_json())
-    return jsonify({'status': wifi_manager.connect(network_config.ssid, network_config.password)})
+@wifi_router.post('/wifi/connect')
+def connect(request: Request, network_config: NetworkConfig):
+    wifi_manager: WiFiManager = request.app.state.wifi_manager
 
-@wifi_bp.route('/wifi/disconnect', methods=['POST'])
-def disconnect():
-    wifi_manager: WiFiManager = current_app.config['wifi_manager']
+    return {'status': wifi_manager.connect(network_config.ssid, network_config.password)}
+
+@wifi_router.post('/wifi/disconnect')
+def disconnect(request: Request):
+    wifi_manager: WiFiManager = request.app.state.wifi_manager
     wifi_manager.disconnect()
-    return jsonify({})
+    return {}
 
-@wifi_bp.route('/wifi/forget', methods=['POST'])
-def forget():
-    wifi_manager: WiFiManager = current_app.config['wifi_manager']
-    network_config: NetworkConfig = NetworkConfigSchema(only=['ssid']).load(request.get_json())
+@wifi_router.post('/wifi/forget')
+def forget(request: Request, network_config: NetworkConfig):
+    wifi_manager: WiFiManager = request.app.state.wifi_manager
+
     wifi_manager.forget(network_config.ssid)
-    return jsonify({})
+    return {}

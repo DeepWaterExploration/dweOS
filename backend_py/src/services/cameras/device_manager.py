@@ -18,6 +18,26 @@ import socketio
 from .ehd import EHDDevice
 from .shd import SHDDevice
 
+def todict(obj, classkey=None):
+    if isinstance(obj, dict):
+        data = {}
+        for (k, v) in obj.items():
+            data[k] = todict(v, classkey)
+        return data
+    elif hasattr(obj, "_ast"):
+        return todict(obj._ast())
+    elif hasattr(obj, "__iter__") and not isinstance(obj, str):
+        return [todict(v, classkey) for v in obj]
+    elif hasattr(obj, "__dict__"):
+        data = dict([(key, todict(value, classkey)) 
+            for key, value in obj.__dict__.items() 
+            if not callable(value) and not key.startswith('_')])
+        if classkey is not None and hasattr(obj, "__class__"):
+            data[classkey] = obj.__class__.__name__
+        return data
+    else:
+        return obj
+
 class DeviceManager(events.EventEmitter):
     '''
     Class for interfacing with and monitoring devices
@@ -92,13 +112,12 @@ class DeviceManager(events.EventEmitter):
         '''
         device = self._find_device_with_bus_info(stream_info.bus_info)
 
-        stream_format = stream_info['stream_format']
-        width: int = stream_format['width']
-        height: int = stream_format['height']
-        interval: Interval = Interval(
-            stream_format['interval']['numerator'], stream_format['interval']['denominator'])
-        encode_type: StreamEncodeTypeEnum = stream_info['encode_type']
-        endpoints = stream_info['endpoints']
+        stream_format = stream_info.stream_format
+        width: int = stream_format.width
+        height: int = stream_format.height
+        interval: Interval = Interval(**stream_format.interval.model_dump())
+        encode_type: StreamEncodeTypeEnum = stream_info.encode_type
+        endpoints = stream_info.endpoints
 
         device.configure_stream(encode_type, width, height,
                                 interval, StreamTypeEnum.UDP, endpoints)
@@ -211,7 +230,7 @@ class DeviceManager(events.EventEmitter):
             # Output device to log (after loading settings)
             logging.info(f'Device Added: {device_info.bus_info}')
 
-            # await self.sio.emit('device_added', DeviceSchema.model_validate(device, from_attributes=True))
+            await self.sio.emit('device_added', DeviceSchema.model_validate(device).model_dump())
 
         # make sure to load the leader followers in case there are new ones to check
         self.settings_manager.load_leader_followers(self.devices)

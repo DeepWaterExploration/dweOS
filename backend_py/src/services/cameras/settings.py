@@ -4,8 +4,7 @@ import time
 import json
 import logging
 
-from .saved_types import *
-from .schemas import SavedDeviceSchema
+from .saved_pydantic_schemas import SavedDeviceSchema, SavedLeaderFollowerPairSchema
 from .device import Device
 from .shd import SHDDevice
 from .camera_types import DeviceType
@@ -21,16 +20,15 @@ class SettingsManager:
         except FileNotFoundError:
             open(path, 'w').close()
             self.file_object = open(path, 'r+')
-        self.to_save: List[SavedDevice] = []
+        self.to_save: List[SavedDeviceSchema] = []
         self.thread = threading.Thread(target=self._run_settings_sync)
         self.thread.start()
 
-        self.leader_follower_pairs: List[SavedLeaderFollowerPair] = []
+        self.leader_follower_pairs: List[SavedLeaderFollowerPairSchema] = []
 
         try:
             settings: list[Dict] = json.loads(self.file_object.read())
-            self.settings: List[SavedDevice] = SavedDeviceSchema(
-                many=True).load(settings)
+            self.settings: List[SavedDeviceSchema] = [SavedDeviceSchema(**saved_device) for saved_device in settings]
         except json.JSONDecodeError:
             self.file_object.seek(0)
             self.file_object.write('[]')
@@ -49,7 +47,7 @@ class SettingsManager:
                 if saved_device.device_type == DeviceType.STELLARHD_FOLLOWER:
                     if not saved_device.is_leader:
                         if saved_device.leader:
-                            self.leader_follower_pairs.append(SavedLeaderFollowerPair(saved_device.leader, saved_device.bus_info))
+                            self.leader_follower_pairs.append(SavedLeaderFollowerPairSchema(saved_device.leader, saved_device.bus_info))
 
                 device.load_settings(saved_device)
                 return
@@ -88,7 +86,7 @@ class SettingsManager:
             # The leader follower pair has been used and everything is good
             self.leader_follower_pairs.remove(leader_follower_pair)
 
-    def _save_device(self, saved_device: SavedDevice):
+    def _save_device(self, saved_device: SavedDeviceSchema):
         for dev in self.settings:
             if dev.bus_info == saved_device.bus_info:
                 self.settings.remove(dev)
@@ -96,7 +94,7 @@ class SettingsManager:
         self.settings.append(saved_device)
         self.file_object.seek(0)
         self.file_object.write(
-            json.dumps(SavedDeviceSchema(many=True).dump(self.settings)))
+            json.dumps([model.model_dump() for model in self.settings]))
         self.file_object.truncate()
         self.file_object.flush()
 
@@ -108,6 +106,5 @@ class SettingsManager:
             time.sleep(1)
 
     def save_device(self, device: Device):
-        saved_device = SavedDeviceSchema().load(SavedDeviceSchema().dump(device))
         # schedule a save command
-        self.to_save.append(saved_device)
+        self.to_save.append(SavedDeviceSchema.model_validate(device))

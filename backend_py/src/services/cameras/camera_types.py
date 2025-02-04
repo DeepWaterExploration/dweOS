@@ -1,9 +1,9 @@
-from enum import Enum
+from enum import IntEnum, Enum
 from dataclasses import dataclass, field
 from typing import List
 
 
-class ControlTypeEnum(Enum):
+class ControlTypeEnum(IntEnum):
     INTEGER = 1
     BOOLEAN = 2
     MENU = 3
@@ -67,14 +67,14 @@ class StreamEndpoint:
     port: int
 
 
-class H264Mode(Enum):
+class H264Mode(IntEnum):
     '''
     H.264 Mode Enum
     '''
     MODE_CONSTANT_BITRATE = 1
     MODE_VARIABLE_BITRATE = 2
 
-class DeviceType(Enum):
+class DeviceType(IntEnum):
     '''
     Device type Enum
     '''

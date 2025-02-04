@@ -39,6 +39,7 @@ class SettingsManager:
     def load_device(self, device: Device):
         for saved_device in self.settings:
             if saved_device.bus_info == device.bus_info:
+                print(saved_device.device_type, device.device_type)
                 if device.device_type != saved_device.device_type:
                     logging.info(f'Device {device.bus_info} with device_type: {device.device_type} plugged into port of saved device_type: {saved_device.device_type}.\
                                   Discarding stored data as this could cause numerous issues.')
@@ -47,7 +48,7 @@ class SettingsManager:
                 if saved_device.device_type == DeviceType.STELLARHD_FOLLOWER:
                     if not saved_device.is_leader:
                         if saved_device.leader:
-                            self.leader_follower_pairs.append(SavedLeaderFollowerPairSchema(saved_device.leader, saved_device.bus_info))
+                            self.leader_follower_pairs.append(SavedLeaderFollowerPairSchema(leader_bus_info=saved_device.leader, follower_bus_info=saved_device.bus_info))
 
                 device.load_settings(saved_device)
                 return

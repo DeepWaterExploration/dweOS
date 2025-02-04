@@ -9,6 +9,12 @@ class LogHandler(logging.Handler):
         self.sio = sio
         self.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - [%(name)s] - %(filename)s:%(lineno)d - %(funcName)s() - %(message)s'))
         self.logs: List[LogSchema] = []
+        self.to_emit: List[LogSchema] = []
+
+    def pop_logs(self):
+        logs = self.to_emit
+        self.to_emit = []
+        return logs
 
     def emit(self, record):
         fmt = self.format(record)
@@ -24,4 +30,5 @@ class LogHandler(logging.Handler):
             'message': record.message
         }
         self.logs.append(LogSchema.model_validate(log))
+        self.to_emit.append(LogSchema.model_validate(log))
         # asyncio.create_task(self.sio.emit('log', log))

@@ -82,9 +82,19 @@ class Server:
         self.app.add_exception_handler(DeviceNotFoundException, self._handle_device_not_found)
         self.app.add_exception_handler(Exception, self._handle_server_error)
 
+    async def emit_logs(self):
+        while True:
+            logs = self.log_handler.pop_logs()
+            for log in logs:
+                await self.sio.emit('log', log.model_dump())
+            await asyncio.sleep(0.1)
+
     def serve(self):
         # Create the logging handler
         logging.getLogger().addHandler(self.log_handler)
+
+        # loop over and emit the logs to the client
+        asyncio.create_task(self.emit_logs())
 
         self.device_manager.start_monitoring()
         if self.feature_support.wifi:

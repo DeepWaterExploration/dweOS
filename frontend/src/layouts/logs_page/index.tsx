@@ -85,11 +85,6 @@ const LogsPage = () => {
         if (connected) {
             getInitialLogs();
         }
-
-        return () => {
-            if (websocket)
-                websocket.removeEventListener("message", socketCallback);
-        };
     }, [connected]);
     return (
         <Grid sx={{ paddingX: 5 }}>

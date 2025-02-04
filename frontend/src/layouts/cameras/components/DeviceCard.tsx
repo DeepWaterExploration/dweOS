@@ -19,7 +19,7 @@ const DeviceCard: React.FC = () => {
     };
 
     return (
-        <Card sx={styles.card} key={device.bus_info}>
+        <Card sx={styles.card}>
             <CardHeader
                 title={device.device_info.device_name}
                 subheader={

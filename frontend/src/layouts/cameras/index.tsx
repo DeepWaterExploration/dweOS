@@ -82,28 +82,25 @@ const DevicesLayout = () => {
         });
     };
 
-    const updateDevice = (device: Device) => {
-        setDevices((prevDevices) => {
-            let newDevices = [...prevDevices];
-            newDevices = newDevices.filter(
-                (dev) => dev.bus_info != device.bus_info
-            );
-            newDevices.push(device);
-            return newDevices;
-        });
+    const updateDevice = (updatedDevice: Device) => {
+        setDevices((prevDevices) =>
+            prevDevices.map((dev) =>
+                dev.bus_info === updatedDevice.bus_info ? updatedDevice : dev
+            )
+        );
     };
 
     const getInitialDevices = async () => {
         let devices = await getDevices();
-        // let preferences = await getSettings();
-        // if (preferences.suggest_host) {
-        //     preferences.default_stream.host = await getRecommendedHost(); // recommend host based on IP
-        // }
-        // let nextPort = getNextPort(devices, preferences);
-        // // Initialize the next port
-        // setNextPort(nextPort);
+        let preferences = await getSettings();
+        if (preferences.suggest_host) {
+            preferences.default_stream.host = await getRecommendedHost(); // recommend host based on IP
+        }
+        let nextPort = getNextPort(devices, preferences);
+        // Initialize the next port
+        setNextPort(nextPort);
 
-        // setSavedPreferences(preferences);
+        setSavedPreferences(preferences);
         setDevices(devices);
 
         setHasRequestedDevices(true);
@@ -293,16 +290,18 @@ const DevicesLayout = () => {
                     const device = proxy(dev);
 
                     subscribe(device, () => {
-                        // update devices without triggering rerender
-                        const index = devices.findIndex(
-                            (dev) => dev.bus_info === device.bus_info
-                        );
-                        if (index !== -1) {
-                            devices.splice(index, 1, device); // Replace the existing device
-                        }
+                        setDevices((oldDevices) => {
+                            const newDevices = [...oldDevices];
+                            const index = newDevices.findIndex(
+                                (dev) => dev.bus_info === device.bus_info
+                            );
+                            if (index !== -1) {
+                                devices.splice(index, 1, device); // Replace the existing device
+                            }
+                            return newDevices;
+                        });
 
-                        // set the next port
-                        let port = getNextPort();
+                        const port = getNextPort();
                         setNextPort(port);
                     });
 
@@ -320,7 +319,7 @@ const DevicesLayout = () => {
                             }}
                             key={device.bus_info}
                         >
-                            <DeviceCard key={device.bus_info} />
+                            <DeviceCard />
                         </DeviceContext.Provider>
                     );
                 })}

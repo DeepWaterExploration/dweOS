@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from .stream import StreamEncodeTypeEnum, StreamTypeEnum, StreamEndpoint, Interval
 from .camera_types import DeviceType
+from .pydantic_schemas import StreamEndpointSchema
 
 
 class SavedControlSchema(BaseModel):
@@ -16,7 +17,7 @@ class SavedControlSchema(BaseModel):
 class SavedStreamSchema(BaseModel):
     encode_type: StreamEncodeTypeEnum
     stream_type: StreamTypeEnum
-    endpoints: List[StreamEndpoint]
+    endpoints: List[StreamEndpointSchema]
     width: int
     height: int
     interval: Interval
@@ -39,7 +40,7 @@ class SavedDeviceSchema(BaseModel):
 
     class Config:
         from_attributes = True
-        use_enum_values = True
+        # use_enum_values = True
 
 class SavedLeaderFollowerPairSchema(BaseModel):
     leader_bus_info: str

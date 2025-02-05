@@ -144,7 +144,7 @@ class NetworkManager:
         connections = []
         for connection in self._list_connections():
             config = connection.GetSettings()
-            new_connection = Connection(config['connection']['id'], config['connection']['type'])
+            new_connection = Connection(id=config['connection']['id'], type=config['connection']['type'])
             # Filter
             if not only_wireless or 'wireless' in config['connection']['type'] and not new_connection in connections:
                 connections.append(new_connection)
@@ -167,7 +167,7 @@ class NetworkManager:
             config = connection.GetSettings()
 
             if not wireless_only or 'wireless' in config['connection']['type']:
-                connections.append(Connection(config['connection']['id'], config['connection']['type']))
+                connections.append(Connection(id=config['connection']['id'], type=config['connection']['type']))
 
         return connections
 
@@ -273,7 +273,7 @@ class NetworkManager:
 
             requires_password = self._ap_requires_password(flags, wpa_flags, rsn_flags)
 
-            access_points.append(AccessPoint(''.join([chr(byte) for byte in ssid]), int(strength), requires_password))
+            access_points.append(AccessPoint(ssid=''.join([chr(byte) for byte in ssid]), strength=int(strength), requires_password=requires_password))
 
         return sorted(access_points, key=lambda ap: ap.strength, reverse=True)
 

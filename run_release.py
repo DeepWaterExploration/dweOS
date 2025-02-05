@@ -1,53 +1,61 @@
-from flask import Flask, send_from_directory, jsonify
-from gevent.pywsgi import WSGIServer
-import sys
-import signal
-import os
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi import FastAPI, Request, HTTPException
+
 from backend_py.src import Server, FeatureSupport
-from flask_socketio import SocketIO
-import multiprocessing
+import socketio
+import os
+from fastapi.middleware.cors import CORSMiddleware
+import asyncio
+from contextlib import asynccontextmanager
 import logging
 import argparse
 
 logging.getLogger().setLevel(logging.INFO)
 
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app)
+ORIGINS = ['http://0.0.0.0:8000']
 
-def run_frontend(port):
-    FRONTEND_DIR = os.path.abspath('./frontend/dist')
+# Use AsyncServer
+sio = socketio.AsyncServer(
+    async_mode='asgi',
+    transports=['websocket']
+)
 
-    @app.route('/',  defaults={'path': 'index.html'})
-    @app.route('/<path:path>')
-    def index(path):
-        return send_from_directory(FRONTEND_DIR, path)
-    
-    blueos_extension = {
-        'name': 'dwe_os_2',
-        'description': 'Web-based driver and software interface for DWE.ai cameras',
-        'icon': 'mdi-camera-plus',
-        'company': 'DeepWater Exploration',
-        'version': '1.0.0',
-        'webpage': 'https://dwe.ai/products/dwe-os',
-        'api': 'https://dwe.ai/products/dwe-os'
-    }
+# Define events
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    server.serve()
+    yield
+    print('Shutting down server...')
 
-    @app.route('/register_service')
-    def register_service():
-        return jsonify(blueos_extension)
+# FastAPI application
+app = FastAPI(lifespan=lifespan, title='DWE OS API', description='API for DWE OS', version='0.1.0')
 
-    @app.errorhandler(404)
-    def not_found(e):
-        return send_from_directory(FRONTEND_DIR, 'index.html')
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-    logging.info(f'Starting client server on http://0.0.0.0:{port}')
-    # http_server = WSGIServer(('0.0.0.0', port), app, log=None)
-    # http_server.serve_forever()
-    socketio.run(app, host='0.0.0.0', port=port)
+# Combine FastAPI and Socket.IO ASGI apps
+asgi_app = socketio.ASGIApp(sio, other_asgi_app=app)
 
+blueos_extension = {
+    'name': 'dwe_os_2',
+    'description': 'Web-based driver and software interface for DWE.ai cameras',
+    'icon': 'mdi-camera-plus',
+    'company': 'DeepWater Exploration',
+    'version': '1.0.0',
+    'webpage': 'https://dwe.ai/products/dwe-os',
+    'api': 'https://dwe.ai/products/dwe-os'
+}
 
 if __name__ == '__main__':
+    import uvicorn
+
     parser = argparse.ArgumentParser(description='Run the server with parameters')
     parser.add_argument('--no-ttyd', action='store_true', help='Disable ttyd server')
     parser.add_argument('--no-wifi', action='store_true', help='Disable WiFi')
@@ -56,7 +64,32 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    server = Server(app=app, socketio=socketio, settings_path=args.settings_path, feature_support=FeatureSupport(ttyd=not args.no_ttyd, wifi=not args.no_wifi), port=args.port)
-    server.serve()
-    run_frontend(args.port)
+    # Server instance
+    server = Server(
+        FeatureSupport(
+            ttyd=not args.no_ttyd, 
+            wifi=not args.no_wifi), 
+            sio, app, settings_path=args.settings_path)
 
+    FRONTEND_DIR = os.path.abspath('./frontend/dist')
+
+    # Register as a BlueOS extension
+    @app.get("/register_service")
+    async def register_service():
+        return JSONResponse(content=blueos_extension)
+
+    # Do API mounting before static mounting
+
+    app.mount('/', StaticFiles(directory=FRONTEND_DIR, html=True), name='static')
+
+    @app.exception_handler(404)
+    async def not_found(request: Request, exc: HTTPException):
+        """Serve index.html for any unknown paths (Frontend Routing Support)"""
+        return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
+
+    async def main():
+        config = uvicorn.Config(asgi_app, host="0.0.0.0", port=args.port)
+        server = uvicorn.Server(config)
+        await server.serve()
+
+    asyncio.run(main())

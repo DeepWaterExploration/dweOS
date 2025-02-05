@@ -8,7 +8,7 @@ from ..services.cameras.pydantic_schemas import StreamInfoSchema, DeviceNickname
 
 camera_router = APIRouter(tags=['cameras'])
 
-@camera_router.get('/devices', response_model=List[DeviceSchema], summary='Get all devices')
+@camera_router.get('/devices', summary='Get all devices')
 def get_devices(request: Request) -> List[DeviceSchema]:
     device_manager: DeviceManager = request.app.state.device_manager
 

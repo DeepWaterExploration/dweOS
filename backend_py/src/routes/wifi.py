@@ -4,27 +4,28 @@ from ..services import WiFiManager, NetworkConfigSchema, NetworkConfig, Status, 
 
 wifi_router = APIRouter(tags=['wifi'])
 
-@wifi_router.get('/wifi/status', response_class=Status)
-def wifi_status(request: Request):
+@wifi_router.get('/wifi/status')
+def wifi_status(request: Request) -> Status:
     wifi_manager: WiFiManager = request.app.state.wifi_manager
     active_connection = wifi_manager.get_status()
     return active_connection
 
-@wifi_router.get('/wifi/access_points', response_model=List[AccessPoint])
-def access_points(request: Request):
+@wifi_router.get('/wifi/access_points')
+def access_points(request: Request) -> List[AccessPoint]:
     wifi_manager: WiFiManager = request.app.state.wifi_manager
     return wifi_manager.get_access_points()
 
-@wifi_router.get('/wifi/connections', response_model=List[Connection])
-def list_wifi_connections(request: Request):
+@wifi_router.get('/wifi/connections')
+def list_wifi_connections(request: Request) -> List[Connection]:
     wifi_manager: WiFiManager = request.app.state.wifi_manager
     return wifi_manager.list_connections()
 
 @wifi_router.post('/wifi/connect')
 def connect(request: Request, network_config: NetworkConfig):
     wifi_manager: WiFiManager = request.app.state.wifi_manager
+    wifi_manager.connect(network_config.ssid, network_config.password)
 
-    return {'status': wifi_manager.connect(network_config.ssid, network_config.password)}
+    return {}
 
 @wifi_router.post('/wifi/disconnect')
 def disconnect(request: Request):

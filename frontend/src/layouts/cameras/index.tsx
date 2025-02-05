@@ -83,6 +83,7 @@ const DevicesLayout = () => {
     };
 
     const updateDevice = (updatedDevice: Device) => {
+        console.log(updatedDevice.leader);
         setDevices((prevDevices) =>
             prevDevices.map((dev) =>
                 dev.bus_info === updatedDevice.bus_info ? updatedDevice : dev
@@ -290,18 +291,16 @@ const DevicesLayout = () => {
                     const device = proxy(dev);
 
                     subscribe(device, () => {
-                        setDevices((oldDevices) => {
-                            const newDevices = [...oldDevices];
-                            const index = newDevices.findIndex(
-                                (dev) => dev.bus_info === device.bus_info
-                            );
-                            if (index !== -1) {
-                                devices.splice(index, 1, device); // Replace the existing device
-                            }
-                            return newDevices;
-                        });
+                        // update devices without triggering rerender
+                        const index = devices.findIndex(
+                            (dev) => dev.bus_info === device.bus_info
+                        );
+                        if (index !== -1) {
+                            devices.splice(index, 1, device); // Replace the existing device
+                        }
 
-                        const port = getNextPort();
+                        // set the next port
+                        let port = getNextPort();
                         setNextPort(port);
                     });
 

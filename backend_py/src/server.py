@@ -43,6 +43,7 @@ class Server:
         if self.feature_support.wifi:
             try:
                 self.wifi_manager = WiFiManager()
+                self.app.include_router(wifi_router)
             except WiFiException as e:
                 logging.warning(f'Error occurred while initializing WiFi: {e} so WiFi will not be supported')
                 self.feature_support.wifi = False
@@ -66,7 +67,6 @@ class Server:
         self.app.include_router(camera_router)
         self.app.include_router(preferences_router)
         self.app.include_router(system_router)
-        self.app.include_router(wifi_router)
         self.app.include_router(lights_router)
         self.app.include_router(logs_router)
 

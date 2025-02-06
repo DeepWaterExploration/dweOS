@@ -123,14 +123,6 @@ class DeviceSchema(BaseModel):
         from_attributes = True
         use_enum_values = True
 
-class SavedDeviceSchema(DeviceSchema):
-    controls: List[ControlSchema]
-    stream: StreamSchema
-    device_type: DeviceType
-
-    class Config:
-        from_attributes = True
-
 
 # API SCHEMAS
 

@@ -285,7 +285,7 @@ const DevicesLayout = () => {
                                 Number(regex.exec(pathB)![0]) ||
                             hash(pathA) - hash(pathB)
                         );
-                    else return hash(a.device_type) - hash(b.device_type);
+                    else return a.device_type - b.device_type;
                 })
                 .map((dev) => {
                     const device = proxy(dev);

@@ -13,7 +13,7 @@ export interface Device {
     options: StreamOptions;
     stream: Stream;
 
-    device_type: string | undefined;
+    device_type: number | undefined;
     is_leader: boolean | undefined;
     leader: string | undefined;
     follower: string | undefined;

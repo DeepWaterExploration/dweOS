@@ -35,8 +35,8 @@ class SavedDeviceSchema(BaseModel):
     stream: SavedStreamSchema
     controls: List[SavedControlSchema]
     device_type: DeviceType
-    is_leader: bool
-    leader: Optional[str]
+    is_leader: Optional[bool] = None
+    leader: Optional[str] = None
 
     class Config:
         from_attributes = True

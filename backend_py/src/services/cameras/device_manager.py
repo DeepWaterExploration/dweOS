@@ -48,6 +48,7 @@ class DeviceManager(events.EventEmitter):
         self.sio = sio
         self.settings_manager = settings_manager
         self._is_monitoring = False
+        self.gst_errors = []
 
     def start_monitoring(self):
         '''
@@ -84,7 +85,7 @@ class DeviceManager(events.EventEmitter):
                 return None
 
         # we need to broadcast that there was a gst error so that the frontend knows there may be a kernel issue
-        device.stream_runner.on('gst_error', lambda errors: self._emit_gst_error(device, errors))
+        device.stream_runner.on('gst_error', lambda errors: self.gst_errors.append(errors))
 
         return device
 
@@ -230,6 +231,10 @@ class DeviceManager(events.EventEmitter):
             # Output device to log (after loading settings)
             logging.info(f'Device Added: {device_info.bus_info}')
 
+            
+            while len(self.gst_errors) > 0:
+                await self._emit_gst_error(device, self.gst_errors.pop())
+
             await self.sio.emit('device_added', DeviceSchema.model_validate(device).model_dump())
 
         # make sure to load the leader followers in case there are new ones to check
@@ -269,7 +274,7 @@ class DeviceManager(events.EventEmitter):
             # get the list of devices and update the internal array
             devices_info = await self._get_devices(devices_info)
 
-    def _emit_gst_error(self, device: Device, errors: list):
+    async def _emit_gst_error(self, device: Device, errors: list):
         '''
         Emit a gst_error and make sure it is not due to the device being unplugged
         '''
@@ -277,7 +282,7 @@ class DeviceManager(events.EventEmitter):
 
         for dev_info in devices_info:
             if device.bus_info == dev_info.bus_info:
-                self.sio.broadcast('gst_error', {'errors': errors, 'bus_info': device.bus_info})
+                self.sio.emit('gst_error', {'errors': errors, 'bus_info': device.bus_info})
                 return
 
         logging.info('gst_error ignored due to device unplugged')

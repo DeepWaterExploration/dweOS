@@ -238,9 +238,7 @@ export const StreamOptions: React.FC = () => {
                 device.stream.configured ? (
                     <>
                         {(
-                            device.is_leader === undefined
-                                ? false
-                                : !device.is_leader
+                            device.device_type === 0 ? false : !device.is_leader
                         ) ? (
                             <DeviceLeader leaders={leaders} />
                         ) : undefined}

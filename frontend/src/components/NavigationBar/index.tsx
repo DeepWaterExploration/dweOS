@@ -243,13 +243,12 @@ const NavigationBar = () => {
             { transports: ["websocket"] }
         );
 
-        socket.current.on("connect", () => {
-            console.log(socket.current.id);
-            setConnected(true);
+        socket.current.on("disconnect", () => {
+            setConnected(false);
         });
 
-        socket.current.on("asdf", () => {
-            console.log("asdf");
+        socket.current.on("connect", () => {
+            setConnected(true);
         });
     };
 

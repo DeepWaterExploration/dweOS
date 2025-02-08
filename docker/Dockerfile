@@ -41,21 +41,21 @@ LABEL company='{\
 
 LABEL permissions='{ \
     "ExposedPorts": { \
-    "8000/tcp": {}, \
+    "8000/tcp": {} \
     }, \
     "HostConfig": { \
     "Privileged": true, \
-    "Binds": [ \
-    "/sys/class/video4linux:/sys/class/video4linux", \
-    "dweos-settings:/settings", \
-    "/dev:/dev" \
-    ], \
+    "Binds": ["/sys/class/video4linux:/sys/class/video4linux", "dweos-settings:/settings", "/dev:/dev"], \
     "PortBindings": { \
     "8000/tcp": [ \
-    { "HostPort": "" } \
-    ], \
+    { \
+    "HostPort": "" \
     } \
-    }'
+    ] \
+    } \
+    } \
+    } \
+    '
 
 LABEL type="device-integration"
 

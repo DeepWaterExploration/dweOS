@@ -9,7 +9,7 @@ from .pydantic_schemas import StreamEndpointSchema
 class SavedControlSchema(BaseModel):
     control_id: int
     name: str
-    value: int
+    value: int | float
 
     class Config:
         from_attributes = True

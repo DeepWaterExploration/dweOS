@@ -1,8 +1,7 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Dict, Optional
 from .camera_types import *
 from .saved_types import *
-from .device import DeviceType
 
 
 class CameraIntervalSchema(BaseModel):
@@ -43,12 +42,11 @@ class ControlFlagsSchema(BaseModel):
     max_value: float
     min_value: float
     step: float
-    control_type: ControlTypeEnum
+    control_type: ControlTypeEnum = Field(...)
     menu: List[MenuItemSchema]
 
     class Config:
         from_attributes = True
-        use_enum_values = True
 
 
 class ControlSchema(BaseModel):
@@ -155,7 +153,7 @@ class DeviceNicknameSchema(BaseModel):
 class UVCControlSchema(BaseModel):
     bus_info: str
     control_id: int
-    value: int
+    value: float | int
 
     class Config:
         from_attributes = True

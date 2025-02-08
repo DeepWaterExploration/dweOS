@@ -4,7 +4,11 @@
   },
   "HostConfig": {
     "Privileged": true,
-    "Binds": ["/sys/class/video4linux:/sys/class/video4linux", "/dev:/dev"],
+    "Binds": [
+      "/sys/class/video4linux:/sys/class/video4linux",
+      "/dev:/dev",
+      "dweos-settings:/settings"
+    ],
     "PortBindings": {
       "8000/tcp": [
         {

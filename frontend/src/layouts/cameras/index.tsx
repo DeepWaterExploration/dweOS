@@ -83,7 +83,6 @@ const DevicesLayout = () => {
     };
 
     const updateDevice = (updatedDevice: Device) => {
-        console.log(updatedDevice.leader);
         setDevices((prevDevices) =>
             prevDevices.map((dev) =>
                 dev.bus_info === updatedDevice.bus_info ? updatedDevice : dev

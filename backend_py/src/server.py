@@ -5,7 +5,6 @@ from .routes import *
 from .logging import LogHandler
 from .schemas import FeatureSupport
 
-from marshmallow import ValidationError
 from fastapi import FastAPI, Request
 import socketio
 
@@ -78,7 +77,7 @@ class Server:
                                response_model=FeatureSupport)
 
         # Error handling
-        self.app.add_exception_handler(ValidationError, self._handle_validation_error)
+        # self.app.add_exception_handler(ValidationError, self._handle_validation_error)
         self.app.add_exception_handler(DeviceNotFoundException, self._handle_device_not_found)
         self.app.add_exception_handler(Exception, self._handle_server_error)
 
@@ -117,14 +116,14 @@ class Server:
             self.wifi_manager.stop_scanning()
 
 
-    def _handle_validation_error(self, request: Request, e: ValidationError):
-        logging.warning('Internal error occurred due to a malformed input.')
-        response = {
-            'error': 'Malformed input',
-            'message': str(e.messages)
-        }
+    # def _handle_validation_error(self, request: Request, e: ValidationError):
+    #     logging.warning('Internal error occurred due to a malformed input.')
+    #     response = {
+    #         'error': 'Malformed input',
+    #         'message': str(e.messages)
+    #     }
         
-        return response
+    #     return response
     
     def _handle_device_not_found(self, request: Request, e: DeviceNotFoundException):
         logging.warning(e)

@@ -34,7 +34,6 @@ import { IP_REGEX } from "../../../utils/utils";
  */
 const getResolutions = (device: Device, encodeFormat: encodeType) => {
     let newResolutions: string[] = [];
-    console.log(encodeFormat);
     // TODO FIX THIS
     for (let camera of device.cameras) {
         let format = camera.formats[encodeFormat as string];
@@ -88,7 +87,6 @@ export const StreamOptions: React.FC = () => {
     }, [nextPort]);
 
     useEffect(() => {
-        console.log("Devices updated");
         setLeaders(devices.filter((dev) => dev.is_leader));
     }, [devices]);
 

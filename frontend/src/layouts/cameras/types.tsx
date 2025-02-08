@@ -104,15 +104,15 @@ export enum encodeType {
 }
 
 export enum controlType {
-    INTEGER = "INTEGER",
-    BOOLEAN = "BOOLEAN",
-    MENU = "MENU",
-    BUTTON = "BUTTON",
-    INTEGER64 = "INTEGER64",
-    CTRL_CLASS = "CTRL_CLASS",
-    STRING = "STRING",
-    BITMASK = "BITMASK",
-    INTEGER_MENU = "INTEGER_MENU",
+    INTEGER = 1,
+    BOOLEAN = 2,
+    MENU = 3,
+    BUTTON = 4,
+    INTEGER64 = 5,
+    CTRL_CLASS = 6,
+    STRING = 7,
+    BITMASK = 8,
+    INTEGER_MENU = 9,
 }
 
 export enum bitrateMode {

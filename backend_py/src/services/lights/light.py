@@ -1,9 +1,16 @@
-from dataclasses import dataclass
+from pydantic import BaseModel
 
-@dataclass
-class Light:
+class Light(BaseModel):
     intensity: float
     pin: int
+    nickname: str
     controller_index: int
     controller_name: str
-    nickname: str
+
+class SetLightInfo(BaseModel):
+    index: int
+    intensity: float
+
+class DisableLightInfo(BaseModel):
+    controller_index: int
+    pin: int

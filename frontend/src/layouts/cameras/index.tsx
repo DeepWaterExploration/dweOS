@@ -15,12 +15,13 @@ import DevicesContext from "../../contexts/DevicesContext";
 import DeviceContext from "../../contexts/DeviceContext";
 import { proxy, subscribe } from "valtio";
 import { useSnackbar } from "notistack";
-import { Device } from "./types";
+import { Device, DeviceType } from "./types";
 import { SavedPreferences } from "../preferences/types";
 import { getRecommendedHost, getSettings } from "../preferences/api";
 import { getDevices } from "./api";
 import { styles } from "../../style";
 import WebsocketContext from "../../contexts/WebsocketContext";
+import { Socket } from "socket.io-client";
 
 interface DeviceRemovedInfo {
     bus_info: string;
@@ -39,8 +40,8 @@ const DevicesLayout = () => {
         setDevices: React.Dispatch<React.SetStateAction<Device[]>>;
     };
 
-    const { websocket, connected } = useContext(WebsocketContext) as {
-        websocket: WebSocket;
+    const { socket, connected } = useContext(WebsocketContext) as {
+        socket: Socket;
         connected: boolean;
     };
 
@@ -81,15 +82,12 @@ const DevicesLayout = () => {
         });
     };
 
-    const updateDevice = (device: Device) => {
-        setDevices((prevDevices) => {
-            let newDevices = [...prevDevices];
-            newDevices = newDevices.filter(
-                (dev) => dev.bus_info != device.bus_info
-            );
-            newDevices.push(device);
-            return newDevices;
-        });
+    const updateDevice = (updatedDevice: Device) => {
+        setDevices((prevDevices) =>
+            prevDevices.map((dev) =>
+                dev.bus_info === updatedDevice.bus_info ? updatedDevice : dev
+            )
+        );
     };
 
     const getInitialDevices = async () => {
@@ -108,59 +106,51 @@ const DevicesLayout = () => {
         setHasRequestedDevices(true);
     };
 
-    const socketCallback = (e) => {
-        let message = deserializeMessage(e.data);
-        switch (message.event_name) {
-            case "device_added": {
-                let dev = message.data as Device;
-                enqueueSnackbar(
-                    `Device added: ${dev.bus_info} - ${dev.nickname || dev.device_type}`,
-                    {
-                        variant: "info",
-                    }
-                );
-                addDevice(message.data as Device);
-                break;
+    const deviceAddedCallback = (device: Device) => {
+        enqueueSnackbar(
+            `Device added: ${device.bus_info} - ${device.nickname || DeviceType[device.device_type]}`,
+            {
+                variant: "info",
             }
-            case "device_removed": {
-                let dev = message.data as DeviceRemovedInfo;
-                enqueueSnackbar(`Device removed: ${dev.bus_info}`, {
-                    variant: "info",
-                });
-                removeDevice((message.data as DeviceRemovedInfo).bus_info);
-                break;
+        );
+        addDevice(device);
+    };
+
+    const deviceRemovedCallback = (bus_info: string) => {
+        enqueueSnackbar(`Device removed: ${bus_info}`, {
+            variant: "info",
+        });
+        removeDevice(bus_info);
+    };
+
+    const gstErrorCallback = (gstErrorMessage: GstErrorMessage) => {
+        stopStreamUpdate(gstErrorMessage.bus_info);
+        enqueueSnackbar(
+            <span>
+                GStreamer Error Occurred: {gstErrorMessage.bus_info} - This is
+                likely a known issue with the kernel, please click for more
+                details.
+            </span>,
+            {
+                variant: "error",
+                autoHideDuration: 5000,
+                action: () => (
+                    <a
+                        href='https://dwe.ai/kernel-issue'
+                        target='_blank'
+                        style={{
+                            color: "white",
+                            textDecoration: "none",
+                            padding: "8px 16px",
+                            display: "block",
+                            width: "100%",
+                        }}
+                    >
+                        Learn More
+                    </a>
+                ),
             }
-            case "gst_error":
-                let gstErrorMessage = message.data as GstErrorMessage;
-                stopStreamUpdate(gstErrorMessage.bus_info);
-                enqueueSnackbar(
-                    <span>
-                        GStreamer Error Occurred: {gstErrorMessage.bus_info} -
-                        This is likely a known issue with the kernel, please
-                        click for more details.
-                    </span>,
-                    {
-                        variant: "error",
-                        autoHideDuration: 5000,
-                        action: () => (
-                            <a
-                                href='https://dwe.ai/kernel-issue'
-                                target='_blank'
-                                style={{
-                                    color: "white",
-                                    textDecoration: "none",
-                                    padding: "8px 16px",
-                                    display: "block",
-                                    width: "100%",
-                                }}
-                            >
-                                Learn More
-                            </a>
-                        ),
-                    }
-                );
-                break;
-        }
+        );
     };
 
     useEffect(() => {
@@ -171,9 +161,14 @@ const DevicesLayout = () => {
             // Code to run once when the component is defined and websocket connects
             getInitialDevices();
 
-            websocket.addEventListener("message", socketCallback);
+            socket.on("device_added", deviceAddedCallback);
+            socket.on("device_removed", deviceRemovedCallback);
+            socket.on("gst_error", gstErrorCallback);
+
             return () => {
-                websocket.removeEventListener("message", socketCallback);
+                socket.off("device_added");
+                socket.off("device_removed");
+                socket.off("gst_error");
             };
         }
     }, [connected]);
@@ -211,6 +206,7 @@ const DevicesLayout = () => {
             device_list[findDeviceWithBusInfo(device_list, bus_info)];
         if (follower) {
             follower.leader = undefined;
+            follower.stream.configured = false;
             updateDevice(follower);
         }
     };
@@ -289,7 +285,7 @@ const DevicesLayout = () => {
                                 Number(regex.exec(pathB)![0]) ||
                             hash(pathA) - hash(pathB)
                         );
-                    else return hash(a.device_type) - hash(b.device_type);
+                    else return a.device_type - b.device_type;
                 })
                 .map((dev) => {
                     const device = proxy(dev);
@@ -322,7 +318,7 @@ const DevicesLayout = () => {
                             }}
                             key={device.bus_info}
                         >
-                            <DeviceCard key={device.bus_info} />
+                            <DeviceCard />
                         </DeviceContext.Provider>
                     );
                 })}

@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List
 import subprocess
 from multiprocessing import Process
@@ -7,7 +7,7 @@ import shlex
 import threading
 import event_emitter as events
 
-from .camera_types import *
+from .pydantic_schemas import *
 
 import logging
 
@@ -16,10 +16,10 @@ class Stream(events.EventEmitter):
     device_path: str = ''
     encode_type: StreamEncodeTypeEnum = None
     stream_type: StreamTypeEnum = StreamTypeEnum.UDP
-    endpoints: List[StreamEndpoint] = field(default_factory=list)
+    endpoints: List[StreamEndpointModel] = field(default_factory=list)
     width: int = None
     height: int = None
-    interval: Interval = field(default_factory=Interval)
+    interval: IntervalModel = field(default_factory=lambda: IntervalModel(numerator=1, denominator=30))
     configured: bool = False
 
     def _construct_pipeline(self):
@@ -89,7 +89,7 @@ class StreamRunner(events.EventEmitter):
         self._run_pipeline()
 
     def stop(self):
-        if not self.started:
+        if not self.started or not self._process:
             return
         self.started = False
         self._process.kill()

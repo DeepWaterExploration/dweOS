@@ -4,44 +4,65 @@ import time
 import threading
 import re
 import event_emitter as events
+import asyncio
 
-from .schemas import *
+from .pydantic_schemas import *
 from .device import Device, lookup_pid_vid, DeviceInfo, DeviceType
 from .settings import SettingsManager
-from ...websockets.broadcast_server import BroadcastServer, Message
 from .enumeration import list_devices
 from .device_utils import list_diff, find_device_with_bus_info
 from .exceptions import DeviceNotFoundException
 
+import socketio
+
 from .ehd import EHDDevice
 from .shd import SHDDevice
+
+def todict(obj, classkey=None):
+    if isinstance(obj, dict):
+        data = {}
+        for (k, v) in obj.items():
+            data[k] = todict(v, classkey)
+        return data
+    elif hasattr(obj, "_ast"):
+        return todict(obj._ast())
+    elif hasattr(obj, "__iter__") and not isinstance(obj, str):
+        return [todict(v, classkey) for v in obj]
+    elif hasattr(obj, "__dict__"):
+        data = dict([(key, todict(value, classkey)) 
+            for key, value in obj.__dict__.items() 
+            if not callable(value) and not key.startswith('_')])
+        if classkey is not None and hasattr(obj, "__class__"):
+            data[classkey] = obj.__class__.__name__
+        return data
+    else:
+        return obj
 
 class DeviceManager(events.EventEmitter):
     '''
     Class for interfacing with and monitoring devices
     '''
 
-    def __init__(self, broadcast_server=BroadcastServer(), settings_manager=SettingsManager()) -> None:
+    def __init__(self, sio: socketio.Server, settings_manager=SettingsManager()) -> None:
         self.devices: List[Device] = []
-        self.broadcast_server = broadcast_server
+        self.sio = sio
         self.settings_manager = settings_manager
-
-        self._thread = threading.Thread(target=self._monitor)
         self._is_monitoring = False
+        # List of devices with gstreamer errors
+        self.gst_errors: List[str] = []
 
     def start_monitoring(self):
         '''
         Begin monitoring for devices in the background
         '''
         self._is_monitoring = True
-        self._thread.start()
+        asyncio.create_task(self._monitor())
 
     def stop_monitoring(self):
         '''
-        Kill the background monitor thread and stop all streams
+        Stop monitoring for devices
         '''
         self._is_monitoring = False
-        self._thread.join()
 
         for device in self.devices:
             device.stream.stop()
@@ -65,7 +86,7 @@ class DeviceManager(events.EventEmitter):
                 return None
 
         # we need to broadcast that there was a gst error so that the frontend knows there may be a kernel issue
-        device.stream_runner.on('gst_error', lambda errors: self._emit_gst_error(device, errors))
+        device.stream_runner.on('gst_error', lambda _: self.gst_errors.append(device.bus_info))
 
         return device
 
@@ -73,17 +94,7 @@ class DeviceManager(events.EventEmitter):
         '''
         Compile and sort a list of devices for jsonifcation
         '''
-        device_list = DeviceSchema().dump(self.devices, many=True)
-        key_pattern = re.compile(r'^(\D+)(\d+)$')
-
-        def key(item: Dict):
-            # Get the integer at the end of the path
-            try:
-                m = key_pattern.match(item['cameras'][0]['path'])
-                return int(m.group(2))
-            except:
-                return -1
-        device_list.sort(key=key)
+        device_list = [DeviceModel.model_validate(device) for device in self.devices]
         return device_list
 
     def set_device_option(self, bus_info: str, option: str, option_value: int | bool) -> bool:
@@ -97,19 +108,18 @@ class DeviceManager(events.EventEmitter):
         self.settings_manager.save_device(device)
         return True
 
-    def configure_device_stream(self, bus_info: str, stream_info: StreamInfoSchema) -> bool:
+    def configure_device_stream(self, stream_info: StreamInfoModel) -> bool:
         '''
         Configure a device's stream with the given stream info
         '''
-        device = self._find_device_with_bus_info(bus_info)
+        device = self._find_device_with_bus_info(stream_info.bus_info)
 
-        stream_format = stream_info['stream_format']
-        width: int = stream_format['width']
-        height: int = stream_format['height']
-        interval: Interval = Interval(
-            stream_format['interval']['numerator'], stream_format['interval']['denominator'])
-        encode_type: StreamEncodeTypeEnum = stream_info['encode_type']
-        endpoints = stream_info['endpoints']
+        stream_format = stream_info.stream_format
+        width: int = stream_format.width
+        height: int = stream_format.height
+        interval = stream_format.interval
+        encode_type: StreamEncodeTypeEnum = stream_info.encode_type
+        endpoints = stream_info.endpoints
 
         device.configure_stream(encode_type, width, height,
                                 interval, StreamTypeEnum.UDP, endpoints)
@@ -118,7 +128,7 @@ class DeviceManager(events.EventEmitter):
         self.settings_manager.save_device(device)
         return True
 
-    def uncofigure_device_stream(self, bus_info: str) -> bool:
+    def unconfigure_device_stream(self, bus_info: str) -> bool:
         '''
         Remove a device stream (unconfigure)
         '''
@@ -194,8 +204,7 @@ class DeviceManager(events.EventEmitter):
             raise DeviceNotFoundException(bus_info)
         return device
     
-    def _get_devices(self, old_devices: List[DeviceInfo]):
-        devices_info = list_devices()
+    async def _get_devices(self, old_devices: List[DeviceInfo]):
         # enumerate the devices
         devices_info = list_devices()
 
@@ -223,9 +232,11 @@ class DeviceManager(events.EventEmitter):
             # Output device to log (after loading settings)
             logging.info(f'Device Added: {device_info.bus_info}')
 
-            self.broadcast_server.broadcast(Message(
-                'device_added', DeviceSchema().dump(device)
-            ))
+            await self.sio.emit('device_added', DeviceModel.model_validate(device).model_dump())
+
+        while len(self.gst_errors) > 0:
+            bus_info = self.gst_errors.pop()
+            await self._emit_gst_error(bus_info, 'GST Error')
 
         # make sure to load the leader followers in case there are new ones to check
         self.settings_manager.load_leader_followers(self.devices)
@@ -247,34 +258,33 @@ class DeviceManager(events.EventEmitter):
                     self.devices.remove(device)
                     logging.info(f'Device Removed: {device_info.bus_info}')
 
-                    self.broadcast_server.broadcast(Message('device_removed', {
-                        'bus_info': device_info.bus_info
-                    }))
+                    await self.sio.emit('device_removed', device_info.bus_info)
 
         return devices_info
 
-    def _monitor(self):
+    async def _monitor(self):
         '''
         Internal code to monitor devices for changes
         '''
-        devices_info = self._get_devices([])
+        devices_info = await self._get_devices([])
 
         while self._is_monitoring:
             # do not overload the bus
-            time.sleep(0.1)
+            await asyncio.sleep(0.1)
 
             # get the list of devices and update the internal array
-            devices_info = self._get_devices(devices_info)
+            devices_info = await self._get_devices(devices_info)
 
-    def _emit_gst_error(self, device: Device, errors: list):
+    async def _emit_gst_error(self, device: str, errors: list):
         '''
         Emit a gst_error and make sure it is not due to the device being unplugged
         '''
         devices_info = list_devices()
 
         for dev_info in devices_info:
-            if device.bus_info == dev_info.bus_info:
-                self.broadcast_server.broadcast(Message('gst_error', {'errors': errors, 'bus_info': device.bus_info}))
+            if device == dev_info.bus_info:
+                print('logging error')
+                await self.sio.emit('gst_error', {'errors': errors, 'bus_info': device})
                 return
 
         logging.info('gst_error ignored due to device unplugged')

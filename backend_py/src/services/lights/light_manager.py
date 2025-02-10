@@ -1,7 +1,6 @@
 from typing import List, Dict
 from .pwm_controller import PWMController
 from .light import Light
-from .schemas import LightSchema
 import logging
 
 class LightManager:
@@ -31,10 +30,7 @@ class LightManager:
         pwm_controller.disable_pin(pin)
 
     def get_lights(self):
-        res = []
-        for light in self.lights:
-            res.append(LightSchema().dump(light))
-        return res
+        return self.lights
 
     def cleanup(self):
         for pwm_controller in self.pwm_controllers:

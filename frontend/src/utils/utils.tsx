@@ -78,9 +78,7 @@ export const hash = function (str: string) {
 export const hostAddress: string = window.location.hostname;
 // export const hostAddress: string = "dweos.local"; // for dev purposes
 export const BACKEND_API_URL = (hostname?: string) =>
-    `http://${hostname || window.location.hostname}:8080`;
-export const BACKEND_API_WS = (hostname?: string) =>
-    `ws://${hostname || window.location.hostname}:9002`;
+    `http://${hostname || import.meta.env.DEV ? hostAddress + ":5000" : window.location.host}`;
 export const TTYD_TOKEN_URL = (hostname?: string) =>
     `http://${hostname || window.location.hostname}:7681/token`;
 export const TTYD_WS = (hostname?: string) =>

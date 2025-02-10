@@ -1,37 +1,18 @@
 {
   "ExposedPorts": {
-    "8000/tcp": {},
-    "9002/tcp": {},
-    "8080/tcp": {},
-    "7681/tcp": {}
+    "8000/tcp": {}
   },
   "HostConfig": {
     "Privileged": true,
     "Binds": [
-      "/run/dbus/system_dbus_socket:/run/dbus/system_bus_socket",
-      "/var/run/dbus/system_dbus_socket:/var/run/dbus/system_bus_socket",
       "/sys/class/video4linux:/sys/class/video4linux",
-      "/dev:/dev"
+      "/dev:/dev",
+      "dweos-settings:/settings"
     ],
     "PortBindings": {
       "8000/tcp": [
         {
           "HostPort": ""
-        }
-      ],
-      "9002/tcp": [
-        {
-          "HostPort": "9002"
-        }
-      ],
-      "8080/tcp": [
-        {
-          "HostPort": "8080"
-        }
-      ],
-      "7681/tcp": [
-        {
-          "HostPort": "7681"
         }
       ]
     }

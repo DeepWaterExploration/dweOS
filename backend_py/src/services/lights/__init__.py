@@ -4,5 +4,4 @@ from .light_types import *
 from .light import *
 from .pwm_controller import *
 from .rpi_pwm_hardware import *
-from .schemas import *
 from .utils import *

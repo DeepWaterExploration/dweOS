@@ -1,7 +1,7 @@
 from ctypes import *
 import struct
 from dataclasses import dataclass
-from typing import Dict, Callable, Any
+from typing import Dict, Callable, Any, Tuple
 
 import event_emitter as events
 
@@ -14,10 +14,10 @@ from . import ehd_controls as xu
 from .stream_utils import fourcc2s
 from .enumeration import *
 from .camera_helper.camera_helper_loader import *
-from .camera_types import *
 from .stream import *
-from .saved_types import *
 from .stream_utils import string_to_stream_encode_type
+from .pydantic_schemas import *
+from .saved_pydantic_schemas import *
 
 import logging
 
@@ -69,7 +69,7 @@ class Camera:
         return pixformat in self.formats.keys()
 
     def _get_formats(self):
-        self.formats: Dict[str,List[FormatSize]] = {}
+        self.formats: Dict[str,List[FormatSizeModel]] = {}
         for i in range(1000):
             v4l2_fmt = v4l2.v4l2_fmtdesc()
             v4l2_fmt.index = i
@@ -89,8 +89,8 @@ class Camera:
                 except:
                     break
                 if frmsize.type == v4l2.V4L2_FRMSIZE_TYPE_DISCRETE:
-                    format_size = FormatSize(
-                        frmsize.discrete.width, frmsize.discrete.height, [])
+                    format_size = FormatSizeModel(width=
+                        frmsize.discrete.width, height=frmsize.discrete.height, intervals=[])
                     for k in range(1000):
                         frmival = v4l2.v4l2_frmivalenum()
                         frmival.index = k
@@ -104,7 +104,7 @@ class Camera:
                             break
                         if frmival.type == v4l2.V4L2_FRMIVAL_TYPE_DISCRETE:
                             format_size.intervals.append(
-                                Interval(frmival.discrete.numerator, frmival.discrete.denominator))
+                                IntervalModel(numerator=frmival.discrete.numerator, denominator=frmival.discrete.denominator))
                     format_sizes.append(format_size)
             self.formats[fourcc2s(v4l2_fmt.pixelformat)] = format_sizes
 
@@ -255,33 +255,47 @@ class Device(events.EventEmitter):
 
     def _get_controls(self):
         fd = self.cameras[0]._fd
-        self.controls: List[Control] = []
+        self.controls: List[ControlModel] = []
 
         for ctrl in self.v4l2_device.controls.values():
-            control = Control(ctrl.id, ctrl.name, ctrl.value)
+            control_type = ControlTypeEnum(ctrl.type)
 
-            control.flags.control_type = ControlTypeEnum(ctrl.type)
-            try:
-                control.flags.max_value = ctrl.maximum
-            except:
-                control.flags.max_value = 0
-            try:
-                control.flags.min_value = ctrl.minimum
-            except:
-                control.flags.min_value = 0
-            try:
-                control.flags.step = ctrl.step
-            except:
-                control.flags.step = 0
-            control.flags.default_value = ctrl._info.default_value
-            control.value = self.get_pu(ctrl.id)
+            max_value = 0
+            min_value = 0
+            step = 0
 
-            match control.flags.control_type:
+            try:
+                max_value = ctrl.maximum
+            except:
+                pass
+
+            try:
+                min_value = ctrl.minimum
+            except:
+                pass
+
+            try:
+                step = ctrl.step
+            except:
+                pass
+
+            default_value = ctrl._info.default_value
+
+            menu: List[MenuItemModel] = []
+            match control_type:
                 case ControlTypeEnum.MENU:
                     for i in ctrl.data:
                         menu_item = ctrl.data[i]
-                        control.flags.menu.append(
-                            MenuItem(i, menu_item))
+                        menu.append(MenuItemModel(index=i, name=menu_item))
+                        
+            flags = ControlFlagsModel(
+                default_value=default_value, 
+                max_value=max_value, 
+                min_value=min_value, 
+                step=step, 
+                control_type=control_type, 
+                menu=menu)
+            control = ControlModel(control_id=ctrl.id, name=ctrl.name, value=ctrl.value, flags=flags)
 
             self.controls.append(control)
 
@@ -291,7 +305,7 @@ class Device(events.EventEmitter):
                 return cam
         return None
 
-    def configure_stream(self, encode_type: StreamEncodeTypeEnum, width: int, height: int, interval: Interval, stream_type: StreamTypeEnum, stream_endpoints: List[StreamEndpoint] = []):
+    def configure_stream(self, encode_type: StreamEncodeTypeEnum, width: int, height: int, interval: IntervalModel, stream_type: StreamTypeEnum, stream_endpoints: List[StreamEndpointModel] = []):
         logging.info(self._fmt_log('Configuring stream'))
 
         camera: Camera = None
@@ -321,9 +335,9 @@ class Device(events.EventEmitter):
         try:
             option = self._options[option_name]
             value = int(option.get_value())
-            self.controls.insert(0, Control(
-                -self._id_counter, option.name, value, ControlFlags(
-                    default_value, max_value, min_value, step, control_type
+            self.controls.insert(0, ControlModel(
+                control_id=-self._id_counter, name=option.name, value=value, flags=ControlFlagsModel(
+                    default_value=default_value, max_value=max_value, min_value=min_value, step=step, control_type=control_type
                 )
             ))
             self._id_counter += 1
@@ -334,7 +348,7 @@ class Device(events.EventEmitter):
     def start_stream(self):
         self.stream_runner.start()
 
-    def load_settings(self, saved_device: SavedDevice):
+    def load_settings(self, saved_device: SavedDeviceModel):
         logging.info(self._fmt_log('Loading device settings'))
 
         for control in saved_device.controls:

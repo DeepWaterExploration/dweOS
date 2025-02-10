@@ -1,5 +1,4 @@
-from .wifi_types import NetworkConfig, Status, Connection
-from .schemas import AccessPointSchema, ConnectionSchema, StatusSchema
+from .wifi_types import *
 import threading
 import time
 import logging
@@ -25,7 +24,7 @@ class WiFiManager:
         self.to_connect: NetworkConfig | None = None
 
         # Changed to true after successfully completed a scan
-        self.status = Status(connection=Connection(), finished_first_scan=False, connected=False)
+        self.status = Status(finished_first_scan=False, connected=False)
 
         # get initial access points before scan
         if self.nm is not None:
@@ -58,13 +57,13 @@ class WiFiManager:
         self._scan_thread.join()
 
     def get_access_points(self):
-        return AccessPointSchema().dump(self.access_points, many=True)
+        return self.access_points
 
     def get_status(self):
-        return StatusSchema().dump(self.status)
+        return self.status
 
     def list_connections(self):
-        return ConnectionSchema().dump(self.connections, many=True)
+        return self.connections
 
     def forget(self, ssid: str):
         self.to_forget = ssid

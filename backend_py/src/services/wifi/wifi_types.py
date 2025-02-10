@@ -1,23 +1,20 @@
-from dataclasses import dataclass
+from pydantic import BaseModel
+from typing import Optional
 
-@dataclass
-class NetworkConfig:
+class NetworkConfig(BaseModel):
     ssid: str
-    password: str = ''
+    password: Optional[str] = None
 
-@dataclass
-class Connection:
-    id: str | None = None
-    type: str | None = None
+class Connection(BaseModel):
+    id: Optional[str] = None
+    type: Optional[str] = None
 
-@dataclass
-class Status:
-    connection: Connection
+class Status(BaseModel):
+    connection: Optional[Connection] = None
     finished_first_scan: bool
     connected: bool
 
-@dataclass
-class AccessPoint:
+class AccessPoint(BaseModel):
     ssid: str
     strength: int
     requires_password: bool

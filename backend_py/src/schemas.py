@@ -1,11 +1,13 @@
-from marshmallow import Schema, fields, post_load
-from .types import FeatureSupport
+from pydantic import BaseModel
 
-class FeatureSupportSchema(Schema):
-    ttyd = fields.Bool()
-    wifi = fields.Bool()
+class FeatureSupport(BaseModel):
+    ttyd: bool
+    wifi: bool
 
-    @post_load
-    def make_feature_support(self, data, **kwargs):
-        return FeatureSupport(**data)
+    @classmethod
+    def all(cls) -> 'FeatureSupport':
+        return cls(ttyd=True, wifi=True)
     
+    @classmethod
+    def none(cls) -> 'FeatureSupport':
+        return cls(ttyd=False, wifi=False)

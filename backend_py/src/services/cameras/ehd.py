@@ -1,7 +1,7 @@
 from typing import Dict
 from .enumeration import DeviceInfo
 from .device import Device, Option, ControlTypeEnum
-from .camera_types import H264Mode
+from .pydantic_schemas import H264Mode
 from . import ehd_controls as xu
 
 class EHDDevice(Device):
@@ -31,7 +31,7 @@ class EHDDevice(Device):
         # Standard integer options
         options['bitrate'] = Option(
             self.cameras[2], '>I', xu.Unit.USR_ID, xu.Selector.USR_H264_CTRL, xu.Command.H264_BITRATE_CTRL, 'Bitrate', 
-            lambda bitrate: bitrate * 1000000, # convert to bps from mpbs 
+            lambda bitrate: int(bitrate * 1000000), # convert to bps from mpbs 
             lambda bitrate: bitrate / 1000000  # convert to mpbs from bps
         )
 

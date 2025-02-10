@@ -1,11 +1,6 @@
 import json
 from typing import Dict
-from .preference_types import SavedPrefrences, StreamEndpoint
-from .schemas import SavedPrefrencesSchema
-
-class DefaultPreferences(SavedPrefrences):
-    def __init__(self):
-        super().__init__(StreamEndpoint('192.168.2.1', 5600), True)
+from .pydantic_schemas import SavedPreferencesModel
 
 class PreferencesManager:
 
@@ -19,11 +14,11 @@ class PreferencesManager:
         
         try:
             settings: list[Dict] = json.loads(self.file_object.read())
-            self.settings: SavedPrefrences = SavedPrefrencesSchema().load(settings)
+            self.settings: SavedPreferencesModel = SavedPreferencesModel.model_validate(settings)
         except json.JSONDecodeError:
-            self.settings = DefaultPreferences()
+            self.settings = SavedPreferencesModel()
 
-    def save(self, preferences: SavedPrefrences):
+    def save(self, preferences: SavedPreferencesModel):
         self.settings = preferences
         self._save_settings()
 
@@ -31,11 +26,10 @@ class PreferencesManager:
         return self.settings
 
     def serialize_preferences(self):
-        return SavedPrefrencesSchema().dump(self.settings)
+        return self.settings
 
     def _save_settings(self):
         self.file_object.seek(0)
-        self.file_object.write(
-            json.dumps(SavedPrefrencesSchema().dump(self.settings)))
+        self.file_object.write(self.settings.model_dump_json())
         self.file_object.truncate()
         self.file_object.flush()

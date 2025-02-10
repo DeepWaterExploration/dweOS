@@ -1,3 +1,9 @@
+export enum DeviceType {
+    EXPLOREHD = 0,
+    STELLARHD_LEADER = 1,
+    STELLARHD_FOLLOWER = 2,
+}
+
 /**
  * Represents a Device object. Same as the one defined in the backend
  */
@@ -13,7 +19,7 @@ export interface Device {
     options: StreamOptions;
     stream: Stream;
 
-    device_type: string | undefined;
+    device_type: DeviceType;
     is_leader: boolean | undefined;
     leader: string | undefined;
     follower: string | undefined;
@@ -104,15 +110,15 @@ export enum encodeType {
 }
 
 export enum controlType {
-    INTEGER = "INTEGER",
-    BOOLEAN = "BOOLEAN",
-    MENU = "MENU",
-    BUTTON = "BUTTON",
-    INTEGER64 = "INTEGER64",
-    CTRL_CLASS = "CTRL_CLASS",
-    STRING = "STRING",
-    BITMASK = "BITMASK",
-    INTEGER_MENU = "INTEGER_MENU",
+    INTEGER = 1,
+    BOOLEAN = 2,
+    MENU = 3,
+    BUTTON = 4,
+    INTEGER64 = 5,
+    CTRL_CLASS = 6,
+    STRING = 7,
+    BITMASK = 8,
+    INTEGER_MENU = 9,
 }
 
 export enum bitrateMode {

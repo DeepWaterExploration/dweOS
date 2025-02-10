@@ -1,7 +1,6 @@
 import logging
 
-from .saved_types import SavedDevice
-
+from .saved_pydantic_schemas import SavedDeviceModel
 from .enumeration import DeviceInfo
 from .device import Device
 
@@ -44,7 +43,7 @@ class SHDDevice(Device):
         leader.follower = self.bus_info
         leader.start_stream()
 
-    def load_settings(self, saved_device: SavedDevice):
+    def load_settings(self, saved_device: SavedDeviceModel):
         return super().load_settings(saved_device)
 
     def remove_leader(self):

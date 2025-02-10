@@ -29,7 +29,7 @@ RUN sh install_requirements.sh
 LABEL authors='[\
     {\
     "name": "Brandon Stevens",\
-    "email": "brandon@dwe.ai"\
+    "email": "support@dwe.ai"\
     }\
     ]'
 
@@ -41,31 +41,21 @@ LABEL company='{\
 
 LABEL permissions='{ \
     "ExposedPorts": { \
-    "8000/tcp": {}, \
-    "9002/tcp": {}, \
-    "8080/tcp": {} \
+    "8000/tcp": {} \
     }, \
     "HostConfig": { \
     "Privileged": true, \
-    "Binds": [ \
-    "/sys/class/video4linux:/sys/class/video4linux", \
-    "dweos-settings:/settings", \
-    "/dev:/dev" \
-    ], \
+    "Binds": ["/sys/class/video4linux:/sys/class/video4linux", "dweos-settings:/settings", "/dev:/dev"], \
     "PortBindings": { \
     "8000/tcp": [ \
-    { "HostPort": "" } \
-    ], \
-    "9002/tcp": [ \
-    { "HostPort": "9002" } \
-    ], \
-    "8080/tcp": [ \
-    { "HostPort": "8080" } \
-    ] \
+    { \
+    "HostPort": "" \
+    } \
     ] \
     } \
     } \
-    }'
+    } \
+    '
 
 LABEL type="device-integration"
 
@@ -85,15 +75,9 @@ LABEL readme="https://raw.githubusercontent.com/DeepwaterExploration/DWE_OS_2/ma
 
 # Expose required ports
 EXPOSE 8000
-EXPOSE 8080
-EXPOSE 9002
-EXPOSE 7681
 
 # Mount required host directories (for dbus, video4linux, and dev access)
 VOLUME ["/sys/class/video4linux", "/dev", "/run/dbus", "/var/run/dbus"]
-
-# Set the environment to enable dbus
-ENV DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
 
 # Install DWE_OS_2
 COPY release /opt/DWE_OS_2

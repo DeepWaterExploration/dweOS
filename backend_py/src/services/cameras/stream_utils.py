@@ -1,4 +1,4 @@
-from .camera_types import StreamEncodeTypeEnum
+from .pydantic_schemas import StreamEncodeTypeEnum
 
 def fourcc2s(fourcc: int):
     res = ''

@@ -1,6 +1,6 @@
 import json
 from typing import Dict
-from .pydantic_schemas import SavedPreferencesSchema
+from .pydantic_schemas import SavedPreferencesModel
 
 class PreferencesManager:
 
@@ -14,11 +14,11 @@ class PreferencesManager:
         
         try:
             settings: list[Dict] = json.loads(self.file_object.read())
-            self.settings: SavedPreferencesSchema = SavedPreferencesSchema.model_validate(settings)
+            self.settings: SavedPreferencesModel = SavedPreferencesModel.model_validate(settings)
         except json.JSONDecodeError:
-            self.settings = SavedPreferencesSchema()
+            self.settings = SavedPreferencesModel()
 
-    def save(self, preferences: SavedPreferencesSchema):
+    def save(self, preferences: SavedPreferencesModel):
         self.settings = preferences
         self._save_settings()
 

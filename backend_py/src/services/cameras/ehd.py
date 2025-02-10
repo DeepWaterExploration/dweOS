@@ -1,7 +1,7 @@
 from typing import Dict
 from .enumeration import DeviceInfo
 from .device import Device, Option, ControlTypeEnum
-from .camera_types import H264Mode
+from .pydantic_schemas import H264Mode
 from . import ehd_controls as xu
 
 class EHDDevice(Device):

@@ -48,7 +48,8 @@ class DeviceManager(events.EventEmitter):
         self.sio = sio
         self.settings_manager = settings_manager
         self._is_monitoring = False
-        self.gst_errors = []
+        # List of devices with gstreamer errors
+        self.gst_errors: List[str] = []
 
     def start_monitoring(self):
         '''
@@ -85,7 +86,7 @@ class DeviceManager(events.EventEmitter):
                 return None
 
         # we need to broadcast that there was a gst error so that the frontend knows there may be a kernel issue
-        device.stream_runner.on('gst_error', lambda errors: self.gst_errors.append(errors))
+        device.stream_runner.on('gst_error', lambda _: self.gst_errors.append(device.bus_info))
 
         return device
 
@@ -93,7 +94,7 @@ class DeviceManager(events.EventEmitter):
         '''
         Compile and sort a list of devices for jsonifcation
         '''
-        device_list = [DeviceSchema.model_validate(device) for device in self.devices]
+        device_list = [DeviceModel.model_validate(device) for device in self.devices]
         return device_list
 
     def set_device_option(self, bus_info: str, option: str, option_value: int | bool) -> bool:
@@ -107,7 +108,7 @@ class DeviceManager(events.EventEmitter):
         self.settings_manager.save_device(device)
         return True
 
-    def configure_device_stream(self, stream_info: StreamInfoSchema) -> bool:
+    def configure_device_stream(self, stream_info: StreamInfoModel) -> bool:
         '''
         Configure a device's stream with the given stream info
         '''
@@ -116,7 +117,7 @@ class DeviceManager(events.EventEmitter):
         stream_format = stream_info.stream_format
         width: int = stream_format.width
         height: int = stream_format.height
-        interval: Interval = Interval(**stream_format.interval.model_dump())
+        interval = stream_format.interval
         encode_type: StreamEncodeTypeEnum = stream_info.encode_type
         endpoints = stream_info.endpoints
 
@@ -231,11 +232,11 @@ class DeviceManager(events.EventEmitter):
             # Output device to log (after loading settings)
             logging.info(f'Device Added: {device_info.bus_info}')
 
-            
-            while len(self.gst_errors) > 0:
-                await self._emit_gst_error(device, self.gst_errors.pop())
+            await self.sio.emit('device_added', DeviceModel.model_validate(device).model_dump())
 
-            await self.sio.emit('device_added', DeviceSchema.model_validate(device).model_dump())
+        while len(self.gst_errors) > 0:
+            bus_info = self.gst_errors.pop()
+            await self._emit_gst_error(bus_info, 'GST Error')
 
         # make sure to load the leader followers in case there are new ones to check
         self.settings_manager.load_leader_followers(self.devices)
@@ -274,15 +275,16 @@ class DeviceManager(events.EventEmitter):
             # get the list of devices and update the internal array
             devices_info = await self._get_devices(devices_info)
 
-    async def _emit_gst_error(self, device: Device, errors: list):
+    async def _emit_gst_error(self, device: str, errors: list):
         '''
         Emit a gst_error and make sure it is not due to the device being unplugged
         '''
         devices_info = list_devices()
 
         for dev_info in devices_info:
-            if device.bus_info == dev_info.bus_info:
-                self.sio.emit('gst_error', {'errors': errors, 'bus_info': device.bus_info})
+            if device == dev_info.bus_info:
+                print('logging error')
+                await self.sio.emit('gst_error', {'errors': errors, 'bus_info': device})
                 return
 
         logging.info('gst_error ignored due to device unplugged')

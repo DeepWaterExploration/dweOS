@@ -1,12 +1,10 @@
 from pydantic import BaseModel
 from typing import List, Optional
 
-from .stream import StreamEncodeTypeEnum, StreamTypeEnum, StreamEndpoint, Interval
-from .camera_types import DeviceType
-from .pydantic_schemas import StreamEndpointSchema
+from .pydantic_schemas import StreamEndpointModel, IntervalModel, DeviceType, StreamEncodeTypeEnum, StreamTypeEnum
 
 
-class SavedControlSchema(BaseModel):
+class SavedControlModel(BaseModel):
     control_id: int
     name: str
     value: int | float
@@ -14,26 +12,26 @@ class SavedControlSchema(BaseModel):
     class Config:
         from_attributes = True
 
-class SavedStreamSchema(BaseModel):
+class SavedStreamModel(BaseModel):
     encode_type: StreamEncodeTypeEnum
     stream_type: StreamTypeEnum
-    endpoints: List[StreamEndpointSchema]
+    endpoints: List[StreamEndpointModel]
     width: int
     height: int
-    interval: Interval
+    interval: IntervalModel
     configured: bool
 
     class Config:
         use_enum_values = True
         from_attributes = True
 
-class SavedDeviceSchema(BaseModel):
+class SavedDeviceModel(BaseModel):
     bus_info: str
     vid: int
     pid: int
     nickname: str
-    stream: SavedStreamSchema
-    controls: List[SavedControlSchema]
+    stream: SavedStreamModel
+    controls: List[SavedControlModel]
     device_type: DeviceType
     is_leader: Optional[bool] = None
     leader: Optional[str] = None
@@ -42,7 +40,7 @@ class SavedDeviceSchema(BaseModel):
         from_attributes = True
         # use_enum_values = True
 
-class SavedLeaderFollowerPairSchema(BaseModel):
+class SavedLeaderFollowerPairModel(BaseModel):
     leader_bus_info: str
     follower_bus_info: str
 

@@ -77,9 +77,7 @@ class Server:
                                response_model=FeatureSupport)
 
         # Error handling
-        # self.app.add_exception_handler(ValidationError, self._handle_validation_error)
-        self.app.add_exception_handler(DeviceNotFoundException, self._handle_device_not_found)
-        self.app.add_exception_handler(Exception, self._handle_server_error)
+        # TODO
 
     async def emit_logs(self):
         while True:
@@ -114,29 +112,3 @@ class Server:
 
         if self.feature_support.wifi:
             self.wifi_manager.stop_scanning()
-
-
-    # def _handle_validation_error(self, request: Request, e: ValidationError):
-    #     logging.warning('Internal error occurred due to a malformed input.')
-    #     response = {
-    #         'error': 'Malformed input',
-    #         'message': str(e.messages)
-    #     }
-        
-    #     return response
-    
-    def _handle_device_not_found(self, request: Request, e: DeviceNotFoundException):
-        logging.warning(e)
-        response = {
-            'error': 'Device not found',
-            'message': str(e)
-        }
-        return response
-    
-    def _handle_server_error(self, request: Request, e: Exception):
-        logging.error(e)
-        response = {
-            'error': 'Unhandled exception occurred within the server',
-            'message': str(e)
-        }
-        return response

@@ -15,7 +15,7 @@ import DevicesContext from "../../contexts/DevicesContext";
 import DeviceContext from "../../contexts/DeviceContext";
 import { proxy, subscribe } from "valtio";
 import { useSnackbar } from "notistack";
-import { Device } from "./types";
+import { Device, DeviceType } from "./types";
 import { SavedPreferences } from "../preferences/types";
 import { getRecommendedHost, getSettings } from "../preferences/api";
 import { getDevices } from "./api";
@@ -108,7 +108,7 @@ const DevicesLayout = () => {
 
     const deviceAddedCallback = (device: Device) => {
         enqueueSnackbar(
-            `Device added: ${device.bus_info} - ${device.nickname || device.device_type}`,
+            `Device added: ${device.bus_info} - ${device.nickname || DeviceType[device.device_type]}`,
             {
                 variant: "info",
             }
@@ -206,6 +206,7 @@ const DevicesLayout = () => {
             device_list[findDeviceWithBusInfo(device_list, bus_info)];
         if (follower) {
             follower.leader = undefined;
+            follower.stream.configured = false;
             updateDevice(follower);
         }
     };

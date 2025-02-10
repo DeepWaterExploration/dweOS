@@ -1,3 +1,9 @@
+export enum DeviceType {
+    EXPLOREHD = 0,
+    STELLARHD_LEADER = 1,
+    STELLARHD_FOLLOWER = 2,
+}
+
 /**
  * Represents a Device object. Same as the one defined in the backend
  */
@@ -13,7 +19,7 @@ export interface Device {
     options: StreamOptions;
     stream: Stream;
 
-    device_type: number | undefined;
+    device_type: DeviceType;
     is_leader: boolean | undefined;
     leader: string | undefined;
     follower: string | undefined;

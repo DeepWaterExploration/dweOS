@@ -152,7 +152,6 @@ class DeviceModel(BaseModel):
 
     class Config:
         from_attributes = True
-        use_enum_values = True
 
 
 # API SCHEMAS

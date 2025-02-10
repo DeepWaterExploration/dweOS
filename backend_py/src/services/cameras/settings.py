@@ -40,8 +40,7 @@ class SettingsManager:
         for saved_device in self.settings:
             if saved_device.bus_info == device.bus_info:
                 if device.device_type != saved_device.device_type:
-                    logging.info(f'Device {device.bus_info} with device_type: {device.device_type} plugged into port of saved device_type: {saved_device.device_type}.\
-                                  Discarding stored data as this could cause numerous issues.')
+                    logging.info(f'Device {device.bus_info} with device_type: {str(device.device_type)} plugged into port of saved device_type: {str(saved_device.device_type)}. Discarding stored data as this could cause numerous issues.')
                     self.settings.remove(saved_device)
                     return
                 if saved_device.device_type == DeviceType.STELLARHD_FOLLOWER:

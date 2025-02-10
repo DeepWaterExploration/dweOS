@@ -22,7 +22,7 @@ class SavedStreamModel(BaseModel):
     configured: bool
 
     class Config:
-        use_enum_values = True
+        # use_enum_values = True
         from_attributes = True
 
 class SavedDeviceModel(BaseModel):

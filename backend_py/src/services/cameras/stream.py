@@ -89,7 +89,7 @@ class StreamRunner(events.EventEmitter):
         self._run_pipeline()
 
     def stop(self):
-        if not self.started:
+        if not self.started or not self._process:
             return
         self.started = False
         self._process.kill()
@@ -126,5 +126,4 @@ class StreamRunner(events.EventEmitter):
             pass
         if len(error_block) > 0:
             self.stop()
-            print('emitting error')
             self.emit('gst_error', error_block)

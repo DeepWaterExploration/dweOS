@@ -3,6 +3,9 @@ from typing import List, Callable
 import time
 from .wifi_types import Connection, AccessPoint
 import logging
+import socket
+import struct
+
 class NMException(Exception):
     '''Exception raised when there is a network manager issue'''
     pass
@@ -44,6 +47,164 @@ class NetworkManager:
         self.interface = dbus.Interface(self.proxy, 'org.freedesktop.NetworkManager')
         # Get an interface to the properties object
         self.props = dbus.Interface(self.proxy, 'org.freedesktop.DBus.Properties')
+        
+
+    @handle_dbus_exceptions
+    def get_ip(self, interface_name: str='eth0'):
+        '''
+        Get the IP address
+
+        :return: The IP address
+        '''
+
+        # This does not necessarily get the IP address of a specific nmconnection, it is just whichever the ethernet device provided is
+        # TODO: Make this get the IP address of a specific nmconnection
+
+        ethernet_device, ethernet_proxy = self._get_ethernet_device(interface_name)
+        if ethernet_device is None:
+            raise NMException('No ethernet device found')
+        
+        dev_props = dbus.Interface(ethernet_proxy, 'org.freedesktop.DBus.Properties')
+
+        ipv4_config_path = dev_props.Get('org.freedesktop.NetworkManager.Device', 'Ip4Config')
+        if not ipv4_config_path or ipv4_config_path == '/':
+            raise NMException('No IPv4 configuration found')
+        
+        ipv4_config_proxy = self.bus.get_object('org.freedesktop.NetworkManager', ipv4_config_path)
+        ipv4_config_props = dbus.Interface(ipv4_config_proxy, 'org.freedesktop.DBus.Properties')
+
+        ip_dec = ipv4_config_props.Get('org.freedesktop.NetworkManager.IP4Config', 'Addresses')[0][0]
+        ip_packed = struct.pack('=L', ip_dec)
+        ip_str = socket.inet_ntop(socket.AF_INET, ip_packed)
+
+        return ip_str
+    
+    @handle_dbus_exceptions
+    def get_connection_method(self, connection_id: str) -> str:
+        '''
+        Get the method of a connection
+
+        :param connection_id: The ID of the connection to get the method of
+        :return: The method of the connection (manual = static, auto = dynamic)
+        '''
+        connection_path = self._find_connection_by_id(connection_id)
+        if not connection_path:
+            raise NMException(f'Connection {connection_id} not found')
+
+        settings_proxy = self.bus.get_object('org.freedesktop.NetworkManager', connection_path)
+        settings_interface = dbus.Interface(settings_proxy, 'org.freedesktop.NetworkManager.Settings.Connection')
+        config = settings_interface.GetSettings()
+
+        ipv4_settings = config.get('ipv4', {})
+        method = ipv4_settings.get('method')
+
+        return method
+
+    @handle_dbus_exceptions
+    def set_static_ip(self, interface_name: str, ip_address: str, prefix: int, gateway: str, dns_servers: List[str] = [], connection_id: str = 'Wired connection 1'):
+        '''
+        Set the static IP address
+
+        :param interface_name: The name of the interface to set the static IP address on
+        :param ip_address: The IP address to set
+        :param prefix: The CIDR prefix length of the IP address
+        :param gateway: The gateway to use
+        :param dns_servers: The DNS servers to use
+        :param connection_id: The ID of the connection to set the static IP address on
+        '''
+
+        # TODO: The best option for us is to automatically determine the connection ID of whichever the active connection is
+
+        ethernet_device, ethernet_proxy = self._get_ethernet_device(interface_name)
+        if ethernet_device is None:
+            raise NMException('No ethernet device found')
+        
+        connection_settings = {
+            'connection': {
+                'id': connection_id,
+                'type': '802-3-ethernet',
+                'interface-name': interface_name,
+                'autoconnect': True,
+            },
+            'ipv4': {
+                # Set the method to manual
+                'method': 'manual',
+                'address-data': dbus.Array([
+                    {
+                        'address': ip_address,
+                        'prefix': dbus.UInt32(int(prefix)),
+                    }
+                ], signature=dbus.Signature('a{sv}')),
+                'gateway': gateway,
+                'dns-search': dbus.Array(dns_servers, signature=dbus.Signature('s')),
+            },
+            'ipv6': {
+                'method': 'ignore',
+            }
+        }
+
+        existing_conn_path = self._find_connection_by_id(connection_id)
+        settings_proxy = self.bus.get_object('org.freedesktop.NetworkManager', '/org/freedesktop/NetworkManager/Settings')
+        settings_interface = dbus.Interface(settings_proxy, 'org.freedesktop.NetworkManager.Settings')
+
+        if existing_conn_path:
+            # Update the existing connection
+            existing_conn_proxy = self.bus.get_object('org.freedesktop.NetworkManager', existing_conn_path)
+            existing_conn_iface = dbus.Interface(existing_conn_proxy, 'org.freedesktop.NetworkManager.Settings.Connection')
+            existing_conn_iface.Update(connection_settings)
+        else:
+            # TODO: Add a new connection
+            raise NMException('No existing connection found')
+
+        logging.info(f'Existing connection path: {existing_conn_path}')
+
+        self.interface.ActivateConnection(existing_conn_path, ethernet_proxy, ethernet_device)
+        
+        
+    def _find_connection_by_id(self, connection_id: str):
+        '''
+        Find a connection by its ID
+        '''
+        for connection in self._list_connections():
+            if connection.GetSettings()['connection']['id'] == connection_id:
+                return connection.object_path
+        
+        
+    def _get_ethernet_device(self, interface_name: str | None = None):
+        '''
+        Get the path of the ethernet device with the given interface name
+
+        :param interface_name: The name of the interface to get the ethernet device for
+        :return: The path of the ethernet device
+        '''
+        devices = self.interface.GetDevices()
+
+        if not devices:
+            raise NMException('No devices found')
+
+        devs = []
+
+        for dev_path in devices:
+            dev_proxy = self.bus.get_object('org.freedesktop.NetworkManager', dev_path)
+            dev_props = dbus.Interface(dev_proxy, 'org.freedesktop.DBus.Properties')
+            dev_type = dev_props.Get('org.freedesktop.NetworkManager.Device', 'DeviceType')
+            dev_interface = dev_props.Get('org.freedesktop.NetworkManager.Device', 'Interface')
+
+            if dev_type == 1:
+                devs.append((dev_path, dev_proxy, dev_interface))
+
+        if len(devs) == 0:
+            raise NMException('No ethernet devices found')
+        
+        # If an interface name is provided, return the device with the matching interface name
+        # Otherwise, return the first ethernet device found
+        if interface_name:
+            for (dev_path, dev_proxy, dev_interface) in devs:
+                if dev_interface == interface_name:
+                    return (dev_path, dev_proxy)
+
+        return devs[0][0:2]
+            
 
     @handle_dbus_exceptions
     def connect(self, ssid: str, password=''):

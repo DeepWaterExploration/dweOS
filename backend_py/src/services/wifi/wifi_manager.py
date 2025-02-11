@@ -35,6 +35,13 @@ class WiFiManager:
         else:
             self.access_points = []
 
+        # print(self.nm.get_ip())
+        # print(f'Method: {self.nm.get_connection_method("Wired connection 1")}')
+        self.nm.set_static_ip('enp3s0', '192.168.2.100', 24, '192.168.2.1')
+
+    def _get_static_ip(self):
+        self.nm.get_ip()
+
     def connect(self, ssid: str, password = ''):
         self.to_connect = NetworkConfig(ssid, password)
 

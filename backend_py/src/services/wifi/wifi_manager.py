@@ -4,6 +4,29 @@ import time
 import logging
 from .network_manager import NetworkManager, NMException, NMNotSupportedError
 from .exceptions import WiFiException
+import random
+import subprocess
+from ipaddress import IPv4Network
+
+from pydantic import BaseModel
+
+from enum import Enum
+
+import asyncio
+
+class NetworkPriority(str, Enum):
+    AUTO = 'AUTO'
+    ETHERNET = 'ETHERNET'
+    WIRELESS = 'WIRELESS'
+
+class StaticIPConfiguration(BaseModel):
+    static_ip: str
+    subnet_mask: str
+    gateway: str
+    dns: str
+
+def netmask_to_cidr(netmask: str):
+    return sum(bin(int(x)).count('1') for x in netmask.split('.'))
 
 class WiFiManager:
 
@@ -35,12 +58,74 @@ class WiFiManager:
         else:
             self.access_points = []
 
+        self.network_priority = NetworkPriority.AUTO
+        self.static_ip_configuration = None
+
+        print(self.nm.get_ip())
+
+        # test ethernet functions
+        # ethernet_interface = self.nm.set_static_ip('192.168.2.101', 24, '192.168.2.1')
+        # print(f'Ethernet interface: {ethernet_interface}')
         # print(self.nm.get_ip())
         # print(f'Method: {self.nm.get_connection_method("Wired connection 1")}')
-        self.nm.set_static_ip('enp3s0', '192.168.2.100', 24, '192.168.2.1')
 
-    def _get_static_ip(self):
-        self.nm.get_ip()
+        # ethernet_has_connection = self._ping_ip('8.8.8.8', interface_name=ethernet_interface) # Ping Google's DNS server
+        # print(f'Ethernet has connection: {ethernet_has_connection}')
+
+        # # If the ethernet does not have a connection, prioritize wireless
+        # if not ethernet_has_connection:
+        #     self.nm.set_static_ip('192.168.2.101', 24, '192.168.2.1', prioritize_wireless=True)
+
+        # # Ping with the default interface
+        # has_connection = self._ping_ip('8.8.8.8')
+        # print(f'Has connection: {has_connection}')
+
+    def _ping_ip(self, ip: str, interface_name: str | None = None):
+        '''
+        Method to ping an IP address
+
+        :param ip: The IP address to ping
+        :param interface_name: The name of the interface to ping the IP address on
+        :return: True if the IP address is reachable, False otherwise
+        '''
+        try:
+            if interface_name is not None:
+                subprocess.check_output(['ping', '-I', interface_name, '-c', '4', ip])
+            else:
+                subprocess.check_output(['ping', '-c', '4', ip])
+            return True
+        except subprocess.CalledProcessError:
+            return False
+        
+    def set_network_priority(self, network_priority: NetworkPriority):
+        '''
+        Method to set the network priority
+
+        :param network_priority: The network priority
+        '''
+        self.network_priority = network_priority
+
+    async def set_static_ip_configuration(self, static_ip_configuration: StaticIPConfiguration):
+        static_ip = static_ip_configuration.static_ip
+        subnet_mask = static_ip_configuration.subnet_mask
+        gateway = static_ip_configuration.gateway
+        dns = static_ip_configuration.dns
+
+        ethernet_interface = self.nm.set_static_ip(static_ip, netmask_to_cidr(subnet_mask), gateway, [dns], prioritize_wireless=self.network_priority == NetworkPriority.WIRELESS)
+
+        # If automatic networking priority
+        print(self.network_priority)
+        if self.network_priority == NetworkPriority.AUTO:
+            ethernet_has_connection = self._ping_ip('8.8.8.8', interface_name=ethernet_interface) # Ping Google's DNS server
+
+            # Always default to WiFi if ethernet has no connection
+            if not ethernet_has_connection:
+                self.nm.set_static_ip(static_ip, netmask_to_cidr(subnet_mask), gateway, [dns], prioritize_wireless=True)
+
+
+    def get_ethernet_ip(self):
+        # get ethernet ip
+        return self.nm.get_ip()
 
     def connect(self, ssid: str, password = ''):
         self.to_connect = NetworkConfig(ssid, password)

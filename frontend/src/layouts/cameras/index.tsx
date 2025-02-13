@@ -22,6 +22,7 @@ import { getDevices } from "./api";
 import { styles } from "../../style";
 import WebsocketContext from "../../contexts/WebsocketContext";
 import { Socket } from "socket.io-client";
+import StreamingConfig from "./components/StreamFake";
 
 interface DeviceRemovedInfo {
     bus_info: string;
@@ -337,6 +338,7 @@ const CamerasPage = () => {
             }}
         >
             <DevicesLayout />
+            <StreamingConfig />
         </DevicesContext.Provider>
     );
 };

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Request
 from typing import List
-from ..services import WiFiManager, NetworkConfigSchema, NetworkConfig, Status, AccessPoint, Connection
+from ..services import WiFiManager, NetworkConfigSchema, NetworkConfig, Status, AccessPoint, Connection, StaticIPConfiguration, NetworkPriority
 
 wifi_router = APIRouter(tags=['wifi'])
 
@@ -39,3 +39,19 @@ def forget(request: Request, network_config: NetworkConfig):
 
     wifi_manager.forget(network_config.ssid)
     return {}
+
+# Ethernet
+@wifi_router.post('/wifi/set_static_ip')
+async def set_static_ip(request: Request, static_ip_configuration: StaticIPConfiguration):
+    wifi_manager: WiFiManager = request.app.state.wifi_manager
+
+    await wifi_manager.set_static_ip_configuration(static_ip_configuration)
+
+    return {}
+    
+
+@wifi_router.post('/wifi/set_network_priority')
+def set_network_priority(request: Request, network_priority: NetworkPriority):
+    wifi_manager: WiFiManager = request.app.state.wifi_manager
+
+    wifi_manager.set_network_priority(network_priority)

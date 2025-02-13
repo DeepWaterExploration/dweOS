@@ -2,7 +2,9 @@ import FormGroup from "@mui/material/FormGroup";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
 import Accordion from "@mui/material/Accordion";
+import Tooltip from "@mui/material/Tooltip";
 import AccordionSummary from "@mui/material/AccordionSummary";
+import ListSubheader from "@mui/material/ListSubheader";
 import Typography from "@mui/material/Typography";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import Box from "@mui/material/Box";
@@ -13,7 +15,7 @@ import ListItemAvatar from "@mui/material/ListItemAvatar";
 import Avatar from "@mui/material/Avatar";
 import ListItemText from "@mui/material/ListItemText";
 import Button from "@mui/material/Button";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import DeleteIcon from "@mui/icons-material/Delete";
 import LinkedCameraIcon from "@mui/icons-material/LinkedCamera";
 import AddIcon from "@mui/icons-material/Add";
@@ -28,6 +30,7 @@ import { DeviceLeader } from "./DeviceLeader";
 import { subscribe } from "valtio";
 import DeviceContext from "../../../contexts/DeviceContext";
 import { IP_REGEX } from "../../../utils/utils";
+import { useTheme } from "@emotion/react";
 
 /*
  * Get the list of resolutions available from the device
@@ -323,6 +326,11 @@ export const StreamOptions: React.FC = () => {
                                 <List
                                     dense={true}
                                     sx={{ maxHeight: 200, overflow: "auto" }}
+                                    subheader={
+                                        <ListSubheader component='div' sx={{}}>
+                                            Active Endpoints
+                                        </ListSubheader>
+                                    }
                                 >
                                     {device.stream.endpoints.map((endpoint) => {
                                         return (
@@ -366,7 +374,7 @@ export const StreamOptions: React.FC = () => {
                             {/* IP Address input */}
                             <TextField
                                 sx={styles.textField}
-                                label='IP Address'
+                                label='New Endpoint IP'
                                 variant='outlined'
                                 size='small'
                                 value={host}
@@ -375,7 +383,7 @@ export const StreamOptions: React.FC = () => {
                             {/* Port Input */}
                             <TextField
                                 sx={styles.portField}
-                                label='Port'
+                                label='New Endpoint Port'
                                 variant='outlined'
                                 size='small'
                                 value={port}

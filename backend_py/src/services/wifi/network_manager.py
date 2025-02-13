@@ -1,5 +1,5 @@
 import dbus
-from typing import List, Callable
+from typing import List, Callable, Dict, Any
 import time
 from .wifi_types import Connection, AccessPoint
 import logging
@@ -57,6 +57,8 @@ class NetworkManager:
         :return: The IP address
         '''
 
+        # TODO: get ip of either active ethernet or wireless
+
         # This does not necessarily get the IP address of a specific nmconnection, it is just whichever the ethernet device provided is
         # TODO: Make this get the IP address of a specific nmconnection
 
@@ -73,7 +75,13 @@ class NetworkManager:
         ipv4_config_proxy = self.bus.get_object('org.freedesktop.NetworkManager', ipv4_config_path)
         ipv4_config_props = dbus.Interface(ipv4_config_proxy, 'org.freedesktop.DBus.Properties')
 
-        ip_dec = ipv4_config_props.Get('org.freedesktop.NetworkManager.IP4Config', 'Addresses')[0][0]
+        addresses = ipv4_config_props.Get('org.freedesktop.NetworkManager.IP4Config', 'Addresses')
+        print(addresses)
+
+        if len(addresses) == 0:
+            raise NMException('Ethernet device does not have an IP')
+
+        ip_dec = addresses[0][0]
         ip_packed = struct.pack('=L', ip_dec)
         ip_str = socket.inet_ntop(socket.AF_INET, ip_packed)
 
@@ -101,7 +109,43 @@ class NetworkManager:
         return method
 
     @handle_dbus_exceptions
-    def set_static_ip(self, interface_name: str, ip_address: str, prefix: int, gateway: str, dns_servers: List[str] = [], connection_id: str = 'Wired connection 1'):
+    def update_connection(self, interface_name: str, connection_id: str, settings: Dict[str, Any], activate: bool = True):
+        '''
+        Update a connection
+
+        :param interface_name: The name of the interface to update the connection on
+        :param connection_id: The ID of the connection to update
+        :param settings: The settings to update the connection with
+        :param activate: Whether to activate the connection after updating it
+        :return: The interface name of the ethernet device
+        '''
+        ethernet_device, ethernet_proxy = self._get_ethernet_device(interface_name)
+        if ethernet_device is None:
+            raise NMException('No ethernet device found')
+        
+        # Get the interface name of the ethernet device
+        dev_props = dbus.Interface(ethernet_proxy, 'org.freedesktop.DBus.Properties')
+        dev_interface = dev_props.Get('org.freedesktop.NetworkManager.Device', 'Interface')
+
+        existing_conn_path = self._find_connection_by_id(connection_id)
+        settings_proxy = self.bus.get_object('org.freedesktop.NetworkManager', '/org/freedesktop/NetworkManager/Settings')
+        settings_interface = dbus.Interface(settings_proxy, 'org.freedesktop.NetworkManager.Settings')
+
+        if existing_conn_path:
+            existing_conn_proxy = self.bus.get_object('org.freedesktop.NetworkManager', existing_conn_path)
+            existing_conn_iface = dbus.Interface(existing_conn_proxy, 'org.freedesktop.NetworkManager.Settings.Connection')
+            existing_conn_iface.Update(settings)
+        else:
+            # TODO: Add a new connection
+            raise NMException('No existing connection found')
+        
+        if activate:
+            self.interface.ActivateConnection(existing_conn_path, ethernet_proxy, ethernet_device)
+
+        return dev_interface
+
+    @handle_dbus_exceptions
+    def set_static_ip(self, ip_address: str, prefix: int, gateway: str, dns_servers: List[str] = [], interface_name: str = 'enp3s0', prioritize_wireless=False, connection_id: str = 'Wired connection 1'):
         '''
         Set the static IP address
 
@@ -111,14 +155,11 @@ class NetworkManager:
         :param gateway: The gateway to use
         :param dns_servers: The DNS servers to use
         :param connection_id: The ID of the connection to set the static IP address on
+        :return: The interface name of the ethernet device
         '''
-
-        # TODO: The best option for us is to automatically determine the connection ID of whichever the active connection is
-
-        ethernet_device, ethernet_proxy = self._get_ethernet_device(interface_name)
-        if ethernet_device is None:
-            raise NMException('No ethernet device found')
         
+        logging.info(f'Setting static IP address {ip_address}/{prefix} on {interface_name} with gateway {gateway} and DNS servers {dns_servers}')
+
         connection_settings = {
             'connection': {
                 'id': connection_id,
@@ -143,24 +184,44 @@ class NetworkManager:
             }
         }
 
-        existing_conn_path = self._find_connection_by_id(connection_id)
-        settings_proxy = self.bus.get_object('org.freedesktop.NetworkManager', '/org/freedesktop/NetworkManager/Settings')
-        settings_interface = dbus.Interface(settings_proxy, 'org.freedesktop.NetworkManager.Settings')
+        if prioritize_wireless:
+            connection_settings['ipv4']['route-metric'] = 200
+            connection_settings['ipv4']['never-default'] = True
 
-        if existing_conn_path:
-            # Update the existing connection
-            existing_conn_proxy = self.bus.get_object('org.freedesktop.NetworkManager', existing_conn_path)
-            existing_conn_iface = dbus.Interface(existing_conn_proxy, 'org.freedesktop.NetworkManager.Settings.Connection')
-            existing_conn_iface.Update(connection_settings)
-        else:
-            # TODO: Add a new connection
-            raise NMException('No existing connection found')
-
-        logging.info(f'Existing connection path: {existing_conn_path}')
-
-        self.interface.ActivateConnection(existing_conn_path, ethernet_proxy, ethernet_device)
+        return self.update_connection(interface_name, connection_id, connection_settings, activate=True)
         
-        
+    @handle_dbus_exceptions
+    def set_dynamic_ip(self, interface_name: str = 'enp3s0', prioritize_wireless=False, connection_id: str = 'Wired connection 1'):
+        '''
+        Set the dynamic IP address
+
+        :param interface_name: The name of the interface to set the dynamic IP address on
+        :param connection_id: The ID of the connection to set the dynamic IP address on
+        :return: The interface name of the ethernet device
+        '''
+        connection_settings = {
+            'connection': {
+                'id': connection_id,
+                'type': '802-3-ethernet',
+                'interface-name': interface_name,
+                'autoconnect': True,
+            },
+            'ipv4': {
+                'method': 'auto',
+                'route-metric': 200, # Make sure that Wireless is preferred over Wired
+                'never-default': True,
+            },
+            'ipv6': {
+                'method': 'ignore',
+            }
+        }
+
+        if prioritize_wireless:
+            connection_settings['ipv4']['route-metric'] = 200
+            connection_settings['ipv4']['never-default'] = True
+
+        return self.update_connection(interface_name, connection_id, connection_settings, activate=True)
+
     def _find_connection_by_id(self, connection_id: str):
         '''
         Find a connection by its ID

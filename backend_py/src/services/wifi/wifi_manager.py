@@ -36,49 +36,29 @@ class WiFiManager:
         except NMException:
             raise WiFiException('NetworkManager is not supported')
         
+        self.access_points = []
+        
         self._update_thread = threading.Thread(target=self._update)
         self._scan_thread = threading.Thread(target=self._scan) # Secondary thread is needed to conduct scans separately
         self._is_scanning = False
+
         self.scan_interval = scan_interval
         self.connections = []
 
-        self.to_forget: str | None = None
-        self.to_disconnect = False
-        self.to_connect: NetworkConfig | None = None
+        self._nm_lock = threading.Lock()
 
         # Changed to true after successfully completed a scan
         self.status = Status(finished_first_scan=False, connected=False)
 
         # get initial access points before scan
-        if self.nm is not None:
-            try:
+        try:
+            with self._nm_lock:
                 self.access_points = self.nm.get_access_points()
-            except NMException as e:
-                raise WiFiException(f'Error occurred while initializing access points {e}') from e
-        else:
-            self.access_points = []
+        except NMException as e:
+            raise WiFiException(f'Error occurred while initializing access points {e}') from e
 
         self.network_priority = NetworkPriority.AUTO
         self.static_ip_configuration = None
-
-        print(self.nm.get_ip())
-
-        # test ethernet functions
-        # ethernet_interface = self.nm.set_static_ip('192.168.2.101', 24, '192.168.2.1')
-        # print(f'Ethernet interface: {ethernet_interface}')
-        # print(self.nm.get_ip())
-        # print(f'Method: {self.nm.get_connection_method("Wired connection 1")}')
-
-        # ethernet_has_connection = self._ping_ip('8.8.8.8', interface_name=ethernet_interface) # Ping Google's DNS server
-        # print(f'Ethernet has connection: {ethernet_has_connection}')
-
-        # # If the ethernet does not have a connection, prioritize wireless
-        # if not ethernet_has_connection:
-        #     self.nm.set_static_ip('192.168.2.101', 24, '192.168.2.1', prioritize_wireless=True)
-
-        # # Ping with the default interface
-        # has_connection = self._ping_ip('8.8.8.8')
-        # print(f'Has connection: {has_connection}')
 
     def _ping_ip(self, ip: str, interface_name: str | None = None):
         '''

@@ -11,8 +11,8 @@ class Connection(BaseModel):
 
 class Status(BaseModel):
     connection: Optional[Connection] = None
-    finished_first_scan: bool
-    connected: bool
+    finished_first_scan: bool = False
+    connected: bool = False
 
 class AccessPoint(BaseModel):
     ssid: str

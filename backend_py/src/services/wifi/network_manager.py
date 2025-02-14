@@ -34,6 +34,8 @@ class NetworkManager:
 
     @handle_dbus_exceptions
     def __init__(self) -> None:
+        self._last_scan_timestamp: int | None = None
+
         # Get the system bus
         self.bus = dbus.SystemBus()
         # Get a local proxy to the NetworkManager object
@@ -402,6 +404,24 @@ class NetworkManager:
         if not wifi_dev:
             raise NMException('No WiFi device found')
         return self._get_access_points(wifi_dev)
+
+    @handle_dbus_exceptions
+    def request_wifi_scan(self) -> None:
+        '''
+        Scan wifi networks
+        '''
+        (wifi_dev, dev_proxy) = self._get_wifi_device()
+
+        if not wifi_dev:
+            raise NMException('No WiFi device found')
+
+        wifi_props = dbus.Interface(dev_proxy, 'org.freedesktop.DBus.Properties')
+
+        # get the timestamp of the last scan
+        self._last_scan_timestamp = wifi_props.Get('org.freedesktop.NetworkManager.Device.Wireless', 'LastScan')
+
+        # request a scan
+        wifi_dev.RequestScan({})
 
 
     @handle_dbus_exceptions

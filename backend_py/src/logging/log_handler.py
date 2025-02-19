@@ -17,9 +17,7 @@ class LogHandler(logging.Handler):
         return logs
 
     def emit(self, record):
-        fmt = self.format(record)
-        # print the logs
-        print(fmt)
+        self.format(record)
         log = {
             'timestamp': record.asctime, 
             'level': record.levelname, 

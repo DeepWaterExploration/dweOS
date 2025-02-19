@@ -146,10 +146,10 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = ({}) => {
         if (connected) {
             refreshNetworks();
 
-            const interval = setInterval(() => refreshNetworks(), 500);
-            return () => {
-                clearInterval(interval);
-            };
+            // const interval = setInterval(() => refreshNetworks(), 500);
+            // return () => {
+            //     clearInterval(interval);
+            // };
         }
     }, [connected]);
 

@@ -41,7 +41,7 @@ class Server:
         # Wifi support
         if self.feature_support.wifi:
             try:
-                self.wifi_manager = WiFiManager()
+                self.wifi_manager = AsyncNetworkManager()
                 self.app.include_router(wifi_router)
             except WiFiException as e:
                 logging.warning(f'Error occurred while initializing WiFi: {e} so WiFi will not be supported')

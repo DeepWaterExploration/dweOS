@@ -26,11 +26,11 @@ const KnownNetworksCard = ({}) => {
 
     useEffect(() => {
         if (connected) {
-            refreshNetworks();
-            const interval = setInterval(() => refreshNetworks(), 500);
-            return () => {
-                clearInterval(interval);
-            };
+            // refreshNetworks();
+            // const interval = setInterval(() => refreshNetworks(), 500);
+            // return () => {
+            //     clearInterval(interval);
+            // };
         }
     }, [connected]);
 

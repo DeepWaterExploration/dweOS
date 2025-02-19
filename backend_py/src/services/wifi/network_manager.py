@@ -1,7 +1,7 @@
 import dbus
 from typing import List, Callable, Dict, Any
 import time
-from .wifi_types import Connection, AccessPoint
+from .wifi_types import Connection, AccessPoint, IPConfiguration, IPType
 import logging
 import socket
 import struct
@@ -52,7 +52,7 @@ class NetworkManager:
         
 
     @handle_dbus_exceptions
-    def get_ip(self, interface_name: str='eth0'):
+    def get_ip_info(self, interface_name: str='eth0') -> IPConfiguration:
         '''
         Get the IP address
 
@@ -77,17 +77,34 @@ class NetworkManager:
         ipv4_config_proxy = self.bus.get_object('org.freedesktop.NetworkManager', ipv4_config_path)
         ipv4_config_props = dbus.Interface(ipv4_config_proxy, 'org.freedesktop.DBus.Properties')
 
-        addresses = ipv4_config_props.Get('org.freedesktop.NetworkManager.IP4Config', 'Addresses')
-        print(addresses)
+        addresses = ipv4_config_props.Get('org.freedesktop.NetworkManager.IP4Config', 'AddressData')
+
+        method = self.get_connection_method()
 
         if len(addresses) == 0:
-            raise NMException('Ethernet device does not have an IP')
+            return None
 
-        ip_dec = addresses[0][0]
-        ip_packed = struct.pack('=L', ip_dec)
-        ip_str = socket.inet_ntop(socket.AF_INET, ip_packed)
+        return IPConfiguration(static_ip=addresses[0]['address'], 
+                                     prefix=addresses[0]['prefix'], 
+                                     gateway=self.get_ip_gateway(),
+                                     ip_type=IPType.STATIC if method == 'manual' else IPType.DYNAMIC)
+    
+    @handle_dbus_exceptions
+    def get_ipv4_settings(self, connection_id: str = 'Wired connection 1'):
+        connection_path = self._find_connection_by_id(connection_id)
+        if not connection_path:
+            raise NMException(f'Connection {connection_id} not found')
 
-        return ip_str
+        settings_proxy = self.bus.get_object('org.freedesktop.NetworkManager', connection_path)
+        settings_interface = dbus.Interface(settings_proxy, 'org.freedesktop.NetworkManager.Settings.Connection')
+        config = settings_interface.GetSettings()
+
+        return config.get('ipv4', {})
+
+    @handle_dbus_exceptions
+    def get_ip_gateway(self, connection_id: str = 'Wired connection 1'):
+        ipv4_settings = self.get_ipv4_settings(connection_id)
+        return ipv4_settings.get('gateway')
     
     @handle_dbus_exceptions
     def get_connection_method(self, connection_id: str) -> str:
@@ -97,18 +114,8 @@ class NetworkManager:
         :param connection_id: The ID of the connection to get the method of
         :return: The method of the connection (manual = static, auto = dynamic)
         '''
-        connection_path = self._find_connection_by_id(connection_id)
-        if not connection_path:
-            raise NMException(f'Connection {connection_id} not found')
-
-        settings_proxy = self.bus.get_object('org.freedesktop.NetworkManager', connection_path)
-        settings_interface = dbus.Interface(settings_proxy, 'org.freedesktop.NetworkManager.Settings.Connection')
-        config = settings_interface.GetSettings()
-
-        ipv4_settings = config.get('ipv4', {})
-        method = ipv4_settings.get('method')
-
-        return method
+        ipv4_settings = self.get_ipv4_settings(connection_id)
+        return ipv4_settings.get('method')
 
     @handle_dbus_exceptions
     def update_connection(self, interface_name: str, connection_id: str, settings: Dict[str, Any], activate: bool = True):
@@ -423,12 +430,8 @@ class NetworkManager:
         # request a scan
         wifi_dev.RequestScan({})
 
-
     @handle_dbus_exceptions
-    def scan_wifi(self, is_scanning_func: Callable[[], bool], timeout=30) -> List[AccessPoint]:
-        '''
-        Scan wifi networks
-        '''
+    def has_finished_scan(self):
         (wifi_dev, dev_proxy) = self._get_wifi_device()
 
         if not wifi_dev:
@@ -436,27 +439,12 @@ class NetworkManager:
 
         wifi_props = dbus.Interface(dev_proxy, 'org.freedesktop.DBus.Properties')
 
-        # get the timestamp of the last scan
-        last_scan = wifi_props.Get('org.freedesktop.NetworkManager.Device.Wireless', 'LastScan')
+        current_scan = wifi_props.Get('org.freedesktop.NetworkManager.Device.Wireless', 'LastScan')
 
-        # request a scan
-        wifi_dev.RequestScan({})
-
-        # wait for scan to finish
-        start_time = time.time()
-        # Check if it is still allowed to complete the scan, is_scanning_func should return false when the program is killed
-        while is_scanning_func() and time.time() - start_time < timeout:
-            current_scan = wifi_props.Get('org.freedesktop.NetworkManager.Device.Wireless', 'LastScan')
-
-            if current_scan != last_scan:
-                # scan 'd, return the access points
-                return self._get_access_points(wifi_dev)
-
-            # wait before checking
-            time.sleep(0.1)
-
-        # Took too long to complete scan
-        raise NMException('Request timed out')
+        if current_scan != self._last_scan_timestamp:
+            return True
+        
+        return False
 
     @handle_dbus_exceptions
     def forget(self, ssid: str):

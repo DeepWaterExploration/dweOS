@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional
-from enum import Enum, IntEnum
+from enum import Enum
 
 class NetworkPriority(str, Enum):
     AUTO = 'AUTO'

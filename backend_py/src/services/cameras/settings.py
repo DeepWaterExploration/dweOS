@@ -1,4 +1,4 @@
-from typing import *
+from typing import List, Dict, cast
 import threading
 import time
 import json

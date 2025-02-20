@@ -90,6 +90,9 @@ class AsyncNetworkManager(EventEmitter):
                 f"Error occurred while initializing access points {e}"
             ) from e
 
+    def get_ip_configuration(self):
+        return self._ip_configuration
+
     def start_scanning(self):
         self._scanning = True
         self._update_task = asyncio.create_task(self._update_loop())
@@ -141,7 +144,7 @@ class AsyncNetworkManager(EventEmitter):
             try:
                 current_time = time.time()
                 try:
-                    cmd = await asyncio.wait_for(self._command_queue.get(), timeout=0.5)
+                    cmd = await asyncio.wait_for(self._command_queue.get(), timeout=2)
                 except asyncio.TimeoutError:
                     # No command arrived, make sure we check self._scanning
                     cmd = None
@@ -151,6 +154,7 @@ class AsyncNetworkManager(EventEmitter):
                     self._command_queue.task_done()
 
                 await self._update_connections()
+                await asyncio.sleep(0.1)
                 await self._update_active_connection()
 
                 async with self._nm_lock:

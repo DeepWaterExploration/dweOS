@@ -19,3 +19,15 @@ export interface AccessPoint {
     strength: number;
     requires_password: boolean;
 }
+
+export enum IPType {
+    STATIC = "STATIC",
+    DYNAMIC = "DYNAMIC",
+}
+
+export interface IPConfiguration {
+    static_ip?: string;
+    gateway?: string;
+    prefix?: number;
+    ip_type: IPType;
+}

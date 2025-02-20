@@ -1,5 +1,5 @@
 import { getRequest, postRequest } from "../../utils/utils";
-import { AccessPoint, Connection, Status } from "./types";
+import { AccessPoint, Connection, IPConfiguration, Status } from "./types";
 
 export async function getWiFiStatus() {
     const response = await getRequest("/wifi/status");
@@ -28,5 +28,18 @@ export async function disconnectFromNetwork() {
 
 export async function forgetNetwork(ssid: string) {
     const response = await postRequest("/wifi/forget", { ssid });
+    return await response.json();
+}
+
+export async function getIPConfiguration() {
+    const response = await getRequest("/wifi/get_ip_configuration");
+    return (await response.json()) as IPConfiguration;
+}
+
+export async function setIPConfiguration(ip_configuration: IPConfiguration) {
+    const response = await postRequest(
+        "/wifi/set_ip_configuration",
+        ip_configuration
+    );
     return await response.json();
 }

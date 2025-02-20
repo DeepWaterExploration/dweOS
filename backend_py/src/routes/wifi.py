@@ -2,13 +2,11 @@ from fastapi import APIRouter, Depends, Request
 from typing import List
 from ..services import (
     AsyncNetworkManager,
-    NetworkConfigSchema,
     NetworkConfig,
     Status,
     AccessPoint,
     Connection,
     IPConfiguration,
-    NetworkPriority,
 )
 
 wifi_router = APIRouter(tags=["wifi"])
@@ -57,7 +55,18 @@ async def forget(request: Request, network_config: NetworkConfig):
 
 
 # Ethernet
-@wifi_router.post("/wifi/set_static_ip")
+@wifi_router.get(
+    "/wifi/get_ip_configuration", summary="Get the ethernet IP configuration"
+)
+def get_ip_configuration(request: Request) -> IPConfiguration:
+    wifi_manager: AsyncNetworkManager = request.app.state.wifi_manager
+
+    return wifi_manager.get_ip_configuration()
+
+
+@wifi_router.post(
+    "/wifi/set_ip_configuration", summary="Update the ethernet IP configuration"
+)
 async def set_static_ip(request: Request, ip_configuration: IPConfiguration):
     wifi_manager: AsyncNetworkManager = request.app.state.wifi_manager
 

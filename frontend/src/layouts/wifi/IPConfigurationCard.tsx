@@ -13,6 +13,7 @@ import Button from "@mui/material/Button";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
 import OutlinedInput from "@mui/material/OutlinedInput";
+import Alert from "@mui/material/Alert";
 
 import React, { useContext, useEffect, useState } from "react";
 import { styles } from "../../style";
@@ -55,6 +56,8 @@ const IPConfigurationCard = ({}) => {
     const [loading, setLoading] = useState(false);
     const [loadingText, setLoadingText] = useState("");
     const [firstLoad, setFirstLoad] = useState(true);
+
+    const [isDirty, setIsDirty] = useState(false);
 
     const [staticIP, setStaticIP] = useState("192.168.2.100");
     const [gateway, setGateway] = useState("0.0.0.0");
@@ -119,6 +122,23 @@ const IPConfigurationCard = ({}) => {
 
     useEffect(() => {
         if (ipConfiguration) {
+            if (
+                ipConfiguration.static_ip !== staticIP ||
+                !(
+                    ipConfiguration.gateway === gateway ||
+                    (ipConfiguration.gateway === null && gateway === "0.0.0.0")
+                ) ||
+                ipConfiguration.prefix !== netmaskToCidr(subnet)
+            ) {
+                setIsDirty(true);
+            } else {
+                setIsDirty(false);
+            }
+        }
+    }, [staticIP, gateway, dns, subnet, ipConfiguration]);
+
+    useEffect(() => {
+        if (ipConfiguration) {
             setSubnet(createNetmaskAddr(ipConfiguration.prefix || 24));
             console.log(ipConfiguration.static_ip);
             setStaticIP(ipConfiguration.static_ip || "192.168.2.100");
@@ -143,6 +163,14 @@ const IPConfigurationCard = ({}) => {
                 <CardContent>
                     <Box>
                         <Divider />
+
+                        {/* If user has unsaved changes, show an alert */}
+                        {isDirty && (
+                            <Alert severity='info' sx={{ mb: 2 }}>
+                                You have unsaved changes. Please click “Update
+                                Configuration” to apply them.
+                            </Alert>
+                        )}
 
                         <Box sx={{ mb: 2, mt: 1 }}>
                             <strong>Current IP:</strong>{" "}

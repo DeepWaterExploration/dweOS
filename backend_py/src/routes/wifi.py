@@ -7,6 +7,7 @@ from ..services import (
     AccessPoint,
     Connection,
     IPConfiguration,
+    NetworkPriorityInformation,
 )
 
 wifi_router = APIRouter(tags=["wifi"])
@@ -42,16 +43,13 @@ async def connect(request: Request, network_config: NetworkConfig):
 @wifi_router.post("/wifi/disconnect")
 async def disconnect(request: Request):
     wifi_manager: AsyncNetworkManager = request.app.state.wifi_manager
-    await wifi_manager.disconnect()
-    return {}
+    return {"status": await wifi_manager.disconnect()}
 
 
 @wifi_router.post("/wifi/forget")
 async def forget(request: Request, network_config: NetworkConfig):
     wifi_manager: AsyncNetworkManager = request.app.state.wifi_manager
-
-    await wifi_manager.forget(network_config.ssid)
-    return {}
+    return {"status": await wifi_manager.forget(network_config.ssid)}
 
 
 # Ethernet
@@ -69,14 +67,22 @@ def get_ip_configuration(request: Request) -> IPConfiguration:
 )
 async def set_static_ip(request: Request, ip_configuration: IPConfiguration):
     wifi_manager: AsyncNetworkManager = request.app.state.wifi_manager
+    return {"status": await wifi_manager.set_ip_configuration(ip_configuration)}
 
-    await wifi_manager.set_ip_configuration(ip_configuration)
 
+@wifi_router.post("/wifi/set_network_priority")
+async def set_network_priority(
+    request: Request, network_priority: NetworkPriorityInformation
+):
+    wifi_manager: AsyncNetworkManager = request.app.state.wifi_manager
+    await wifi_manager.set_network_priority(network_priority.network_priority)
     return {}
 
 
-# @wifi_router.post("/wifi/set_network_priority")
-# def set_network_priority(request: Request, network_priority: NetworkPriority):
-#     wifi_manager: AsyncNetworkManager = request.app.state.wifi_manager
-
-#     wifi_manager.set_network_priority(network_priority)
+@wifi_router.get("/wifi/get_network_priority")
+async def getet_network_priority(request: Request) -> NetworkPriorityInformation:
+    wifi_manager: AsyncNetworkManager = request.app.state.wifi_manager
+    network_priority = NetworkPriorityInformation(
+        network_priority=wifi_manager.get_network_priority()
+    )
+    return network_priority

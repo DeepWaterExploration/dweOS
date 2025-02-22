@@ -18,15 +18,15 @@ import Alert from "@mui/material/Alert";
 import React, { useContext, useEffect, useState } from "react";
 import { styles } from "../../style";
 import WebsocketContext from "../../contexts/WebsocketContext";
-import { getIPConfiguration, setIPConfiguration } from "./api";
-import { IPConfiguration, IPType } from "./types";
+import {
+    getIPConfiguration,
+    getNetworkPriority,
+    setIPConfiguration,
+    setNetworkPriority,
+} from "./api";
+import { IPConfiguration, IPType, NetworkPriority } from "./types";
 import { useDidMountEffect } from "../../utils/utils";
-
-enum ConnectionType {
-    ETHERNET = 0,
-    WIRELESS = 1,
-    AUTO = 2,
-}
+import { enqueueSnackbar } from "notistack";
 
 const netmaskToCidr = (n) =>
     n.split(".").reduce((c, o) => c - Math.log2(256 - +o), 32);
@@ -52,7 +52,6 @@ const IPConfigurationCard = ({}) => {
 
     const [dhcpEnabled, setDhcpEnabled] = useState(false);
 
-    const [dns, setDNS] = useState("8.8.8.8");
     const [loading, setLoading] = useState(false);
     const [loadingText, setLoadingText] = useState("");
     const [firstLoad, setFirstLoad] = useState(true);
@@ -62,6 +61,16 @@ const IPConfigurationCard = ({}) => {
     const [staticIP, setStaticIP] = useState("192.168.2.100");
     const [gateway, setGateway] = useState("0.0.0.0");
     const [subnet, setSubnet] = useState("255.255.255.0");
+    const [dns, setDNS] = useState([]);
+    const [dnsInput, setDNSInput] = useState("");
+
+    const [staticIpError, setStaticIpError] = useState(false);
+    const [gatewayError, setGatewayError] = useState(false);
+    const [subnetError, setSubnetError] = useState(false);
+    const [dnsError, setDnsError] = useState(false);
+    const [networkPriorityInfo, setNetworkPriorityInfo] = useState(
+        NetworkPriority.ETHERNET
+    );
 
     const handleDHCPChange = () => {
         setLoading(true);
@@ -94,6 +103,13 @@ const IPConfigurationCard = ({}) => {
     };
 
     const handleUpdate = () => {
+        if (isError()) {
+            enqueueSnackbar(
+                "Please fix the highlighted errors before updating.",
+                { variant: "error" }
+            );
+            return;
+        }
         setLoading(true);
         setLoadingText("Updating IP Configuration...");
 
@@ -102,12 +118,68 @@ const IPConfigurationCard = ({}) => {
             gateway: gateway,
             prefix: netmaskToCidr(subnet),
             ip_type: dhcpEnabled ? IPType.DYNAMIC : IPType.STATIC,
+            dns: dns,
         };
         console.log(newIpConfig);
         setIPConfiguration(newIpConfig).then(() => {
             setLoading(false);
         });
         setIPConfigurationInfo(newIpConfig);
+    };
+
+    const isValidIP = (ip: string) => {
+        return (
+            /^(\d{1,3}\.){3}\d{1,3}$/.test(ip) &&
+            ip.split(".").every((octet) => parseInt(octet) <= 255)
+        );
+    };
+
+    const handleStaticIpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.trim();
+        setStaticIP(value);
+        if (value && !isValidIP(value)) {
+            setStaticIpError(true);
+        } else {
+            setStaticIpError(false);
+        }
+    };
+
+    const handleSubnetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.trim();
+        setSubnet(value);
+        if (value && !isValidIP(value)) {
+            setSubnetError(true);
+        } else {
+            setSubnetError(false);
+        }
+    };
+
+    const handleGatewayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.trim();
+        setGateway(value);
+        if (value && !isValidIP(value)) {
+            setGatewayError(true);
+        } else {
+            setGatewayError(false);
+        }
+    };
+
+    const handleDnsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setDNSInput(e.target.value);
+
+        const newDnsArray = e.target.value
+            .split(",")
+            .map((item) => item.trim())
+            .filter((item) => item);
+
+        // Validate each IP
+        const isValid = newDnsArray.every(isValidIP);
+
+        if (isValid || newDnsArray.length === 0) {
+            setDNS(newDnsArray);
+        }
+
+        setDnsError(validateInput(e.target.value));
     };
 
     useEffect(() => {
@@ -117,8 +189,15 @@ const IPConfigurationCard = ({}) => {
                 setIPConfigurationInfo(ip_configuration);
                 setFirstLoad(false);
             });
+
+            getNetworkPriority().then((priority) =>
+                setNetworkPriorityInfo(priority.network_priority)
+            );
         }
     }, [connected]);
+
+    const isError = () =>
+        staticIpError || dnsError || subnetError || gatewayError;
 
     useEffect(() => {
         if (ipConfiguration) {
@@ -128,7 +207,8 @@ const IPConfigurationCard = ({}) => {
                     ipConfiguration.gateway === gateway ||
                     (ipConfiguration.gateway === null && gateway === "0.0.0.0")
                 ) ||
-                ipConfiguration.prefix !== netmaskToCidr(subnet)
+                ipConfiguration.prefix !== netmaskToCidr(subnet) ||
+                (ipConfiguration.dns != dns && !isError())
             ) {
                 setIsDirty(true);
             } else {
@@ -144,8 +224,28 @@ const IPConfigurationCard = ({}) => {
             setStaticIP(ipConfiguration.static_ip || "192.168.2.100");
             setDhcpEnabled(ipConfiguration.ip_type === IPType.DYNAMIC);
             setGateway(ipConfiguration.gateway || "0.0.0.0");
+            console.log(ipConfiguration.dns);
+            setDNS(ipConfiguration.dns || []);
+            setDNSInput((ipConfiguration.dns || []).join(", "));
         }
     }, [ipConfiguration]);
+
+    useEffect(() => {
+        if (connected) {
+            setLoadingText("Changing network priority");
+            setLoading(true);
+            setNetworkPriority(networkPriorityInfo).then(() => {
+                setLoading(false);
+            });
+        }
+    }, [networkPriorityInfo]);
+
+    const validateInput = (input: string) =>
+        input.length !== 0 &&
+        input
+            .split(",")
+            .map((item) => item.trim())
+            .some((ip) => !isValidIP(ip));
 
     return (
         <Card sx={{ ...styles.card }}>
@@ -180,20 +280,25 @@ const IPConfigurationCard = ({}) => {
                         <FormControl fullWidth sx={{ mb: 2 }}>
                             <InputLabel>Connection Priority</InputLabel>
                             <Select
-                                defaultValue={"auto"}
+                                value={networkPriorityInfo}
                                 input={
                                     <OutlinedInput
                                         notched
                                         label={"Connection Priority"}
                                     />
                                 }
-                                onChange={handleUpdate}
+                                onChange={(e) =>
+                                    setNetworkPriorityInfo(
+                                        e.target.value as NetworkPriority
+                                    )
+                                }
                             >
-                                <MenuItem value='auto'>
-                                    Auto (Best Network)
+                                <MenuItem value={NetworkPriority.WIRELESS}>
+                                    WiFi
                                 </MenuItem>
-                                <MenuItem value='wifi'>WiFi</MenuItem>
-                                <MenuItem value='ethernet'>Ethernet</MenuItem>
+                                <MenuItem value={NetworkPriority.ETHERNET}>
+                                    Ethernet
+                                </MenuItem>
                             </Select>
                         </FormControl>
 
@@ -213,30 +318,37 @@ const IPConfigurationCard = ({}) => {
                                     fullWidth
                                     label='Static IP'
                                     value={staticIP}
-                                    onChange={(e) =>
-                                        setStaticIP(e.target.value)
-                                    }
+                                    onChange={handleStaticIpChange}
                                     sx={{ mb: 2 }}
+                                    error={staticIpError}
                                 />
                                 <TextField
                                     fullWidth
                                     label='Subnet Mask'
                                     value={subnet}
-                                    onChange={(e) => setSubnet(e.target.value)}
+                                    onChange={handleSubnetChange}
                                     sx={{ mb: 2 }}
+                                    error={subnetError}
                                 />
                                 <TextField
                                     fullWidth
                                     label='Gateway'
                                     value={gateway}
-                                    onChange={(e) => setGateway(e.target.value)}
+                                    onChange={handleGatewayChange}
                                     sx={{ mb: 2 }}
+                                    error={gatewayError}
                                 />
                                 <TextField
                                     fullWidth
-                                    label='DNS'
-                                    value={dns}
-                                    onChange={(e) => setDNS(e.target.value)}
+                                    label='DNS (comma-separated)'
+                                    value={dnsInput}
+                                    onChange={handleDnsChange}
+                                    helperText={
+                                        dnsError
+                                            ? "Invalid IP address format"
+                                            : ""
+                                    }
+                                    error={dnsError}
                                     sx={{ mb: 2 }}
                                 />
                                 <Button

@@ -1,10 +1,16 @@
 import Grid from "@mui/material/Grid";
-import React from "react";
+import React, { useState } from "react";
 import NetworkSettingsCard from "./NetworkSettings";
 import KnownNetworksCard from "./KnownNetworksCard";
 import IPConfigurationCard from "./IPConfigurationCard";
+import { Connection } from "./types";
 
 const Wifi: React.FC = () => {
+    const [currentNetwork, setCurrentNetwork] = useState({
+        id: "",
+        type: "",
+    } as Connection);
+
     return (
         <Grid
             container
@@ -16,8 +22,14 @@ const Wifi: React.FC = () => {
                 padding: "0 3em",
             }}
         >
-            <NetworkSettingsCard />
-            <KnownNetworksCard />
+            <NetworkSettingsCard
+                currentNetwork={currentNetwork}
+                setCurrentNetwork={setCurrentNetwork}
+            />
+            <KnownNetworksCard
+                currentNetwork={currentNetwork}
+                setCurrentNetwork={setCurrentNetwork}
+            />
             <IPConfigurationCard />
         </Grid>
     );

@@ -3,9 +3,10 @@ import time
 from typing import Callable
 from event_emitter import EventEmitter
 
-from .wifi_types import IPConfiguration, Status, Connection, IPType
+from .wifi_types import IPConfiguration, Status, Connection, IPType, NetworkPriority
 from .network_manager import NetworkManager, NMException
 from .exceptions import WiFiException
+import subprocess
 
 import logging
 
@@ -17,6 +18,7 @@ class CommandType(str, Enum):
     DISCONNECT = "disconnect"
     FORGET = "forget"
     UPDATE_IP = "update_ip"
+    CHANGE_NETWORK_PRIORITY = "priority"
 
 
 class Command:
@@ -50,6 +52,7 @@ class AsyncNetworkManager(EventEmitter):
         self._command_queue: asyncio.Queue[Command] = asyncio.Queue()
 
         self._ip_configuration = IPConfiguration()
+        self._network_priority = NetworkPriority.ETHERNET
 
         self.scan_interval = scan_interval
         self._scanning = False
@@ -67,10 +70,32 @@ class AsyncNetworkManager(EventEmitter):
         self._initialize_access_points()
         self._initialize_ip_configuration()
 
+    def get_network_priority(self):
+        return self._network_priority
+
+    def _ping_ip(self, ip: str, interface_name: str | None = None):
+        """
+        Method to ping an IP address
+
+        :param ip: The IP address to ping
+        :param interface_name: The name of the interface to ping the IP address on
+        :return: True if the IP address is reachable, False otherwise
+        """
+        try:
+            if interface_name is not None:
+                subprocess.check_output(["ping", "-I", interface_name, "-c", "4", ip])
+            else:
+                subprocess.check_output(["ping", "-c", "4", ip])
+            return True
+        except subprocess.CalledProcessError:
+            return False
+
     def _initialize_ip_configuration(self):
         self._ip_configuration = self.nm.get_ip_info()
 
-        if self._ip_configuration.ip_type == IPType.STATIC:
+        if self._ip_configuration == None:
+            logging.info("No ethernet connection detected")
+        elif self._ip_configuration.ip_type == IPType.STATIC:
             logging.info(
                 f"Static IP: {self._ip_configuration.static_ip}/{self._ip_configuration.prefix}, Gateway: {self._ip_configuration.gateway}"
             )
@@ -118,6 +143,12 @@ class AsyncNetworkManager(EventEmitter):
     def list_connections(self):
         return self.connections
 
+    async def set_network_priority(self, network_priority: NetworkPriority):
+        self._network_priority = network_priority
+        cmd = Command(CommandType.CHANGE_NETWORK_PRIORITY, network_priority)
+        await self._command_queue.put(cmd)
+        return await cmd.future
+
     async def set_ip_configuration(self, ip_configuration: IPConfiguration):
         cmd = Command(CommandType.UPDATE_IP, ip_configuration)
         await self._command_queue.put(cmd)
@@ -163,13 +194,25 @@ class AsyncNetworkManager(EventEmitter):
                     if new_ip_configuration != self._ip_configuration:
                         self._ip_configuration = new_ip_configuration
                         logging.info("IP Configuration changed")
-                        self.emit("ip_changed", new_ip_configuration)
+                        self.emit("ip_changed")
 
                 async with self._nm_lock:
                     if self._requested_scan and self.nm.has_finished_scan():
                         self.status.finished_first_scan = True
                         self._requested_scan = False
-                        self.access_points = self.nm.get_access_points()
+                        new_access_points = self.nm.get_access_points()
+                        # Can't just do this
+                        # if new_access_points != self.access_points:
+                        #     self.emit("aps_changed")
+
+                        # do this:
+                        current_ssids = {ap.ssid for ap in self.access_points}
+                        new_ssids = {ap.ssid for ap in new_access_points}
+
+                        if current_ssids != new_ssids:
+                            self.emit("aps_changed")
+
+                        self.access_points = new_access_points
 
                 # Only scan every 10 seconds
                 if current_time - start_time > self.scan_interval:
@@ -192,19 +235,41 @@ class AsyncNetworkManager(EventEmitter):
         elif cmd.cmd_type == CommandType.UPDATE_IP:
             (ip_configuration,) = cmd.args
             await self._handle_update_ip(cmd, ip_configuration)
+        elif cmd.cmd_type == CommandType.CHANGE_NETWORK_PRIORITY:
+            (network_priority,) = cmd.args
+            await self._handle_change_network_priority(cmd, network_priority)
         else:
             cmd.set_exception(ValueError(f"Unknown command type: {cmd.cmd_type}"))
+
+    def _set_static_ip(
+        self, ip_configuration: IPConfiguration, prioritize_wireless=False
+    ):
+        """do not call"""
+        print(prioritize_wireless)
+        return self.nm.set_static_ip(
+            ip_configuration.static_ip,
+            ip_configuration.prefix,
+            ip_configuration.gateway or "0.0.0.0",
+            ip_configuration.dns,
+            prioritize_wireless=prioritize_wireless,
+        )
+
+    async def _handle_change_network_priority(
+        self, cmd: Command, network_priority: NetworkPriority
+    ):
+        async with self._nm_lock:
+            if network_priority == NetworkPriority.ETHERNET:
+                self._set_static_ip(self._ip_configuration)
+                cmd.set_result(True)
+            else:  # Wireless Priority
+                self._set_static_ip(self._ip_configuration, True)
+                cmd.set_result(True)
 
     async def _handle_update_ip(self, cmd: Command, ip_configuration: IPConfiguration):
         try:
             async with self._nm_lock:
                 if ip_configuration.ip_type == IPType.STATIC:
-                    self.nm.set_static_ip(
-                        ip_configuration.static_ip,
-                        ip_configuration.prefix,
-                        ip_configuration.gateway,
-                        prioritize_wireless=True,
-                    )
+                    self._set_static_ip(ip_configuration)
                     cmd.set_result(True)
                 else:
                     self.nm.set_dynamic_ip()
@@ -269,7 +334,7 @@ class AsyncNetworkManager(EventEmitter):
             async with self._nm_lock:
                 connections = self.nm.list_wireless_connections()
                 if connections != self.connections:
-                    self.emit("connections_changed", connections)
+                    self.emit("connections_changed")
                     self.connections = connections
         except NMException as e:
             logging.error(f"Error occured while fetching cached connections: f{e}")
@@ -284,10 +349,10 @@ class AsyncNetworkManager(EventEmitter):
                 if self.status.connection != connection and not self.status.connected:
                     self.status.connection = connection
                     self.status.connected = True
-                    self.emit("connected", connection)
+                    self.emit("connected")
                 elif self.status.connected:
                     self.status.connection = connection
-                    self.emit("connection_changed", connection)
+                    self.emit("connection_changed")
             else:
                 self.status.connection = Connection()
                 self.status.connected = False

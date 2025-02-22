@@ -3,6 +3,8 @@ import dbus
 from typing import List, Callable, Dict, Any
 from .wifi_types import Connection, AccessPoint, IPConfiguration, IPType
 import logging
+import socket
+import struct
 
 
 class NMException(Exception):
@@ -31,6 +33,13 @@ def handle_dbus_exceptions(func: Callable):
     return wrapper
 
 
+def ip_to_uint32(ip_str: str) -> dbus.UInt32:
+    """Convert dotted IPv4 string to a 32-bit unsigned integer (network byte order)."""
+    packed = socket.inet_aton(ip_str)  # e.g. b'\x08\x08\x08\x08'
+    val = struct.unpack("!I", packed)[0]  # e.g. 134744072 (0x08080808)
+    return dbus.UInt32(val)
+
+
 class NetworkManager:
     """
     Class for interfacing with NetworkManager over dbus
@@ -57,7 +66,7 @@ class NetworkManager:
         self.props = dbus.Interface(self.proxy, "org.freedesktop.DBus.Properties")
 
     @handle_dbus_exceptions
-    def get_ip_info(self, interface_name: str = "eth0") -> IPConfiguration:
+    def get_ip_info(self, interface_name: str | None = None) -> IPConfiguration:
         """
         Get the IP address
 
@@ -66,8 +75,9 @@ class NetworkManager:
 
         # TODO: get ip of either active ethernet or wireless
 
-        # This does not necessarily get the IP address of a specific nmconnection, it is just whichever the ethernet device provided is
-        # TODO: Make this get the IP address of a specific nmconnection
+        (ethernet_device, ethernet_proxy, _, connection_id) = (
+            self._get_eth_device_and_connection()
+        )
 
         ethernet_device, ethernet_proxy = self._get_ethernet_device(interface_name)
         if ethernet_device is None:
@@ -92,7 +102,12 @@ class NetworkManager:
             "org.freedesktop.NetworkManager.IP4Config", "AddressData"
         )
 
-        method = self.get_connection_method()
+        method = self.get_connection_method(connection_id)
+
+        dns_int_arr = self.get_ipv4_settings(connection_id).get("dns") or []
+        dns_arr: List[str] = []
+        for dns_int in dns_int_arr:
+            dns_arr.append(socket.inet_ntoa(struct.pack("!I", dns_int)))
 
         if len(addresses) == 0:
             return None
@@ -102,6 +117,7 @@ class NetworkManager:
             prefix=addresses[0]["prefix"],
             gateway=self.get_ip_gateway(),
             ip_type=IPType.STATIC if method == "manual" else IPType.DYNAMIC,
+            dns=dns_arr,
         )
 
     @handle_dbus_exceptions
@@ -143,10 +159,10 @@ class NetworkManager:
     @handle_dbus_exceptions
     def update_connection(
         self,
-        interface_name: str,
-        connection_id: str,
         settings: Dict[str, Any],
         activate: bool = True,
+        interface_name: str | None = None,
+        connection_id: str | None = None,
     ):
         """
         Update a connection
@@ -195,14 +211,11 @@ class NetworkManager:
 
         return dev_interface
 
-    def _update_ipv4_settings(
-        self,
-        settings: Dict[str, object],
-        interface_name: str | None = None,
-        connection_id: str | None = None,
+    def _get_eth_device_and_connection(
+        self, interface_name: str | None = None, connection_id: str | None = None
     ):
         # Get the first ethernet device
-        (_, ethernet_proxy) = self._get_ethernet_device()
+        (ethernet_device, ethernet_proxy) = self._get_ethernet_device(interface_name)
         dev_props = dbus.Interface(ethernet_proxy, "org.freedesktop.DBus.Properties")
         # enp3s0 or eth0
         dev_interface = dev_props.Get(
@@ -227,6 +240,21 @@ class NetworkManager:
             # We have the connection ID
             connection_id = ethernet_connection["connection"]["id"]
 
+        # This 99/100 times will be good enough, unless for some reason someone has two ethernet cards on their device
+        # TODO: Support infinite ethernet cards
+
+        return (ethernet_device, ethernet_proxy, dev_interface, connection_id)
+
+    def _update_ipv4_settings(
+        self,
+        settings: Dict[str, object],
+        interface_name: str | None = None,
+        connection_id: str | None = None,
+    ):
+        (_, _, dev_interface, connection_id) = self._get_eth_device_and_connection(
+            interface_name
+        )
+
         # Given no interface name, we need to guess
         if interface_name is None:
             # This 99/100 times will be good enough, unless for some reason someone has two ethernet cards on their device
@@ -245,7 +273,7 @@ class NetworkManager:
 
         # Update the connection and return the result
         return self.update_connection(
-            interface_name, connection_id, connection_settings, activate=True
+            connection_settings, True, interface_name, connection_id
         )
 
     @handle_dbus_exceptions
@@ -271,6 +299,8 @@ class NetworkManager:
         :return: The interface name of the ethernet device
         """
 
+        print(prioritize_wireless)
+
         # Update the IPv4 configuration, leaving everything else the same
         ipv4_settings = {
             "method": "manual",
@@ -283,14 +313,18 @@ class NetworkManager:
                 ],
                 signature=dbus.Signature("a{sv}"),
             ),
-            "dns-search": dbus.Array(dns_servers, signature=dbus.Signature("s")),
+            "dns": dbus.Array(
+                [ip_to_uint32(dns) for dns in dns_servers],
+                signature=dbus.Signature("u"),
+            ),
         }
 
         # If we prioritize wireless, there is no reason to have a default gateway, since we will always use the wireless one
         if prioritize_wireless:
             ipv4_settings["route-metric"] = 200
-            ipv4_settings["never-default"] = True
+            # ipv4_settings["never-default"] = True
         else:
+            ipv4_settings["route-metric"] = 0
             ipv4_settings["gateway"] = gateway
 
         # Update the connection and return the result

@@ -182,12 +182,20 @@ const IPConfigurationCard = ({}) => {
         setDnsError(validateInput(e.target.value));
     };
 
+    const updateNetworkPriority = (newNetworkPriority: NetworkPriority) => {
+        setLoadingText("Changing network priority");
+        setLoading(true);
+        setNetworkPriorityInfo(newNetworkPriority);
+        setNetworkPriority(newNetworkPriority).then(() => {
+            setLoading(false);
+        });
+    };
+
     useEffect(() => {
         if (connected) {
             // Stuff to do on connected
             getIPConfiguration().then((ip_configuration) => {
                 setIPConfigurationInfo(ip_configuration);
-                setFirstLoad(false);
             });
 
             getNetworkPriority().then((priority) =>
@@ -200,7 +208,7 @@ const IPConfigurationCard = ({}) => {
         staticIpError || dnsError || subnetError || gatewayError;
 
     useEffect(() => {
-        if (ipConfiguration) {
+        if (ipConfiguration && !firstLoad) {
             if (
                 ipConfiguration.static_ip !== staticIP ||
                 !(
@@ -215,6 +223,8 @@ const IPConfigurationCard = ({}) => {
                 setIsDirty(false);
             }
         }
+
+        if (ipConfiguration) setFirstLoad(false);
     }, [staticIP, gateway, dns, subnet, ipConfiguration]);
 
     useEffect(() => {
@@ -229,16 +239,6 @@ const IPConfigurationCard = ({}) => {
             setDNSInput((ipConfiguration.dns || []).join(", "));
         }
     }, [ipConfiguration]);
-
-    useEffect(() => {
-        if (connected) {
-            setLoadingText("Changing network priority");
-            setLoading(true);
-            setNetworkPriority(networkPriorityInfo).then(() => {
-                setLoading(false);
-            });
-        }
-    }, [networkPriorityInfo]);
 
     const validateInput = (input: string) =>
         input.length !== 0 &&
@@ -288,7 +288,7 @@ const IPConfigurationCard = ({}) => {
                                     />
                                 }
                                 onChange={(e) =>
-                                    setNetworkPriorityInfo(
+                                    updateNetworkPriority(
                                         e.target.value as NetworkPriority
                                     )
                                 }

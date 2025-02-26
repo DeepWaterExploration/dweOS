@@ -2,7 +2,6 @@ import Grid from "@mui/material/Grid";
 import React, { useState } from "react";
 import NetworkSettingsCard from "./NetworkSettings";
 import KnownNetworksCard from "./KnownNetworksCard";
-import IPConfigurationCard from "./IPConfigurationCard";
 import { Connection } from "./types";
 
 const Wifi: React.FC = () => {
@@ -30,7 +29,7 @@ const Wifi: React.FC = () => {
                 currentNetwork={currentNetwork}
                 setCurrentNetwork={setCurrentNetwork}
             />
-            <IPConfigurationCard />
+            {/* <IPConfigurationCard /> */}
         </Grid>
     );
 };

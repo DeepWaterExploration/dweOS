@@ -175,7 +175,7 @@ class AsyncNetworkManager(EventEmitter):
             try:
                 current_time = time.time()
                 try:
-                    cmd = await asyncio.wait_for(self._command_queue.get(), timeout=2)
+                    cmd = await asyncio.wait_for(self._command_queue.get(), timeout=0.1)
                 except asyncio.TimeoutError:
                     # No command arrived, make sure we check self._scanning
                     cmd = None
@@ -185,7 +185,6 @@ class AsyncNetworkManager(EventEmitter):
                     self._command_queue.task_done()
 
                 await self._update_connections()
-                await asyncio.sleep(0.1)
                 await self._update_active_connection()
 
                 async with self._nm_lock:
@@ -209,7 +208,7 @@ class AsyncNetworkManager(EventEmitter):
                         current_ssids = {ap.ssid for ap in self.access_points}
                         new_ssids = {ap.ssid for ap in new_access_points}
 
-                        if current_ssids != new_ssids:
+                        if new_ssids - current_ssids != set():
                             self.emit("aps_changed")
 
                         self.access_points = new_access_points
@@ -220,6 +219,8 @@ class AsyncNetworkManager(EventEmitter):
                     async with self._nm_lock:
                         self.nm.request_wifi_scan()
                         self._requested_scan = True
+
+                await asyncio.sleep(5)
             except Exception as e:
                 logging.exception("Exception in _update_loop: %s", e)
 
@@ -245,7 +246,6 @@ class AsyncNetworkManager(EventEmitter):
         self, ip_configuration: IPConfiguration, prioritize_wireless=False
     ):
         """do not call"""
-        print(prioritize_wireless)
         return self.nm.set_static_ip(
             ip_configuration.static_ip,
             ip_configuration.prefix,
@@ -258,6 +258,8 @@ class AsyncNetworkManager(EventEmitter):
         self, cmd: Command, network_priority: NetworkPriority
     ):
         async with self._nm_lock:
+            if self._ip_configuration is None:
+                return
             if network_priority == NetworkPriority.ETHERNET:
                 self._set_static_ip(self._ip_configuration)
                 cmd.set_result(True)
@@ -345,16 +347,20 @@ class AsyncNetworkManager(EventEmitter):
         try:
             async with self._nm_lock:
                 connection = self.nm.get_active_wireless_connection()
-            if connection is not None:
-                if self.status.connection != connection and not self.status.connected:
-                    self.status.connection = connection
-                    self.status.connected = True
-                    self.emit("connected")
-                elif self.status.connected:
-                    self.status.connection = connection
-                    self.emit("connection_changed")
-            else:
-                self.status.connection = Connection()
-                self.status.connected = False
+                if connection is not None:
+                    if (
+                        self.status.connection != connection
+                        and not self.status.connected
+                    ):
+                        self.status.connection = connection
+                        self.status.connected = True
+                        self.emit("connected")
+                    elif self.status.connected:
+                        self.status.connection = connection
+                        self.emit("connection_changed")
+                else:
+                    self.status.connection = Connection()
+                    self.status.connected = False
         except NMException as e:
+            # An error regarding path will occur sometimes when the connection has not re-activated
             logging.error(f"Error occured while fetching active connection: f{e}")

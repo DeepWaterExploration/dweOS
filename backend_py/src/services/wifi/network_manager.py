@@ -242,8 +242,9 @@ class NetworkManager:
 
         # This 99/100 times will be good enough, unless for some reason someone has two ethernet cards on their device
         # TODO: Support infinite ethernet cards
+        # print(dev_interface, connection_id)
 
-        return (ethernet_device, ethernet_proxy, dev_interface, connection_id)
+        return (ethernet_device, ethernet_proxy, dev_interface, "Wired connection 1")
 
     def _update_ipv4_settings(
         self,
@@ -298,8 +299,6 @@ class NetworkManager:
         :param connection_id: The ID of the connection to set the static IP address on
         :return: The interface name of the ethernet device
         """
-
-        print(prioritize_wireless)
 
         # Update the IPv4 configuration, leaving everything else the same
         ipv4_settings = {
@@ -404,9 +403,27 @@ class NetworkManager:
 
     @handle_dbus_exceptions
     def connect(self, ssid: str, password=""):
+        # Check if the SSID already exists as a known connection
+        existing_connection = None
+        for connection in self.list_wireless_connections():
+            if connection.id == ssid:
+                existing_connection = connection
+                break
+
+        # Get the WiFi device
         (wifi_dev, dev_proxy) = self._get_wifi_device()
         if wifi_dev is None:
             raise NMException("No WiFi device found")
+
+        # If the connection already exists, just activate it, no need for any password
+        if existing_connection:
+            connection_path = self._find_connection_by_id(
+                connection_id=existing_connection.id
+            )
+            if not connection_path:
+                raise NMException(f"Known connection for SSID {ssid} not found")
+            self.interface.ActivateConnection(connection_path, dev_proxy, "/")
+            return
 
         wifi_interface = dbus.Interface(
             dev_proxy, "org.freedesktop.NetworkManager.Device.Wireless"

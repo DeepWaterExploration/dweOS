@@ -5,7 +5,7 @@ from .routes import *
 from .logging import LogHandler
 from .schemas import FeatureSupport
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 import socketio
 
 import logging
@@ -51,6 +51,7 @@ class Server:
             try:
                 self.wifi_manager = AsyncNetworkManager()
                 self.app.include_router(wifi_router)
+                self.app.include_router(wired_router)
                 self.wifi_manager.on(
                     "ip_changed",
                     lambda: asyncio.create_task(self.sio.emit("ip_changed")),

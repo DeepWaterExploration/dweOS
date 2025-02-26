@@ -25,6 +25,7 @@ import { BrowserRouter as Router } from "react-router-dom";
 // Import Material-UI components and icons
 import LightbulbIcon from "@mui/icons-material/Lightbulb";
 import SignalWifi0BarOutlinedIcon from "@mui/icons-material/SignalWifi0BarOutlined";
+import SettingsEthernetIcon from "@mui/icons-material/SettingsEthernet";
 import SettingsIcon from "@mui/icons-material/Settings";
 import VideoCameraBackOutlinedIcon from "@mui/icons-material/VideoCameraBackOutlined";
 import TerminalIcon from "@mui/icons-material/Terminal";
@@ -56,6 +57,7 @@ import { getStatus } from "./api";
 import { FeatureSupport } from "../../utils/types";
 import { getFeatureSupport } from "../../utils/api";
 import { io, Socket } from "socket.io-client";
+import Wired from "../../layouts/wired";
 
 const drawerWidth = 240;
 
@@ -174,6 +176,17 @@ const generateRoutes = (features: FeatureSupport) => {
                       type: routeType.COLLAPSE,
                       name: "WiFi",
                       key: "wifi",
+                      default: false,
+                  },
+                  {
+                      route: "/communications/wired",
+                      component: <Wired />,
+                      exact: true,
+                      icon: <SettingsEthernetIcon />,
+                      category: "Communications",
+                      type: routeType.COLLAPSE,
+                      name: "Wired",
+                      key: "wired",
                       default: false,
                   },
               ]

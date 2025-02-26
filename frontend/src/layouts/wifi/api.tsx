@@ -1,11 +1,5 @@
 import { getRequest, postRequest } from "../../utils/utils";
-import {
-    AccessPoint,
-    Connection,
-    IPConfiguration,
-    NetworkPriority,
-    Status,
-} from "./types";
+import { AccessPoint, Connection, Status } from "./types";
 
 export async function getWiFiStatus() {
     const response = await getRequest("/wifi/status");
@@ -35,29 +29,4 @@ export async function disconnectFromNetwork() {
 export async function forgetNetwork(ssid: string) {
     const response = await postRequest("/wifi/forget", { ssid });
     return await response.json();
-}
-
-export async function getIPConfiguration() {
-    const response = await getRequest("/wifi/get_ip_configuration");
-    return (await response.json()) as IPConfiguration;
-}
-
-export async function setIPConfiguration(ip_configuration: IPConfiguration) {
-    const response = await postRequest(
-        "/wifi/set_ip_configuration",
-        ip_configuration
-    );
-    return await response.json();
-}
-
-export async function setNetworkPriority(networkPriority: NetworkPriority) {
-    const response = await postRequest("/wifi/set_network_priority", {
-        network_priority: networkPriority,
-    });
-    return await response.json();
-}
-
-export async function getNetworkPriority() {
-    const response = await getRequest("/wifi/get_network_priority");
-    return (await response.json()) as { network_priority: NetworkPriority };
 }

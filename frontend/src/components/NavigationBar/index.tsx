@@ -341,11 +341,16 @@ const NavigationBar = () => {
                                         style={{ marginTop: "5px" }}
                                         sx={{ pr: 3 }}
                                     >
-                                        <img
-                                            src={DWELogo_white}
-                                            style={{ height: 30 }}
-                                            alt='DWE Logo'
-                                        />
+                                        <a
+                                            href='https://dwe.ai'
+                                            target='_blank'
+                                        >
+                                            <img
+                                                src={DWELogo_white}
+                                                style={{ height: 30 }}
+                                                alt='DWE Logo'
+                                            />
+                                        </a>
                                     </Box>
                                 </Box>
 

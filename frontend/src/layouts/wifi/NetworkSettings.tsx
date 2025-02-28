@@ -115,13 +115,16 @@ const WifiConnectDialog: React.FC<WifiConnectDialogProps> = (props) => {
 export interface NetworkSettingsCardProps {
     currentNetwork: Connection;
     setCurrentNetwork: React.Dispatch<React.SetStateAction<Connection>>;
+    loadingText: string;
+    setLoadingText: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = ({
     setCurrentNetwork,
     currentNetwork,
+    setLoadingText,
 }) => {
-    const { connected } = useContext(WebsocketContext);
+    const { connected, socket } = useContext(WebsocketContext);
 
     const [wifiConnected, setConnected] = useState(false);
     const [finishedFirstScan, setFinishedFirstScan] = useState(false);
@@ -147,6 +150,17 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = ({
     useEffect(() => {
         if (connected) {
             refreshNetworks();
+
+            socket.on("wifi_disconnected", () => {
+                setConnected(false);
+                setCurrentNetwork({
+                    id: "",
+                    type: "",
+                });
+            });
+            return () => {
+                socket.off("wifi_disconnected");
+            };
         }
     }, [connected]);
 
@@ -156,7 +170,9 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = ({
     );
 
     const onConnectToNewNetwork = async (ssid: string, password?: string) => {
+        setLoadingText(`Connecting to network ${ssid}...`);
         let result = await connectToNetwork(ssid, password);
+        setLoadingText("");
         if (result) {
             enqueueSnackbar("Connection Successful!", {
                 variant: "success",
@@ -169,7 +185,9 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = ({
     };
 
     const onDisconnectFromNetwork = async () => {
+        setLoadingText("Disconnecing from network...");
         let result = await disconnectFromNetwork();
+        setLoadingText("");
         if (result) {
             enqueueSnackbar("Disconnection Successful!", {
                 variant: "success",

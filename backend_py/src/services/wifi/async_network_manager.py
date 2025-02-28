@@ -359,6 +359,8 @@ class AsyncNetworkManager(EventEmitter):
                         self.status.connection = connection
                         self.emit("connection_changed")
                 else:
+                    if self.status.connected:
+                        self.emit("disconnected")
                     self.status.connection = Connection()
                     self.status.connected = False
         except NMException as e:

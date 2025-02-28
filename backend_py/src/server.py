@@ -68,6 +68,10 @@ class Server:
                     "connection_changed",
                     lambda: asyncio.create_task(self.sio.emit("connection_changed")),
                 )
+                self.wifi_manager.on(
+                    "disconnected",
+                    lambda: asyncio.create_task(self.sio.emit("wifi_disconnected")),
+                )
 
             except WiFiException as e:
                 logging.warning(

@@ -17,11 +17,14 @@ import WebsocketContext from "../../contexts/WebsocketContext";
 export interface KnownNetworksCardProps {
     currentNetwork: Connection;
     setCurrentNetwork: React.Dispatch<React.SetStateAction<Connection>>;
+    loadingText: string;
+    setLoadingText: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const KnownNetworksCard: React.FC<KnownNetworksCardProps> = ({
     currentNetwork,
     setCurrentNetwork,
+    setLoadingText,
 }) => {
     const { connected, socket } = useContext(WebsocketContext);
 
@@ -43,7 +46,9 @@ const KnownNetworksCard: React.FC<KnownNetworksCardProps> = ({
     }, [connected]);
 
     const onForgetNetwork = async (ssid: string) => {
+        setLoadingText(`Forgetting network ${ssid}...`);
         let result = await forgetNetwork(ssid);
+        setLoadingText("");
         if (result) {
             enqueueSnackbar("Successfully forgot network!", {
                 variant: "success",
@@ -52,12 +57,13 @@ const KnownNetworksCard: React.FC<KnownNetworksCardProps> = ({
                 prevKnownNetworks.filter((connection) => connection.id !== ssid)
             );
 
-            if (currentNetwork.id === ssid) {
-                setCurrentNetwork({
-                    id: "",
-                    type: "",
-                });
-            }
+            // Handled by server now
+            // if (currentNetwork.id === ssid) {
+            //     setCurrentNetwork({
+            //         id: "",
+            //         type: "",
+            //     });
+            // }
         } else {
             enqueueSnackbar("Failed to forget network", {
                 variant: "error",
@@ -66,7 +72,9 @@ const KnownNetworksCard: React.FC<KnownNetworksCardProps> = ({
     };
 
     const onConnectToNetwork = async (ssid: string) => {
+        setLoadingText(`Connecting to known network ${ssid}...`);
         let result = await connectToNetwork(ssid);
+        setLoadingText("");
         if (result) {
             enqueueSnackbar("Successfully connected to network!", {
                 variant: "success",

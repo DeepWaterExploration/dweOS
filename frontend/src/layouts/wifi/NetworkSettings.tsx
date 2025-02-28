@@ -112,15 +112,20 @@ const WifiConnectDialog: React.FC<WifiConnectDialogProps> = (props) => {
     );
 };
 
-export interface NetworkSettingsCardProps {}
+export interface NetworkSettingsCardProps {
+    currentNetwork: Connection;
+    setCurrentNetwork: React.Dispatch<React.SetStateAction<Connection>>;
+    loadingText: string;
+    setLoadingText: React.Dispatch<React.SetStateAction<string>>;
+}
 
-const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = ({}) => {
-    const { connected } = useContext(WebsocketContext);
+const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = ({
+    setCurrentNetwork,
+    currentNetwork,
+    setLoadingText,
+}) => {
+    const { connected, socket } = useContext(WebsocketContext);
 
-    const [currentNetwork, setCurrentNetwork] = useState({
-        id: "",
-        type: "",
-    } as Connection);
     const [wifiConnected, setConnected] = useState(false);
     const [finishedFirstScan, setFinishedFirstScan] = useState(false);
     const [accessPoints, setAccessPoints] = useState([] as AccessPoint[]);
@@ -146,9 +151,15 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = ({}) => {
         if (connected) {
             refreshNetworks();
 
-            const interval = setInterval(() => refreshNetworks(), 500);
+            socket.on("wifi_disconnected", () => {
+                setConnected(false);
+                setCurrentNetwork({
+                    id: "",
+                    type: "",
+                });
+            });
             return () => {
-                clearInterval(interval);
+                socket.off("wifi_disconnected");
             };
         }
     }, [connected]);
@@ -159,19 +170,40 @@ const NetworkSettingsCard: React.FC<NetworkSettingsCardProps> = ({}) => {
     );
 
     const onConnectToNewNetwork = async (ssid: string, password?: string) => {
-        await connectToNetwork(ssid, password);
-        setTimeout(async () => {
-            const { newNetwork } = await refreshNetworks();
-            if (newNetwork && newNetwork.id === ssid)
-                enqueueSnackbar("Connection Successful!", {
-                    variant: "success",
-                });
-            else enqueueSnackbar("Connection failed", { variant: "error" });
-        }, 500);
+        setLoadingText(`Connecting to network ${ssid}...`);
+        let result = await connectToNetwork(ssid, password);
+        setLoadingText("");
+        if (result) {
+            enqueueSnackbar("Connection Successful!", {
+                variant: "success",
+            });
+            setConnected(true);
+            setCurrentNetwork({ id: ssid, type: "802-11-wireless" });
+        } else {
+            enqueueSnackbar("Connection failed", { variant: "error" });
+        }
     };
 
     const onDisconnectFromNetwork = async () => {
-        await disconnectFromNetwork();
+        setLoadingText("Disconnecing from network...");
+        let result = await disconnectFromNetwork();
+        setLoadingText("");
+        if (result) {
+            enqueueSnackbar("Disconnection Successful!", {
+                variant: "success",
+            });
+            setConnected(false);
+            setCurrentNetwork({ id: "", type: "" });
+        } else {
+            enqueueSnackbar(
+                <>
+                    {"Disconnection failed, check"}
+                    <a href='/communications/logs'>&nbsp;logs&nbsp;</a>
+                    {"for more information"}
+                </>,
+                { variant: "error" }
+            );
+        }
     };
 
     return (

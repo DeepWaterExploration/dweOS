@@ -206,7 +206,6 @@ const DevicesLayout = () => {
             device_list[findDeviceWithBusInfo(device_list, bus_info)];
         if (follower) {
             follower.leader = undefined;
-            follower.stream.configured = false;
             updateDevice(follower);
         }
     };

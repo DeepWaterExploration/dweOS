@@ -48,9 +48,12 @@ class SHDDevice(Device):
 
     def remove_leader(self):
         if not self.leader_device:
-            logging.warn('Attempting to remove leader from a device with no leader. This is undefined behavior and will not be permitted.')
+            logging.warning('Attempting to remove leader from a device with no leader. This is undefined behavior and will not be permitted.')
             return
-        self.leader_device.stream_runner.streams.remove(self.stream)
+        try:
+            self.leader_device.stream_runner.streams.remove(self.stream)
+        except ValueError:
+            logging.warning('Tried to remove stream from leader without a stream')
         # restart the leader device stream to take this device out of it
         if self.leader_device.stream_runner.started:
             self.leader_device.start_stream()

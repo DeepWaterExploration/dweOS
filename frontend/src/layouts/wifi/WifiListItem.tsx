@@ -114,17 +114,37 @@ const WifiListItem: React.FC<WifiListItemProps> = (props) => {
                         );
                     case WifiListItemType.KNOWN:
                         return (
-                            <Button
-                                variant='contained'
-                                style={{ color: "white", fontWeight: "bold" }}
-                                onClick={() => {
-                                    props.on_forget
-                                        ? props.on_forget()
-                                        : undefined;
-                                }}
-                            >
-                                Forget
-                            </Button>
+                            <>
+                                <Button
+                                    variant='contained'
+                                    style={{
+                                        color: "white",
+                                        fontWeight: "bold",
+                                    }}
+                                    onClick={() => {
+                                        props.on_connect
+                                            ? props.on_connect()
+                                            : undefined;
+                                    }}
+                                >
+                                    Connect
+                                </Button>
+                                <Button
+                                    variant='contained'
+                                    style={{
+                                        marginLeft: "15px",
+                                        color: "white",
+                                        fontWeight: "bold",
+                                    }}
+                                    onClick={() => {
+                                        props.on_forget
+                                            ? props.on_forget()
+                                            : undefined;
+                                    }}
+                                >
+                                    Forget
+                                </Button>
+                            </>
                         );
                 }
                 return <></>;

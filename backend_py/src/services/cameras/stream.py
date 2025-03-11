@@ -11,64 +11,74 @@ from .pydantic_schemas import *
 
 import logging
 
+
 @dataclass
 class Stream(events.EventEmitter):
-    device_path: str = ''
+    device_path: str = ""
     encode_type: StreamEncodeTypeEnum = None
     stream_type: StreamTypeEnum = StreamTypeEnum.UDP
     endpoints: List[StreamEndpointModel] = field(default_factory=list)
     width: int = None
     height: int = None
-    interval: IntervalModel = field(default_factory=lambda: IntervalModel(numerator=1, denominator=30))
+    interval: IntervalModel = field(
+        default_factory=lambda: IntervalModel(numerator=1, denominator=30)
+    )
     configured: bool = False
 
+    software_h264_bitrate = 5000
+
     def _construct_pipeline(self):
-        return f'{self._build_source()} ! {self._construct_caps()} ! {self._build_payload()} ! {self._build_sink()}'
+        return f"{self._build_source()} ! {self._construct_caps()} ! {self._build_payload()} ! {self._build_sink()}"
 
     def _get_format(self):
         match self.encode_type:
             case StreamEncodeTypeEnum.H264:
-                return 'video/x-h264'
+                return "video/x-h264"
             case StreamEncodeTypeEnum.MJPG:
-                return 'image/jpeg'
+                return "image/jpeg"
+            case StreamEncodeTypeEnum.SOFTWARE_H264:
+                return "image/jpeg"  # from jpeg to h.264
             case _:
-                return ''
+                return ""
 
     def _build_source(self):
-        return f'v4l2src device={self.device_path}'
+        return f"v4l2src device={self.device_path}"
 
     def _construct_caps(self):
-        return f'{self._get_format()},width={self.width},height={self.height},framerate={self.interval.denominator}/{self.interval.numerator}'
+        return f"{self._get_format()},width={self.width},height={self.height},framerate={self.interval.denominator}/{self.interval.numerator}"
 
     def _build_payload(self):
         match self.encode_type:
             case StreamEncodeTypeEnum.H264:
-                return 'h264parse ! queue ! rtph264pay config-interval=10 pt=96'
+                return "h264parse ! queue ! rtph264pay config-interval=10 pt=96"
             case StreamEncodeTypeEnum.MJPG:
-                return 'rtpjpegpay'
+                return "rtpjpegpay"
+            case StreamEncodeTypeEnum.SOFTWARE_H264:
+                return f"jpegdec ! queue ! x264enc byte-stream=true tune=zerolatency bitrate={self.software_h264_bitrate} speed-preset=ultrafast ! rtph264pay config-interval=10 pt=96"
             case _:
-                return ''
+                return ""
 
     def _build_sink(self):
         match self.stream_type:
             case StreamTypeEnum.UDP:
                 if len(self.endpoints) == 0:
-                    return 'fakesink'
-                sink = 'multiudpsink sync=true clients='
+                    return "fakesink"
+                sink = "multiudpsink sync=true clients="
                 for endpoint, i in zip(self.endpoints, range(len(self.endpoints))):
-                    sink += f'{endpoint.host}:{endpoint.port}'
-                    if i < len(self.endpoints)-1:
-                        sink += ','
+                    sink += f"{endpoint.host}:{endpoint.port}"
+                    if i < len(self.endpoints) - 1:
+                        sink += ","
 
                 return sink
             case _:
-                return ''
+                return ""
 
     def start(*args):
         pass
 
     def stop(*args):
         pass
+
 
 class StreamRunner(events.EventEmitter):
 
@@ -82,7 +92,7 @@ class StreamRunner(events.EventEmitter):
 
     def start(self):
         if self.started:
-            logging.info('Joining thread')
+            logging.info("Joining thread")
             self.stop()
             self.error_thread.join()
         self.started = True
@@ -100,7 +110,11 @@ class StreamRunner(events.EventEmitter):
         pipeline_str = self._construct_pipeline()
         logging.info(pipeline_str)
         self._process = subprocess.Popen(
-            f'gst-launch-1.0 {pipeline_str}'.split(' '), stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+            f"gst-launch-1.0 {pipeline_str}".split(" "),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
         self.error_thread = threading.Thread(target=self._log_errors)
         self.error_thread.start()
 
@@ -109,12 +123,12 @@ class StreamRunner(events.EventEmitter):
         for stream in self.streams:
             if stream.configured:
                 pipeline_strs.append(stream._construct_pipeline())
-        return ' '.join(pipeline_strs)
-    
+        return " ".join(pipeline_strs)
+
     def _log_errors(self):
         error_block = []
         try:
-            for stderr_line in iter(self._process.stderr.readline, ''):
+            for stderr_line in iter(self._process.stderr.readline, ""):
                 stderr_line = self._process.stderr.readline()
                 if stderr_line:
                     error_block.append(stderr_line)
@@ -126,4 +140,4 @@ class StreamRunner(events.EventEmitter):
             pass
         if len(error_block) > 0:
             self.stop()
-            self.emit('gst_error', error_block)
+            self.emit("gst_error", error_block)

@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from typing import List, Dict, Optional
 from enum import Enum, IntEnum
 
+
 class ControlTypeEnum(IntEnum):
     INTEGER = 1
     BOOLEAN = 2
@@ -13,27 +14,33 @@ class ControlTypeEnum(IntEnum):
     BITMASK = 8
     INTEGER_MENU = 9
 
+
 class StreamEncodeTypeEnum(str, Enum):
-    MJPG = 'MJPG'
-    H264 = 'H264'
+    MJPG = "MJPG"
+    H264 = "H264"
+    SOFTWARE_H264 = "SOFTWARE_H264"
+
 
 class StreamTypeEnum(str, Enum):
-    UDP = 'UDP'
+    UDP = "UDP"
 
 
 class H264Mode(IntEnum):
-    '''
+    """
     H.264 Mode Enum
-    '''
+    """
+
     MODE_CONSTANT_BITRATE = 1
     MODE_VARIABLE_BITRATE = 2
 
+
 class DeviceType(IntEnum):
-    '''
+    """
     Device type Enum
-    '''
+    """
+
     EXPLOREHD = 0
-    STELLARHD_LEADER= 1
+    STELLARHD_LEADER = 1
     STELLARHD_FOLLOWER = 2
 
 
@@ -156,6 +163,7 @@ class DeviceModel(BaseModel):
 
 # API SCHEMAS
 
+
 class StreamFormatModel(BaseModel):
     width: int
     height: int
@@ -163,6 +171,7 @@ class StreamFormatModel(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 class StreamInfoModel(BaseModel):
     bus_info: str
@@ -173,6 +182,7 @@ class StreamInfoModel(BaseModel):
     class Config:
         from_attributes = True
 
+
 class UVCControlModel(BaseModel):
     bus_info: str
     control_id: int
@@ -180,6 +190,7 @@ class UVCControlModel(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 class DeviceNicknameModel(BaseModel):
     bus_info: str
@@ -195,6 +206,7 @@ class DeviceLeaderModel(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 class DeviceDescriptorModel(BaseModel):
     bus_info: str

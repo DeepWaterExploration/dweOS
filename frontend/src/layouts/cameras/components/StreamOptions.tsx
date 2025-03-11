@@ -51,7 +51,7 @@ const getResolutions = (device: Device, encodeFormat: encodeType) => {
     return newResolutions;
 };
 
-const ENCODERS = ["H264", "MJPG"];
+const ENCODERS = ["H264", "MJPG", "SOFTWARE_H264"];
 
 export const StreamOptions: React.FC = () => {
     const {
@@ -211,6 +211,7 @@ export const StreamOptions: React.FC = () => {
         let newEncoders = [];
         for (let camera of device.cameras) {
             for (let format in camera.formats) {
+                console.log(format);
                 if (ENCODERS.includes(format)) {
                     newEncoders.push(format);
                 }

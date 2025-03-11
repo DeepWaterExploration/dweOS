@@ -51,6 +51,8 @@ class AsyncNetworkManager(EventEmitter):
 
         self._command_queue: asyncio.Queue[Command] = asyncio.Queue()
 
+        self.logger = logging.getLogger("dwe_os_2.wifi.AsyncNetworkManager")
+
         self._ip_configuration = IPConfiguration()
         self._network_priority = NetworkPriority.ETHERNET
 
@@ -94,13 +96,13 @@ class AsyncNetworkManager(EventEmitter):
         self._ip_configuration = self.nm.get_ip_info()
 
         if self._ip_configuration == None:
-            logging.info("No ethernet connection detected")
+            self.logger.info("No ethernet connection detected")
         elif self._ip_configuration.ip_type == IPType.STATIC:
-            logging.info(
+            self.logger.info(
                 f"Static IP: {self._ip_configuration.static_ip}/{self._ip_configuration.prefix}, Gateway: {self._ip_configuration.gateway}"
             )
         else:
-            logging.info(
+            self.logger.info(
                 f"Dynamic IP: {self._ip_configuration.static_ip}/{self._ip_configuration.prefix}"
             )
 
@@ -122,7 +124,7 @@ class AsyncNetworkManager(EventEmitter):
         self._scanning = True
         self._update_task = asyncio.create_task(self._update_loop())
 
-        logging.info("WiFi manager scanning started")
+        self.logger.info("WiFi manager scanning started")
 
     async def stop_scanning(self):
         self._scanning = False
@@ -132,7 +134,7 @@ class AsyncNetworkManager(EventEmitter):
         if self._update_task:
             await self._update_task
 
-        logging.info("WiFi manager scanning stopped")
+        self.logger.info("WiFi manager scanning stopped")
 
     def get_access_points(self):
         return self.access_points
@@ -192,7 +194,7 @@ class AsyncNetworkManager(EventEmitter):
                     new_ip_configuration = self.nm.get_ip_info()
                     if new_ip_configuration != self._ip_configuration:
                         self._ip_configuration = new_ip_configuration
-                        logging.info("IP Configuration changed")
+                        self.logger.info("IP Configuration changed")
                         self.emit("ip_changed")
 
                 async with self._nm_lock:
@@ -222,7 +224,7 @@ class AsyncNetworkManager(EventEmitter):
 
                 await asyncio.sleep(5)
             except Exception as e:
-                logging.exception("Exception in _update_loop: %s", e)
+                self.logger.exception("Exception in _update_loop: %s", e)
 
     async def _process_command(self, cmd: Command):
         if cmd.cmd_type == CommandType.CONNECT:
@@ -342,7 +344,7 @@ class AsyncNetworkManager(EventEmitter):
                     self.emit("connections_changed")
                     self.connections = connections
         except NMException as e:
-            logging.error(f"Error occured while fetching cached connections: f{e}")
+            self.logger.error(f"Error occured while fetching cached connections: f{e}")
 
     async def _update_active_connection(self):
         if self.nm is None:
@@ -368,4 +370,4 @@ class AsyncNetworkManager(EventEmitter):
                     self.status.connected = False
         except NMException as e:
             # An error regarding path will occur sometimes when the connection has not re-activated
-            logging.error(f"Error occured while fetching active connection: f{e}")
+            self.logger.error(f"Error occured while fetching active connection: f{e}")

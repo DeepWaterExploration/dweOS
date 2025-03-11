@@ -6,8 +6,6 @@ import asyncio
 from contextlib import asynccontextmanager
 import logging
 
-logging.getLogger().setLevel(logging.INFO)
-
 ORIGINS = ["http://localhost:5173"]
 
 # Use AsyncServer
@@ -40,7 +38,9 @@ app.add_middleware(
 
 # Server instance
 # server = Server(FeatureSupport.none(), sio, app, settings_path='.')
-server = Server(FeatureSupport.all(), sio, app, settings_path=".")
+server = Server(
+    FeatureSupport.all(), sio, app, settings_path=".", log_level=logging.DEBUG
+)
 
 # Combine FastAPI and Socket.IO ASGI apps
 app = socketio.ASGIApp(sio, other_asgi_app=app)

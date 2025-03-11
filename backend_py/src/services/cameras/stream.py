@@ -90,9 +90,11 @@ class StreamRunner(events.EventEmitter):
         self.started = False
         self.error_thread = None
 
+        self.logger = logging.getLogger("dwe_os_2.cameras.StreamRunner")
+
     def start(self):
         if self.started:
-            logging.info("Joining thread")
+            self.logger.info("Joining thread")
             self.stop()
             self.error_thread.join()
         self.started = True
@@ -108,7 +110,7 @@ class StreamRunner(events.EventEmitter):
 
     def _run_pipeline(self):
         pipeline_str = self._construct_pipeline()
-        logging.info(pipeline_str)
+        self.logger.info(pipeline_str)
         self._process = subprocess.Popen(
             f"gst-launch-1.0 {pipeline_str}".split(" "),
             stdout=subprocess.DEVNULL,
@@ -132,7 +134,7 @@ class StreamRunner(events.EventEmitter):
                 stderr_line = self._process.stderr.readline()
                 if stderr_line:
                     error_block.append(stderr_line)
-                    logging.error(stderr_line)
+                    self.logger.error(stderr_line)
                     self.stop()
                 else:
                     break

@@ -65,6 +65,8 @@ class NetworkManager:
         # Get an interface to the properties object
         self.props = dbus.Interface(self.proxy, "org.freedesktop.DBus.Properties")
 
+        self.logger = logging.getLogger("dwe_os_2.wifi.NetworkManager")
+
     @handle_dbus_exceptions
     def get_ip_info(self, interface_name: str | None = None) -> IPConfiguration:
         """
@@ -233,7 +235,7 @@ class NetworkManager:
         if connection_id is None:
             if ethernet_connection is None:
                 # If we did not get supplied a connection ID, we will not create one automatically
-                logging.error(
+                self.logger.error(
                     "There is no existing ethernet connection to configure and creating one is not currently supported."
                 )
                 return
@@ -268,7 +270,7 @@ class NetworkManager:
         # Update the IPv4 configuration, leaving everything else the same
         connection_settings["ipv4"] = settings
 
-        logging.info(
+        self.logger.info(
             f"Updating IP Config for connection: {connection_id} on {interface_name}"
         )
 
@@ -637,7 +639,7 @@ class NetworkManager:
             config = connection.GetSettings()
             # ensure config being None cannot cause issues
             if config is None:
-                logging.warning("Failed to get config from connection")
+                self.logger.warning("Failed to get config from connection")
                 continue
             try:
                 if config["connection"]["id"] == ssid:
@@ -654,7 +656,7 @@ class NetworkManager:
     def _get_wifi_device(self):
         devices = self.interface.GetDevices()
         if devices is None:
-            logging.warning("Failed to retrieve device list")
+            self.logger.warning("Failed to retrieve device list")
             devices = []
         for dev_path in devices:
             dev_proxy = self.bus.get_object("org.freedesktop.NetworkManager", dev_path)

@@ -1,12 +1,16 @@
 from abc import ABC, abstractmethod
 import logging
 
+
 class PWMController(ABC):
-    NAME = 'Abstract Controller'
+    NAME = "Abstract Controller"
+
+    def __init__(self):
+        self.logger = logging.getLogger("dwe_os_2.PWMController")
 
     @abstractmethod
     def set_intensity(self, pin: int, intensity: float):
-        logging.info(f'Setting light intensity: {pin} to {intensity}')
+        self.logger.info(f"Setting light intensity: {pin} to {intensity}")
 
     @abstractmethod
     def disable_pin(self, pin: int):

@@ -11,27 +11,33 @@ from .shd import SHDDevice
 
 from .device_utils import find_device_with_bus_info
 
+
 class SettingsManager:
 
-    def __init__(self, settings_path: str = '.') -> None:
-        path = f'{settings_path}/device_settings.json'
+    def __init__(self, settings_path: str = ".") -> None:
+        path = f"{settings_path}/device_settings.json"
         try:
-            self.file_object = open(path, 'r+')
+            self.file_object = open(path, "r+")
         except FileNotFoundError:
-            open(path, 'w').close()
-            self.file_object = open(path, 'r+')
+            open(path, "w").close()
+            self.file_object = open(path, "r+")
         self.to_save: List[SavedDeviceModel] = []
         self.thread = threading.Thread(target=self._run_settings_sync)
         self.thread.start()
 
         self.leader_follower_pairs: List[SavedLeaderFollowerPairModel] = []
 
+        self.logger = logging.getLogger("dwe_os_2.SettingsManager")
+
         try:
             settings: list[Dict] = json.loads(self.file_object.read())
-            self.settings: List[SavedDeviceModel] = [SavedDeviceModel.model_validate(saved_device) for saved_device in settings]
+            self.settings: List[SavedDeviceModel] = [
+                SavedDeviceModel.model_validate(saved_device)
+                for saved_device in settings
+            ]
         except json.JSONDecodeError:
             self.file_object.seek(0)
-            self.file_object.write('[]')
+            self.file_object.write("[]")
             self.file_object.truncate()
             self.settings = []
             self.file_object.flush()
@@ -40,13 +46,20 @@ class SettingsManager:
         for saved_device in self.settings:
             if saved_device.bus_info == device.bus_info:
                 if device.device_type != saved_device.device_type:
-                    logging.info(f'Device {device.bus_info} with device_type: {str(device.device_type)} plugged into port of saved device_type: {str(saved_device.device_type)}. Discarding stored data as this could cause numerous issues.')
+                    self.logger.info(
+                        f"Device {device.bus_info} with device_type: {str(device.device_type)} plugged into port of saved device_type: {str(saved_device.device_type)}. Discarding stored data as this could cause numerous issues."
+                    )
                     self.settings.remove(saved_device)
                     return
                 if saved_device.device_type == DeviceType.STELLARHD_FOLLOWER:
                     if not saved_device.is_leader:
                         if saved_device.leader:
-                            self.leader_follower_pairs.append(SavedLeaderFollowerPairModel(leader_bus_info=saved_device.leader, follower_bus_info=saved_device.bus_info))
+                            self.leader_follower_pairs.append(
+                                SavedLeaderFollowerPairModel(
+                                    leader_bus_info=saved_device.leader,
+                                    follower_bus_info=saved_device.bus_info,
+                                )
+                            )
 
                 device.load_settings(saved_device)
                 return
@@ -56,16 +69,24 @@ class SettingsManager:
         # If a follower is plugged in and the leader is not attached yet, wait until it is attached to do anything
         # If a follower is plugged in and the leader is not a stellar leader, remove the leader information
         for leader_follower_pair in self.leader_follower_pairs:
-            leader = find_device_with_bus_info(devices, leader_follower_pair.leader_bus_info)
-            follower = find_device_with_bus_info(devices, leader_follower_pair.follower_bus_info)
+            leader = find_device_with_bus_info(
+                devices, leader_follower_pair.leader_bus_info
+            )
+            follower = find_device_with_bus_info(
+                devices, leader_follower_pair.follower_bus_info
+            )
 
             if not leader or not follower:
-                logging.warn(f'Error finding devices: {leader_follower_pair.leader_bus_info}, {leader_follower_pair.follower_bus_info}')
+                self.logger.warning(
+                    f"Error finding devices: {leader_follower_pair.leader_bus_info}, {leader_follower_pair.follower_bus_info}"
+                )
                 continue
 
             if follower.device_type != DeviceType.STELLARHD_FOLLOWER:
                 # wrong device type plugged in
-                logging.error('This should never ever happen, but is ok and will be managed by the software.')
+                self.logger.error(
+                    "This should never ever happen, but is ok and will be managed by the software."
+                )
                 self.leader_follower_pairs.remove(leader_follower_pair)
                 continue
 
@@ -73,7 +94,9 @@ class SettingsManager:
             follower = cast(SHDDevice, follower)
 
             if leader.device_type != DeviceType.STELLARHD_LEADER:
-                logging.info('Non leader device plugged into leader port. This is ok and will be managed by the software!')
+                self.logger.info(
+                    "Non leader device plugged into leader port. This is ok and will be managed by the software!"
+                )
                 self.leader_follower_pairs.remove(leader_follower_pair)
                 continue
 
@@ -93,7 +116,8 @@ class SettingsManager:
         self.settings.append(saved_device)
         self.file_object.seek(0)
         self.file_object.write(
-            json.dumps([model.model_dump() for model in self.settings]))
+            json.dumps([model.model_dump() for model in self.settings])
+        )
         self.file_object.truncate()
         self.file_object.flush()
 

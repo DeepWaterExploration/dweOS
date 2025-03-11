@@ -279,14 +279,17 @@ class AsyncNetworkManager(EventEmitter):
         except Exception as e:
             cmd.set_exception(e)
 
+    def _is_connected(self, ssid: str):
+        if not self.nm.get_active_wireless_connection():
+            return False
+        return self.nm.get_active_wireless_connection().id == ssid
+
     async def _handle_connect(self, cmd: Command, ssid: str, password: str = ""):
         try:
             async with self._nm_lock:
                 self.nm.connect(ssid, password)
 
-                if await self._wait_for(
-                    lambda: self.nm.get_active_wireless_connection().id == ssid
-                ):
+                if await self._wait_for(lambda: self._is_connected(ssid)):
                     self.status.connected = False
                     self.status.connection = None
                     cmd.set_result(True)

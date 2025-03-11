@@ -107,6 +107,7 @@ export interface Stream {
 export enum encodeType {
     MJPG = "MJPG",
     H264 = "H264",
+    SOFTWARE_H264 = "SOFTWARE_H264",
 }
 
 export enum controlType {

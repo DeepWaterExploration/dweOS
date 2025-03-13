@@ -31,6 +31,7 @@ import { subscribe } from "valtio";
 import DeviceContext from "../../../contexts/DeviceContext";
 import { IP_REGEX } from "../../../utils/utils";
 import { useTheme } from "@emotion/react";
+// import { lighten } from "@mui/material";
 
 /*
  * Get the list of resolutions available from the device
@@ -79,6 +80,10 @@ export const StreamOptions: React.FC = () => {
     const [port, setPort] = useState(nextPort);
 
     const [leaders, setLeaders] = useState([] as Device[]);
+
+    const [editingHost, setEditingHost] = useState<undefined | string>(
+        undefined
+    );
 
     const { enqueueSnackbar } = useSnackbar();
 
@@ -311,7 +316,15 @@ export const StreamOptions: React.FC = () => {
                                 ))}
                             </TextField>
                         </div>
-                        <Paper sx={{ marginBottom: "10px" }}>
+                        <Paper
+                            sx={{
+                                marginBottom: "10px",
+                                boxShadow: 3,
+                                borderRadius: 2,
+                                backgroundColor: (theme) =>
+                                    theme.palette.background.paper,
+                            }}
+                        >
                             {device.stream.endpoints.length === 0 ? (
                                 <Typography
                                     fontWeight='500'
@@ -321,14 +334,18 @@ export const StreamOptions: React.FC = () => {
                                         padding: "25px",
                                     }}
                                 >
-                                    No stream endpoint added
+                                    No stream endpoints added
                                 </Typography>
                             ) : (
                                 <List
                                     dense={true}
-                                    sx={{ maxHeight: 200, overflow: "auto" }}
+                                    sx={{
+                                        maxHeight: 200,
+                                        overflow: "auto",
+                                        borderRadius: 2,
+                                    }}
                                     subheader={
-                                        <ListSubheader component='div' sx={{}}>
+                                        <ListSubheader component='div'>
                                             Active Endpoints
                                         </ListSubheader>
                                     }
@@ -361,7 +378,95 @@ export const StreamOptions: React.FC = () => {
                                                     </Avatar>
                                                 </ListItemAvatar>
                                                 <ListItemText
-                                                    primary={`IP Address: ${endpoint.host}`}
+                                                    primary={
+                                                        <>
+                                                            IP Address:&nbsp;
+                                                            <Typography
+                                                                component='span'
+                                                                sx={{
+                                                                    cursor: "text",
+                                                                    userSelect:
+                                                                        "none",
+                                                                    fontSize:
+                                                                        "inherit",
+                                                                    alignItems:
+                                                                        "center",
+                                                                }}
+                                                                onDoubleClick={() =>
+                                                                    setEditingHost(
+                                                                        endpoint.host
+                                                                    )
+                                                                }
+                                                            >
+                                                                {editingHost ===
+                                                                endpoint.host ? (
+                                                                    <TextField
+                                                                        autoFocus
+                                                                        variant='standard'
+                                                                        size='small'
+                                                                        defaultValue={
+                                                                            endpoint.host
+                                                                        }
+                                                                        onBlur={(
+                                                                            e
+                                                                        ) =>
+                                                                            setEditingHost(
+                                                                                undefined
+                                                                            )
+                                                                        }
+                                                                        onKeyDown={(
+                                                                            e
+                                                                        ) => {
+                                                                            if (
+                                                                                e.key ===
+                                                                                "Enter"
+                                                                            ) {
+                                                                                // handleEditEndpoint(
+                                                                                //     endpoint.host,
+                                                                                //     e
+                                                                                //         .currentTarget
+                                                                                //         .value
+                                                                                // );
+                                                                            }
+                                                                        }}
+                                                                        sx={{
+                                                                            fontSize:
+                                                                                "inherit",
+                                                                            lineHeight:
+                                                                                "inherit", // Matches text alignment
+                                                                            padding: 0,
+                                                                            margin: 0,
+                                                                            minWidth:
+                                                                                "80px",
+                                                                            height: "auto",
+                                                                            display:
+                                                                                "inline-flex", // Keeps it inline
+                                                                            "& .MuiInputBase-root":
+                                                                                {
+                                                                                    padding: 0,
+                                                                                    margin: 0,
+                                                                                    fontSize:
+                                                                                        "inherit",
+                                                                                    lineHeight:
+                                                                                        "inherit",
+                                                                                },
+                                                                            "& .MuiInputBase-input":
+                                                                                {
+                                                                                    fontSize:
+                                                                                        "inherit",
+                                                                                    padding: 0,
+                                                                                    margin: 0,
+                                                                                    lineHeight:
+                                                                                        "inherit",
+                                                                                },
+                                                                        }}
+                                                                    />
+                                                                ) : (
+                                                                    endpoint.host
+                                                                )}
+                                                            </Typography>
+                                                        </>
+                                                    }
                                                     secondary={`Port: ${endpoint.port}`}
                                                 />
                                             </ListItem>
@@ -370,46 +475,28 @@ export const StreamOptions: React.FC = () => {
                                 </List>
                             )}
                         </Paper>
-                        {/* Container for User Input and Interaction */}
-                        <div style={styles.cardContent.div}>
-                            {/* IP Address input */}
-                            <TextField
-                                sx={styles.textField}
-                                label='New Endpoint IP'
-                                variant='outlined'
-                                size='small'
-                                value={host}
-                                onChange={(e) => setHost(e.target.value)}
-                            />
-                            {/* Port Input */}
-                            <TextField
-                                sx={styles.portField}
-                                label='New Endpoint Port'
-                                variant='outlined'
-                                size='small'
-                                value={port}
-                                onChange={(e) =>
-                                    setPort(parseInt(e.target.value))
-                                }
-                                type='number'
-                                inputProps={{ min: 1024, max: 65535 }} // Specify minimum and maximum values
-                            />
-                            {/* Add Stream Endpoint Button */}
-                            <IconButton
-                                sx={{
-                                    width: "40px",
-                                    height: "40px",
-                                    color: "text.secondary",
-                                    marginLeft: "-10px",
-                                }}
-                                onClick={() => {
-                                    handleAddEndpoint();
-                                }}
-                            >
-                                <AddIcon />
-                            </IconButton>
-                        </div>
+                        {/* Cool floaty button */}
                         <Button
+                            onClick={handleAddEndpoint}
+                            sx={{
+                                // backgroundColor: (theme) =>
+                                //     theme.palette.background.paper,
+                                backgroundColor: "inherit",
+                                boxShadow: 3,
+                                padding: 1,
+                                borderRadius: 2,
+                                "&:hover": {
+                                    boxShadow: 4,
+                                    backgroundColor: (theme) =>
+                                        theme.palette.mode === "dark"
+                                            ? theme.palette.grey[800]
+                                            : theme.palette.grey[100],
+                                },
+                            }}
+                        >
+                            Add Stream Endpoint
+                        </Button>
+                        {/* <Button
                             color='primary'
                             variant='contained'
                             onClick={() => {
@@ -421,7 +508,7 @@ export const StreamOptions: React.FC = () => {
                             }}
                         >
                             Restart Stream
-                        </Button>
+                        </Button> */}
                     </>
                 ) : undefined
             ) : undefined}

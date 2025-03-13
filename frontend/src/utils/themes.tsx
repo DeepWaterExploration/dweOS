@@ -32,6 +32,9 @@ const themeOptions = (mode: "light" | "dark") => ({
                       secondary: "#CCCCCC",
                       tertiary: "#46BAE7",
                   },
+                  grey: {
+                      800: "#1c1c1c",
+                  },
               }),
     },
     components: {

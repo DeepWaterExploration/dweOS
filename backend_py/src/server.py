@@ -97,7 +97,7 @@ class Server:
                 )
 
             except WiFiException as e:
-                self.logger.warning(
+                self.server_logger.warning(
                     f"Error occurred while initializing WiFi: {e} so WiFi will not be supported"
                 )
                 self.feature_support.wifi = False

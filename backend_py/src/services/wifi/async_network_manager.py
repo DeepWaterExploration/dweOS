@@ -72,6 +72,33 @@ class AsyncNetworkManager(EventEmitter):
         self._initialize_access_points()
         self._initialize_ip_configuration()
 
+    async def _reinitialize_nm(self):
+        self.logger.info("Reinitializing NetworkManager")
+        async with self._nm_lock:
+            del self.nm
+            self.nm = NetworkManager()
+
+    async def safe_dbus_call(self, method, *args, timeout=3):
+        """
+        Runs a DBus method call safely with a timeout.
+
+        :param method: The DBus function to call.
+        :param args: Arguments to pass to the function.
+        :param timeout: Timeout in seconds before forcefully stopping.
+        :return: The result of the function or None if it times out.
+        """
+        try:
+            return await asyncio.wait_for(
+                asyncio.to_thread(method, *args), timeout=timeout
+            )
+        except asyncio.TimeoutError:
+            return None  # Handle failure gracefully
+        except NMException as e:
+            self.logger.info(e)
+            await self._reinitialize_nm()
+            await asyncio.sleep(1)
+            return None
+
     def get_network_priority(self):
         return self._network_priority
 
@@ -177,7 +204,9 @@ class AsyncNetworkManager(EventEmitter):
             try:
                 current_time = time.time()
                 try:
-                    cmd = await asyncio.wait_for(self._command_queue.get(), timeout=0.1)
+                    cmd = await asyncio.wait_for(
+                        self._command_queue.get(), timeout=0.01
+                    )
                 except asyncio.TimeoutError:
                     # No command arrived, make sure we check self._scanning
                     cmd = None
@@ -191,17 +220,21 @@ class AsyncNetworkManager(EventEmitter):
 
                 async with self._nm_lock:
                     # Update ip configuration
-                    new_ip_configuration = self.nm.get_ip_info()
+                    new_ip_configuration = await self._get_ip_info_safe()
                     if new_ip_configuration != self._ip_configuration:
                         self._ip_configuration = new_ip_configuration
                         self.logger.info("IP Configuration changed")
                         self.emit("ip_changed")
 
                 async with self._nm_lock:
-                    if self._requested_scan and self.nm.has_finished_scan():
+                    if self._requested_scan and await self.safe_dbus_call(
+                        self.nm.has_finished_scan
+                    ):
                         self.status.finished_first_scan = True
                         self._requested_scan = False
-                        new_access_points = self.nm.get_access_points()
+                        new_access_points = await self.safe_dbus_call(
+                            self.nm.get_access_points
+                        )
                         # Can't just do this
                         # if new_access_points != self.access_points:
                         #     self.emit("aps_changed")
@@ -219,7 +252,7 @@ class AsyncNetworkManager(EventEmitter):
                 if current_time - start_time > self.scan_interval:
                     start_time = current_time
                     async with self._nm_lock:
-                        self.nm.request_wifi_scan()
+                        await self.safe_dbus_call(self.nm.request_wifi_scan)
                         self._requested_scan = True
 
                 await asyncio.sleep(5)
@@ -243,6 +276,12 @@ class AsyncNetworkManager(EventEmitter):
             await self._handle_change_network_priority(cmd, network_priority)
         else:
             cmd.set_exception(ValueError(f"Unknown command type: {cmd.cmd_type}"))
+
+    async def _get_ip_info_safe(self):
+        try:
+            return await asyncio.to_thread(self.nm.get_ip_info)
+        except NMException as e:
+            await self._reinitialize_nm()
 
     def _set_static_ip(
         self, ip_configuration: IPConfiguration, prioritize_wireless=False
@@ -339,7 +378,9 @@ class AsyncNetworkManager(EventEmitter):
             return
         try:
             async with self._nm_lock:
-                connections = self.nm.list_wireless_connections()
+                connections = await self.safe_dbus_call(
+                    self.nm.list_wireless_connections
+                )
                 if connections != self.connections:
                     self.emit("connections_changed")
                     self.connections = connections
@@ -351,7 +392,9 @@ class AsyncNetworkManager(EventEmitter):
             return
         try:
             async with self._nm_lock:
-                connection = self.nm.get_active_wireless_connection()
+                connection = await self.safe_dbus_call(
+                    self.nm.get_active_wireless_connection
+                )
                 if connection is not None:
                     if (
                         self.status.connection != connection

@@ -58,5 +58,6 @@ def create_pwm_controllers():
         else:
             pwm_controllers.append(RPiHardwarePWMController())
     else:
+        pwm_controllers.append(FakePWMController())
         logger.info("No supported PWM Controllers Found.")
     return pwm_controllers

@@ -1,7 +1,9 @@
 import Slider from "@mui/material/Slider";
+import Typography from "@mui/material/Typography";
 import React, { useState } from "react";
 import { Control } from "../../types";
 import { subscribe } from "valtio";
+import EditableText from "../EditableText";
 
 interface ControlProps {
     control: Control;
@@ -15,22 +17,54 @@ const IntegerControl: React.FC<ControlProps> = ({ control, index }) => {
         value as number
     );
 
+    console.log(min_value);
+    const [isEditing, setIsEditing] = useState(false);
+
     subscribe(control, () => {
         setControlValueSlider(control.value);
     });
 
+    function isFloat(str: string): boolean {
+        return !isNaN(parseFloat(str)) && isFinite(Number(str));
+    }
+
     return (
         <React.Fragment key={index}>
             <span key={"label" + index}>
-                {name}: {controlValueSlider}
+                <Typography>
+                    <EditableText
+                        name={`${name}:`}
+                        text={`${controlValueSlider}`}
+                        isEditing={isEditing}
+                        setText={(v) => {
+                            setControlValueSlider(parseFloat(v));
+                            control.value = parseFloat(v);
+                            setIsEditing(false);
+                        }}
+                        onMouseOver={() => setIsEditing(true)}
+                        onMouseOut={() => setIsEditing(false)}
+                        isSecondary={false}
+                        minTextWidth={20}
+                        maxTextWidth={300}
+                        textWidthMultiplier={1.1}
+                        errorFunc={(s) =>
+                            !(
+                                isFloat(s) &&
+                                parseFloat(s) <= max_value &&
+                                parseFloat(s) >= min_value
+                            )
+                        }
+                    />
+                </Typography>
             </span>
             <Slider
                 onChangeCommitted={(_, newValue) =>
                     (control.value = newValue as number)
                 }
-                onChange={(_, newValue) =>
-                    setControlValueSlider(newValue as number)
-                }
+                onChange={(_, newValue) => {
+                    setControlValueSlider(newValue as number);
+                    setIsEditing(false);
+                }}
                 name={`control-${control_id}`}
                 min={min_value}
                 max={max_value}

@@ -25,7 +25,7 @@ import {
     setNetworkPriority,
 } from "./api";
 import { IPConfiguration, IPType, NetworkPriority } from "./types";
-import { useDidMountEffect } from "../../utils/utils";
+import { isValidIP, useDidMountEffect } from "../../utils/utils";
 import { enqueueSnackbar } from "notistack";
 
 const netmaskToCidr = (n) =>
@@ -125,13 +125,6 @@ const IPConfigurationCard = ({}) => {
             setLoading(false);
         });
         setIPConfigurationInfo(newIpConfig);
-    };
-
-    const isValidIP = (ip: string) => {
-        return (
-            /^(\d{1,3}\.){3}\d{1,3}$/.test(ip) &&
-            ip.split(".").every((octet) => parseInt(octet) <= 255)
-        );
     };
 
     const handleStaticIpChange = (e: React.ChangeEvent<HTMLInputElement>) => {

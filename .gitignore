@@ -17,6 +17,8 @@
 *.vcf
 *.xml
 
+*.log.*
+
 ### PowerShell ###
 # Exclude packaged modules
 *.zip
@@ -323,7 +325,7 @@ pip-selfcheck.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python,virtualenv,data,pycharm,powershell
 
-# Custom 
+# Custom
 release
 release.tar.gz
 **/device_settings.json

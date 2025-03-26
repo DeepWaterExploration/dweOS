@@ -29,8 +29,9 @@ import { DeviceSwitch } from "./DeviceSwitch";
 import { DeviceLeader } from "./DeviceLeader";
 import { subscribe } from "valtio";
 import DeviceContext from "../../../contexts/DeviceContext";
-import { IP_REGEX } from "../../../utils/utils";
+import { IP_REGEX, isValidIP } from "../../../utils/utils";
 import { useTheme } from "@emotion/react";
+import EditableText from "./EditableText";
 // import { lighten } from "@mui/material";
 
 /*
@@ -53,6 +54,12 @@ const getResolutions = (device: Device, encodeFormat: encodeType) => {
 };
 
 const ENCODERS = ["H264", "MJPG", "SOFTWARE_H264"];
+
+enum EditMode {
+    NONE = 0,
+    HOST = 1,
+    PORT = 2,
+}
 
 export const StreamOptions: React.FC = () => {
     const {
@@ -81,9 +88,10 @@ export const StreamOptions: React.FC = () => {
 
     const [leaders, setLeaders] = useState([] as Device[]);
 
-    const [editingHost, setEditingHost] = useState<undefined | string>(
+    const [editingIndex, setEditingIndex] = useState<undefined | number>(
         undefined
     );
+    const [editMode, setEditMode] = useState(EditMode.NONE);
 
     const { enqueueSnackbar } = useSnackbar();
 
@@ -350,128 +358,161 @@ export const StreamOptions: React.FC = () => {
                                         </ListSubheader>
                                     }
                                 >
-                                    {device.stream.endpoints.map((endpoint) => {
-                                        return (
-                                            <ListItem
-                                                key={`${endpoint.host}:${endpoint.port}`}
-                                                secondaryAction={
-                                                    <IconButton
-                                                        edge='end'
-                                                        aria-label='icon
+                                    {device.stream.endpoints.map(
+                                        (endpoint, index) => {
+                                            return (
+                                                <ListItem
+                                                    key={`${endpoint.host}:${endpoint.port}`}
+                                                    secondaryAction={
+                                                        <IconButton
+                                                            edge='end'
+                                                            aria-label='icon
                                                                 '
-                                                        onClick={() => {
-                                                            device.stream.endpoints =
-                                                                device.stream.endpoints.filter(
-                                                                    (e) =>
-                                                                        `${e.host}:${e.port}` !==
-                                                                        `${endpoint.host}:${endpoint.port}`
-                                                                );
-                                                        }}
-                                                    >
-                                                        <DeleteIcon />
-                                                    </IconButton>
-                                                }
-                                            >
-                                                <ListItemAvatar>
-                                                    <Avatar>
-                                                        <LinkedCameraIcon />
-                                                    </Avatar>
-                                                </ListItemAvatar>
-                                                <ListItemText
-                                                    primary={
-                                                        <>
-                                                            IP Address:&nbsp;
-                                                            <Typography
-                                                                component='span'
-                                                                sx={{
-                                                                    cursor: "text",
-                                                                    userSelect:
-                                                                        "none",
-                                                                    fontSize:
-                                                                        "inherit",
-                                                                    alignItems:
-                                                                        "center",
+                                                            onClick={() => {
+                                                                device.stream.endpoints =
+                                                                    device.stream.endpoints.filter(
+                                                                        (e) =>
+                                                                            `${e.host}:${e.port}` !==
+                                                                            `${endpoint.host}:${endpoint.port}`
+                                                                    );
+                                                            }}
+                                                        >
+                                                            <DeleteIcon />
+                                                        </IconButton>
+                                                    }
+                                                >
+                                                    <ListItemAvatar>
+                                                        <Avatar>
+                                                            <LinkedCameraIcon />
+                                                        </Avatar>
+                                                    </ListItemAvatar>
+                                                    <ListItemText
+                                                        primary={
+                                                            <EditableText
+                                                                name='IP Address:'
+                                                                isSecondary={
+                                                                    false
+                                                                }
+                                                                isEditing={
+                                                                    editingIndex ===
+                                                                        index &&
+                                                                    editMode ===
+                                                                        EditMode.HOST
+                                                                }
+                                                                onMouseOver={() => {
+                                                                    setEditingIndex(
+                                                                        index
+                                                                    );
+                                                                    setEditMode(
+                                                                        EditMode.HOST
+                                                                    );
                                                                 }}
-                                                                onDoubleClick={() =>
-                                                                    setEditingHost(
-                                                                        endpoint.host
+                                                                onMouseOut={() => {
+                                                                    setEditingIndex(
+                                                                        undefined
+                                                                    );
+                                                                    setEditMode(
+                                                                        EditMode.NONE
+                                                                    );
+                                                                }}
+                                                                errorFunc={(
+                                                                    s
+                                                                ) =>
+                                                                    !isValidIP(
+                                                                        s
                                                                     )
                                                                 }
-                                                            >
-                                                                {editingHost ===
-                                                                endpoint.host ? (
-                                                                    <TextField
-                                                                        autoFocus
-                                                                        variant='standard'
-                                                                        size='small'
-                                                                        defaultValue={
-                                                                            endpoint.host
-                                                                        }
-                                                                        onBlur={(
-                                                                            e
-                                                                        ) =>
-                                                                            setEditingHost(
-                                                                                undefined
-                                                                            )
-                                                                        }
-                                                                        onKeyDown={(
-                                                                            e
-                                                                        ) => {
-                                                                            if (
-                                                                                e.key ===
-                                                                                "Enter"
-                                                                            ) {
-                                                                                // handleEditEndpoint(
-                                                                                //     endpoint.host,
-                                                                                //     e
-                                                                                //         .currentTarget
-                                                                                //         .value
-                                                                                // );
-                                                                            }
-                                                                        }}
-                                                                        sx={{
-                                                                            fontSize:
-                                                                                "inherit",
-                                                                            lineHeight:
-                                                                                "inherit", // Matches text alignment
-                                                                            padding: 0,
-                                                                            margin: 0,
-                                                                            minWidth:
-                                                                                "80px",
-                                                                            height: "auto",
-                                                                            display:
-                                                                                "inline-flex", // Keeps it inline
-                                                                            "& .MuiInputBase-root":
-                                                                                {
-                                                                                    padding: 0,
-                                                                                    margin: 0,
-                                                                                    fontSize:
-                                                                                        "inherit",
-                                                                                    lineHeight:
-                                                                                        "inherit",
-                                                                                },
-                                                                            "& .MuiInputBase-input":
-                                                                                {
-                                                                                    fontSize:
-                                                                                        "inherit",
-                                                                                    padding: 0,
-                                                                                    margin: 0,
-                                                                                    lineHeight:
-                                                                                        "inherit",
-                                                                                },
-                                                                        }}
-                                                                    />
-                                                                ) : (
+                                                                text={
                                                                     endpoint.host
-                                                                )}
-                                                            </Typography>
-                                                        </>
-                                                    }
-                                                    secondary={`Port: ${endpoint.port}`}
-                                                />
-                                            </ListItem>
-                                        );
-                                    })}
+                                                                }
+                                                                setText={(
+                                                                    text
+                                                                ) => {
+                                                                    endpoint.host =
+                                                                        text;
+                                                                    setEditingIndex(
+                                                                        undefined
+                                                                    );
+                                                                    setEditMode(
+                                                                        EditMode.NONE
+                                                                    );
+                                                                }}
+                                                                minTextWidth={
+                                                                    30
+                                                                }
+                                                                maxTextWidth={
+                                                                    300
+                                                                }
+                                                                textWidthMultiplier={
+                                                                    1.2
+                                                                }
+                                                            />
+                                                        }
+                                                        secondary={
+                                                            <EditableText
+                                                                name='Port:'
+                                                                isSecondary={
+                                                                    true
+                                                                }
+                                                                isEditing={
+                                                                    editingIndex ===
+                                                                        index &&
+                                                                    editMode ===
+                                                                        EditMode.PORT
+                                                                }
+                                                                onMouseOver={() => {
+                                                                    setEditingIndex(
+                                                                        index
+                                                                    );
+                                                                    setEditMode(
+                                                                        EditMode.PORT
+                                                                    );
+                                                                }}
+                                                                onMouseOut={() => {
+                                                                    setEditingIndex(
+                                                                        undefined
+                                                                    );
+                                                                    setEditMode(
+                                                                        EditMode.NONE
+                                                                    );
+                                                                }}
+                                                                onClick={() => {
+                                                                    setEditingIndex(
+                                                                        index
+                                                                    );
+                                                                    setEditMode(
+                                                                        EditMode.PORT
+                                                                    );
+                                                                }}
+                                                                text={`${endpoint.port}`}
+                                                                setText={(
+                                                                    text
+                                                                ) => {
+                                                                    endpoint.port =
+                                                                        parseInt(
+                                                                            text
+                                                                        );
+                                                                    setEditingIndex(
+                                                                        undefined
+                                                                    );
+                                                                    setEditMode(
+                                                                        EditMode.NONE
+                                                                    );
+                                                                }}
+                                                                minTextWidth={5}
+                                                                maxTextWidth={
+                                                                    30
+                                                                }
+                                                                textWidthMultiplier={
+                                                                    1.2
+                                                                }
+                                                            />
+                                                        }
+                                                    />
+                                                </ListItem>
+                                            );
+                                        }
+                                    )}
                                 </List>
                             )}
                         </Paper>
@@ -496,19 +537,6 @@ export const StreamOptions: React.FC = () => {
                         >
                             Add Stream Endpoint
                         </Button>
-                        {/* <Button
-                            color='primary'
-                            variant='contained'
-                            onClick={() => {
-                                restartStream(device.bus_info).then(() => {
-                                    enqueueSnackbar("Stream restarted", {
-                                        variant: "info",
-                                    });
-                                });
-                            }}
-                        >
-                            Restart Stream
-                        </Button> */}
                     </>
                 ) : undefined
             ) : undefined}

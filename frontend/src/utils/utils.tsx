@@ -75,6 +75,13 @@ export const hash = function (str: string) {
     return hash;
 };
 
+export const isValidIP = (ip: string) => {
+    return (
+        /^(\d{1,3}\.){3}\d{1,3}$/.test(ip) &&
+        ip.split(".").every((octet) => parseInt(octet) <= 255)
+    );
+};
+
 export const hostAddress: string = window.location.hostname;
 // export const hostAddress: string = "dweos.local"; // for dev purposes
 export const BACKEND_API_URL = (hostname?: string) =>

@@ -16,7 +16,7 @@ interface EditableTextProps {
     errorFunc?: (s: string) => boolean;
     minTextWidth: number;
     maxTextWidth: number;
-    textWidthMultiplier: number;
+    textWidthOffset: number;
 }
 
 const EditableText: React.FC<EditableTextProps> = ({
@@ -31,7 +31,7 @@ const EditableText: React.FC<EditableTextProps> = ({
     errorFunc,
     minTextWidth,
     maxTextWidth,
-    textWidthMultiplier,
+    textWidthOffset,
 }) => {
     const [isFocused, setIsFocused] = useState(false);
 
@@ -46,8 +46,8 @@ const EditableText: React.FC<EditableTextProps> = ({
             // Measure the text width and set input width
             const width = measureRef.current.offsetWidth;
             setInputWidth(
-                Math.min(Math.max(width, minTextWidth), maxTextWidth) *
-                    textWidthMultiplier
+                Math.min(Math.max(width, minTextWidth), maxTextWidth) +
+                    textWidthOffset
             );
         }
 

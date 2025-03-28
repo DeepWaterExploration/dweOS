@@ -443,8 +443,8 @@ export const StreamOptions: React.FC = () => {
                                                                 maxTextWidth={
                                                                     300
                                                                 }
-                                                                textWidthMultiplier={
-                                                                    1.2
+                                                                textWidthOffset={
+                                                                    5
                                                                 }
                                                             />
                                                         }
@@ -503,8 +503,8 @@ export const StreamOptions: React.FC = () => {
                                                                 maxTextWidth={
                                                                     30
                                                                 }
-                                                                textWidthMultiplier={
-                                                                    1.2
+                                                                textWidthOffset={
+                                                                    5
                                                                 }
                                                             />
                                                         }

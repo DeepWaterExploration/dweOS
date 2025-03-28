@@ -46,7 +46,7 @@ const IntegerControl: React.FC<ControlProps> = ({ control, index }) => {
                         isSecondary={false}
                         minTextWidth={20}
                         maxTextWidth={300}
-                        textWidthMultiplier={1.1}
+                        textWidthOffset={5}
                         errorFunc={(s) =>
                             !(
                                 isFloat(s) &&

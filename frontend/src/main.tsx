@@ -1,12 +1,10 @@
-import ReactDOM from "react-dom/client";
-
-import AppBlock from "./App";
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
 import "./index.css";
-import React from "react";
+import App from "./App.tsx";
 
-const rootElement = document.getElementById("root");
-if (rootElement) {
-    ReactDOM.createRoot(rootElement).render(<AppBlock />);
-} else {
-    console.error("Unable to find root element with ID 'root'");
-}
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);

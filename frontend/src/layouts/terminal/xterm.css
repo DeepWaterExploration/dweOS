@@ -1,8 +1,0 @@
-.xterm .xterm-viewport {
-    scrollbar-width: none;  /* Firefox */
-    -ms-overflow-style: none;  /* IE 10+ */
-}
-
-.xterm .xterm-viewport::-webkit-scrollbar {
-    display: none;  /* Chrome, Safari, and Edge */
-}

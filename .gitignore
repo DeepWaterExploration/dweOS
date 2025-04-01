@@ -156,7 +156,10 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# lib/
+
+# !/frontend/src/lib/
+
 lib64/
 parts/
 sdist/

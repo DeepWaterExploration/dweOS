@@ -1,37 +1,12 @@
 "use client";
 
 import * as React from "react";
-import {
-  AudioWaveform,
-  Blocks,
-  Calendar,
-  Command,
-  Home,
-  Icon,
-  Inbox,
-  MessageCircleQuestion,
-  Search,
-  ActivityIcon,
-  CameraIcon,
-  Sparkles,
-  Trash2,
-  VideoIcon,
-  VideotapeIcon,
-} from "lucide-react";
+import { Home, CameraIcon, VideotapeIcon } from "lucide-react";
 
-import DWELogo from "@/assets/logo-marker.svg";
+import DWELogo from "@/assets/dwe-logo.svg";
 
-import { NavFavorites } from "@/components/nav-favorites";
 import { NavMain } from "@/components/nav-main";
-import { NavSecondary } from "@/components/nav-secondary";
-import { NavWorkspaces } from "@/components/nav-workspaces";
-import { TeamSwitcher } from "@/components/team-switcher";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarRail,
-} from "@/components/ui/sidebar";
+import { Sidebar, SidebarHeader } from "@/components/ui/sidebar";
 import { Badge } from "./ui/badge";
 
 const data = {
@@ -65,17 +40,27 @@ export function SidebarLeft({
   return (
     <Sidebar className="border-r-0" {...props}>
       <SidebarHeader>
-        <div className="flex items-center space-x-4 mb-4 sm:mb-0">
-          <img src={data.main.logo} className="w-5 h-5" />
-          <span className="truncate font-semibold">{data.main.name}</span>
-          <Badge variant="secondary">v0.0.0</Badge>
+        <div className="flex mt-2 ml-2 items-center gap-2 mb-4 sm:mb-0">
+          <div className="flex-shrink-0 flex items-center justify-center w-10">
+            <a href="https://dwe.ai" target="_blank">
+              <img
+                src={data.main.logo}
+                alt="Logo"
+                className="max-w-full max-h-full object-contain"
+              />
+            </a>
+          </div>
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            {/* <span className="truncate font-semibold text-sm">
+              {data.main.name}
+            </span> */}
+            <Badge variant="secondary" className="flex-shrink-0">
+              v2.0.0
+            </Badge>
+          </div>
         </div>
         <NavMain items={data.navMain} />
       </SidebarHeader>
-      {/* <SidebarContent>
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
-      </SidebarContent> */}
-      {/* <SidebarRail /> */}
     </Sidebar>
   );
 }

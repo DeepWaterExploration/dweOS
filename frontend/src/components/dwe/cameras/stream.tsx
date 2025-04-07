@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import DeviceContext from "@/contexts/DeviceContext";
 import { subscribe, useSnapshot } from "valtio";
 import { components } from "@/schemas/dwe_os_2";
+import { useToast } from "@/hooks/use-toast";
 
 const StreamSelector = ({
   options,
@@ -176,18 +177,30 @@ const EndpointList = ({
           </CardHeader>
           <CardContent>
             {/* List */}
-            <ul className="space-y-4">
-              {deviceState.stream.endpoints.map((_, index) => (
-                <Endpoint
-                  endpoint={device!.stream.endpoints[index]}
-                  deleteEndpoint={() =>
-                    (device!.stream.endpoints = device!.stream.endpoints.filter(
-                      (_, i) => i !== index
-                    ))
-                  }
-                />
-              ))}
-            </ul>
+            {/* If there are no endpoints.... */}
+            {deviceState.stream.endpoints.length === 0 ? (
+              <div className="min-w-0 flex-1 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">No endpoints added</p>
+                  <p className="text-xs text-muted-foreground">
+                    Press the plus icon to add an endpoint
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <ul className="space-y-4">
+                {/* If there are endpoints.... */}
+                {deviceState.stream.endpoints.map((_, index) => (
+                  <Endpoint
+                    endpoint={device!.stream.endpoints[index]}
+                    deleteEndpoint={() =>
+                      (device!.stream.endpoints =
+                        device!.stream.endpoints.filter((_, i) => i !== index))
+                    }
+                  />
+                ))}
+              </ul>
+            )}
           </CardContent>
         </Card>
         <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2">
@@ -250,11 +263,10 @@ export const CameraStream = ({
 }) => {
   const device = useContext(DeviceContext)!;
 
+  const { toast } = useToast();
+
   // readonly device state
   const deviceState = useSnapshot(device);
-
-  const [host, setHost] = useState(defaultHost);
-  const [port, setPort] = useState(nextPort);
 
   const [streamEnabled, setStreamEnabled] = useState(
     deviceState.stream.configured
@@ -273,14 +285,31 @@ export const CameraStream = ({
   );
 
   useEffect(() => {
-    device.stream.configured = streamEnabled;
-  }, [streamEnabled, device]);
+    if (streamEnabled && device.stream.endpoints.length === 0) {
+      toast({
+        title: "Uh Oh! Failed to start stream!",
+        description: "Cannot start stream without any endpoints!",
+        variant: "destructive",
+      });
+      setStreamEnabled(false);
+    } else {
+      device.stream.configured = streamEnabled;
+    }
+  }, [streamEnabled, device, toast]);
 
   useEffect(() => {
     const [width, height] = getResolution(resolution);
     device.stream.width = width!;
     device.stream.height = height!;
   }, [resolution, device]);
+
+  useEffect(() => {
+    device.stream.interval.denominator = parseInt(fps);
+  }, [device, fps]);
+
+  useEffect(() => {
+    device.stream.encode_type = format;
+  }, [device, format]);
 
   subscribe(device.stream, () => {
     setResolutions(getResolutions(device, deviceState.stream.encode_type));
@@ -356,7 +385,6 @@ export const CameraStream = ({
       </div>
 
       <EndpointList defaultHost={defaultHost} nextPort={nextPort} />
-
       <Separator className="my-2" />
 
       <div className="flex justify-between items-center">
@@ -364,11 +392,6 @@ export const CameraStream = ({
           <span className="text-sm font-medium">
             Stream {streamEnabled ? "enabled" : "disabled"}
           </span>
-          {/* {streamEnabled && (
-            <p className="text-xs text-muted-foreground mt-1">
-              {resolution} @ {fps}fps ({format})
-            </p>
-          )} */}
         </div>
         <Button
           variant={"ghost"}

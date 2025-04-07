@@ -11,7 +11,6 @@ import { CameraStream } from "./stream";
 import { subscribe, useSnapshot } from "valtio";
 import { useContext, useEffect } from "react";
 import DeviceContext from "@/contexts/DeviceContext";
-import type { components } from "@/schemas/dwe_os_2";
 import { API_CLIENT } from "@/api";
 
 export function CameraCard({

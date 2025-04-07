@@ -5,6 +5,8 @@ from multiprocessing import Process
 import time
 import shlex
 import threading
+import os
+import signal
 import event_emitter as events
 
 from .pydantic_schemas import *
@@ -89,24 +91,31 @@ class StreamRunner(events.EventEmitter):
         self.loop = None
         self.started = False
         self.error_thread = None
+        self.started_time = 0
+        self._lock = threading.RLock()
 
         self.logger = logging.getLogger("dwe_os_2.cameras.StreamRunner")
 
     def start(self):
-        if self.started:
-            self.logger.info("Joining thread")
-            self.stop()
-            self.error_thread.join()
-        self.started = True
-        self._run_pipeline()
+        with self._lock:
+            if self.started:
+                self.stop()
+            self.started = True
+            self._run_pipeline()
 
     def stop(self):
-        if not self.started or not self._process:
-            return
-        self.started = False
-        self._process.kill()
-        self._process.wait()
-        del self._process
+        with self._lock:
+            if not self.started or not self._process:
+                return
+
+            self.logger.info("Stopping stream")
+            self.started = False
+            self._process.kill()
+            if self._process.stderr:
+                self._process.stderr.close()
+            self._process.wait()
+            self._process = None
+            self.error_thread.join()
 
     def _run_pipeline(self):
         pipeline_str = self._construct_pipeline()
@@ -131,11 +140,11 @@ class StreamRunner(events.EventEmitter):
         error_block = []
         try:
             for stderr_line in iter(self._process.stderr.readline, ""):
-                stderr_line = self._process.stderr.readline()
                 if stderr_line:
                     error_block.append(stderr_line)
-                    self.logger.error(stderr_line)
+                    self.logger.error(f"GStreamer Error: {stderr_line.strip()}")
                     self.stop()
+                    break
                 else:
                     break
         except:

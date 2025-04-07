@@ -19,6 +19,7 @@ import { CommandPalette } from "./components/dwe/app/command-palette";
 import { io, Socket } from "socket.io-client";
 import { useEffect, useRef, useState } from "react";
 import WebsocketContext from "./contexts/WebsocketContext";
+import { Toaster } from "@/components/ui/toaster";
 
 function App() {
   const socket = useRef<Socket | undefined>(undefined);
@@ -51,6 +52,7 @@ function App() {
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <Toaster />
       <WebsocketContext.Provider value={{ socket: socket.current, connected }}>
         <SidebarProvider>
           <SidebarLeft />

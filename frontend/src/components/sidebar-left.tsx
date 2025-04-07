@@ -4,15 +4,18 @@ import * as React from "react";
 import { Home, CameraIcon, VideotapeIcon } from "lucide-react";
 
 import DWELogo from "@/assets/dwe-logo.svg";
+import DWELogoDark from "@/assets/dwe-logo-dark.svg";
 
 import { NavMain } from "@/components/nav-main";
 import { Sidebar, SidebarHeader } from "@/components/ui/sidebar";
 import { Badge } from "./ui/badge";
+import { useTheme } from "./theme-provider";
 
 const data = {
   main: {
     name: "DWE OS",
-    logo: DWELogo,
+    logoLight: DWELogo,
+    logoDark: DWELogoDark,
   },
   navMain: [
     {
@@ -37,6 +40,13 @@ const data = {
 export function SidebarLeft({
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
+  const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+
+  const theme = useTheme();
+  const themeColor = theme.theme === "system" ? systemTheme : theme.theme;
+
   return (
     <Sidebar className="border-r-0" {...props}>
       <SidebarHeader>
@@ -44,7 +54,11 @@ export function SidebarLeft({
           <div className="flex-shrink-0 flex items-center justify-center w-10">
             <a href="https://dwe.ai" target="_blank">
               <img
-                src={data.main.logo}
+                src={
+                  themeColor === "dark"
+                    ? data.main.logoLight
+                    : data.main.logoDark
+                }
                 alt="Logo"
                 className="max-w-full max-h-full object-contain"
               />

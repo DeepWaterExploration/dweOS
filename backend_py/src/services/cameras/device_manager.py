@@ -93,11 +93,16 @@ class DeviceManager(events.EventEmitter):
                 return None
 
         # we need to broadcast that there was a gst error so that the frontend knows there may be a kernel issue
-        device.stream_runner.on(
-            "gst_error", lambda _: self.gst_errors.append(device.bus_info)
-        )
+        device.stream_runner.on("gst_error", lambda _: self._append_gst_error(device))
 
         return device
+
+    def _append_gst_error(self, device: DeviceModel):
+        """
+        Helper function to append a gst error
+        """
+        device.stream.configured = False
+        self.gst_errors.append(device.bus_info)
 
     def get_devices(self):
         """

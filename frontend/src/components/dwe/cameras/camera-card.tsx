@@ -23,35 +23,17 @@ export function CameraCard({
   const device = useContext(DeviceContext)!;
 
   // readonly device state
-  const deviceState = useSnapshot(device!);
+  const deviceState = useSnapshot(device);
 
   useEffect(() => {
-    const unsubscribe = subscribe(device!, () => {});
-
-    subscribe(device, () => {
-      API_CLIENT.POST("/devices/set_nickname", {
-        body: { bus_info: device.bus_info, nickname: device.nickname },
-      });
-    });
+    const unsubscribe = subscribe(device, () => {});
 
     subscribe(device.stream, () => {
       if (device.stream.configured) {
-        API_CLIENT.POST("/devices/configure_stream", {
-          body: {
-            bus_info: device.bus_info,
-            encode_type: device.stream.encode_type,
-            endpoints: device.stream.endpoints,
-            stream_format: {
-              width: device.stream.width,
-              height: device.stream.height,
-              interval: device.stream.interval,
-            },
-          },
-        });
       } else {
-        API_CLIENT.POST("/devices/unconfigure_stream", {
-          body: { bus_info: device.bus_info },
-        });
+        // API_CLIENT.POST("/devices/unconfigure_stream", {
+        //   body: { bus_info: device.bus_info },
+        // });
       }
     });
 

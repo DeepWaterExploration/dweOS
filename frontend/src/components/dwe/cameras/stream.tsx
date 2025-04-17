@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -24,7 +24,13 @@ import DeviceContext from "@/contexts/DeviceContext";
 import { subscribe, useSnapshot } from "valtio";
 import { components } from "@/schemas/dwe_os_2";
 import { useToast } from "@/hooks/use-toast";
+import DevicesContext from "@/contexts/DevicesContext";
+import { getDeviceByBusInfo, useDidMountEffect } from "@/lib/utils";
+import { API_CLIENT } from "@/api";
+import WebsocketContext from "@/contexts/WebsocketContext";
 
+// Options for StreamSelector should provide label and value for each choice
+type StreamOption = { label: string; value: string };
 const StreamSelector = ({
   options,
   placeholder,
@@ -33,10 +39,10 @@ const StreamSelector = ({
   onChange,
   disabled = false,
 }: {
-  options: string[];
+  options: StreamOption[];
   placeholder: string;
   label: string;
-  value: string;
+  value?: string;
   onChange: (value: string) => void;
   disabled?: boolean;
 }) => {
@@ -54,9 +60,9 @@ const StreamSelector = ({
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
-            {options.map((val) => (
-              <SelectItem key={val} value={val}>
-                {val}
+            {options.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
               </SelectItem>
             ))}
           </SelectGroup>
@@ -263,6 +269,8 @@ export const CameraStream = ({
 }) => {
   const device = useContext(DeviceContext)!;
 
+  const { devices, leaders } = useContext(DevicesContext)!;
+
   const { toast } = useToast();
 
   // readonly device state
@@ -284,35 +292,85 @@ export const CameraStream = ({
     [] as components["schemas"]["StreamEncodeTypeEnum"][]
   );
 
+  const [shouldPostFlag, setShouldPostFlag] = useState(false);
+
+  const configureStream = () => {
+    API_CLIENT.POST("/devices/configure_stream", {
+      body: {
+        bus_info: device.bus_info,
+        encode_type: device.stream.encode_type,
+        endpoints: device.stream.endpoints,
+        stream_format: {
+          width: device.stream.width,
+          height: device.stream.height,
+          interval: device.stream.interval,
+        },
+      },
+    });
+  };
+
+  const unconfigureStream = () => {
+    API_CLIENT.POST("/devices/unconfigure_stream", {
+      body: { bus_info: device.bus_info },
+    });
+  };
+
   useEffect(() => {
-    if (streamEnabled && device.stream.endpoints.length === 0) {
-      toast({
-        title: "Uh Oh! Failed to start stream!",
-        description: "Cannot start stream without any endpoints!",
-        variant: "destructive",
-      });
-      setStreamEnabled(false);
-    } else {
-      device.stream.configured = streamEnabled;
+    if (shouldPostFlag) {
+      if (streamEnabled) configureStream();
+      else unconfigureStream();
+      setShouldPostFlag(false);
     }
-  }, [streamEnabled, device, toast]);
+    device.stream.configured = streamEnabled;
+  }, [streamEnabled, shouldPostFlag]);
+
+  useEffect(() => {
+    device.stream.configured = streamEnabled;
+    if (device.follower)
+      getDeviceByBusInfo(devices, device.follower).stream.configured =
+        streamEnabled;
+  }, [streamEnabled]);
 
   useEffect(() => {
     const [width, height] = getResolution(resolution);
     device.stream.width = width!;
     device.stream.height = height!;
-  }, [resolution, device]);
+
+    if (shouldPostFlag) {
+      configureStream();
+      setStreamEnabled(true);
+      setShouldPostFlag(false);
+    }
+  }, [resolution]);
 
   useEffect(() => {
     device.stream.interval.denominator = parseInt(fps);
-  }, [device, fps]);
+
+    if (shouldPostFlag) {
+      configureStream();
+      setStreamEnabled(true);
+      setShouldPostFlag(false);
+    }
+  }, [device, fps, shouldPostFlag]);
 
   useEffect(() => {
     device.stream.encode_type = format;
-  }, [device, format]);
+
+    if (shouldPostFlag) {
+      configureStream();
+      setStreamEnabled(true);
+      setShouldPostFlag(false);
+    }
+  }, [device, shouldPostFlag, format]);
 
   subscribe(device.stream, () => {
     setResolutions(getResolutions(device, deviceState.stream.encode_type));
+
+    if (device.stream.configured && !streamEnabled) {
+      setStreamEnabled(true);
+    } else if (!device.stream.configured && streamEnabled) {
+      setStreamEnabled(false);
+    }
   });
 
   useEffect(() => {
@@ -353,36 +411,87 @@ export const CameraStream = ({
       <div className="grid grid-cols-3 gap-3 grid grid-cols-1 sm:grid-cols-12 gap-3">
         <div className="sm:col-span-5">
           <StreamSelector
-            options={resolutions}
+            options={resolutions.map((r) => ({ label: r, value: r }))}
             placeholder="Resolution"
             label="Resolution"
             value={resolution}
-            onChange={setResolution}
+            onChange={(newResolution) => {
+              setResolution(newResolution);
+              setShouldPostFlag(true);
+            }}
           />
         </div>
 
         <div className="sm:col-span-3">
           <StreamSelector
-            options={intervals}
+            options={intervals.map((i) => ({ label: i, value: i }))}
             placeholder="FPS"
             label="Frame Rate"
             value={fps}
-            onChange={setFps}
+            onChange={(newFps) => {
+              setFps(newFps);
+              setShouldPostFlag(true);
+            }}
           />
         </div>
 
         <div className="sm:col-span-4">
           <StreamSelector
-            options={encoders}
+            options={encoders.map((e) => ({ label: e, value: e }))}
             placeholder="Format"
             label="Format"
             value={format}
-            onChange={(fmt) =>
-              setFormat(fmt as components["schemas"]["StreamEncodeTypeEnum"])
-            }
+            onChange={(fmt) => {
+              setFormat(fmt as components["schemas"]["StreamEncodeTypeEnum"]);
+              setShouldPostFlag(true);
+            }}
           />
         </div>
       </div>
+
+      {deviceState.device_type === 2 && (
+        <StreamSelector
+          options={[
+            { label: "No Leader", value: "Unassigned" },
+            ...leaders
+              .filter((d) => d.bus_info !== device.bus_info)
+              .map((d) => ({ label: d.bus_info, value: d.bus_info })),
+          ]}
+          placeholder="No Leader"
+          label="Leader Device"
+          value={deviceState.leader ? deviceState.leader : "Unassigned"}
+          onChange={async (newLeader) => {
+            try {
+              if (newLeader === "Unassigned") {
+                device.leader = undefined;
+                API_CLIENT.POST("/devices/remove_leader", {
+                  body: { follower: device.bus_info },
+                });
+              } else {
+                device.leader = newLeader;
+                const leader = getDeviceByBusInfo(devices, device.leader);
+                leader.follower = device.bus_info;
+                device.stream.configured = leader.stream.configured;
+
+                API_CLIENT.POST("/devices/set_leader", {
+                  body: { leader: device.leader, follower: device.bus_info },
+                });
+              }
+              toast({
+                title: "Leader updated",
+                description: `Leader set to ${newLeader}`,
+              });
+            } catch (e) {
+              toast({
+                title: "Failed to set leader",
+                description: (e as Error).message,
+                variant: "destructive",
+              });
+            }
+          }}
+          disabled={leaders.length < 1}
+        />
+      )}
 
       <EndpointList defaultHost={defaultHost} nextPort={nextPort} />
       <Separator className="my-2" />
@@ -396,7 +505,14 @@ export const CameraStream = ({
         <Button
           variant={"ghost"}
           className="w-4 h-8"
-          onClick={() => setStreamEnabled((prev) => !prev)}
+          onClick={() => {
+            setStreamEnabled((prev) => {
+              const newState = !prev;
+              return newState;
+            });
+            setShouldPostFlag(true);
+          }}
+          disabled={!!device.leader}
         >
           {streamEnabled ? <PauseIcon /> : <PlayIcon />}
         </Button>

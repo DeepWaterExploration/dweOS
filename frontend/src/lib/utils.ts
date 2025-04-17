@@ -1,8 +1,10 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { components } from "@/schemas/dwe_os_2";
+import { clsx, type ClassValue } from "clsx";
+import React, { useEffect, useRef } from "react";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 export async function getRequest(
@@ -11,14 +13,14 @@ export async function getRequest(
 ): Promise<Response> {
   let url = `http://${window.location.hostname}:9090${path}`;
   const config: RequestInit = {
-      mode: "cors",
-      method: "GET",
-      headers: {
-          "Content-Type": "application/json",
-      },
+    mode: "cors",
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
   };
   if (url_search_params) {
-      url = `${url}?${url_search_params}`;
+    url = `${url}?${url_search_params}`;
   }
   return await fetch(url, config);
 }
@@ -29,12 +31,12 @@ export async function postRequest(
 ): Promise<void> {
   const url = `http://${window.location.hostname}:9090${path}`;
   const config: RequestInit = {
-      mode: "cors",
-      method: "POST",
-      headers: {
-          "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
+    mode: "cors",
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
   };
 }
 
@@ -79,3 +81,25 @@ export const boxMullerRandom = (function () {
     return z;
   };
 })();
+
+export const getDeviceByBusInfo = (
+  devices: components["schemas"]["DeviceModel"][],
+  bus_info: string
+) => {
+  return devices.filter((dev) => dev.bus_info === bus_info)[0];
+};
+
+export function useDidMountEffect(
+  effect: React.EffectCallback,
+  deps: React.DependencyList
+) {
+  const didMount = useRef(false);
+
+  useEffect(() => {
+    if (didMount.current) {
+      return effect();
+    } else {
+      didMount.current = true;
+    }
+  }, deps);
+}

@@ -4,9 +4,10 @@ import { useContext, useEffect, useState } from "react";
 import { Check, Edit2, X } from "lucide-react";
 import { useSnapshot } from "valtio";
 import DeviceContext from "@/contexts/DeviceContext";
+import { API_CLIENT } from "@/api";
 
 export const CameraNickname = () => {
-  const device = useContext(DeviceContext);
+  const device = useContext(DeviceContext)!;
 
   // readonly device state
   const deviceState = useSnapshot(device!);
@@ -37,7 +38,10 @@ export const CameraNickname = () => {
   };
 
   useEffect(() => {
-    device!.nickname = nickname;
+    API_CLIENT.POST("/devices/set_nickname", {
+      body: { bus_info: device.bus_info, nickname: device.nickname },
+    });
+    device.nickname = nickname;
   }, [nickname]);
 
   const handleKeyDown: React.KeyboardEventHandler<HTMLInputElement> = (e) => {

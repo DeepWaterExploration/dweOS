@@ -13,6 +13,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import DevicesContext from "@/contexts/DevicesContext";
+import { getDeviceByBusInfo } from "@/lib/utils";
 
 type DeviceModel = components["schemas"]["DeviceModel"];
 
@@ -163,19 +165,33 @@ const DeviceListLayout = () => {
     };
   }, [socket, connected]);
 
+  const enableStream = (bus_info: string) => {
+    const device = { ...getDeviceByBusInfo(devices, bus_info) };
+    device.stream.configured = true;
+    // updateDevice(device);
+  };
+
   return (
     <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(350px,1fr))]">
-      {devices.map((device, index) => (
-        <div key={`${device.bus_info}-${index}`}>
-          <DeviceContext.Provider value={device}>
-            <CameraCard
-              defaultHost={savedPreferences.default_stream!.host}
-              nextPort={nextPort}
-            />
-          </DeviceContext.Provider>
-        </div>
-      ))}
-      {devices.length === 0 && <NoDevicesConnected />}
+      <DevicesContext.Provider
+        value={{
+          devices,
+          leaders: devices.filter((d) => d.device_type == 1),
+          enableStream,
+        }}
+      >
+        {devices.map((device, index) => (
+          <div key={`${device.bus_info}-${index}`}>
+            <DeviceContext.Provider value={device}>
+              <CameraCard
+                defaultHost={savedPreferences.default_stream!.host}
+                nextPort={nextPort}
+              />
+            </DeviceContext.Provider>
+          </div>
+        ))}
+        {devices.length === 0 && <NoDevicesConnected />}
+      </DevicesContext.Provider>
     </div>
   );
 };

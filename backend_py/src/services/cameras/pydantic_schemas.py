@@ -136,6 +136,7 @@ class StreamModel(BaseModel):
     height: int
     interval: IntervalModel
     configured: bool
+    enabled: bool
 
     class Config:
         from_attributes = True
@@ -177,6 +178,7 @@ class StreamInfoModel(BaseModel):
     bus_info: str
     stream_format: StreamFormatModel
     encode_type: StreamEncodeTypeEnum
+    enabled: bool
     endpoints: List[StreamEndpointModel]
 
     class Config:

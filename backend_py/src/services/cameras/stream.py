@@ -26,6 +26,7 @@ class Stream(events.EventEmitter):
         default_factory=lambda: IntervalModel(numerator=1, denominator=30)
     )
     configured: bool = False
+    enabled: bool = False
 
     software_h264_bitrate = 5000
 
@@ -131,9 +132,9 @@ class StreamRunner(events.EventEmitter):
 
     def _construct_pipeline(self):
         pipeline_strs = []
+        print(self.streams)
         for stream in self.streams:
-            if stream.configured:
-                pipeline_strs.append(stream._construct_pipeline())
+            pipeline_strs.append(stream._construct_pipeline())
         return " ".join(pipeline_strs)
 
     def _log_errors(self):

@@ -101,7 +101,7 @@ class DeviceManager(events.EventEmitter):
         """
         Helper function to append a gst error
         """
-        device.stream.configured = False
+        device.stream.enabled = False
         self.gst_errors.append(device.bus_info)
 
     def get_devices(self):
@@ -140,7 +140,11 @@ class DeviceManager(events.EventEmitter):
         device.configure_stream(
             encode_type, width, height, interval, StreamTypeEnum.UDP, endpoints
         )
-        device.start_stream()
+
+        if stream_info.enabled:
+            device.start_stream()
+        else:
+            device.stop_stream()
 
         self.settings_manager.save_device(device)
         return True

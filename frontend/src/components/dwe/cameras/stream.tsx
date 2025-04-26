@@ -163,9 +163,11 @@ const Endpoint = ({
 const EndpointList = ({
   defaultHost,
   nextPort,
+  setShouldPostFlag,
 }: {
   defaultHost: string;
   nextPort: number;
+  setShouldPostFlag: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
   const device = useContext(DeviceContext);
 
@@ -198,11 +200,13 @@ const EndpointList = ({
                 {/* If there are endpoints.... */}
                 {deviceState.stream.endpoints.map((_, index) => (
                   <Endpoint
+                    key={index}
                     endpoint={device!.stream.endpoints[index]}
-                    deleteEndpoint={() =>
-                      (device!.stream.endpoints =
-                        device!.stream.endpoints.filter((_, i) => i !== index))
-                    }
+                    deleteEndpoint={() => {
+                      device!.stream.endpoints =
+                        device!.stream.endpoints.filter((_, i) => i !== index);
+                      setShouldPostFlag(true);
+                    }}
                   />
                 ))}
               </ul>
@@ -277,7 +281,7 @@ export const CameraStream = ({
   const deviceState = useSnapshot(device);
 
   const [streamEnabled, setStreamEnabled] = useState(
-    deviceState.stream.configured
+    deviceState.stream.enabled
   );
   const [resolution, setResolution] = useState(
     `${deviceState.stream.width}x${deviceState.stream.height}`
@@ -295,39 +299,31 @@ export const CameraStream = ({
   const [shouldPostFlag, setShouldPostFlag] = useState(false);
 
   const configureStream = () => {
+    const [width, height] = getResolution(resolution);
+    if (width === null || height === null) return;
     API_CLIENT.POST("/devices/configure_stream", {
       body: {
         bus_info: device.bus_info,
-        encode_type: device.stream.encode_type,
-        endpoints: device.stream.endpoints,
+        encode_type: format, // use local state
+        endpoints: device.stream.endpoints, // or lift endpoints into state too
         stream_format: {
-          width: device.stream.width,
-          height: device.stream.height,
-          interval: device.stream.interval,
+          width,
+          height,
+          interval: { numerator: 1, denominator: Number(fps) }, // use local state
         },
+        enabled: streamEnabled, // use local state
       },
     });
   };
 
-  const unconfigureStream = () => {
-    API_CLIENT.POST("/devices/unconfigure_stream", {
-      body: { bus_info: device.bus_info },
-    });
-  };
+  useEffect(() => {
+    device.stream.enabled = streamEnabled;
+  }, [streamEnabled]);
 
   useEffect(() => {
-    if (shouldPostFlag) {
-      if (streamEnabled) configureStream();
-      else unconfigureStream();
-      setShouldPostFlag(false);
-    }
-    device.stream.configured = streamEnabled;
-  }, [streamEnabled, shouldPostFlag]);
-
-  useEffect(() => {
-    device.stream.configured = streamEnabled;
+    device.stream.enabled = streamEnabled;
     if (device.follower)
-      getDeviceByBusInfo(devices, device.follower).stream.configured =
+      getDeviceByBusInfo(devices, device.follower).stream.enabled =
         streamEnabled;
   }, [streamEnabled]);
 
@@ -335,40 +331,29 @@ export const CameraStream = ({
     const [width, height] = getResolution(resolution);
     device.stream.width = width!;
     device.stream.height = height!;
-
-    if (shouldPostFlag) {
-      configureStream();
-      setStreamEnabled(true);
-      setShouldPostFlag(false);
-    }
   }, [resolution]);
 
   useEffect(() => {
     device.stream.interval.denominator = parseInt(fps);
+  }, [device, fps]);
 
+  useEffect(() => {
     if (shouldPostFlag) {
       configureStream();
-      setStreamEnabled(true);
       setShouldPostFlag(false);
     }
-  }, [device, fps, shouldPostFlag]);
+  }, [shouldPostFlag]);
 
   useEffect(() => {
     device.stream.encode_type = format;
-
-    if (shouldPostFlag) {
-      configureStream();
-      setStreamEnabled(true);
-      setShouldPostFlag(false);
-    }
-  }, [device, shouldPostFlag, format]);
+  }, [device, format]);
 
   subscribe(device.stream, () => {
     setResolutions(getResolutions(device, deviceState.stream.encode_type));
 
-    if (device.stream.configured && !streamEnabled) {
+    if (device.stream.enabled && !streamEnabled) {
       setStreamEnabled(true);
-    } else if (!device.stream.configured && streamEnabled) {
+    } else if (!device.stream.enabled && streamEnabled) {
       setStreamEnabled(false);
     }
   });
@@ -389,6 +374,10 @@ export const CameraStream = ({
     }
     setIntervals(newIntervals);
   }, [resolutions, device]);
+
+  subscribe(device.stream.endpoints, () => {
+    setShouldPostFlag(true);
+  });
 
   useEffect(() => {
     const newEncoders = [];
@@ -471,7 +460,7 @@ export const CameraStream = ({
                 device.leader = newLeader;
                 const leader = getDeviceByBusInfo(devices, device.leader);
                 leader.follower = device.bus_info;
-                device.stream.configured = leader.stream.configured;
+                device.stream.enabled = leader.stream.enabled;
 
                 API_CLIENT.POST("/devices/set_leader", {
                   body: { leader: device.leader, follower: device.bus_info },
@@ -493,7 +482,11 @@ export const CameraStream = ({
         />
       )}
 
-      <EndpointList defaultHost={defaultHost} nextPort={nextPort} />
+      <EndpointList
+        defaultHost={defaultHost}
+        nextPort={nextPort}
+        setShouldPostFlag={setShouldPostFlag}
+      />
       <Separator className="my-2" />
 
       <div className="flex justify-between items-center">

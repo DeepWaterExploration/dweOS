@@ -421,7 +421,12 @@ class Device(events.EventEmitter):
             self.logger.error("Failed to add option to controls list.")
 
     def start_stream(self):
+        self.stream.enabled = True
         self.stream_runner.start()
+
+    def stop_stream(self):
+        self.stream.enabled = False
+        self.stream_runner.stop()
 
     def load_settings(self, saved_device: SavedDeviceModel):
         self.logger.info(self._fmt_log("Loading device settings"))

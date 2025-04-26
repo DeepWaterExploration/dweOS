@@ -22,16 +22,6 @@ async def configure_stream(request: Request, stream_info: StreamInfoModel):
 
     return {}
 
-@camera_router.post('/devices/unconfigure_stream', summary='Unconfigure a stream')
-def unconfigure_stream(request: Request, device_descriptor: DeviceDescriptorModel):
-    device_manager: DeviceManager = request.app.state.device_manager
-
-    bus_info = device_descriptor.bus_info
-
-    device_manager.unconfigure_device_stream(bus_info)
-
-    return {}
-
 @camera_router.post('/devices/set_nickname', summary='Set a device nickname')
 def set_nickname(request: Request, device_nickname: DeviceNicknameModel):
     device_manager: DeviceManager = request.app.state.device_manager

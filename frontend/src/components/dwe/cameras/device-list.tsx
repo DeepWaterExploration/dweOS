@@ -59,67 +59,55 @@ const DeviceListLayout = () => {
 
   const [nextPort, setNextPort] = useState(5600);
 
-  const getNextPort = (devs = devices) => {
-    const allPorts: number[] = [];
-    devs.forEach((device) => {
-      device.stream.endpoints.forEach((endpoint) =>
-        allPorts.push(endpoint.port)
-      );
-    });
+  const getNextPort = (devs: DeviceModel[]) => {
+    const allPorts = devs.flatMap((device) =>
+      device.stream.endpoints.map((endpoint) => endpoint.port)
+    );
     return allPorts.length > 0
-      ? allPorts.sort().reverse()[0] + 1
-      : savedPreferences.default_stream!.port; // return the highest port
+      ? Math.max(...allPorts) + 1
+      : savedPreferences.default_stream!.port;
   };
 
   const createDeviceProxy = (device: DeviceModel) => {
     const proxyDevice = proxy(device);
 
     subscribe(proxyDevice, () => {
-      let maxPort = nextPort;
-      proxyDevice.stream.endpoints.forEach((e) => {
-        if (e.port >= maxPort) {
-          maxPort = e.port + 1;
-        }
+      setDevices((prevDevices) => {
+        const updatedDevices = prevDevices.map((d) =>
+          d.bus_info === proxyDevice.bus_info ? proxyDevice : d
+        );
+        setNextPort(getNextPort(updatedDevices));
+        return updatedDevices;
       });
-      setNextPort(maxPort);
     });
 
     return proxyDevice;
   };
 
   const addDevice = (device: DeviceModel) => {
-    const proxiedDevice = createDeviceProxy(device);
     setDevices((prevDevices) => {
-      const exists = prevDevices.some(
-        (d) => d.bus_info === proxiedDevice.bus_info
-      );
-
+      const exists = prevDevices.some((d) => d.bus_info === device.bus_info);
       if (exists) {
-        updateDevice(device);
+        const updatedDevices = prevDevices.map((d) =>
+          d.bus_info === device.bus_info ? device : d
+        );
+        setNextPort(getNextPort(updatedDevices));
+        return updatedDevices;
       } else {
-        return [...prevDevices, proxiedDevice];
+        const newDevices = [...prevDevices, createDeviceProxy(device)];
+        setNextPort(getNextPort(newDevices));
+        return newDevices;
       }
-
-      return prevDevices;
-    });
-  };
-
-  const updateDevice = (updatedDevice: DeviceModel) => {
-    setDevices((prevDevices) => {
-      const index = prevDevices.findIndex(
-        (d) => d.bus_info === updatedDevice.bus_info
-      );
-      if (index !== -1) {
-        prevDevices[index] = updatedDevice;
-      }
-      return prevDevices;
     });
   };
 
   const removeDevice = (bus_info: string) => {
     setDevices((prevDevices) => {
-      prevDevices = prevDevices.filter((d) => d.bus_info !== bus_info);
-      return prevDevices;
+      const filteredDevices = prevDevices.filter(
+        (d) => d.bus_info !== bus_info
+      );
+      setNextPort(getNextPort(filteredDevices));
+      return filteredDevices;
     });
   };
 

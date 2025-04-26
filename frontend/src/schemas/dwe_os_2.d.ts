@@ -208,23 +208,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/devices/unconfigure_stream": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Unconfigure a stream */
-        post: operations["unconfigure_stream_devices_unconfigure_stream_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/devices/set_nickname": {
         parameters: {
             query?: never;
@@ -755,6 +738,8 @@ export interface components {
             bus_info: string;
             stream_format: components["schemas"]["StreamFormatModel"];
             encode_type: components["schemas"]["StreamEncodeTypeEnum"];
+            /** Enabled */
+            enabled: boolean;
             /** Endpoints */
             endpoints: components["schemas"]["StreamEndpointModel"][];
         };
@@ -773,6 +758,8 @@ export interface components {
             interval: components["schemas"]["IntervalModel"];
             /** Configured */
             configured: boolean;
+            /** Enabled */
+            enabled: boolean;
         };
         /**
          * StreamTypeEnum
@@ -1088,39 +1075,6 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["StreamInfoModel"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    unconfigure_stream_devices_unconfigure_stream_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["DeviceDescriptorModel"];
             };
         };
         responses: {

@@ -120,14 +120,16 @@ class SHDDevice(Device):
             self.stream_runner.start()
 
     def start_stream(self):
-        if not self.is_leader:
-            if self.leader:
-                self.logger.info("Starting stream as a follower. This is not allowed.")
-                return
-
         self.stream.software_h264_bitrate = int(
             self.bitrate_option.get_value() * 1000
-        )  # mbps to kbit/sec
+        )
+        
+        if not self.is_leader:
+            if self.leader:
+                self.leader_device.start_stream()
+                return
+
+          # mbps to kbit/sec
         super().start_stream()
 
     def unconfigure_stream(self):

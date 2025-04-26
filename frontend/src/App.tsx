@@ -20,6 +20,7 @@ import { io, Socket } from "socket.io-client";
 import { useEffect, useRef, useState } from "react";
 import WebsocketContext from "./contexts/WebsocketContext";
 import { Toaster } from "@/components/ui/toaster";
+import { WifiSelector } from "./components/dwe/wireless/wifi-selector";
 
 function App() {
   const socket = useRef<Socket | undefined>(undefined);
@@ -73,6 +74,7 @@ function App() {
                 <Separator orientation="vertical" className="mr-2 h-4" />
                 <ModeToggle />
                 <CommandPalette />
+                <WifiSelector />
               </div>
             </header>
             <div className="flex flex-1 flex-col gap-4 p-4">

@@ -475,6 +475,11 @@ export interface components {
             /** Type */
             type?: string | null;
         };
+        /** ConnectionResultModel */
+        ConnectionResultModel: {
+            /** Result */
+            result: boolean;
+        };
         /** ControlFlagsModel */
         ControlFlagsModel: {
             /** Default Value */
@@ -872,7 +877,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ConnectionResultModel"];
                 };
             };
             /** @description Validation Error */

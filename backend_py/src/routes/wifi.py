@@ -8,6 +8,7 @@ from ..services import (
     Connection,
     IPConfiguration,
     NetworkPriorityInformation,
+    ConnectionResultModel
 )
 
 wifi_router = APIRouter(tags=["wifi"])
@@ -33,11 +34,11 @@ def list_wifi_connections(request: Request) -> List[Connection]:
 
 
 @wifi_router.post("/wifi/connect", summary="Connect to a network")
-async def connect(request: Request, network_config: NetworkConfig):
+async def connect(request: Request, network_config: NetworkConfig) -> ConnectionResultModel:
     wifi_manager: AsyncNetworkManager = request.app.state.wifi_manager
     result = await wifi_manager.connect(network_config.ssid, network_config.password)
 
-    return {"result": result}
+    return ConnectionResultModel(result=result)
 
 
 @wifi_router.post("/wifi/disconnect", summary="Disconnect from the connected network")

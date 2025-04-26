@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Home, CameraIcon, VideotapeIcon } from "lucide-react";
+import { Home, CameraIcon, VideotapeIcon, SettingsIcon } from "lucide-react";
 
 import DWELogo from "@/assets/dwe-logo.svg";
 import DWELogoDark from "@/assets/dwe-logo-dark.svg";
@@ -33,6 +33,11 @@ const data = {
       title: "Recording Browser",
       url: "/videos",
       icon: VideotapeIcon,
+    },
+    {
+      title: "Preferences",
+      url: "/preferences",
+      icon: SettingsIcon,
     },
   ],
 };

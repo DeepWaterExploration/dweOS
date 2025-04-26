@@ -3,6 +3,7 @@ import App from "./App";
 import OverviewLayout from "./components/Overview";
 import DeviceListLayout from "./components/dwe/cameras/device-list";
 import { RecordingBrowser } from "./components/RecordingBrowser";
+import PreferencesLayout from "./components/dwe/preferences/preferences";
 
 export const router = createBrowserRouter([
   {
@@ -12,6 +13,7 @@ export const router = createBrowserRouter([
       { index: true, element: <OverviewLayout /> },
       { path: "/cameras", element: <DeviceListLayout /> },
       { path: "/videos", element: <RecordingBrowser /> },
+      { path: "/preferences", element: <PreferencesLayout /> },
     ],
   },
 ]);

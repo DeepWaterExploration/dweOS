@@ -7,7 +7,8 @@
     "dev": "vite --host",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "schema-pull": "openapi-typescript http://localhost:5000/openapi.json -o ./src/schemas/dwe_os_2.d.ts"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.1",
@@ -29,9 +30,9 @@
     "date-fns": "^3.6.0",
     "lucide-react": "^0.456.0",
     "openapi-fetch": "^0.13.5",
-    "react": "^18.3.1",
+    "react": "^18.2.0",
     "react-day-picker": "^8.10.1",
-    "react-dom": "^18.3.1",
+    "react-dom": "^18.2.0",
     "react-router-dom": "^6.28.0",
     "recharts": "^2.13.3",
     "socket.io-client": "^4.8.1",

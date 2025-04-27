@@ -28,18 +28,14 @@ export const CameraNickname = () => {
 
   const saveNickname = () => {
     const trimmedNickname = tempNickname.trim();
-    if (trimmedNickname) {
-      setNickname(trimmedNickname);
-      setIsEditing(false);
-    } else {
-      setTempNickname(nickname);
-      setIsEditing(false);
-    }
+    console.log(trimmedNickname);
+    setNickname(trimmedNickname);
+    setIsEditing(false);
   };
 
   useEffect(() => {
     API_CLIENT.POST("/devices/set_nickname", {
-      body: { bus_info: device.bus_info, nickname: device.nickname },
+      body: { bus_info: device.bus_info, nickname },
     });
     device.nickname = nickname;
   }, [nickname]);

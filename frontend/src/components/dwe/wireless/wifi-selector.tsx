@@ -62,8 +62,13 @@ export function WifiSelector() {
         updateConnectedNetwork();
       });
 
+      socket?.on("aps_changed", () => {
+        updateWifiNetworks();
+      });
+
       return () => {
         socket?.off("connection_changed");
+        socket?.off("aps_changed");
       };
     }
 
@@ -164,26 +169,40 @@ export function WifiSelector() {
 
           {isWifiEnabled ? (
             <>
-              {networks.map((network) => (
-                <DropdownMenuItem
-                  key={network.ssid}
-                  className="flex items-center justify-between cursor-pointer"
-                  onClick={() => handleNetworkConnect(network)}
-                >
-                  <div className="flex items-center gap-2">
-                    <SignalStrength strength={network.strength} />
-                    <span className="truncate max-w-[8rem]">
-                      {network.ssid}
-                    </span>
-                    {network.requires_password && (
-                      <Lock className="h-3 w-3 text-muted-foreground" />
+              {networks
+
+                .sort((a, b) => {
+                  const connectedId = wifiStatus?.connection?.id;
+                  if (a.ssid === connectedId) return -1; // a is connected, put first
+                  if (b.ssid === connectedId) return 1; // b is connected, put first
+                  return b.strength - a.strength; // otherwise sort by strength
+                })
+                .filter(
+                  (network, index) =>
+                    networks.findIndex(
+                      (findNetwork) => network.ssid === findNetwork.ssid
+                    ) === index
+                )
+                .map((network) => (
+                  <DropdownMenuItem
+                    key={network.ssid}
+                    className="flex items-center justify-between cursor-pointer"
+                    onClick={() => handleNetworkConnect(network)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <SignalStrength strength={network.strength} />
+                      <span className="truncate max-w-[8rem]">
+                        {network.ssid}
+                      </span>
+                      {network.requires_password && (
+                        <Lock className="h-3 w-3 text-muted-foreground" />
+                      )}
+                    </div>
+                    {wifiStatus?.connection?.id == network.ssid && (
+                      <Check className="h-4 w-4 text-green-500" />
                     )}
-                  </div>
-                  {wifiStatus?.connection?.id == network.ssid && (
-                    <Check className="h-4 w-4 text-green-500" />
-                  )}
-                </DropdownMenuItem>
-              ))}
+                  </DropdownMenuItem>
+                ))}
               <DropdownMenuSeparator />
               <DropdownMenuItem>
                 <span className="text-sm text-muted-foreground">
@@ -249,20 +268,17 @@ interface SignalStrengthProps {
 }
 
 function SignalStrength({ strength }: SignalStrengthProps) {
+  const thresholds = [20, 50, 70, 100];
+
   return (
     <div className="flex h-4 items-end gap-[2px]">
-      {[1, 2, 3, 4].map((level) => (
+      {thresholds.map((threshold, index) => (
         <div
-          key={level}
+          key={threshold}
           className={cn(
-            "w-1 bg-current rounded-sm",
-            level <= strength ? "text-foreground" : "text-muted-foreground/30",
-            {
-              "h-1": level === 1,
-              "h-2": level === 2,
-              "h-3": level === 3,
-              "h-4": level === 4,
-            }
+            "w-1 rounded-sm",
+            strength >= threshold ? "bg-foreground" : "bg-muted-foreground/30",
+            `h-${index + 1}`
           )}
         />
       ))}

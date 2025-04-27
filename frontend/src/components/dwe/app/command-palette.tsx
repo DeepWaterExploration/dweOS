@@ -32,6 +32,20 @@ export function CommandPalette() {
           <CommandInput placeholder="Type a command..." />
           <CommandList>
             <CommandEmpty>No results found.</CommandEmpty>
+            <CommandGroup heading="Docs">
+              <CommandItem
+                onSelect={() =>
+                  runCommand(() =>
+                    window.open(
+                      "https://docs.dwe.ai/software/dwe-os/guides/streaming",
+                      "_blank"
+                    )
+                  )
+                }
+              >
+                Streaming Guide
+              </CommandItem>
+            </CommandGroup>
             <CommandGroup heading="Navigation">
               <CommandItem onSelect={() => runCommand(() => navigate("/"))}>
                 Overview
@@ -45,6 +59,9 @@ export function CommandPalette() {
                 onSelect={() => runCommand(() => navigate("/videos"))}
               >
                 Recordings
+              </CommandItem>
+              <CommandItem onSelect={() => runCommand(() => navigate("/logs"))}>
+                Logs
               </CommandItem>
             </CommandGroup>
           </CommandList>

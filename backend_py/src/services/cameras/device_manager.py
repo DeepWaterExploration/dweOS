@@ -175,6 +175,8 @@ class DeviceManager(events.EventEmitter):
         """
         device = self._find_device_with_bus_info(bus_info)
 
+        self.logger.info(f'Setting nickname of {bus_info} to {nickname}')
+
         device.nickname = nickname
 
         self.settings_manager.save_device(device)

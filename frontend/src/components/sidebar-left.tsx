@@ -1,7 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { Home, CameraIcon, VideotapeIcon, SettingsIcon } from "lucide-react";
+import {
+  Home,
+  CameraIcon,
+  VideotapeIcon,
+  SettingsIcon,
+  LogsIcon,
+} from "lucide-react";
 
 import DWELogo from "@/assets/dwe-logo.svg";
 import DWELogoDark from "@/assets/dwe-logo-dark.svg";
@@ -38,6 +44,11 @@ const data = {
       title: "Preferences",
       url: "/preferences",
       icon: SettingsIcon,
+    },
+    {
+      title: "Logs",
+      url: "/logs",
+      icon: LogsIcon,
     },
   ],
 };

@@ -132,7 +132,6 @@ class StreamRunner(events.EventEmitter):
 
     def _construct_pipeline(self):
         pipeline_strs = []
-        print(self.streams)
         for stream in self.streams:
             pipeline_strs.append(stream._construct_pipeline())
         return " ".join(pipeline_strs)

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/card";
 import DevicesContext from "@/contexts/DevicesContext";
 import { getDeviceByBusInfo } from "@/lib/utils";
+import NotConnected from "../not-connected";
 
 type DeviceModel = components["schemas"]["DeviceModel"];
 
@@ -146,7 +147,10 @@ const DeviceListLayout = () => {
 
       getDevices();
       getSavedPreferences();
+    } else {
+      setDevices([]);
     }
+
     return () => {
       socket?.off("device_added", handleDeviceAdded);
       socket?.off("device_removed", handleDeviceRemoved);
@@ -178,7 +182,8 @@ const DeviceListLayout = () => {
             </DeviceContext.Provider>
           </div>
         ))}
-        {devices.length === 0 && <NoDevicesConnected />}
+        {devices.length === 0 &&
+          (connected ? <NoDevicesConnected /> : <NotConnected />)}
       </DevicesContext.Provider>
     </div>
   );

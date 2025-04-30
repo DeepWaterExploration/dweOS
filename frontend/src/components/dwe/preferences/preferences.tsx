@@ -1,5 +1,12 @@
 import { API_CLIENT } from "@/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -9,6 +16,7 @@ import WebsocketContext from "@/contexts/WebsocketContext";
 import { cn } from "@/lib/utils";
 import { components } from "@/schemas/dwe_os_2";
 import { useContext, useEffect, useState } from "react";
+import NotConnected from "../not-connected";
 
 export const IP_REGEX =
   /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$|^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)+([A-Za-z]|[A-Za-z][A-Za-z0-9\-]*[A-Za-z0-9])$/;
@@ -90,47 +98,53 @@ const PreferencesLayout = () => {
   }, [recommendHost, host, port]);
 
   return (
-    <div className="flex flex-wrap justify-start px-12 gap-8">
-      <SettingsCard cardTitle="Stream">
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="stream-host">Default Stream Host</Label>
-            <Input
-              id="stream-host"
-              disabled={recommendHost}
-              value={host}
-              onChange={(e) => setHost(e.target.value)}
-              placeholder="Enter host IP"
-              className={cn(!IP_REGEX.test(host) && "border-red-500")}
-            />
-          </div>
+    <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(350px,1fr))]">
+      {connected ? (
+        <SettingsCard cardTitle="Stream">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="stream-host">Default Stream Host</Label>
+              <Input
+                id="stream-host"
+                disabled={recommendHost}
+                value={host}
+                onChange={(e) => setHost(e.target.value)}
+                placeholder="Enter host IP"
+                className={cn(!IP_REGEX.test(host) && "border-red-500")}
+              />
+            </div>
 
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="stream-port">Default Stream Port</Label>
-            <Input
-              id="stream-port"
-              type="number"
-              value={port}
-              onChange={(e) => setPort(parseInt(e.target.value))}
-              placeholder="Enter port"
-              min={1024}
-              max={65535}
-              className={cn((port < 1024 || port > 65535) && "border-red-500")}
-            />
-          </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="stream-port">Default Stream Port</Label>
+              <Input
+                id="stream-port"
+                type="number"
+                value={port}
+                onChange={(e) => setPort(parseInt(e.target.value))}
+                placeholder="Enter port"
+                min={1024}
+                max={65535}
+                className={cn(
+                  (port < 1024 || port > 65535) && "border-red-500"
+                )}
+              />
+            </div>
 
-          <Separator />
+            <Separator />
 
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="recommend-host"
-              checked={recommendHost}
-              onCheckedChange={(checked) => setRecommendHost(!!checked)}
-            />
-            <Label htmlFor="recommend-host">Recommend Default Host</Label>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="recommend-host"
+                checked={recommendHost}
+                onCheckedChange={(checked) => setRecommendHost(!!checked)}
+              />
+              <Label htmlFor="recommend-host">Recommend Default Host</Label>
+            </div>
           </div>
-        </div>
-      </SettingsCard>
+        </SettingsCard>
+      ) : (
+        <NotConnected />
+      )}
     </div>
   );
 };

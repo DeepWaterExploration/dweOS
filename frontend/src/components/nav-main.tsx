@@ -9,6 +9,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { Link, useLocation } from "react-router-dom";
 
 export function NavMain({
   items,
@@ -20,6 +21,8 @@ export function NavMain({
     isActive?: boolean;
   }[];
 }) {
+  const location = useLocation();
+
   return (
     <SidebarGroup title="DWE OS">
       <SidebarGroupContent>
@@ -28,12 +31,12 @@ export function NavMain({
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
                 asChild
-                isActive={item.url == window.location.pathname}
+                isActive={item.url == location.pathname}
               >
-                <a href={item.url}>
+                <Link to={item.url}>
                   <item.icon />
                   <span>{item.title}</span>
-                </a>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}

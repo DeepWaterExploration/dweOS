@@ -16,6 +16,7 @@ import { NavMain } from "@/components/nav-main";
 import { Sidebar, SidebarHeader } from "@/components/ui/sidebar";
 import { Badge } from "./ui/badge";
 import { useTheme } from "./theme-provider";
+import WebsocketContext from "@/contexts/WebsocketContext";
 
 const data = {
   main: {
@@ -63,6 +64,8 @@ export function SidebarLeft({
   const theme = useTheme();
   const themeColor = theme.theme === "system" ? systemTheme : theme.theme;
 
+  const { connected } = React.useContext(WebsocketContext)!;
+
   return (
     <Sidebar className="border-r-0" {...props}>
       <SidebarHeader>
@@ -87,6 +90,15 @@ export function SidebarLeft({
             <Badge variant="secondary" className="flex-shrink-0">
               v2.0.0
             </Badge>
+            {connected ? (
+              <Badge variant="success" className="flex-shrink-0">
+                Connected
+              </Badge>
+            ) : (
+              <Badge variant="destructive" className="flex-shrink-0">
+                Disconnected
+              </Badge>
+            )}
           </div>
         </div>
         <NavMain items={data.navMain} />

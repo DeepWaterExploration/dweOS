@@ -268,7 +268,9 @@ interface SignalStrengthProps {
 }
 
 function SignalStrength({ strength }: SignalStrengthProps) {
-  const thresholds = [20, 50, 70, 100];
+  const thresholds = [20, 50, 70];
+
+  const h_values = ["h-[0.25rem]", "h-2", "h-3", "h-4"];
 
   return (
     <div className="flex h-4 items-end gap-[2px]">
@@ -278,7 +280,7 @@ function SignalStrength({ strength }: SignalStrengthProps) {
           className={cn(
             "w-1 rounded-sm",
             strength >= threshold ? "bg-foreground" : "bg-muted-foreground/30",
-            `h-${index + 1}`
+            `h-${index + 2}`
           )}
         />
       ))}

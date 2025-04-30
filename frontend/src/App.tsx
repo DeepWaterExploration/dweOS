@@ -21,6 +21,10 @@ import { useEffect, useRef, useState } from "react";
 import WebsocketContext from "./contexts/WebsocketContext";
 import { Toaster } from "@/components/ui/toaster";
 import { WifiSelector } from "./components/dwe/wireless/wifi-selector";
+import { EthernetPort, EthernetPortIcon } from "lucide-react";
+import { Button } from "./components/ui/button";
+import { WiredDropdown } from "./components/dwe/wireless/wired-dropdown";
+import { SystemDropdown } from "./components/dwe/system/system-dropdown";
 
 function App() {
   const socket = useRef<Socket | undefined>(undefined);
@@ -74,7 +78,9 @@ function App() {
                 <Separator orientation="vertical" className="mr-2 h-4" />
                 <ModeToggle />
                 <CommandPalette />
+                <WiredDropdown />
                 <WifiSelector />
+                <SystemDropdown />
               </div>
             </header>
             <div className="flex flex-1 flex-col gap-4 p-4">

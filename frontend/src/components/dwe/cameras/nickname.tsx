@@ -31,12 +31,13 @@ export const CameraNickname = () => {
     console.log(trimmedNickname);
     setNickname(trimmedNickname);
     setIsEditing(false);
+
+    API_CLIENT.POST("/devices/set_nickname", {
+      body: { bus_info: device.bus_info, nickname: trimmedNickname },
+    });
   };
 
   useEffect(() => {
-    API_CLIENT.POST("/devices/set_nickname", {
-      body: { bus_info: device.bus_info, nickname },
-    });
     device.nickname = nickname;
   }, [nickname]);
 

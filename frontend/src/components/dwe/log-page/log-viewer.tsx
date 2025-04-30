@@ -32,6 +32,8 @@ import {
 import WebsocketContext from "@/contexts/WebsocketContext";
 import { API_CLIENT } from "@/api";
 import { components } from "@/schemas/dwe_os_2";
+import { LogDetailView } from "./log-detail-view";
+import { getLevelColor } from "@/lib/utils";
 
 export function LogViewer() {
   const { connected, socket } = useContext(WebsocketContext)!;
@@ -45,6 +47,10 @@ export function LogViewer() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
+  const [selectedLog, setSelectedLog] = useState<
+    components["schemas"]["LogSchema"] | undefined
+  >(undefined);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   // Available log levels
   const logLevels = ["ALL", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"];
@@ -62,26 +68,10 @@ export function LogViewer() {
       return () => {
         socket?.off("log");
       };
+    } else {
+      setLogs([]);
     }
   }, [connected]);
-
-  // Function to get color for log level badge
-  const getLevelColor = (level: string) => {
-    switch (level) {
-      case "DEBUG":
-        return "bg-blue-500 hover:bg-blue-600";
-      case "INFO":
-        return "bg-gray-500 hover:bg-gray-600";
-      case "WARNING":
-        return "bg-yellow-500 hover:bg-yellow-600";
-      case "ERROR":
-        return "bg-red-500 hover:bg-red-600";
-      case "CRITICAL":
-        return "bg-purple-500 hover:bg-purple-600";
-      default:
-        return "bg-gray-500 hover:bg-gray-600";
-    }
-  };
 
   // Format timestamp for better readability
   const formatTimestamp = (timestamp: string) => {
@@ -160,7 +150,7 @@ export function LogViewer() {
 
   const refreshLogs = () => {
     setIsLoading(true);
-    updateLogs().then(() => setIsLoading(false));
+    updateLogs().then(() => setTimeout(() => setIsLoading(false), 500));
   };
 
   return (
@@ -217,7 +207,14 @@ export function LogViewer() {
           <TableBody>
             {currentItems.length > 0 ? (
               currentItems.map((log, index) => (
-                <TableRow key={index}>
+                <TableRow
+                  key={index}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => {
+                    setSelectedLog(log);
+                    setIsDetailOpen(true);
+                  }}
+                >
                   <TableCell className="font-mono text-xs">
                     {formatTimestamp(log.timestamp)}
                   </TableCell>
@@ -227,7 +224,7 @@ export function LogViewer() {
                     </Badge>
                   </TableCell>
                   <TableCell
-                    className="truncate max-w-[150px]"
+                    className="whitespace-normal break-words max-w-[150px]"
                     title={log.name}
                   >
                     {log.name}
@@ -235,24 +232,23 @@ export function LogViewer() {
                   <TableCell>
                     <div className="text-xs">
                       <div
-                        className="truncate max-w-[150px]"
+                        className="break-words max-w-[150px]"
                         title={log.filename}
                       >
                         {log.filename}:{log.lineno}
                       </div>
                       <div
-                        className="text-gray-500 truncate max-w-[150px]"
+                        className="text-gray-500 break-words max-w-[150px]"
                         title={log.function}
                       >
                         {log.function}()
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell
-                    className="font-mono text-xs truncate max-w-[150px]"
-                    title={log.message}
-                  >
-                    {log.message}
+                  <TableCell title={log.message}>
+                    <div className="font-mono text-xs whitespace-normal break-words max-w-[150px] line-clamp-3">
+                      {log.message}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -351,6 +347,13 @@ export function LogViewer() {
           </Pagination>
         </div>
       )}
+
+      {/* Log Detail Dialog */}
+      <LogDetailView
+        log={selectedLog}
+        open={isDetailOpen}
+        onOpenChange={setIsDetailOpen}
+      />
     </div>
   );
 }

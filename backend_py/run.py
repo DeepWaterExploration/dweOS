@@ -6,7 +6,7 @@ import asyncio
 from contextlib import asynccontextmanager
 import logging
 
-ORIGINS = ["http://localhost:5173"]
+ORIGINS = ["http://localhost:5173", "http://localhost:5174"]
 
 # Use AsyncServer
 sio = socketio.AsyncServer(

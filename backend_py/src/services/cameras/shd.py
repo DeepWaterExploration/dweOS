@@ -1,5 +1,3 @@
-import logging
-
 from .saved_pydantic_schemas import SavedDeviceModel
 from .enumeration import DeviceInfo
 from .device import Device, BaseOption, ControlTypeEnum, StreamEncodeTypeEnum
@@ -94,7 +92,8 @@ class SHDDevice(Device):
         # restart leader's stream to now include this device
         leader.stream.configured = True
         leader.follower = self.bus_info
-        leader.start_stream()
+        if leader.stream.enabled:
+            leader.start_stream()
 
     def load_settings(self, saved_device: SavedDeviceModel):
         return super().load_settings(saved_device)
@@ -112,18 +111,20 @@ class SHDDevice(Device):
         # restart the leader device stream to take this device out of it
         if self.leader_device.stream_runner.started:
             self.leader_device.start_stream()
+        # TODO: FIX in UI end..?
+        self.stream.enabled = self.leader_device.stream.enabled
         self.leader_device.follower = None
         self.leader_device = None
         self.leader = None
-        # start the stream if configured
-        if self.stream.configured:
+        # start the stream if enabled
+        if self.stream.enabled:
             self.stream_runner.start()
 
     def start_stream(self):
         self.stream.software_h264_bitrate = int(
             self.bitrate_option.get_value() * 1000
         )
-        
+
         if not self.is_leader:
             if self.leader:
                 self.leader_device.start_stream()

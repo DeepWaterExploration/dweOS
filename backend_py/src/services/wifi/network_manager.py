@@ -208,7 +208,7 @@ class NetworkManager:
 
         if activate:
             self.interface.ActivateConnection(
-                existing_conn_path, ethernet_proxy, ethernet_device
+                existing_conn_path, ethernet_device, "/"
             )
 
         return dev_interface
@@ -246,7 +246,7 @@ class NetworkManager:
         # TODO: Support infinite ethernet cards
         # print(dev_interface, connection_id)
 
-        return (ethernet_device, ethernet_proxy, dev_interface, "Wired connection 1")
+        return (ethernet_device, ethernet_proxy, dev_interface, connection_id)
 
     def _update_ipv4_settings(
         self,

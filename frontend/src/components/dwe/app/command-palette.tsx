@@ -63,6 +63,16 @@ export function CommandPalette() {
               <CommandItem onSelect={() => runCommand(() => navigate("/logs"))}>
                 Logs
               </CommandItem>
+              <CommandItem
+                onSelect={() => runCommand(() => navigate("/preferences"))}
+              >
+                Preferences
+              </CommandItem>
+              <CommandItem
+                onSelect={() => runCommand(() => navigate("/terminal"))}
+              >
+                Terminal
+              </CommandItem>
             </CommandGroup>
           </CommandList>
         </Command>

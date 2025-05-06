@@ -95,8 +95,7 @@ class AsyncNetworkManager(EventEmitter):
             return None  # Handle failure gracefully
         except NMException as e:
             self.logger.info(e)
-            await self._reinitialize_nm()
-            await asyncio.sleep(1)
+            # await self._reinitialize_nm()
             return None
 
     def get_network_priority(self):
@@ -252,8 +251,12 @@ class AsyncNetworkManager(EventEmitter):
                 if current_time - start_time > self.scan_interval:
                     start_time = current_time
                     async with self._nm_lock:
-                        await self.safe_dbus_call(self.nm.request_wifi_scan)
-                        self._requested_scan = True
+                        res = await self.safe_dbus_call(self.nm.request_wifi_scan)
+                        if res == None:
+                            # Scanning failed
+                            await asyncio.sleep(1)
+                        else:
+                            self._requested_scan = True
 
                 await asyncio.sleep(5)
             except Exception as e:
@@ -281,7 +284,8 @@ class AsyncNetworkManager(EventEmitter):
         try:
             return await asyncio.to_thread(self.nm.get_ip_info)
         except NMException as e:
-            await self._reinitialize_nm()
+            self.logger.error(f'NetworkManager Exception Occurred while getting IP Information {e}')
+            # await self._reinitialize_nm()
 
     def _set_static_ip(
         self, ip_configuration: IPConfiguration, prioritize_wireless=False

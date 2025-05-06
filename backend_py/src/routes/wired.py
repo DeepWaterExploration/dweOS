@@ -13,7 +13,7 @@ wired_router = APIRouter(tags=["wired"])
 @wired_router.get(
     "/wired/get_ip_configuration", summary="Get the ethernet IP configuration"
 )
-def get_ip_configuration(request: Request) -> IPConfiguration:
+def get_ip_configuration(request: Request) -> IPConfiguration | None:
     wifi_manager: AsyncNetworkManager = request.app.state.wifi_manager
 
     return wifi_manager.get_ip_configuration()
@@ -37,7 +37,7 @@ async def set_network_priority(
 
 
 @wired_router.get("/wired/get_network_priority", summary="Get the network priority")
-async def getet_network_priority(request: Request) -> NetworkPriorityInformation:
+async def get_network_priority(request: Request) -> NetworkPriorityInformation:
     wifi_manager: AsyncNetworkManager = request.app.state.wifi_manager
     network_priority = NetworkPriorityInformation(
         network_priority=wifi_manager.get_network_priority()

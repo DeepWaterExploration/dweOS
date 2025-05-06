@@ -45,7 +45,8 @@ class SHDDevice(Device):
     def _get_options(self) -> Dict[str, StellarOption]:
         options = {}
 
-        self.bitrate_option = StellarOption("Software H.264 Bitrate", 5)  # 5 mpbs
+        self.bitrate_option = StellarOption(
+            "Software H.264 Bitrate", 5)  # 5 mpbs
 
         # Only restart if it's being used
         self.bitrate_option.on(
@@ -62,36 +63,43 @@ class SHDDevice(Device):
         return options
 
     def set_leader(self, leader: "SHDDevice"):
-        # We love forward references
+        # This is a hacky workaround to allow frame sync between two followers
         if not leader.is_leader:
             self.logger.warning(
-                "Attempting to add follower SHD as a leader. This is undefined behavior and will not be permitted."
+                self._fmt_log(
+                    "Forcing follower to be a leader. This may lead to undefined behavior if external sync is not present."
+                )
             )
-            return
+            # Promote the follower to leader role
+            leader.is_leader = True
+
         if leader.follower:
             self.logger.warning(
-                "Attempted to add follower to SHD with follower. This is undefined behavior and will not be permitted."
+                self._fmt_log(
+                    "Attempted to add follower to SHD with existing follower. Overwriting existing follower."
+                )
             )
-            return
+
         if self.leader_device:
             self.logger.info(
                 self._fmt_log(
-                    "Setting leader of device with leader. Removing previous leader."
+                    "Setting new leader for device with existing leader. Removing previous leader."
                 )
             )
             self.remove_leader()
+
         self.leader_device = leader
         self.leader = leader.bus_info
-        # remember to stop the stream because it is no longer managed by this device
         self.stream_runner.stop()
+
         if len(leader.stream_runner.streams) < 2:
             leader.stream_runner.streams.append(self.stream)
         else:
             leader.stream_runner.streams[1] = self.stream
 
-        # restart leader's stream to now include this device
         leader.stream.configured = True
         leader.follower = self.bus_info
+
         if leader.stream.enabled:
             leader.start_stream()
 
@@ -107,7 +115,11 @@ class SHDDevice(Device):
         try:
             self.leader_device.stream_runner.streams.remove(self.stream)
         except ValueError:
-            self.logger.warning("Tried to remove stream from leader without a stream")
+            self.logger.warning(
+                "Tried to remove stream from leader without a stream")
+
+        self.leader_device.is_leader = False
+
         # restart the leader device stream to take this device out of it
         if self.leader_device.stream_runner.started:
             self.leader_device.start_stream()

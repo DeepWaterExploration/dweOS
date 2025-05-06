@@ -168,7 +168,9 @@ const DeviceListLayout = () => {
       <DevicesContext.Provider
         value={{
           devices,
-          leaders: devices.filter((d) => d.device_type == 1),
+          leaders: devices.filter(
+            (d) => d.device_type == 1 || d.device_type == 2 // leader or follower
+          ),
           enableStream,
         }}
       >

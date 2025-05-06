@@ -1,7 +1,7 @@
 {
     "name": "frontend",
     "private": true,
-    "version": "v0.5.0-serial-pwm",
+    "version": "v0.5.0-pwm-serial",
     "type": "module",
     "scripts": {
         "dev": "vite --host",

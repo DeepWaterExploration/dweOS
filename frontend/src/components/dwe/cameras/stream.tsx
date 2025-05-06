@@ -457,6 +457,8 @@ export const CameraStream = ({
           onChange={async (newLeader) => {
             try {
               if (newLeader === "Unassigned") {
+                // Make the leader not a leader anymore
+                getDeviceByBusInfo(devices, device.leader).is_leader = false;
                 device.leader = undefined;
                 API_CLIENT.POST("/devices/remove_leader", {
                   body: { follower: device.bus_info },
@@ -466,6 +468,7 @@ export const CameraStream = ({
                 const leader = getDeviceByBusInfo(devices, device.leader);
                 leader.follower = device.bus_info;
                 device.stream.enabled = leader.stream.enabled;
+                leader.is_leader = true;
 
                 API_CLIENT.POST("/devices/set_leader", {
                   body: { leader: device.leader, follower: device.bus_info },
@@ -483,7 +486,7 @@ export const CameraStream = ({
               });
             }
           }}
-          disabled={leaders.length < 1}
+          disabled={leaders.length < 1 || deviceState.is_leader}
         />
       )}
 

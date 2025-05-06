@@ -11,7 +11,6 @@ import { CameraStream } from "./stream";
 import { subscribe, useSnapshot } from "valtio";
 import { useContext, useEffect } from "react";
 import DeviceContext from "@/contexts/DeviceContext";
-import { API_CLIENT } from "@/api";
 
 export function CameraCard({
   defaultHost,
@@ -28,14 +27,7 @@ export function CameraCard({
   useEffect(() => {
     const unsubscribe = subscribe(device, () => {});
 
-    subscribe(device.stream, () => {
-      if (device.stream.configured) {
-      } else {
-        // API_CLIENT.POST("/devices/unconfigure_stream", {
-        //   body: { bus_info: device.bus_info },
-        // });
-      }
-    });
+    subscribe(device.stream, () => {});
 
     return () => unsubscribe();
   }, [device]);

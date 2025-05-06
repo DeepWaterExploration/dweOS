@@ -45,10 +45,7 @@ export function WiredDropdown() {
   const updateIPConfiguration = async () => {
     setIsLoading(true);
     try {
-      const response: {
-        data?: IPConfiguration | null;
-        error?: any;
-      } = await API_CLIENT.GET("/wired/get_ip_configuration");
+      const response = await API_CLIENT.GET("/wired/get_ip_configuration");
 
       if (response.error) {
         console.error("Error fetching IP configuration:", response.error);
@@ -127,15 +124,10 @@ export function WiredDropdown() {
         setIsSaving(false);
         return;
       }
-      // Add more robust IP address/prefix validation here if needed
     }
 
     try {
-      // Correctly type the response for the POST
-      const response: {
-        data?: any; // Adjust type based on actual success response body
-        error?: any;
-      } = await API_CLIENT.POST("/wired/set_ip_configuration", {
+      const response = await API_CLIENT.POST("/wired/set_ip_configuration", {
         body: payload,
       });
 
@@ -144,7 +136,7 @@ export function WiredDropdown() {
         toast({
           title: "Error",
           description: `Failed to save wired IP configuration: ${
-            response.error.message || "Unknown error"
+            response.error.detail || "Unknown error"
           }.`,
           variant: "destructive",
         });
@@ -323,15 +315,6 @@ export function WiredDropdown() {
                 )}
                 Save Changes
               </Button>
-
-              {/* Display Current IP Configuration (Optional, for comparison) */}
-              {/* You could show the currently applied config below the form */}
-              {/* <DropdownMenuSeparator />
-                <DropdownMenuLabel>Current Applied Config</DropdownMenuLabel>
-                 <div className="text-xs px-4 py-2 text-muted-foreground">
-                     ... display ipConfiguration here ...
-                 </div>
-                 */}
             </div>
           )}
         </DropdownMenuContent>

@@ -9,6 +9,7 @@ from .settings import SettingsManager
 from .enumeration import list_devices
 from .device_utils import list_diff, find_device_with_bus_info
 from .exceptions import DeviceNotFoundException
+from ..pwm import SerialPWMController, PWMConfig
 
 import socketio
 
@@ -55,6 +56,8 @@ class DeviceManager(events.EventEmitter):
         self._is_monitoring = False
         # List of devices with gstreamer errors
         self.gst_errors: List[str] = []
+
+        self.pwm_controller = SerialPWMController("/dev/ttyS0", 9600)
 
         self.logger = logging.getLogger("dwe_os_2.cameras.DeviceManager")
 
@@ -140,6 +143,9 @@ class DeviceManager(events.EventEmitter):
         device.configure_stream(
             encode_type, width, height, interval, StreamTypeEnum.UDP, endpoints
         )
+
+        # Apply the frequency based on the FPS
+        self.pwm_controller.apply_from_fps(interval.denominator)
 
         if stream_info.enabled:
             device.start_stream()

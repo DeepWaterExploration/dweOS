@@ -64,9 +64,6 @@ class Server:
             settings_manager=self.settings_manager, sio=self.sio
         )
 
-        # Lights
-        self.light_manager = LightManager(create_pwm_controllers())
-
         self.server_logger = logging.getLogger("dwe_os_2.Server")
 
         # Wifi support
@@ -111,7 +108,6 @@ class Server:
         # FAST API
         self.app.state.device_manager = self.device_manager
         self.app.state.log_handler = self.log_handler
-        self.app.state.light_manager = self.light_manager
         self.app.state.settings_manager = self.settings_manager
         self.app.state.preferences_manager = self.preferences_manager
         self.app.state.system_manager = self.system_manager
@@ -125,7 +121,6 @@ class Server:
         self.app.include_router(camera_router)
         self.app.include_router(preferences_router)
         self.app.include_router(system_router)
-        self.app.include_router(lights_router)
         self.app.include_router(logs_router)
 
         self.app.add_api_route(
@@ -162,7 +157,6 @@ class Server:
     def shutdown(self):
         self.server_logger.info("Shutting down")
 
-        self.light_manager.cleanup()
         self.device_manager.stop_monitoring()
 
         if self.feature_support.ttyd:

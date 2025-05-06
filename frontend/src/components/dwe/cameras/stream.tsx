@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -25,9 +25,9 @@ import { subscribe, useSnapshot } from "valtio";
 import { components } from "@/schemas/dwe_os_2";
 import { useToast } from "@/hooks/use-toast";
 import DevicesContext from "@/contexts/DevicesContext";
-import { getDeviceByBusInfo, useDidMountEffect } from "@/lib/utils";
+import { getDeviceByBusInfo } from "@/lib/utils";
 import { API_CLIENT } from "@/api";
-import WebsocketContext from "@/contexts/WebsocketContext";
+import { CameraControls } from "./camera-controls";
 
 // Options for StreamSelector should provide label and value for each choice
 type StreamOption = { label: string; value: string };
@@ -322,9 +322,14 @@ export const CameraStream = ({
 
   useEffect(() => {
     device.stream.enabled = streamEnabled;
-    if (device.follower)
-      getDeviceByBusInfo(devices, device.follower).stream.enabled =
-        streamEnabled;
+    if (device.follower) {
+      const follower = getDeviceByBusInfo(devices, device.follower);
+      if (follower.leader !== device.bus_info) {
+        device.follower = "";
+        return;
+      }
+      follower.stream.enabled = streamEnabled;
+    }
   }, [streamEnabled]);
 
   useEffect(() => {
@@ -510,6 +515,8 @@ export const CameraStream = ({
           {streamEnabled ? <PauseIcon /> : <PlayIcon />}
         </Button>
       </div>
+
+      <CameraControls />
     </div>
   );
 };

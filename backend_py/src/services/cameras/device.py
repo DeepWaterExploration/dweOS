@@ -299,7 +299,8 @@ class Device(events.EventEmitter):
         self.controls: List[ControlModel] = []
 
         for ctrl in self.v4l2_device.controls.values():
-            control_type = ControlTypeEnum(ctrl.type)
+            internal_enum = V4LControlTypeEnum(ctrl.type)
+            control_type = ControlTypeEnum(internal_enum.name)
 
             max_value = 0
             min_value = 0
@@ -480,9 +481,13 @@ class Device(events.EventEmitter):
             control.value = value
         except (AttributeError, PermissionError) as e:
             self.logger.debug(f"Error setting control value: {e.strerror}")
+            return False
         for ctrl in self.controls:
             if ctrl.control_id == control_id:
                 ctrl.value = value
+                break
+
+        return True
 
     # get an option
     def get_option(self, opt: str) -> Any:

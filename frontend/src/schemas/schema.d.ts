@@ -506,9 +506,9 @@ export interface components {
         };
         /**
          * ControlTypeEnum
-         * @enum {string}
+         * @enum {integer}
          */
-        ControlTypeEnum: "INTEGER" | "BOOLEAN" | "MENU" | "BUTTON" | "INTEGER64" | "CTRL_CLASS" | "STRING" | "BITMASK" | "INTEGER_MENU";
+        ControlTypeEnum: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
         /** DeviceDescriptorModel */
         DeviceDescriptorModel: {
             /** Bus Info */

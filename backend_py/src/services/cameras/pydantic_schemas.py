@@ -2,8 +2,7 @@ from pydantic import BaseModel, Field
 from typing import List, Dict, Optional
 from enum import Enum, IntEnum
 
-
-class ControlTypeEnum(IntEnum):
+class V4LControlTypeEnum(IntEnum):
     INTEGER = 1
     BOOLEAN = 2
     MENU = 3
@@ -13,6 +12,17 @@ class ControlTypeEnum(IntEnum):
     STRING = 7
     BITMASK = 8
     INTEGER_MENU = 9
+
+class ControlTypeEnum(str, Enum):
+    INTEGER = "INTEGER"
+    BOOLEAN = "BOOLEAN"
+    MENU = "MENU"
+    BUTTON = "BUTTON"
+    INTEGER64 = "INTEGER64"
+    CTRL_CLASS = "CTRL_CLASS"
+    STRING = "STRING"
+    BITMASK = "BITMASK"
+    INTEGER_MENU = "INTEGER_MENU"
 
 
 class StreamEncodeTypeEnum(str, Enum):

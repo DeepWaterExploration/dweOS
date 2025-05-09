@@ -10,3 +10,4 @@ python-socketio
 dbus-python==1.2.18
 uvicorn
 pyserial==3.5
+aiofiles

@@ -1,6 +1,6 @@
 // src/components/camera-controls.tsx (Updated to use Dialog)
 
-import { useContext, useState } from "react"; // Added useState
+import { useContext, useEffect, useMemo, useState } from "react"; // Added useState
 import DeviceContext from "@/contexts/DeviceContext";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -49,10 +49,14 @@ export const CameraControls = () => {
     });
   };
 
-  // --- renderControl function remains the same ---
-  // Note: Valtio subscriptions are tricky inside conditionally rendered components
-  // like Dialogs if not managed carefully. Consider moving subscription logic
-  // into the individual control components (IntegerControl, etc.) if issues arise.
+  useMemo(() => {
+    controls.forEach((c) => {
+      subscribe(c, () => {
+        setUVCControl(bus_info, c.value, c.control_id);
+      });
+    });
+  }, [controls, bus_info]);
+
   const renderControl = (
     control: components["schemas"]["ControlModel"],
     index: number
@@ -83,12 +87,13 @@ export const CameraControls = () => {
   const resetControls = () => {
     controls.forEach((control) => {
       if (control.value !== control.flags.default_value) {
-        // Valtio proxy mutation triggers the subscription automatically
         control.value = control.flags.default_value;
       }
     });
     toast({ title: "Camera controls reset to default values." });
   };
+
+  useEffect(() => {});
 
   const supportedControls = controls.filter((c) =>
     ["INTEGER", "BOOLEAN", "MENU"].includes(c.flags.control_type || "")

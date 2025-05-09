@@ -57,7 +57,7 @@ class DeviceManager(events.EventEmitter):
         # List of devices with gstreamer errors
         self.gst_errors: List[str] = []
 
-        self.pwm_controller = SerialPWMController("/dev/ttyS0", 9600)
+        self.pwm_controller = SerialPWMController("/dev/ttyUSB0", 9600)
 
         self.logger = logging.getLogger("dwe_os_2.cameras.DeviceManager")
 
@@ -67,6 +67,7 @@ class DeviceManager(events.EventEmitter):
         """
         self._is_monitoring = True
         asyncio.create_task(self._monitor())
+        self.pwm_controller.start()
 
     def stop_monitoring(self):
         """
@@ -96,7 +97,8 @@ class DeviceManager(events.EventEmitter):
                 return None
 
         # we need to broadcast that there was a gst error so that the frontend knows there may be a kernel issue
-        device.stream_runner.on("gst_error", lambda _: self._append_gst_error(device))
+        device.stream_runner.on(
+            "gst_error", lambda _: self._append_gst_error(device))
 
         return device
 
@@ -111,7 +113,8 @@ class DeviceManager(events.EventEmitter):
         """
         Compile and sort a list of devices for jsonifcation
         """
-        device_list = [DeviceModel.model_validate(device) for device in self.devices]
+        device_list = [DeviceModel.model_validate(
+            device) for device in self.devices]
         return device_list
 
     def set_device_option(

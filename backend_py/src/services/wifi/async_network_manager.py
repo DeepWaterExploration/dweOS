@@ -94,6 +94,8 @@ class AsyncNetworkManager(EventEmitter):
         except asyncio.TimeoutError:
             return None  # Handle failure gracefully
         except NMException as e:
+            if "No WiFi device" in str(e):
+                return None
             self.logger.info(e)
             # await self._reinitialize_nm()
             return None
@@ -284,6 +286,8 @@ class AsyncNetworkManager(EventEmitter):
         try:
             return await asyncio.to_thread(self.nm.get_ip_info)
         except NMException as e:
+            async with self._nm_lock:
+                self.nm.reconnect()
             self.logger.error(
                 f'NetworkManager Exception Occurred while getting IP Information {e}')
             # await self._reinitialize_nm()

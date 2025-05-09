@@ -1,4 +1,4 @@
-import { Network, Power, PowerCircle, RefreshCw } from "lucide-react";
+import { Power, PowerCircle, RefreshCw } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,20 +15,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { API_CLIENT } from "@/api";
-import { useContext, useEffect, useState } from "react";
-import WebsocketContext from "@/contexts/WebsocketContext";
+import { useState } from "react";
 
 export function SystemDropdown() {
   const { toast } = useToast();
-  const { connected } = useContext(WebsocketContext)!;
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [action, setAction] = useState<"restart" | "shutdown" | null>(null);
@@ -44,8 +36,11 @@ export function SystemDropdown() {
         await API_CLIENT.POST("/system/shutdown");
         toast({ title: "System is shutting down..." });
       }
-    } catch (error) {
-      toast({ title: `Failed to ${action}`, variant: "destructive" });
+    } catch {
+      toast({
+        title: `Successfully completed "${action}" action`,
+        variant: "default",
+      });
     } finally {
       setDialogOpen(false);
       setAction(null);

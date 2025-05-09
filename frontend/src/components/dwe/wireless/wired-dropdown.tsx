@@ -18,7 +18,6 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-// Import types from the generated schema
 type IPConfiguration = components["schemas"]["IPConfiguration"];
 type IPType = components["schemas"]["IPType"];
 
@@ -30,7 +29,6 @@ export function WiredDropdown() {
     IPConfiguration | undefined
   >(undefined);
 
-  // State for the form inputs - initially null or empty
   const [formIpType, setFormIpType] = useState<IPType | null>(null);
   const [formStaticIp, setFormStaticIp] = useState<string>("");
   const [formPrefix, setFormPrefix] = useState<number | null>(null);
@@ -47,13 +45,12 @@ export function WiredDropdown() {
     try {
       const response = await API_CLIENT.GET("/wired/get_ip_configuration");
 
+      // This means there is no ethernet attached
       if (response.error) {
         console.error("Error fetching IP configuration:", response.error);
         setIpConfiguration(undefined);
-        // Don't toast here if it's just 'no ethernet', toast on initial connection
       } else if (response.data) {
         setIpConfiguration(response.data);
-        // Initialize form states when configuration is fetched
         setFormIpType(response.data.ip_type);
         setFormStaticIp(response.data.static_ip || "");
         setFormPrefix(response.data.prefix ?? 24); // Use ?? to default if null/undefined
@@ -112,7 +109,6 @@ export function WiredDropdown() {
         : null, // Send null if empty string
     };
 
-    // Optional: Basic validation before sending
     if (payload.ip_type === "STATIC") {
       if (!payload.static_ip || !payload.prefix || !payload.gateway) {
         toast({
@@ -253,6 +249,13 @@ export function WiredDropdown() {
                   </div>
                 </RadioGroup>
               </div>
+
+              {/* Poor nomenclature, but static IP can also store the dynamic address */}
+              {formIpType == "DYNAMIC" && (
+                <div className="space-y-2">
+                  <Label htmlFor="static-ip">IP Address: {formStaticIp}</Label>
+                </div>
+              )}
 
               {/* Static IP fields - only visible if STATIC is selected */}
               {formIpType === "STATIC" && (

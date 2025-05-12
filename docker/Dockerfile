@@ -39,13 +39,14 @@ LABEL company='{\
     "email": "support@dwe.ai"\
     }'
 
+
 LABEL permissions='{ \
     "ExposedPorts": { \
     "8000/tcp": {} \
     }, \
     "HostConfig": { \
     "Privileged": true, \
-    "Binds": ["/sys/class/video4linux:/sys/class/video4linux", "dweos-settings:/settings", "/dev:/dev"], \
+    "Binds": ["/sys/class/video4linux:/sys/class/video4linux", "/dev:/dev", "/usr/blueos/userdata/dwe_os_2:/settings"], \
     "PortBindings": { \
     "8000/tcp": [ \
     { \

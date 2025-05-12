@@ -11,6 +11,7 @@ import { CameraStream } from "./stream";
 import { subscribe, useSnapshot } from "valtio";
 import { useContext, useEffect } from "react";
 import DeviceContext from "@/contexts/DeviceContext";
+import { Switch } from "@/components/ui/switch";
 
 export function CameraCard({
   defaultHost,
@@ -45,6 +46,8 @@ export function CameraCard({
       <CardContent>
         <CameraNickname />
         <CameraStream defaultHost={defaultHost} nextPort={nextPort} />
+        {deviceState.device_type === 1 ||
+          (deviceState.device_type === 2 && <Switch />)}
       </CardContent>
     </Card>
   );

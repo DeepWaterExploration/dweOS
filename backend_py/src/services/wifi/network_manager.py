@@ -70,6 +70,18 @@ class NetworkManager:
 
         self.logger = logging.getLogger("dwe_os_2.wifi.NetworkManager")
 
+    def reconnect(self):
+        self.logger.info("Reconnecting DBus and refreshing proxies")
+
+        self.bus = dbus.SystemBus()
+        self.proxy = self.bus.get_object(
+            "org.freedesktop.NetworkManager", "/org/freedesktop/NetworkManager"
+        )
+        self.interface = dbus.Interface(
+            self.proxy, "org.freedesktop.NetworkManager")
+        self.props = dbus.Interface(
+            self.proxy, "org.freedesktop.DBus.Properties")
+
     @handle_dbus_exceptions
     def get_ip_info(self, interface_name: str | None = None) -> IPConfiguration:
         """

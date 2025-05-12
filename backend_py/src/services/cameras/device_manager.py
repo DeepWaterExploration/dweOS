@@ -10,6 +10,7 @@ from .enumeration import list_devices
 from .device_utils import list_diff, find_device_with_bus_info
 from .exceptions import DeviceNotFoundException
 from ..pwm import SerialPWMController, PWMConfig
+from ..firmware.flash_manager import FlashManager
 
 import socketio
 
@@ -59,7 +60,13 @@ class DeviceManager(events.EventEmitter):
 
         self.pwm_controller = SerialPWMController("/dev/ttyUSB0", 9600)
 
+        # self.flash_manager = FlashManager()
+
         self.logger = logging.getLogger("dwe_os_2.cameras.DeviceManager")
+
+    def flash_device(self, bus_info: str, role: str):
+        device = self._find_device_with_bus_info(bus_info)
+        return self.flash_manager.flash(device.cameras[0].path, role)
 
     def start_monitoring(self):
         """

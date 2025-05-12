@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from typing import List, Dict, Optional
 from enum import Enum, IntEnum
 
+
 class V4LControlTypeEnum(IntEnum):
     INTEGER = 1
     BOOLEAN = 2
@@ -12,6 +13,7 @@ class V4LControlTypeEnum(IntEnum):
     STRING = 7
     BITMASK = 8
     INTEGER_MENU = 9
+
 
 class ControlTypeEnum(str, Enum):
     INTEGER = "INTEGER"

@@ -165,7 +165,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get the network priority */
-        get: operations["getet_network_priority_wired_get_network_priority_get"];
+        get: operations["get_network_priority_wired_get_network_priority_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -372,40 +372,6 @@ export interface paths {
         put?: never;
         /** Shutdown the system */
         post: operations["shutdown_system_shutdown_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/lights": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Lights */
-        get: operations["get_lights_lights_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/lights/set_intensity": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Set Intensity */
-        post: operations["set_intensity_lights_set_intensity_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -630,19 +596,6 @@ export interface components {
             /** Denominator */
             denominator: number;
         };
-        /** Light */
-        Light: {
-            /** Intensity */
-            intensity: number;
-            /** Pin */
-            pin: number;
-            /** Nickname */
-            nickname: string;
-            /** Controller Index */
-            controller_index: number;
-            /** Controller Name */
-            controller_name: string;
-        };
         /** LogSchema */
         LogSchema: {
             /** Timestamp */
@@ -695,13 +648,6 @@ export interface components {
              * @default true
              */
             suggest_host: boolean;
-        };
-        /** SetLightInfo */
-        SetLightInfo: {
-            /** Index */
-            index: number;
-            /** Intensity */
-            intensity: number;
         };
         /** Status */
         Status: {
@@ -959,7 +905,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["IPConfiguration"];
+                    "application/json": components["schemas"]["IPConfiguration"] | null;
                 };
             };
         };
@@ -1030,7 +976,7 @@ export interface operations {
             };
         };
     };
-    getet_network_priority_wired_get_network_priority_get: {
+    get_network_priority_wired_get_network_priority_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1379,59 +1325,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
-                };
-            };
-        };
-    };
-    get_lights_lights_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Light"][];
-                };
-            };
-        };
-    };
-    set_intensity_lights_set_intensity_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SetLightInfo"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

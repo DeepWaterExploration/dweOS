@@ -40,8 +40,6 @@ class SerialPWMController:
             duty_cycle=self.settings['duty_cycle']
         )
 
-        asyncio.get_event_loop().create_task(self._open_serial())
-
     async def _open_serial(self):
         try:
             self.logger.info('Opening serial port')
@@ -52,8 +50,8 @@ class SerialPWMController:
             # Initial apply
 
             for _ in range(10):
-                line = self.serial.readline()
-                if line:
+                line = self.serial.readline().decode('utf-8').strip()
+                if 'PWM frequency' in line:
                     self.logger.info('APPLYING INITIAL CONFIG')
                     self.logger.info(line)
                     self.apply(self.current_config)
@@ -72,11 +70,13 @@ class SerialPWMController:
         """Starts the background asyncio task to sync settings."""
         loop = asyncio.get_running_loop()
         self._sync_task = loop.create_task(self._run_settings_sync())
+        asyncio.get_event_loop().create_task(self._open_serial())
 
     def _load_settings(self):
         try:
             with open(self.settings_path, "r") as f:
                 loaded = json.load(f)
+                print(loaded)
                 self.settings = loaded
         except (FileNotFoundError, json.JSONDecodeError):
             self.settings = {'frequency': 0, 'duty_cycle': 0}

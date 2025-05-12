@@ -116,7 +116,7 @@ class StreamRunner(events.EventEmitter):
                 self._process.stderr.close()
             self._process.wait()
             self._process = None
-            self.error_thread.join()
+            # self.error_thread.join()
 
     def _run_pipeline(self):
         pipeline_str = self._construct_pipeline()
@@ -127,8 +127,8 @@ class StreamRunner(events.EventEmitter):
             stderr=subprocess.PIPE,
             text=True,
         )
-        self.error_thread = threading.Thread(target=self._log_errors)
-        self.error_thread.start()
+        # self.error_thread = threading.Thread(target=self._log_errors)
+        # self.error_thread.start()
 
     def _construct_pipeline(self):
         pipeline_strs = []
@@ -142,7 +142,8 @@ class StreamRunner(events.EventEmitter):
             for stderr_line in iter(self._process.stderr.readline, ""):
                 if stderr_line:
                     error_block.append(stderr_line)
-                    self.logger.error(f"GStreamer Error: {stderr_line.strip()}")
+                    self.logger.error(
+                        f"GStreamer Error: {stderr_line.strip()}")
                     self.stop()
                     break
                 else:

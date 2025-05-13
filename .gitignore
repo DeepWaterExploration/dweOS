@@ -333,4 +333,5 @@ release
 release.tar.gz
 **/device_settings.json
 **/server_preferences.json
+**/serial_pwm_settings.json
 .env

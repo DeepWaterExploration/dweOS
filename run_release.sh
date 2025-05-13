@@ -4,6 +4,9 @@
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
+cd /opt/CH341SER
+sudo make load || echo "CH341 module may already be loaded. Continuing..."
+
 cd ${SCRIPT_DIR}
 
 # needs sudo perms

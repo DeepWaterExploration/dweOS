@@ -42,7 +42,6 @@ class SerialPWMController:
 
     async def _open_serial(self):
         try:
-            self.logger.info('Opening serial port')
             self.serial = serial.Serial(
                 port=self.port, baudrate=self.baudrate, timeout=1)
             self.found_port = True

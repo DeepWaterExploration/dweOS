@@ -49,7 +49,7 @@ const data = {
     },
     {
       title: "Logs",
-      url: "/logs",
+      url: "/log-viewer",
       icon: LogsIcon,
     },
     {

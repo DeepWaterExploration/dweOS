@@ -324,6 +324,12 @@ export const CameraStream = ({
     device.stream.enabled = streamEnabled;
     if (device.follower) {
       const follower = getDeviceByBusInfo(devices, device.follower);
+      if (!follower) {
+        // follower was removed
+        device.follower = "";
+        device.is_leader = false;
+        return;
+      }
       if (follower.leader !== device.bus_info) {
         device.follower = "";
         return;

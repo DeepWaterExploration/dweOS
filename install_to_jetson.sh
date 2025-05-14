@@ -15,19 +15,18 @@ read -s PASSWORD
 
 echo "[+] Connecting to Jetson at $JETSON..."
 
-ssh "$JETSON" 'bash -s' <<EOF
+sshpass -p "$PASSWORD" ssh "$JETSON" 'bash -s' <<EOF
 set -e
 
-echo "[1/7] Deleting existing installation if installed..."
+echo "$PASSWORD" | sudo -S echo "[1/7] Deleting existing installation if installed..."
 # Unload the driver if it's loaded
-echo "$PASSWORD" | sudo -S rmmod ch34x || true
-
-# Remove the CH341SER directory
-sudo rm -rf /opt/CH341SER
-
 # Stop and disable the service first (if active)
 sudo systemctl stop dwe_os_2.service || true
 sudo systemctl disable dwe_os_2.service || true
+sudo rmmod ch34x || true
+
+# Remove the CH341SER directory
+sudo rm -rf /opt/CH341SER
 
 # Remove the service file
 sudo rm -f /etc/systemd/system/dwe_os_2.service

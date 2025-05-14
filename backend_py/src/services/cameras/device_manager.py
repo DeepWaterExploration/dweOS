@@ -289,7 +289,12 @@ class DeviceManager(events.EventEmitter):
             for device in self.devices:
                 if device.device_info == device_info:
                     device.stream_runner.stop()
-                    if device.device_type == DeviceType.STELLARHD_LEADER:
+                    if device.device_type == DeviceType.STELLARHD_FOLLOWER:
+                        follower_casted = cast(SHDDevice, device)
+                        if follower_casted.leader:
+                            # cleanup
+                            follower_casted.remove_leader()
+                    if device.device_type == DeviceType.STELLARHD_LEADER or device.device_type == DeviceType.STELLARHD_FOLLOWER:
                         for follower in self.devices:
                             if follower.device_type == DeviceType.STELLARHD_FOLLOWER:
                                 # remove the leader if its leader is the removed device

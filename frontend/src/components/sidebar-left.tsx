@@ -7,7 +7,6 @@ import {
   // VideotapeIcon,
   SettingsIcon,
   LogsIcon,
-  TerminalIcon,
 } from "lucide-react";
 
 import DWELogo from "@/assets/dwe-logo.svg";
@@ -52,11 +51,11 @@ const data = {
       url: "/log-viewer",
       icon: LogsIcon,
     },
-    {
-      title: "Terminal",
-      url: "/terminal",
-      icon: TerminalIcon,
-    },
+    // {
+    //   title: "Terminal",
+    //   url: "/terminal",
+    //   icon: TerminalIcon,
+    // },
   ],
 };
 

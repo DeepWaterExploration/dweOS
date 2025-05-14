@@ -104,6 +104,7 @@ class SHDDevice(Device):
             leader.start_stream()
 
     def load_settings(self, saved_device: SavedDeviceModel):
+        # self.is_leader = saved_device.is_leader
         return super().load_settings(saved_device)
 
     def remove_leader(self):
@@ -117,6 +118,8 @@ class SHDDevice(Device):
         except ValueError:
             self.logger.warning(
                 "Tried to remove stream from leader without a stream")
+
+        self.logger.info(f'Removing leader from {self.bus_info}')
 
         self.leader_device.is_leader = False
 

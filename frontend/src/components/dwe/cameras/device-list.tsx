@@ -86,8 +86,16 @@ const DeviceListLayout = () => {
   };
 
   const addDevice = (device: DeviceModel) => {
+    window.location.reload();
     setDevices((prevDevices) => {
       const exists = prevDevices.some((d) => d.bus_info === device.bus_info);
+      if (device.leader) {
+        const leader = getDeviceByBusInfo(prevDevices, device.leader);
+        if (leader) {
+          leader.is_leader = true;
+          leader.follower = device.bus_info;
+        }
+      }
       if (exists) {
         const updatedDevices = prevDevices.map((d) =>
           d.bus_info === device.bus_info ? device : d
@@ -103,7 +111,16 @@ const DeviceListLayout = () => {
   };
 
   const removeDevice = (bus_info: string) => {
+    window.location.reload();
     setDevices((prevDevices) => {
+      const previousDevice = getDeviceByBusInfo(prevDevices, bus_info);
+      if (previousDevice.leader) {
+        const leader = getDeviceByBusInfo(prevDevices, previousDevice.leader);
+        if (leader) {
+          leader.follower = undefined;
+          leader.is_leader = false;
+        }
+      }
       const filteredDevices = prevDevices.filter(
         (d) => d.bus_info !== bus_info
       );

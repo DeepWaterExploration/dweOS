@@ -3,6 +3,7 @@ from .enumeration import DeviceInfo
 from .device import Device, BaseOption, ControlTypeEnum, StreamEncodeTypeEnum
 from typing import Dict
 
+from ..pwm.serial_pwm_controller import SerialPWMController
 from event_emitter import EventEmitter
 
 
@@ -25,8 +26,8 @@ class SHDDevice(Device):
     Class for stellarHD devices
     """
 
-    def __init__(self, device_info: DeviceInfo, is_leader=True) -> None:
-        super().__init__(device_info)
+    def __init__(self, device_info: DeviceInfo, pwm_controller: SerialPWMController, is_leader=True) -> None:
+        super().__init__(device_info, pwm_controller)
         self.is_leader = is_leader
         self.leader: str = None
         self.leader_device: "SHDDevice" = None

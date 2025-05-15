@@ -87,11 +87,11 @@ class DeviceManager(events.EventEmitter):
         device = None
         match device_type:
             case DeviceType.EXPLOREHD:
-                device = EHDDevice(device_info)
+                device = EHDDevice(device_info, self.pwm_controller)
             case DeviceType.STELLARHD_LEADER:
-                device = SHDDevice(device_info)
+                device = SHDDevice(device_info, self.pwm_controller)
             case DeviceType.STELLARHD_FOLLOWER:
-                device = SHDDevice(device_info, False)
+                device = SHDDevice(device_info, self.pwm_controller, False)
             case _:
                 # Not a DWE device
                 return None
@@ -146,9 +146,6 @@ class DeviceManager(events.EventEmitter):
         device.configure_stream(
             encode_type, width, height, interval, StreamTypeEnum.UDP, endpoints
         )
-
-        # Apply the frequency based on the FPS
-        self.pwm_controller.apply_from_fps(interval.denominator)
 
         if stream_info.enabled:
             device.start_stream()

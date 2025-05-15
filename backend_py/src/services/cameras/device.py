@@ -19,6 +19,7 @@ from .stream import *
 from .stream_utils import string_to_stream_encode_type
 from .pydantic_schemas import *
 from .saved_pydantic_schemas import *
+from ..pwm.serial_pwm_controller import SerialPWMController
 
 import logging
 
@@ -233,7 +234,7 @@ class Option(BaseOption):
 
 class Device(events.EventEmitter):
 
-    def __init__(self, device_info: DeviceInfo) -> None:
+    def __init__(self, device_info: DeviceInfo, pwm_controller: SerialPWMController) -> None:
         super().__init__()
         self.cameras: List[Camera] = []
         for device_path in device_info.device_paths:
@@ -255,6 +256,8 @@ class Device(events.EventEmitter):
         self.nickname = ""
         self.stream = Stream()
 
+        self._serial_pwm_controller = pwm_controller
+
         # each device has a streamrunner, but not all of them are used if they are a follower (shd)
         self.stream_runner = StreamRunner(self.stream)
 
@@ -275,7 +278,8 @@ class Device(events.EventEmitter):
                     )
                     break
 
-        self.v4l2_device = device.Device(self.cameras[0].path)  # for control purposes
+        self.v4l2_device = device.Device(
+            self.cameras[0].path)  # for control purposes
         self.v4l2_device.open()
 
         # This must be configured by the implementing class
@@ -423,6 +427,11 @@ class Device(events.EventEmitter):
 
     def start_stream(self):
         self.stream.enabled = True
+        # any time a stream starts, lets set the pwm frequency
+        self.logger.info(self._serial_pwm_controller)
+        self.logger.info('Applying frame sync signal from device...')
+        self._serial_pwm_controller.apply_from_fps(
+            self.stream.interval.denominator)
         self.stream_runner.start()
 
     def stop_stream(self):

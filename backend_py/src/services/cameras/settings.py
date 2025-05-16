@@ -80,6 +80,7 @@ class SettingsManager:
                 self.logger.warning(
                     f"Error finding devices: {leader_follower_pair.leader_bus_info}, {leader_follower_pair.follower_bus_info}"
                 )
+                self.leader_follower_pairs.remove(leader_follower_pair)
                 continue
 
             if follower.device_type != DeviceType.STELLARHD_FOLLOWER:

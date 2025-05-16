@@ -18,6 +18,7 @@ import {
   PlayIcon,
   PlusIcon,
   Trash2Icon,
+  TrashIcon,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import DeviceContext from "@/contexts/DeviceContext";
@@ -28,6 +29,13 @@ import DevicesContext from "@/contexts/DevicesContext";
 import { getDeviceByBusInfo } from "@/lib/utils";
 import { API_CLIENT } from "@/api";
 import { CameraControls } from "./camera-controls";
+
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 // Options for StreamSelector should provide label and value for each choice
 type StreamOption = { label: string; value: string };
@@ -234,6 +242,119 @@ const EndpointList = ({
   );
 };
 
+const FollowerList = () => {
+  const [followers, setFollowers] = useState([
+    { bus_info: "usb-0000:00:14.0-1", nickname: "stellarHD Follower" },
+  ]);
+
+  const [potentialFollowers, setPotentialFollowers] = useState([
+    { bus_info: "usb-0000:00:14.0-2", nickname: "Front" },
+    { bus_info: "usb-0000:00:14.0-3", nickname: "Rear" },
+    { bus_info: "usb-0000:00:14.0-4", nickname: "Stereo" },
+  ]);
+
+  const [selectedBusInfo, setSelectedBusInfo] = useState<string | undefined>();
+
+  const handleAddFollower = () => {
+    const selected = potentialFollowers.find(
+      (f) => f.bus_info === selectedBusInfo
+    );
+    if (!selected) return;
+
+    setFollowers([...followers, selected]);
+    setPotentialFollowers(
+      potentialFollowers.filter((f) => f.bus_info !== selectedBusInfo)
+    );
+    setSelectedBusInfo(undefined);
+  };
+
+  return (
+    <Accordion type="single" collapsible>
+      <AccordionItem value="followers">
+        <AccordionTrigger className="text-sm font-semibold">
+          Followers
+        </AccordionTrigger>
+        <AccordionContent className="w-full">
+          <div className="space-y-4">
+            {/* Add Dropdown */}
+            <div className="grid grid-cols-12 gap-3 w-full items-end">
+              <div className="col-span-9">
+                <StreamSelector
+                  options={potentialFollowers.map((f) => ({
+                    label: `${f.nickname} (${f.bus_info})`,
+                    value: f.bus_info,
+                  }))}
+                  placeholder="Select a device..."
+                  label="Add Follower"
+                  value={selectedBusInfo}
+                  onChange={setSelectedBusInfo}
+                />
+              </div>
+
+              <div className="col-span-3">
+                <Button
+                  onClick={handleAddFollower}
+                  className="w-full"
+                  disabled={!selectedBusInfo}
+                >
+                  Add
+                </Button>
+              </div>
+            </div>
+
+            {/* Follower Table */}
+            {followers.length === 0 ? (
+              <div className="text-sm text-muted-foreground p-4 border rounded-md bg-muted/50">
+                No followers connected. Devices that mirror this stream will
+                appear here.
+              </div>
+            ) : (
+              <div className="rounded-md border w-full overflow-hidden">
+                <table className="w-full table-fixed text-sm text-left">
+                  <thead className="bg-muted/30 border-b">
+                    <tr>
+                      <th className="px-4 py-2 w-1/2 truncate font-medium">
+                        Port
+                      </th>
+                      <th className="px-4 py-2 w-1/2 truncate font-medium">
+                        Device Type
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {followers.map((follower, index) => (
+                      <tr key={index} className="border-b hover:bg-muted/10">
+                        <td className="px-4 py-2 truncate">
+                          {follower.bus_info}
+                        </td>
+                        <td className="px-4 py-2">
+                          <div className="grid grid-cols-[1fr_auto] items-center gap-2">
+                            <span className="truncate">
+                              {follower.nickname}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                            >
+                              <Trash2Icon className="w-4 h-4" />
+                              <span className="sr-only">Remove</span>
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
+  );
+};
+
 const getResolution = (resolution: string) => {
   const split = resolution.split("x");
   if (split.length < 2) return [null, null];
@@ -318,18 +439,10 @@ export const CameraStream = ({
 
   useEffect(() => {
     device.stream.enabled = streamEnabled;
-  }, [streamEnabled]);
+  }, [device.stream, streamEnabled]);
 
   useEffect(() => {
     device.stream.enabled = streamEnabled;
-    if (device.follower) {
-      const follower = getDeviceByBusInfo(devices, device.follower);
-      if (follower.leader !== device.bus_info) {
-        device.follower = "";
-        return;
-      }
-      follower.stream.enabled = streamEnabled;
-    }
   }, [streamEnabled]);
 
   useEffect(() => {
@@ -443,56 +556,14 @@ export const CameraStream = ({
         </div>
       </div>
 
-      {deviceState.device_type === 2 && (
-        <StreamSelector
-          options={[
-            { label: "No Leader", value: "Unassigned" },
-            ...leaders
-              .filter((d) => d.bus_info !== device.bus_info)
-              .map((d) => ({ label: d.bus_info, value: d.bus_info })),
-          ]}
-          placeholder="No Leader"
-          label="Leader Device"
-          value={deviceState.leader ? deviceState.leader : "Unassigned"}
-          onChange={async (newLeader) => {
-            try {
-              if (newLeader === "Unassigned") {
-                device.leader = undefined;
-                API_CLIENT.POST("/devices/remove_leader", {
-                  body: { follower: device.bus_info },
-                });
-              } else {
-                device.leader = newLeader;
-                const leader = getDeviceByBusInfo(devices, device.leader);
-                leader.follower = device.bus_info;
-                device.stream.enabled = leader.stream.enabled;
-
-                API_CLIENT.POST("/devices/set_leader", {
-                  body: { leader: device.leader, follower: device.bus_info },
-                });
-              }
-              toast({
-                title: "Leader updated",
-                description: `Leader set to ${newLeader}`,
-              });
-            } catch (e) {
-              toast({
-                title: "Failed to set leader",
-                description: (e as Error).message,
-                variant: "destructive",
-              });
-            }
-          }}
-          disabled={leaders.length < 1}
-        />
-      )}
-
       <EndpointList
         defaultHost={defaultHost}
         nextPort={nextPort}
         setShouldPostFlag={setShouldPostFlag}
       />
       <Separator className="my-2" />
+
+      <FollowerList />
 
       <div className="flex justify-between items-center">
         <div>
@@ -510,7 +581,6 @@ export const CameraStream = ({
             });
             setShouldPostFlag(true);
           }}
-          disabled={!!device.leader}
         >
           {streamEnabled ? <PauseIcon /> : <PlayIcon />}
         </Button>

@@ -1,12 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List
 import subprocess
-from multiprocessing import Process
-import time
-import shlex
 import threading
-import os
-import signal
 import event_emitter as events
 
 from .pydantic_schemas import *
@@ -142,7 +137,8 @@ class StreamRunner(events.EventEmitter):
             for stderr_line in iter(self._process.stderr.readline, ""):
                 if stderr_line:
                     error_block.append(stderr_line)
-                    self.logger.error(f"GStreamer Error: {stderr_line.strip()}")
+                    self.logger.error(
+                        f"GStreamer Error: {stderr_line.strip()}")
                     self.stop()
                     break
                 else:

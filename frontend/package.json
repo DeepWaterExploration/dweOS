@@ -12,7 +12,7 @@
     "schema-pull": "openapi-typescript http://localhost:5000/openapi.json -o ./src/schemas/dwe_os_2.d.ts"
   },
   "dependencies": {
-    "@radix-ui/react-accordion": "^1.2.9",
+    "@radix-ui/react-accordion": "^1.2.10",
     "@radix-ui/react-avatar": "^1.1.1",
     "@radix-ui/react-checkbox": "^1.2.3",
     "@radix-ui/react-collapsible": "^1.1.1",

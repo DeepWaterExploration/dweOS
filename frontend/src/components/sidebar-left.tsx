@@ -4,7 +4,6 @@ import * as React from "react";
 import {
   Home,
   CameraIcon,
-  VideotapeIcon,
   SettingsIcon,
   LogsIcon,
   TerminalIcon,
@@ -38,18 +37,13 @@ const data = {
       icon: CameraIcon,
     },
     {
-      title: "Recording Browser",
-      url: "/videos",
-      icon: VideotapeIcon,
-    },
-    {
       title: "Preferences",
       url: "/preferences",
       icon: SettingsIcon,
     },
     {
       title: "Logs",
-      url: "/logs",
+      url: "/log-viewer",
       icon: LogsIcon,
     },
     {

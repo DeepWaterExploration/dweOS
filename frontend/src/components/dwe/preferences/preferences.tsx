@@ -44,6 +44,8 @@ const PreferencesLayout = () => {
   const [host, setHost] = useState("");
   const [port, setPort] = useState(5600);
 
+  const [frequency, setFrequency] = useState(0);
+
   const [recommendHost, setRecommendHost] = useState(false);
 
   useEffect(() => {
@@ -59,6 +61,11 @@ const PreferencesLayout = () => {
       setRecommendHost(newPreferences.suggest_host);
       setPort(newPreferences.default_stream!.port);
       setHost(newPreferences.default_stream!.host);
+
+      const newFrequency = (await API_CLIENT.GET("/system/get_frequency"))
+        .data!["frequency"] as number;
+      console.log(newFrequency);
+      setFrequency(newFrequency);
     };
 
     if (connected) {
@@ -126,6 +133,27 @@ const PreferencesLayout = () => {
                 max={65535}
                 className={cn(
                   (port < 1024 || port > 65535) && "border-red-500"
+                )}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="stream-port">Frequency</Label>
+              <Input
+                id="frequency"
+                type="number"
+                value={frequency}
+                onChange={(e) => setFrequency(e.target.valueAsNumber)}
+                onBlur={() =>
+                  API_CLIENT.POST("/system/set_manual_frequency", {
+                    params: { query: { manual_frequency: frequency } },
+                  })
+                }
+                placeholder="Enter frequency"
+                min={0}
+                max={65}
+                className={cn(
+                  (frequency < 0 || frequency > 65) && "border-red-500"
                 )}
               />
             </div>

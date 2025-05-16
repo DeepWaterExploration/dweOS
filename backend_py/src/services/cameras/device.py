@@ -456,8 +456,9 @@ class Device(events.EventEmitter):
             saved_device.stream.endpoints,
         )
         self.stream.configured = saved_device.stream.configured
+        self.stream.enabled = saved_device.stream.enabled
         self.nickname = saved_device.nickname
-        if self.stream.configured:
+        if self.stream.enabled:
             self.start_stream()
 
     def unconfigure_stream(self):

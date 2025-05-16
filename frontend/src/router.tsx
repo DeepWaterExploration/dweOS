@@ -15,7 +15,7 @@ export const router = createBrowserRouter([
       { index: true, element: <OverviewLayout /> },
       { path: "/cameras", element: <DeviceListLayout /> },
       { path: "/videos", element: <RecordingBrowser /> },
-      { path: "/preferences", element: <PreferencesLayout /> },
+      { path: "/preferences-manager", element: <PreferencesLayout /> },
       { path: "/log-viewer", element: <LogViewer /> },
       { path: "/terminal", element: <Terminal /> },
     ],

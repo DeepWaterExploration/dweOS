@@ -12,6 +12,7 @@ class SavedControlModel(BaseModel):
     class Config:
         from_attributes = True
 
+
 class SavedStreamModel(BaseModel):
     encode_type: StreamEncodeTypeEnum
     stream_type: StreamTypeEnum
@@ -20,10 +21,12 @@ class SavedStreamModel(BaseModel):
     height: int
     interval: IntervalModel
     configured: bool
+    enabled: bool
 
     class Config:
         # use_enum_values = True
         from_attributes = True
+
 
 class SavedDeviceModel(BaseModel):
     bus_info: str
@@ -39,6 +42,7 @@ class SavedDeviceModel(BaseModel):
     class Config:
         from_attributes = True
         # use_enum_values = True
+
 
 class SavedLeaderFollowerPairModel(BaseModel):
     leader_bus_info: str

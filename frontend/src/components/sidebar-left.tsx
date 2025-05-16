@@ -43,7 +43,7 @@ const data = {
     // },
     {
       title: "Preferences",
-      url: "/preferences",
+      url: "/preferences-manager",
       icon: SettingsIcon,
     },
     {

@@ -159,8 +159,7 @@ const DeviceListLayout = () => {
 
   const enableStream = (bus_info: string) => {
     const device = { ...getDeviceByBusInfo(devices, bus_info) };
-    device.stream.configured = true;
-    // updateDevice(device);
+    device.stream.enabled = true;
   };
 
   return (
@@ -168,7 +167,7 @@ const DeviceListLayout = () => {
       <DevicesContext.Provider
         value={{
           devices,
-          leaders: devices.filter((d) => d.device_type == 1),
+          followerModels: devices.filter((d) => d.device_type == 2),
           enableStream,
         }}
       >

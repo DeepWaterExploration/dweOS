@@ -20,7 +20,6 @@ class Stream(events.EventEmitter):
     interval: IntervalModel = field(
         default_factory=lambda: IntervalModel(numerator=1, denominator=30)
     )
-    configured: bool = False
     enabled: bool = False
 
     software_h264_bitrate = 5000
@@ -94,6 +93,8 @@ class StreamRunner(events.EventEmitter):
 
     def start(self):
         with self._lock:
+            self.logger.info(
+                f"Starting stream for followers: {[stream.device_path for stream in self.streams]}")
             if self.started:
                 self.stop()
             self.started = True

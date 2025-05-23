@@ -60,13 +60,13 @@ const StreamSelector = ({
         {label}
       </label>
       <Select value={value} onValueChange={onChange} disabled={disabled}>
-        <SelectTrigger className="w-full text-sm">
+        <SelectTrigger className="w-full text-sm outline-none focus:ring-1 focus:ring-inset focus:ring-primary/50">
           <SelectValue
             placeholder={placeholder}
             className="truncate"
           ></SelectValue>
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="">
           <SelectGroup>
             {options.map((opt) => (
               <SelectItem key={opt.value} value={opt.value}>
@@ -243,29 +243,77 @@ const EndpointList = ({
 };
 
 const FollowerList = () => {
-  const [followers, setFollowers] = useState([
-    { bus_info: "usb-0000:00:14.0-1", nickname: "stellarHD Follower" },
-  ]);
+  const device = useContext(DeviceContext)!;
 
-  const [potentialFollowers, setPotentialFollowers] = useState([
-    { bus_info: "usb-0000:00:14.0-2", nickname: "Front" },
-    { bus_info: "usb-0000:00:14.0-3", nickname: "Rear" },
-    { bus_info: "usb-0000:00:14.0-4", nickname: "Stereo" },
-  ]);
+  const deviceState = useSnapshot(device);
+  const [followers, setFollowers] = useState(device.followers);
 
-  const [selectedBusInfo, setSelectedBusInfo] = useState<string | undefined>();
+  console.log(device.followers);
+
+  const { followerModels, devices } = useContext(DevicesContext)!;
+
+  const [potentialFollowers, setPotentialFollowers] = useState<string[]>([]);
+
+  const updatePotentialFollowers = () => {
+    setPotentialFollowers([
+      "Select a device...",
+      ...followerModels
+        .map((f) => f.bus_info)
+        .filter((value) => !followers.includes(value)),
+    ]);
+  };
+
+  useEffect(() => {
+    updatePotentialFollowers();
+  }, []);
+
+  useEffect(() => {
+    followers
+      .filter((value) => !deviceState.followers.includes(value))
+      .forEach((newFollower) => {
+        device.followers = followers;
+        API_CLIENT.POST("/devices/add_follower", {
+          body: {
+            leader_bus_info: deviceState.bus_info,
+            follower_bus_info: newFollower,
+          },
+        });
+        getDeviceByBusInfo(devices, newFollower).is_managed = true;
+        updatePotentialFollowers();
+
+        setSelectedBusInfo("Select a device...");
+      });
+
+    deviceState.followers
+      .filter((value) => !followers.includes(value))
+      .forEach((removedFollower) => {
+        device.followers = followers;
+        API_CLIENT.POST("/devices/remove_follower", {
+          body: {
+            leader_bus_info: deviceState.bus_info,
+            follower_bus_info: removedFollower,
+          },
+        });
+        getDeviceByBusInfo(devices, removedFollower).is_managed = false;
+        updatePotentialFollowers();
+
+        setSelectedBusInfo("Select a device...");
+      });
+  }, [followers]);
+
+  const [selectedBusInfo, setSelectedBusInfo] = useState("Select a device...");
 
   const handleAddFollower = () => {
-    const selected = potentialFollowers.find(
+    const selected = followerModels.find(
       (f) => f.bus_info === selectedBusInfo
-    );
+    )?.bus_info;
     if (!selected) return;
 
     setFollowers([...followers, selected]);
-    setPotentialFollowers(
-      potentialFollowers.filter((f) => f.bus_info !== selectedBusInfo)
-    );
-    setSelectedBusInfo(undefined);
+  };
+
+  const handleDeleteFollower = (follower: string) => {
+    setFollowers((oldFollowers) => oldFollowers.filter((f) => f !== follower));
   };
 
   return (
@@ -281,8 +329,8 @@ const FollowerList = () => {
               <div className="col-span-9">
                 <StreamSelector
                   options={potentialFollowers.map((f) => ({
-                    label: `${f.nickname} (${f.bus_info})`,
-                    value: f.bus_info,
+                    label: `${f}`,
+                    value: f,
                   }))}
                   placeholder="Select a device..."
                   label="Add Follower"
@@ -292,11 +340,7 @@ const FollowerList = () => {
               </div>
 
               <div className="col-span-3">
-                <Button
-                  onClick={handleAddFollower}
-                  className="w-full"
-                  disabled={!selectedBusInfo}
-                >
+                <Button onClick={handleAddFollower} className="w-full">
                   Add
                 </Button>
               </div>
@@ -324,17 +368,14 @@ const FollowerList = () => {
                   <tbody>
                     {followers.map((follower, index) => (
                       <tr key={index} className="border-b hover:bg-muted/10">
-                        <td className="px-4 py-2 truncate">
-                          {follower.bus_info}
-                        </td>
+                        <td className="px-4 py-2 truncate">{follower}</td>
                         <td className="px-4 py-2">
                           <div className="grid grid-cols-[1fr_auto] items-center gap-2">
-                            <span className="truncate">
-                              {follower.nickname}
-                            </span>
+                            <span className="truncate">stellarHD</span>
                             <Button
                               variant="ghost"
                               size="sm"
+                              onClick={() => handleDeleteFollower(follower)}
                               className="h-6 w-6 p-0"
                             >
                               <Trash2Icon className="w-4 h-4" />
@@ -393,8 +434,6 @@ export const CameraStream = ({
   nextPort: number;
 }) => {
   const device = useContext(DeviceContext)!;
-
-  const { devices, leaders } = useContext(DevicesContext)!;
 
   const { toast } = useToast();
 
@@ -522,6 +561,7 @@ export const CameraStream = ({
             placeholder="Resolution"
             label="Resolution"
             value={resolution}
+            // disabled={deviceState.is_managed}
             onChange={(newResolution) => {
               setResolution(newResolution);
               setShouldPostFlag(true);
@@ -535,6 +575,7 @@ export const CameraStream = ({
             placeholder="FPS"
             label="Frame Rate"
             value={fps}
+            // disabled={deviceState.is_managed}
             onChange={(newFps) => {
               setFps(newFps);
               setShouldPostFlag(true);
@@ -548,6 +589,7 @@ export const CameraStream = ({
             placeholder="Format"
             label="Format"
             value={format}
+            // disabled={deviceState.is_managed}
             onChange={(fmt) => {
               setFormat(fmt as components["schemas"]["StreamEncodeTypeEnum"]);
               setShouldPostFlag(true);
@@ -563,17 +605,23 @@ export const CameraStream = ({
       />
       <Separator className="my-2" />
 
-      <FollowerList />
+      {deviceState.device_type == 1 && <FollowerList />}
 
       <div className="flex justify-between items-center">
         <div>
           <span className="text-sm font-medium">
-            Stream {streamEnabled ? "enabled" : "disabled"}
+            Stream{" "}
+            {deviceState.is_managed
+              ? "managed"
+              : streamEnabled
+              ? "enabled"
+              : "disabled"}
           </span>
         </div>
         <Button
           variant={"ghost"}
           className="w-4 h-8"
+          disabled={deviceState.is_managed}
           onClick={() => {
             setStreamEnabled((prev) => {
               const newState = !prev;

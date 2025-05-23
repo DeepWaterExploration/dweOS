@@ -87,13 +87,14 @@ class DeviceManager(events.EventEmitter):
             case DeviceType.STELLARHD_LEADER:
                 device = SHDDevice(device_info)
             case DeviceType.STELLARHD_FOLLOWER:
-                device = SHDDevice(device_info, False)
+                device = SHDDevice(device_info)
             case _:
                 # Not a DWE device
                 return None
 
         # we need to broadcast that there was a gst error so that the frontend knows there may be a kernel issue
-        device.stream_runner.on("gst_error", lambda _: self._append_gst_error(device))
+        device.stream_runner.on(
+            "gst_error", lambda _: self._append_gst_error(device))
 
         return device
 
@@ -108,7 +109,8 @@ class DeviceManager(events.EventEmitter):
         """
         Compile and sort a list of devices for jsonifcation
         """
-        device_list = [DeviceModel.model_validate(device) for device in self.devices]
+        device_list = [DeviceModel.model_validate(
+            device) for device in self.devices]
         return device_list
 
     def set_device_option(
@@ -149,25 +151,25 @@ class DeviceManager(events.EventEmitter):
         self.settings_manager.save_device(device)
         return True
 
-    def unconfigure_device_stream(self, bus_info: str) -> bool:
-        """
-        Remove a device stream (unconfigure)
-        """
-        device = self._find_device_with_bus_info(bus_info)
-        if not device:
-            return False
+    # def unconfigure_device_stream(self, bus_info: str) -> bool:
+    #     """
+    #     Remove a device stream (unconfigure)
+    #     """
+    #     device = self._find_device_with_bus_info(bus_info)
+    #     if not device:
+    #         return False
 
-        device.unconfigure_stream()
+    #     device.unconfigure_stream()
 
-        self.settings_manager.save_device(device)
+    #     self.settings_manager.save_device(device)
 
-        # Remove leader if leader stops stream
-        if (
-            device.device_type == DeviceType.STELLARHD_LEADER
-            and cast(SHDDevice, device).follower
-        ):
-            self.remove_leader(cast(SHDDevice, device).follower)
-        return True
+    #     # Remove leader if leader stops stream
+    #     if (
+    #         device.device_type == DeviceType.STELLARHD_LEADER
+    #         and cast(SHDDevice, device).follower
+    #     ):
+    #         self.remove_leader(cast(SHDDevice, device).follower)
+    #     return True
 
     def set_device_nickname(self, bus_info: str, nickname: str) -> bool:
         """
@@ -195,36 +197,56 @@ class DeviceManager(events.EventEmitter):
         self.settings_manager.save_device(device)
         return True
 
-    def set_leader(self, leader_bus_info: str, follower_bus_info: str) -> bool:
-        """
-        Set the leader_bus_info as the leader for the follower_bus_info device
-        """
-        follower_device = self._find_device_with_bus_info(follower_bus_info)
+    def add_follower(self, leader_bus_info: str, follower_bus_info: str):
+        '''
+        Add a follower to a leader
+        '''
         leader_device = self._find_device_with_bus_info(leader_bus_info)
+        follower_device = self._find_device_with_bus_info(follower_bus_info)
 
-        if follower_device.device_type == DeviceType.STELLARHD_FOLLOWER:
-            cast(SHDDevice, follower_device).set_leader(leader_device)
-            self.settings_manager.save_device(follower_device)
-        else:
+        if leader_device.device_type != DeviceType.STELLARHD_LEADER:
             self.logger.warning(
-                "Attempting to add leader to a non follower device type."
-            )
+                'Attempted to add follower to device of non-leader type.')
             return False
+
+        if follower_device.device_type != DeviceType.STELLARHD_FOLLOWER:
+            self.logger.warning(
+                'Attempted to add follower of non-follower type')
+            return False
+
+        leader_device = cast(SHDDevice, leader_device)
+        follower_device = cast(SHDDevice, follower_device)
+        leader_device.add_follower(follower_device)
+
+        self.settings_manager.save_device(leader_device)
+        self.settings_manager.save_device(follower_device)
+
         return True
 
-    def remove_leader(self, bus_info: str) -> bool:
-        """
-        Remove leader from follower
-        """
-        follower_device = self._find_device_with_bus_info(bus_info)
-        if follower_device.device_type == DeviceType.STELLARHD_FOLLOWER:
-            cast(SHDDevice, follower_device).remove_leader()
-            self.settings_manager.save_device(follower_device)
-        else:
-            self.logger.warninging(
-                "Attempting to remove leader from a non follower device type."
-            )
+    def remove_follower(self, leader_bus_info: str, follower_bus_info: str):
+        '''
+        Remove a follower from a leader
+        '''
+        leader_device = self._find_device_with_bus_info(leader_bus_info)
+        follower_device = self._find_device_with_bus_info(follower_bus_info)
+
+        if leader_device.device_type != DeviceType.STELLARHD_LEADER:
+            self.logger.warning(
+                'Attempted to remove follower from device of non-leader type.')
             return False
+
+        if follower_device.device_type != DeviceType.STELLARHD_FOLLOWER:
+            self.logger.warning(
+                'Attempted to remove follower of non-follower type')
+            return False
+
+        leader_device = cast(SHDDevice, leader_device)
+        follower_device = cast(SHDDevice, follower_device)
+        leader_device.remove_follower(follower_device)
+
+        self.settings_manager.save_device(leader_device)
+        self.settings_manager.save_device(follower_device)
+
         return True
 
     def _find_device_with_bus_info(self, bus_info: str) -> Device | None:
@@ -259,7 +281,7 @@ class DeviceManager(events.EventEmitter):
             # append the device to the device list
             self.devices.append(device)
             # load the settings
-            self.settings_manager.load_device(device)
+            self.settings_manager.load_device(device, self.devices)
 
             # Output device to log (after loading settings)
             self.logger.info(f"Device Added: {device_info.bus_info}")
@@ -272,8 +294,9 @@ class DeviceManager(events.EventEmitter):
             bus_info = self.gst_errors.pop()
             await self._emit_gst_error(bus_info, "GST Error")
 
-        # make sure to load the leader followers in case there are new ones to check
-        self.settings_manager.load_leader_followers(self.devices)
+        if len(removed_devices) > 0 or len(new_devices) > 0:
+            # make sure to load the leader followers in case there are new ones to check
+            self.settings_manager.link_followers(self.devices)
 
         # remove the old devices
         for device_info in removed_devices:

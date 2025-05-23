@@ -6,11 +6,11 @@ import asyncio
 from contextlib import asynccontextmanager
 import logging
 
-ORIGINS = ["http://localhost:5173", "http://localhost:5174"]
+ORIGINS = ["*"]
 
 # Use AsyncServer
 sio = socketio.AsyncServer(
-    cors_allowed_origins=ORIGINS, async_mode="asgi", transports=["websocket"]
+    cors_allowed_origins='*', async_mode="asgi", transports=["websocket"]
 )
 
 
@@ -30,8 +30,8 @@ app = FastAPI(
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ORIGINS,
-    allow_credentials=True,
+    allow_origins=["*"],            # you can narrow this to your frontend URL
+    allow_credentials=False,        # must be False if you keep ["*"]
     allow_methods=["*"],
     allow_headers=["*"],
 )

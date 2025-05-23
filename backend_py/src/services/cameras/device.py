@@ -275,14 +275,12 @@ class Device(events.EventEmitter):
                     )
                     break
 
-        self.v4l2_device = device.Device(self.cameras[0].path)  # for control purposes
+        self.v4l2_device = device.Device(
+            self.cameras[0].path)  # for control purposes
         self.v4l2_device.open()
 
         # This must be configured by the implementing class
         self._options: Dict[str, BaseOption] = self._get_options()
-
-        # Options dict
-        # self.options = {}
 
         # list the controls and store them
         self.controls = []
@@ -385,7 +383,6 @@ class Device(events.EventEmitter):
         self.stream.endpoints = stream_endpoints
         self.stream.encode_type = encode_type
         self.stream.stream_type = stream_type
-        self.stream.configured = True
 
     def add_control_from_option(
         self,
@@ -446,15 +443,13 @@ class Device(events.EventEmitter):
             saved_device.stream.stream_type,
             saved_device.stream.endpoints,
         )
-        self.stream.configured = saved_device.stream.configured
+        self.stream.enabled = saved_device.stream.enabled
         self.nickname = saved_device.nickname
-        if self.stream.configured:
+        if self.stream.enabled:
             self.start_stream()
 
     def unconfigure_stream(self):
-        self.stream.configured = False
         self.stream_runner.stop()
-
         self.logger.info(self._fmt_log(f"Stream stopped"))
 
     def get_pu(self, control_id: int):

@@ -34,7 +34,7 @@ function App() {
     if (socket.current) delete socket.current;
 
     socket.current = io(
-      import.meta.env.DEV ? "http://localhost:5000" : undefined,
+      import.meta.env.DEV ? `http://${window.location.hostname}:5000` : undefined,
       { transports: ["websocket"] }
     );
 

@@ -7,7 +7,7 @@ type DeviceModel = components["schemas"]["DeviceModel"];
 const DevicesContext = React.createContext<
   | {
       devices: DeviceModel[];
-      leaders: DeviceModel[];
+      followerModels: DeviceModel[];
       enableStream: (bus_info: string) => void;
     }
   | undefined

@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from typing import List, Dict, Optional
 from enum import Enum, IntEnum
 
+
 class V4LControlTypeEnum(IntEnum):
     INTEGER = 1
     BOOLEAN = 2
@@ -12,6 +13,7 @@ class V4LControlTypeEnum(IntEnum):
     STRING = 7
     BITMASK = 8
     INTEGER_MENU = 9
+
 
 class ControlTypeEnum(str, Enum):
     INTEGER = "INTEGER"
@@ -145,7 +147,6 @@ class StreamModel(BaseModel):
     width: int
     height: int
     interval: IntervalModel
-    configured: bool
     enabled: bool
 
     class Config:
@@ -153,20 +154,30 @@ class StreamModel(BaseModel):
 
 
 class DeviceModel(BaseModel):
+    # List of cameras, e.g. /dev/video0, /dev/video2
     cameras: Optional[List[CameraModel]] = None
+    # List of camera controls and their values, default values, etc.
     controls: List[ControlModel]
+    # Stores information about the stream
     stream: StreamModel
+    # e.g. exploreHD
     name: Optional[str] = None
     vid: int
     pid: int
+    # usb-0000:00: ... to uniquely identify the port
     bus_info: str
+    # DWE.ai
     manufacturer: Optional[str] = None
+    # device nickname
     nickname: str
+    # initial information used to construct the object, redundant data...
     device_info: Optional[DeviceInfoModel] = None
+    # 0 (exploreHD), 1 (Leader), 2 (Follower)
     device_type: DeviceType
-    is_leader: Optional[bool] = None
-    leader: Optional[str] = None
-    follower: Optional[str] = None
+    # Only required for stellarHD (remember, followers CAN be leaders in some circumstances)
+    followers: List[str] = []
+    # True if is a follower and stream is managed by the leader
+    is_managed: bool = False
 
     class Config:
         from_attributes = True
@@ -222,3 +233,12 @@ class DeviceLeaderModel(BaseModel):
 
 class DeviceDescriptorModel(BaseModel):
     bus_info: str
+
+
+class AddFollowerPayload(BaseModel):
+    leader_bus_info: str
+    follower_bus_info: str
+
+
+class SimpleRequestStatusModel(BaseModel):
+    success: bool = True

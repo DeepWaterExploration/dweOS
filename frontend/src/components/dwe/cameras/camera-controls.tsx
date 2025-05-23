@@ -1,6 +1,6 @@
 // src/components/camera-controls.tsx (Updated to use Dialog)
 
-import { useContext, useState } from "react"; // Added useState
+import { useContext, useEffect, useState } from "react"; // Added useState
 import DeviceContext from "@/contexts/DeviceContext";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -24,14 +24,18 @@ import { components } from "@/schemas/dwe_os_2";
 import { API_CLIENT } from "@/api";
 import { useToast } from "@/hooks/use-toast";
 
-export const CameraControls = () => {
-  const device = useContext(DeviceContext)!;
-  const controls = device.controls;
-  const bus_info = device.bus_info;
+const ControlWrapper = ({
+  control,
+  index,
+}: {
+  control: components["schemas"]["ControlModel"];
+  index: number;
+}) => {
+  const key = control.control_id ?? `control-${index}`;
   const { toast } = useToast();
-  const [isOpen, setIsOpen] = useState(false); // Control dialog open state
+  const device = useContext(DeviceContext)!;
+  const bus_info = device.bus_info;
 
-  // --- setUVCControl function remains the same ---
   const setUVCControl = (
     bus_info: string,
     value: number,
@@ -49,41 +53,43 @@ export const CameraControls = () => {
     });
   };
 
-  // --- renderControl function remains the same ---
-  // Note: Valtio subscriptions are tricky inside conditionally rendered components
-  // like Dialogs if not managed carefully. Consider moving subscription logic
-  // into the individual control components (IntegerControl, etc.) if issues arise.
-  const renderControl = (
-    control: components["schemas"]["ControlModel"],
-    index: number
-  ) => {
-    if (
-      control.name.includes("Auto Exposure") &&
-      control.flags.control_type === "MENU"
-    ) {
-      control.flags.control_type = "BOOLEAN";
-    }
+  useEffect(() => {
+    const unsub = subscribe(control, () => {
+      setUVCControl(bus_info, control.value, control.control_id);
+    });
+    return () => unsub(); // Clean up on unmount
+  }, [control, bus_info]);
 
-    const key = control.control_id ?? `control-${index}`;
+  if (
+    control.name.includes("Auto Exposure") &&
+    control.flags.control_type === "MENU"
+  ) {
+    control.flags.control_type = "BOOLEAN";
+  }
 
-    switch (control.flags.control_type) {
-      case "INTEGER":
-        return <IntegerControl key={key} control={control} />;
-      case "BOOLEAN":
-        return <BooleanControl key={key} control={control} />;
-      case "MENU":
-        return <MenuControl key={key} control={control} />;
-      default:
-        console.warn("Unsupported control type:", control.flags.control_type);
-        return null;
-    }
-  };
+  switch (control.flags.control_type) {
+    case "INTEGER":
+      return <IntegerControl key={key} control={control} />;
+    case "BOOLEAN":
+      return <BooleanControl key={key} control={control} />;
+    case "MENU":
+      return <MenuControl key={key} control={control} />;
+    default:
+      console.warn("Unsupported control type:", control.flags.control_type);
+      return null;
+  }
+};
 
-  // --- resetControls function remains the same ---
+export const CameraControls = () => {
+  const device = useContext(DeviceContext)!;
+  const controls = device.controls;
+  const bus_info = device.bus_info;
+  const { toast } = useToast();
+  const [isOpen, setIsOpen] = useState(false);
+
   const resetControls = () => {
     controls.forEach((control) => {
       if (control.value !== control.flags.default_value) {
-        // Valtio proxy mutation triggers the subscription automatically
         control.value = control.flags.default_value;
       }
     });
@@ -102,7 +108,6 @@ export const CameraControls = () => {
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] max-h-[80vh] overflow-y-auto">
-        {/* Added max-h and overflow */}
         <DialogHeader>
           <DialogTitle>Camera Controls</DialogTitle>
           <DialogDescription>
@@ -111,10 +116,15 @@ export const CameraControls = () => {
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          {/* Content previously inside CardContent */}
           {supportedControls.length > 0 ? (
             <div className="space-y-4">
-              {supportedControls.map(renderControl)}
+              {supportedControls.map((control, index) => (
+                <ControlWrapper
+                  key={control.control_id ?? index}
+                  control={control}
+                  index={index}
+                />
+              ))}
               <Separator className="my-4" />
               <Button
                 className="w-full flex items-center gap-2"

@@ -250,14 +250,19 @@ const FollowerList = () => {
 
   console.log(device.followers);
 
-  const { followerModels, devices } = useContext(DevicesContext)!;
+  const { devices } = useContext(DevicesContext)!;
+
+  subscribe(device.followers, () => {
+    setFollowers(device.followers);
+  });
 
   const [potentialFollowers, setPotentialFollowers] = useState<string[]>([]);
 
   const updatePotentialFollowers = () => {
     setPotentialFollowers([
       "Select a device...",
-      ...followerModels
+      ...devices
+        .filter((d) => d.device_type == 2)
         .map((f) => f.bus_info)
         .filter((value) => !followers.includes(value)),
     ]);
@@ -265,7 +270,7 @@ const FollowerList = () => {
 
   useEffect(() => {
     updatePotentialFollowers();
-  }, []);
+  }, [devices]);
 
   useEffect(() => {
     followers
@@ -278,7 +283,8 @@ const FollowerList = () => {
             follower_bus_info: newFollower,
           },
         });
-        getDeviceByBusInfo(devices, newFollower).is_managed = true;
+        const dev = getDeviceByBusInfo(devices, newFollower);
+        if (dev) dev.is_managed = true;
         updatePotentialFollowers();
 
         setSelectedBusInfo("Select a device...");
@@ -294,7 +300,8 @@ const FollowerList = () => {
             follower_bus_info: removedFollower,
           },
         });
-        getDeviceByBusInfo(devices, removedFollower).is_managed = false;
+        const dev = getDeviceByBusInfo(devices, removedFollower);
+        if (dev) dev.is_managed = false;
         updatePotentialFollowers();
 
         setSelectedBusInfo("Select a device...");
@@ -304,7 +311,7 @@ const FollowerList = () => {
   const [selectedBusInfo, setSelectedBusInfo] = useState("Select a device...");
 
   const handleAddFollower = () => {
-    const selected = followerModels.find(
+    const selected = devices.find(
       (f) => f.bus_info === selectedBusInfo
     )?.bus_info;
     if (!selected) return;

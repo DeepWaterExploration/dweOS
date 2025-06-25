@@ -228,7 +228,15 @@ class DeviceManager(events.EventEmitter):
         Remove a follower from a leader
         '''
         leader_device = self._find_device_with_bus_info(leader_bus_info)
-        follower_device = self._find_device_with_bus_info(follower_bus_info)
+        leader_device = cast(SHDDevice, leader_device)
+        try:
+            follower_device = self._find_device_with_bus_info(
+                follower_bus_info)
+        except DeviceNotFoundException:
+            # THERE IS NO INHERENT TRUTH TO THE EXISTANCE OF THE FOLLOWER
+            # Expected in the case of an unplugged follower
+            leader_device.remove_manual(follower_bus_info)
+            return
 
         if leader_device.device_type != DeviceType.STELLARHD_LEADER:
             self.logger.warning(
@@ -240,7 +248,6 @@ class DeviceManager(events.EventEmitter):
                 'Attempted to remove follower of non-follower type')
             return False
 
-        leader_device = cast(SHDDevice, leader_device)
         follower_device = cast(SHDDevice, follower_device)
         leader_device.remove_follower(follower_device)
 
@@ -303,14 +310,35 @@ class DeviceManager(events.EventEmitter):
             for device in self.devices:
                 if device.device_info == device_info:
                     device.stream_runner.stop()
+
+                    # What to do when a device is unplugged
+                    # If it is a leader, just have the followers detatch temporarily
+                    # If it is a follower, remove self from the leaders streams
+                    # This means we need to handle situations like the following
+                    #   Leader gets unplugged and follower gets new leader
+                    #   Follower gets unplugged and now there is no inherent truth to the
+                    #       existance of a given follower
                     if device.device_type == DeviceType.STELLARHD_LEADER:
-                        for follower in self.devices:
-                            if follower.device_type == DeviceType.STELLARHD_FOLLOWER:
-                                # remove the leader if its leader is the removed device
-                                # FIXME: This could be cleaner if the leader has a list of followers instead, which it does sorta, but not quite
+                        leader_casted = cast(SHDDevice, device)
+                        for follower_bus_info in leader_casted.followers:
+                            # This can be optimized, but it truly does not matter
+                            follower = self._find_device_with_bus_info(
+                                follower_bus_info)
+                            # Remember, follower might not exist now - never inherent truth to its existance
+                            if follower:
                                 follower_casted = cast(SHDDevice, follower)
-                                if follower_casted.leader == device.bus_info:
-                                    follower_casted.remove_leader()
+                                leader_casted.remove_follower(follower_casted)
+                    elif device.device_type == DeviceType.STELLARHD_FOLLOWER:
+                        follower_casted = cast(SHDDevice, device)
+                        if follower_casted.is_managed:
+                            # TODO: Fix this
+                            for device in self.devices:
+                                if device.device_type == DeviceType.STELLARHD_LEADER:
+                                    leader_casted = cast(SHDDevice, device)
+                                    if follower_casted.bus_info in leader_casted.followers:
+                                        leader_casted.stream_runner.streams.remove(
+                                            follower_casted.stream)
+                                        leader_casted.stream_runner.start()
 
                     self.devices.remove(device)
                     self.logger.info(f"Device Removed: {device_info.bus_info}")

@@ -67,13 +67,15 @@ class SettingsManager:
                             self.logger.warning(
                                 f"Follower device with bus_info {follower_bus_info} not currently connected"
                             )
-                            return
+                            saved_device.followers.remove(follower_bus_info)
+                            continue
 
                         if follower.device_type != DeviceType.STELLARHD_FOLLOWER:
                             self.logger.warning(
                                 f"Follower device {follower.bus_info} is not of follower type, skipping"
                             )
-                            return
+                            saved_device.followers.remove(follower_bus_info)
+                            continue
 
                         follower = cast(SHDDevice, follower)
                         device = cast(SHDDevice, device)
@@ -81,6 +83,7 @@ class SettingsManager:
                             self.logger.info(
                                 f"Saved follower already has a new leader")
                             # This is true when the follower has now gotten a new leader
+                            saved_device.followers.remove(follower_bus_info)
                             continue
                         device.add_follower(follower)
                 # We plugged in a new follower
@@ -103,6 +106,9 @@ class SettingsManager:
                 return
 
     def link_followers(self, devices: List[Device]):
+        '''
+        Run this when we need to check for new devices
+        '''
         for leader in devices:
             if leader.device_type != DeviceType.STELLARHD_LEADER:
                 continue
@@ -111,6 +117,7 @@ class SettingsManager:
 
             saved = self.saved_by_bus_info.get(leader.bus_info)
 
+            # This device has not been saved
             if not saved:
                 continue
 
@@ -121,9 +128,14 @@ class SettingsManager:
 
                 follower = find_device_with_bus_info(
                     devices, follower_bus_info)
+
+                # If this follower does not exist, that is ok
+                # There is no truth to the existance of the followers list
                 if not follower:
                     continue
 
+                # What is worse than it not existing, however, is it not being a follower
+                # So, we delete
                 if follower.device_type != DeviceType.STELLARHD_FOLLOWER:
                     self.logger.warning(
                         f"Follower device {follower.bus_info} is not of follower type, skipping"

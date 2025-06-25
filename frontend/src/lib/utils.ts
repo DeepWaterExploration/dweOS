@@ -11,7 +11,7 @@ export const getDeviceByBusInfo = (
   devices: components["schemas"]["DeviceModel"][],
   bus_info: string
 ) => {
-  return devices.filter((dev) => dev.bus_info === bus_info)[0];
+  return devices.filter((dev) => dev.bus_info === bus_info)[0] || null;
 };
 
   // Function to get color for log level badge

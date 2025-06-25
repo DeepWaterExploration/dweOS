@@ -33,7 +33,12 @@ class SHDDevice(Device):
         mjpg_camera.formats["SOFTWARE_H264"] = mjpg_camera.formats["MJPG"]
 
         # List of followers
+        # Zero inherent truth to the existance of these devices
         self.followers: List[str] = []
+
+        # These exist
+        self.follower_devices: List['SHDDevice'] = []
+
         # Is true if it is managed, false otherwise
         self.is_managed = False
 
@@ -47,7 +52,13 @@ class SHDDevice(Device):
                 'Trying to add follower to device that already has this device as a follower. Ignoring request.')
             return
         self.logger.info('Adding follower')
+
+        # For saving purposes
         self.followers.append(device.bus_info)
+
+        # This is the real addition
+        self.follower_devices.append(device)
+
         # Make the follower managed
         device.set_is_managed(True)
         # Append the new device stream
@@ -64,6 +75,10 @@ class SHDDevice(Device):
         # Reconstruct the list without the follower
         self.followers = [
             dev for dev in self.followers if dev != device.bus_info]
+        self.follower_devices = [
+            dev for dev in self.follower_devices if dev.bus_info != device.bus_info
+        ]
+
         self.stream_runner.streams.remove(device.stream)
         device.set_is_managed(False)
 
@@ -71,6 +86,12 @@ class SHDDevice(Device):
 
         if self.stream.enabled:
             self.start_stream()
+
+    def remove_manual(self, follower_bus_info: str):
+        '''
+        This should be called in the case the follower no longer exists
+        '''
+        self.followers.remove(follower_bus_info)
 
     def set_is_managed(self, is_managed: bool):
         self.is_managed = is_managed

@@ -5,6 +5,7 @@ from .wifi_types import Connection, AccessPoint, IPConfiguration, IPType
 import logging
 import socket
 import struct
+import time
 
 
 class NMException(Exception):
@@ -58,14 +59,46 @@ class NetworkManager:
 
         # The proxy does not exist, since NetworkManager does not exist
         if not self.proxy:
-            raise NMNotSupportedError("NetworkManager is not installed on this system.")
+            raise NMNotSupportedError(
+                "NetworkManager is not installed on this system.")
 
         # Get an interface to the NetworkManager object from the proxy
-        self.interface = dbus.Interface(self.proxy, "org.freedesktop.NetworkManager")
+        self.interface = dbus.Interface(
+            self.proxy, "org.freedesktop.NetworkManager")
         # Get an interface to the properties object
-        self.props = dbus.Interface(self.proxy, "org.freedesktop.DBus.Properties")
+        self.props = dbus.Interface(
+            self.proxy, "org.freedesktop.DBus.Properties")
 
         self.logger = logging.getLogger("dwe_os_2.wifi.NetworkManager")
+
+    def reinit(self):
+        self.bus.close()
+
+        del self.bus
+        del self.proxy
+        del self.interface
+        del self.props
+
+        time.sleep(0.1)
+
+        # Get the system bus
+        self.bus = dbus.SystemBus()
+        # Get a local proxy to the NetworkManager object
+        self.proxy = self.bus.get_object(
+            "org.freedesktop.NetworkManager", "/org/freedesktop/NetworkManager"
+        )
+
+        # The proxy does not exist, since NetworkManager does not exist
+        if not self.proxy:
+            raise NMNotSupportedError(
+                "NetworkManager is not installed on this system.")
+
+        # Get an interface to the NetworkManager object from the proxy
+        self.interface = dbus.Interface(
+            self.proxy, "org.freedesktop.NetworkManager")
+        # Get an interface to the properties object
+        self.props = dbus.Interface(
+            self.proxy, "org.freedesktop.DBus.Properties")
 
     @handle_dbus_exceptions
     def get_ip_info(self, interface_name: str | None = None) -> IPConfiguration:
@@ -81,11 +114,13 @@ class NetworkManager:
             self._get_eth_device_and_connection()
         )
 
-        ethernet_device, ethernet_proxy = self._get_ethernet_device(interface_name)
+        ethernet_device, ethernet_proxy = self._get_ethernet_device(
+            interface_name)
         if ethernet_device is None:
             raise NMException("No ethernet device found")
 
-        dev_props = dbus.Interface(ethernet_proxy, "org.freedesktop.DBus.Properties")
+        dev_props = dbus.Interface(
+            ethernet_proxy, "org.freedesktop.DBus.Properties")
 
         ipv4_config_path = dev_props.Get(
             "org.freedesktop.NetworkManager.Device", "Ip4Config"
@@ -175,12 +210,14 @@ class NetworkManager:
         :param activate: Whether to activate the connection after updating it
         :return: The interface name of the ethernet device
         """
-        ethernet_device, ethernet_proxy = self._get_ethernet_device(interface_name)
+        ethernet_device, ethernet_proxy = self._get_ethernet_device(
+            interface_name)
         if ethernet_device is None:
             raise NMException("No ethernet device found")
 
         # Get the interface name of the ethernet device
-        dev_props = dbus.Interface(ethernet_proxy, "org.freedesktop.DBus.Properties")
+        dev_props = dbus.Interface(
+            ethernet_proxy, "org.freedesktop.DBus.Properties")
         dev_interface = dev_props.Get(
             "org.freedesktop.NetworkManager.Device", "Interface"
         )
@@ -218,7 +255,8 @@ class NetworkManager:
     ):
         # Get the first ethernet device
         (ethernet_device, ethernet_proxy) = self._get_ethernet_device(interface_name)
-        dev_props = dbus.Interface(ethernet_proxy, "org.freedesktop.DBus.Properties")
+        dev_props = dbus.Interface(
+            ethernet_proxy, "org.freedesktop.DBus.Properties")
         # enp3s0 or eth0
         dev_interface = dev_props.Get(
             "org.freedesktop.NetworkManager.Device", "Interface"
@@ -379,8 +417,10 @@ class NetworkManager:
         devs = []
 
         for dev_path in devices:
-            dev_proxy = self.bus.get_object("org.freedesktop.NetworkManager", dev_path)
-            dev_props = dbus.Interface(dev_proxy, "org.freedesktop.DBus.Properties")
+            dev_proxy = self.bus.get_object(
+                "org.freedesktop.NetworkManager", dev_path)
+            dev_props = dbus.Interface(
+                dev_proxy, "org.freedesktop.DBus.Properties")
             dev_type = dev_props.Get(
                 "org.freedesktop.NetworkManager.Device", "DeviceType"
             )
@@ -423,7 +463,8 @@ class NetworkManager:
                 connection_id=existing_connection.id
             )
             if not connection_path:
-                raise NMException(f"Known connection for SSID {ssid} not found")
+                raise NMException(
+                    f"Known connection for SSID {ssid} not found")
             self.interface.ActivateConnection(connection_path, dev_proxy, "/")
             return
 
@@ -436,9 +477,12 @@ class NetworkManager:
         ap_path = None
         ap_requires_password = False
         for ap in access_points:
-            ap_proxy = self.bus.get_object("org.freedesktop.NetworkManager", ap)
-            ap_props = dbus.Interface(ap_proxy, "org.freedesktop.DBus.Properties")
-            ap_ssid = ap_props.Get("org.freedesktop.NetworkManager.AccessPoint", "Ssid")
+            ap_proxy = self.bus.get_object(
+                "org.freedesktop.NetworkManager", ap)
+            ap_props = dbus.Interface(
+                ap_proxy, "org.freedesktop.DBus.Properties")
+            ap_ssid = ap_props.Get(
+                "org.freedesktop.NetworkManager.AccessPoint", "Ssid")
             ssid_str = "".join([chr(byte) for byte in ap_ssid])
 
             if ssid_str == ssid:
@@ -500,7 +544,8 @@ class NetworkManager:
         if not wifi_dev:
             raise Exception("No WiFi device found")
 
-        dev_props = dbus.Interface(dev_proxy, "org.freedesktop.DBus.Properties")
+        dev_props = dbus.Interface(
+            dev_proxy, "org.freedesktop.DBus.Properties")
         active_connection = dev_props.Get(
             "org.freedesktop.NetworkManager.Device", "ActiveConnection"
         )
@@ -602,7 +647,8 @@ class NetworkManager:
         if not wifi_dev:
             raise NMException("No WiFi device found")
 
-        wifi_props = dbus.Interface(dev_proxy, "org.freedesktop.DBus.Properties")
+        wifi_props = dbus.Interface(
+            dev_proxy, "org.freedesktop.DBus.Properties")
 
         # get the timestamp of the last scan
         self._last_scan_timestamp = wifi_props.Get(
@@ -619,7 +665,8 @@ class NetworkManager:
         if not wifi_dev:
             raise NMException("No WiFi device found")
 
-        wifi_props = dbus.Interface(dev_proxy, "org.freedesktop.DBus.Properties")
+        wifi_props = dbus.Interface(
+            dev_proxy, "org.freedesktop.DBus.Properties")
 
         current_scan = wifi_props.Get(
             "org.freedesktop.NetworkManager.Device.Wireless", "LastScan"
@@ -659,8 +706,10 @@ class NetworkManager:
             self.logger.warning("Failed to retrieve device list")
             devices = []
         for dev_path in devices:
-            dev_proxy = self.bus.get_object("org.freedesktop.NetworkManager", dev_path)
-            dev_props = dbus.Interface(dev_proxy, "org.freedesktop.DBus.Properties")
+            dev_proxy = self.bus.get_object(
+                "org.freedesktop.NetworkManager", dev_path)
+            dev_props = dbus.Interface(
+                dev_proxy, "org.freedesktop.DBus.Properties")
             dev_type = dev_props.Get(
                 "org.freedesktop.NetworkManager.Device", "DeviceType"
             )
@@ -682,14 +731,18 @@ class NetworkManager:
         if wifi_access_points is None:
             return []
         for ap_path in wifi_access_points:
-            ap_proxy = self.bus.get_object("org.freedesktop.NetworkManager", ap_path)
-            ap_props = dbus.Interface(ap_proxy, "org.freedesktop.DBus.Properties")
+            ap_proxy = self.bus.get_object(
+                "org.freedesktop.NetworkManager", ap_path)
+            ap_props = dbus.Interface(
+                ap_proxy, "org.freedesktop.DBus.Properties")
 
-            ssid = ap_props.Get("org.freedesktop.NetworkManager.AccessPoint", "Ssid")
+            ssid = ap_props.Get(
+                "org.freedesktop.NetworkManager.AccessPoint", "Ssid")
             strength = ap_props.Get(
                 "org.freedesktop.NetworkManager.AccessPoint", "Strength"
             )
-            flags = ap_props.Get("org.freedesktop.NetworkManager.AccessPoint", "Flags")
+            flags = ap_props.Get(
+                "org.freedesktop.NetworkManager.AccessPoint", "Flags")
             wpa_flags = ap_props.Get(
                 "org.freedesktop.NetworkManager.AccessPoint", "WpaFlags"
             )
@@ -697,7 +750,8 @@ class NetworkManager:
                 "org.freedesktop.NetworkManager.AccessPoint", "RsnFlags"
             )
 
-            requires_password = self._ap_requires_password(flags, wpa_flags, rsn_flags)
+            requires_password = self._ap_requires_password(
+                flags, wpa_flags, rsn_flags)
 
             access_points.append(
                 AccessPoint(
@@ -723,7 +777,8 @@ class NetworkManager:
     def _get_connection_proxy(self, active_connection):
         # Get the connection details from the active connection
         connection_proxy = dbus.Interface(
-            self.bus.get_object("org.freedesktop.NetworkManager", active_connection),
+            self.bus.get_object(
+                "org.freedesktop.NetworkManager", active_connection),
             "org.freedesktop.DBus.Properties",
         )
 

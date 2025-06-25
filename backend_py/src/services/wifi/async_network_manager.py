@@ -75,8 +75,7 @@ class AsyncNetworkManager(EventEmitter):
     async def _reinitialize_nm(self):
         self.logger.info("Reinitializing NetworkManager")
         async with self._nm_lock:
-            del self.nm
-            self.nm = NetworkManager()
+            self.nm.reinit()
 
     async def safe_dbus_call(self, method, *args, timeout=3):
         """
@@ -95,7 +94,7 @@ class AsyncNetworkManager(EventEmitter):
             return None  # Handle failure gracefully
         except NMException as e:
             self.logger.info(e)
-            # await self._reinitialize_nm()
+            await self._reinitialize_nm()
             return None
 
     def get_network_priority(self):
@@ -111,7 +110,8 @@ class AsyncNetworkManager(EventEmitter):
         """
         try:
             if interface_name is not None:
-                subprocess.check_output(["ping", "-I", interface_name, "-c", "4", ip])
+                subprocess.check_output(
+                    ["ping", "-I", interface_name, "-c", "4", ip])
             else:
                 subprocess.check_output(["ping", "-c", "4", ip])
             return True
@@ -278,14 +278,16 @@ class AsyncNetworkManager(EventEmitter):
             (network_priority,) = cmd.args
             await self._handle_change_network_priority(cmd, network_priority)
         else:
-            cmd.set_exception(ValueError(f"Unknown command type: {cmd.cmd_type}"))
+            cmd.set_exception(ValueError(
+                f"Unknown command type: {cmd.cmd_type}"))
 
     async def _get_ip_info_safe(self):
         try:
             return await asyncio.to_thread(self.nm.get_ip_info)
         except NMException as e:
-            self.logger.error(f'NetworkManager Exception Occurred while getting IP Information {e}')
-            # await self._reinitialize_nm()
+            self.logger.error(
+                f'NetworkManager Exception Occurred while getting IP Information {e}')
+            await self._reinitialize_nm()
 
     def _set_static_ip(
         self, ip_configuration: IPConfiguration, prioritize_wireless=False
@@ -389,7 +391,9 @@ class AsyncNetworkManager(EventEmitter):
                     self.emit("connections_changed")
                     self.connections = connections
         except NMException as e:
-            self.logger.error(f"Error occured while fetching cached connections: f{e}")
+            self.logger.error(
+                f"Error occured while fetching cached connections: f{e}")
+            await self._reinitialize_nm()
 
     async def _update_active_connection(self):
         if self.nm is None:
@@ -417,4 +421,5 @@ class AsyncNetworkManager(EventEmitter):
                     self.status.connected = False
         except NMException as e:
             # An error regarding path will occur sometimes when the connection has not re-activated
-            self.logger.error(f"Error occured while fetching active connection: f{e}")
+            self.logger.error(
+                f"Error occured while fetching active connection: f{e}")

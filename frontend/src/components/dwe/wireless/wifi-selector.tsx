@@ -72,7 +72,7 @@ export function WifiSelector() {
       };
     }
 
-    return () => {};
+    return () => { };
   }, [connected]);
 
   const toggleWifi = () => {
@@ -173,6 +173,8 @@ export function WifiSelector() {
 
                 .sort((a, b) => {
                   const connectedId = wifiStatus?.connection?.id;
+                  console.log(connectedId);
+
                   if (a.ssid === connectedId) return -1; // a is connected, put first
                   if (b.ssid === connectedId) return 1; // b is connected, put first
                   return b.strength - a.strength; // otherwise sort by strength
@@ -222,7 +224,7 @@ export function WifiSelector() {
         <DialogContent className="sm:max-w-md">
           <form onSubmit={handlePasswordSubmit}>
             <DialogHeader>
-              <DialogTitle>Connect to {wifiStatus?.connection?.id}</DialogTitle>
+              <DialogTitle>Connect to {selectedNetwork?.ssid}</DialogTitle>
               <DialogDescription>
                 This network is password protected. Please enter the password to
                 connect.

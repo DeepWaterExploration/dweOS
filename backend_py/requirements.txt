@@ -8,5 +8,6 @@ fastapi
 pydantic
 python-socketio
 dbus-python==1.2.18
-uvicornsdbus==0.14.0
+uvicorn
+sdbus==0.14.0
 sdbus-networkmanager==2.0.0

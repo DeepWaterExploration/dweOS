@@ -313,75 +313,13 @@ class NetworkManager:
                 nm_settings.add_connection(properties)
             except NmConnectionInvalidPropertyError as e:
                 raise Exception("Can't Connect to wifi. Make sure password is correct")
-            activate_cmd = ["sudo", "nmcli", "connection", "up", connection_id]
-            subprocess.run(activate_cmd, capture_output=True, text=True, check=True)
-            time.sleep(5)
-            connectivity_cmd = ["nmcli", "-t", "networking", "connectivity"]
-            connectivity_result = subprocess.run(connectivity_cmd, capture_output=True, text=True, check=True)
-            connectivity_status = connectivity_result.stdout.strip()
+            password_bytes = str(password + '\n')
+            activate_cmd = ["sudo", "nmcli", "--ask", "connection", "up", connection_id]
+            subprocess.run(activate_cmd, input=password_bytes, capture_output=True, text=True, check=True)
             
-
-            if connectivity_status == "full":
-                return True
-            elif connectivity_status == "limited":
-                return True # Consider this success, or change to False based on needs
-            else:
-                return False
 
             
             
-
-    def connect_bad(self, ssid: str, password=""):
-        # TODO: THIS DOES NOT WORK
-
-        # Get the WiFi device
-        wifi_dev = self._get_wifi_device()
-        if wifi_dev is None:
-            raise Exception("No WiFi device found")
-
-    
-        access_points = wifi_dev.access_points
-
-        selected_ap = None
-        selected_ap_path = None
-        for ap_path in access_points:
-            ap = AccessPoint(ap_path, self.bus)
-            if ap.ssid.decode('utf-8') == ssid:
-                selected_ap = ap
-                selected_ap_path = ap_path
-                break
-
-        if selected_ap is None:
-            raise Exception(f"Access point with SSID {ssid} not found")
-
-        connection_settings = {
-            "802-11-wireless": {
-                # Explicitly wrap the bytes for SSID as a Variant with 'ay' signature
-                "ssid": ("ay", ssid.encode('utf-8')),
-                "mode": ("s", "infrastructure"),
-            },
-            "connection": {
-                "id": ("s", ssid),
-                "type": ("s", "802-11-wireless"),
-            },
-            "ipv4": {"method": ("s", "auto")},
-            "ipv6": {"method": ("s", "ignore")},
-        }
-
-        if self._ap_requires_password(selected_ap.flags, selected_ap.wpa_flags, selected_ap.rsn_flags):
-            connection_settings["802-11-wireless-security"] = {
-                "key-mgmt": ("s", "wpa-psk"),
-                "psk": ("s", password),
-            }
-
-        print(f"Connecting to {ssid} with password {password} on AP {selected_ap_path}")
-        # Call NetworkManager to add and activate the connection
-        self.networkmanager.add_and_activate_connection2(
-            connection_settings,
-            wifi_dev.path,
-            selected_ap_path,
-            {}
-        )
 
     
     def disconnect(self):

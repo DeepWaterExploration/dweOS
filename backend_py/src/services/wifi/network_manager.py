@@ -314,7 +314,7 @@ class NetworkManager:
             except NmConnectionInvalidPropertyError as e:
                 raise Exception("Can't Connect to wifi. Make sure password is correct")
             password_bytes = str(password + '\n')
-            activate_cmd = ["sudo", "nmcli", "--ask", "connection", "up", connection_id]
+            activate_cmd = ["nmcli", "--ask", "connection", "up", connection_id]
             subprocess.run(activate_cmd, input=password_bytes, capture_output=True, text=True, check=True)
             
 

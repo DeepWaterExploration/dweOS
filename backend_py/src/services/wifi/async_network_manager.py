@@ -1,13 +1,13 @@
 import asyncio
 import time
-from typing import Callable
+from typing import Callable, List
 from event_emitter import EventEmitter
 
 from .wifi_types import IPConfiguration, Status, Connection, IPType, NetworkPriority
-from .network_manager import NetworkManager, NMException
+from .network_manager import NetworkManager
 from .exceptions import WiFiException
 import subprocess
-
+from .network_manager import AccessPoint, ConnectionType
 import logging
 
 from enum import Enum
@@ -44,7 +44,7 @@ class AsyncNetworkManager(EventEmitter):
         super().__init__()
         try:
             self.nm = NetworkManager()
-        except NMException:
+        except Exception:
             raise WiFiException("NetworkManager is not supported")
 
         self._nm_lock = asyncio.Lock()
@@ -53,7 +53,7 @@ class AsyncNetworkManager(EventEmitter):
 
         self.logger = logging.getLogger("dwe_os_2.wifi.AsyncNetworkManager")
 
-        self._ip_configuration = IPConfiguration()
+        self._ip_configuration = {}
         self._network_priority = NetworkPriority.ETHERNET
 
         self.scan_interval = scan_interval
@@ -92,7 +92,9 @@ class AsyncNetworkManager(EventEmitter):
             )
         except asyncio.TimeoutError:
             return None  # Handle failure gracefully
-        except NMException as e:
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
             self.logger.info(e)
             await self._reinitialize_nm()
             return None
@@ -123,14 +125,14 @@ class AsyncNetworkManager(EventEmitter):
 
         if self._ip_configuration == None:
             self.logger.info("No ethernet connection detected")
-        elif self._ip_configuration.ip_type == IPType.STATIC:
-            self.logger.info(
-                f"Static IP: {self._ip_configuration.static_ip}/{self._ip_configuration.prefix}, Gateway: {self._ip_configuration.gateway}"
-            )
-        else:
-            self.logger.info(
-                f"Dynamic IP: {self._ip_configuration.static_ip}/{self._ip_configuration.prefix}"
-            )
+        # elif self._ip_configuration.ip_type == IPType.STATIC:
+        #     self.logger.info(
+        #         f"Static IP: {self._ip_configuration.static_ip}/{self._ip_configuration.prefix}, Gateway: {self._ip_configuration.gateway}"
+        #     )
+        # else:
+        #     self.logger.info(
+        #         f"Dynamic IP: {self._ip_configuration.static_ip}/{self._ip_configuration.prefix}"
+        #     )
 
     def _initialize_access_points(self):
         """
@@ -138,7 +140,9 @@ class AsyncNetworkManager(EventEmitter):
         """
         try:
             self.access_points = self.nm.get_access_points()
-        except NMException as e:
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
             raise WiFiException(
                 f"Error occurred while initializing access points {e}"
             ) from e
@@ -162,14 +166,17 @@ class AsyncNetworkManager(EventEmitter):
 
         self.logger.info("WiFi manager scanning stopped")
 
-    def get_access_points(self):
+    def get_access_points(self) -> List[AccessPoint]:
         return self.access_points
+    
+    def _requires_password(self, access_points: AccessPoint) -> bool:
+        return self.nm._ap_requires_password(access_points.flags, access_points.wpa_flags, access_points.rsn_flags)
 
     def get_status(self):
         return self.status
 
     def list_connections(self):
-        return self.connections
+        return [Connection(id=i.id, type=i.type) for i in self.connections]
 
     async def set_network_priority(self, network_priority: NetworkPriority):
         self._network_priority = network_priority
@@ -284,21 +291,22 @@ class AsyncNetworkManager(EventEmitter):
     async def _get_ip_info_safe(self):
         try:
             return await asyncio.to_thread(self.nm.get_ip_info)
-        except NMException as e:
+        except Exception as e:
             self.logger.error(
                 f'NetworkManager Exception Occurred while getting IP Information {e}')
             await self._reinitialize_nm()
 
-    def _set_static_ip(
+    async def _set_static_ip(
         self, ip_configuration: IPConfiguration, prioritize_wireless=False
     ):
         """do not call"""
-        return self.nm.set_static_ip(
+        return await self.safe_dbus_call(
+            self.nm.set_static_ip,
             ip_configuration.static_ip,
             ip_configuration.prefix,
             ip_configuration.gateway or "0.0.0.0",
             ip_configuration.dns,
-            prioritize_wireless=prioritize_wireless,
+            prioritize_wireless
         )
 
     async def _handle_change_network_priority(
@@ -308,25 +316,26 @@ class AsyncNetworkManager(EventEmitter):
             if self._ip_configuration is None:
                 return
             if network_priority == NetworkPriority.ETHERNET:
-                self._set_static_ip(self._ip_configuration)
+                await self._set_static_ip(self._ip_configuration)
                 cmd.set_result(True)
             else:  # Wireless Priority
-                self._set_static_ip(self._ip_configuration, True)
+                await self._set_static_ip(self._ip_configuration, True)
                 cmd.set_result(True)
 
     async def _handle_update_ip(self, cmd: Command, ip_configuration: IPConfiguration):
         try:
             async with self._nm_lock:
                 if ip_configuration.ip_type == IPType.STATIC:
-                    self._set_static_ip(ip_configuration)
+                    await self._set_static_ip(ip_configuration)
                     cmd.set_result(True)
                 else:
-                    self.nm.set_dynamic_ip()
+                    # Run sync dynamic IP in thread
+                    await asyncio.to_thread(self.nm.set_dynamic_ip)
                     cmd.set_result(True)
         except Exception as e:
             cmd.set_exception(e)
 
-    def _is_connected(self, ssid: str):
+    async def _is_connected(self, ssid: str):
         if not self.nm.get_active_wireless_connection():
             return False
         return self.nm.get_active_wireless_connection().id == ssid
@@ -334,7 +343,8 @@ class AsyncNetworkManager(EventEmitter):
     async def _handle_connect(self, cmd: Command, ssid: str, password: str = ""):
         try:
             async with self._nm_lock:
-                self.nm.connect(ssid, password)
+                # Run sync connect in thread to avoid blocking
+                await asyncio.to_thread(self.nm.connect, ssid, password)
 
                 if await self._wait_for(lambda: self._is_connected(ssid)):
                     self.status.connected = False
@@ -348,7 +358,8 @@ class AsyncNetworkManager(EventEmitter):
     async def _handle_disconnect(self, cmd: Command):
         try:
             async with self._nm_lock:
-                self.nm.disconnect()
+                # Run sync disconnect in thread
+                await asyncio.to_thread(self.nm.disconnect)
 
                 if await self._wait_for(
                     lambda: self.nm.get_active_wireless_connection() is None
@@ -365,7 +376,8 @@ class AsyncNetworkManager(EventEmitter):
     async def _handle_forget(self, cmd: Command, ssid: str):
         try:
             async with self._nm_lock:
-                self.nm.forget(ssid)
+                # Run sync forget in thread
+                await asyncio.to_thread(self.nm.forget, ssid)
 
             cmd.set_result(True)
 
@@ -390,9 +402,9 @@ class AsyncNetworkManager(EventEmitter):
                 if connections != self.connections:
                     self.emit("connections_changed")
                     self.connections = connections
-        except NMException as e:
+        except Exception as e:
             self.logger.error(
-                f"Error occured while fetching cached connections: f{e}")
+                f"Error occurred while fetching cached connections: {e}")
             await self._reinitialize_nm()
 
     async def _update_active_connection(self):
@@ -400,26 +412,31 @@ class AsyncNetworkManager(EventEmitter):
             return
         try:
             async with self._nm_lock:
-                connection = await self.safe_dbus_call(
-                    self.nm.get_active_wireless_connection
-                )
+                # Fetch active connection via safe async call
+                connection = await self.safe_dbus_call(self.nm.get_active_wireless_connection)
+                # Extract id and type in thread to avoid blocking
+                if connection is not None:
+                    conn_id, ap_type = await asyncio.to_thread(lambda c: (c.id, c.connection_type), connection)
+                else:
+                    conn_id, ap_type = None, None
+                formattedConnection = Connection(id=conn_id, type=ap_type)
                 if connection is not None:
                     if (
-                        self.status.connection != connection
+                        self.status.connection != formattedConnection
                         and not self.status.connected
                     ):
-                        self.status.connection = connection
+                        self.status.connection = formattedConnection
                         self.status.connected = True
                         self.emit("connected")
                     elif self.status.connected:
-                        self.status.connection = connection
+                        self.status.connection = formattedConnection
                         self.emit("connection_changed")
                 else:
                     if self.status.connected:
                         self.emit("disconnected")
                     self.status.connection = Connection()
                     self.status.connected = False
-        except NMException as e:
+        except Exception as e:
             # An error regarding path will occur sometimes when the connection has not re-activated
             self.logger.error(
-                f"Error occured while fetching active connection: f{e}")
+                f"Error occurred while fetching active connection: {e}")

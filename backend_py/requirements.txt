@@ -1,5 +1,4 @@
-event_emitter==0.3.0
-gevent==24.2.1
+#gevent==22.10.2
 linuxpy==0.13.0
 natsort==8.4.0
 PyEventEmitter==1.0.5

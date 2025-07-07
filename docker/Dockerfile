@@ -22,6 +22,8 @@ COPY release/backend_py/requirements.txt .
 # Copy apt requirements with cache
 COPY release/install_requirements.sh .
 
+RUN pip install --no-build-isolation gevent==22.10.2
+
 RUN pip install --no-cache-dir -r requirements.txt
 
 RUN sh install_requirements.sh
@@ -45,7 +47,7 @@ LABEL permissions='{ \
     }, \
     "HostConfig": { \
     "Privileged": true, \
-    "Binds": ["/sys/class/video4linux:/sys/class/video4linux", "dweos-settings:/settings", "/dev:/dev"], \
+    "Binds": ["/sys/class/video4linux:/sys/class/video4linux", "/usr/blueos/userdata/dwe_os_2:/settings", "/dev:/dev"], \
     "PortBindings": { \
     "8000/tcp": [ \
     { \
@@ -80,7 +82,7 @@ EXPOSE 8000
 VOLUME ["/sys/class/video4linux", "/dev", "/run/dbus", "/var/run/dbus"]
 
 # Install DWE_OS_2
-COPY release /opt/DWE_OS_2
+COPY release /opt/DWE_OS_2dock
 
 WORKDIR /opt/DWE_OS_2
 

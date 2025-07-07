@@ -82,7 +82,7 @@ EXPOSE 8000
 VOLUME ["/sys/class/video4linux", "/dev", "/run/dbus", "/var/run/dbus"]
 
 # Install DWE_OS_2
-COPY release /opt/DWE_OS_2dock
+COPY release /opt/DWE_OS_2
 
 WORKDIR /opt/DWE_OS_2
 

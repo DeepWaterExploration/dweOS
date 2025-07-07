@@ -509,3 +509,41 @@ class NetworkManager:
 
 
         return connections
+
+    def turn_off_wifi(self):
+        """
+        Turn off the WiFi device completely
+        """
+        wifi_dev = self._get_wifi_device()
+
+        if not wifi_dev:
+            raise Exception("No WiFi device found")
+
+        
+        # Alternative approach using nmcli command for more reliable wifi disabling
+        try:
+            subprocess.run(["nmcli", "radio", "wifi", "off"], check=True, capture_output=True)
+        except subprocess.CalledProcessError as e:
+            self.logger.error(f"Failed to turn off WiFi using nmcli: {e}")
+            raise Exception("Failed to turn off WiFi")
+
+    def turn_on_wifi(self):
+        """
+        Turn on the WiFi device
+        """
+        try:
+            subprocess.run(["nmcli", "radio", "wifi", "on"], check=True, capture_output=True)
+        except subprocess.CalledProcessError as e:
+            self.logger.error(f"Failed to turn on WiFi using nmcli: {e}")
+            raise Exception("Failed to turn on WiFi")
+
+
+    def is_wifi_enabled(self) -> bool:
+        """
+        Check if WiFi is currently enabled
+        """
+        try:
+            result = subprocess.run(["nmcli", "radio", "wifi"], check=True, capture_output=True, text=True)
+            return result.stdout.strip() == "enabled"
+        except subprocess.CalledProcessError:
+            return False

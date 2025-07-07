@@ -60,7 +60,7 @@ export function CommandPalette() {
               >
                 Recordings
               </CommandItem>
-              <CommandItem onSelect={() => runCommand(() => navigate("/logs"))}>
+              <CommandItem onSelect={() => runCommand(() => navigate("/log-viewer"))}>
                 Logs
               </CommandItem>
               <CommandItem

@@ -440,3 +440,27 @@ class AsyncNetworkManager(EventEmitter):
             # An error regarding path will occur sometimes when the connection has not re-activated
             self.logger.error(
                 f"Error occurred while fetching active connection: {e}")
+            
+    async def turn_off_wifi(self):
+        """
+        Turn off WiFi
+        """
+        try:
+            async with self._nm_lock:
+                await asyncio.to_thread(self.nm.turn_off_wifi)
+            return True
+        except Exception as e:
+            self.logger.error(f"Error occurred while turning off WiFi: {e}")
+            return False
+        
+    async def turn_on_wifi(self):
+        """
+        Turn on WiFi
+        """
+        try:
+            async with self._nm_lock:
+                await asyncio.to_thread(self.nm.turn_on_wifi)
+            return True
+        except Exception as e:
+            self.logger.error(f"Error occurred while turning on WiFi: {e}")
+            return False

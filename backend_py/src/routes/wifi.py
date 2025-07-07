@@ -65,3 +65,12 @@ async def disconnect(request: Request):
 async def forget(request: Request, network_config: NetworkConfig):
     wifi_manager: AsyncNetworkManager = request.app.state.wifi_manager
     return {"status": await wifi_manager.forget(network_config.ssid)}
+
+@wifi_router.post("/wifi/off", summary="Turn off WiFi")
+async def wifi_off(request: Request):
+    wifi_manager: AsyncNetworkManager = request.app.state.wifi_manager
+    return {"status": await wifi_manager.turn_off_wifi()}
+@wifi_router.post("/wifi/on", summary="Turn on WiFi")
+async def wifi_on(request: Request):
+    wifi_manager: AsyncNetworkManager = request.app.state.wifi_manager
+    return {"status": await wifi_manager.turn_on_wifi()}

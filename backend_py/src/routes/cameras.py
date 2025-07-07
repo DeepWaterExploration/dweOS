@@ -2,11 +2,12 @@ from fastapi import APIRouter, Depends, Request
 from ..services import DeviceManager, StreamInfoModel, DeviceNicknameModel, UVCControlModel, DeviceDescriptorModel, DeviceLeaderModel
 import logging
 
-from typing import List
+from typing import List, cast
 
 from ..services.cameras.pydantic_schemas import StreamInfoModel, DeviceNicknameModel, UVCControlModel, DeviceLeaderModel, DeviceModel, AddFollowerPayload, SimpleRequestStatusModel
 from ..services.cameras.exceptions import DeviceNotFoundException
-
+from ..services.cameras.pydantic_schemas import DeviceType
+from ..services.cameras.shd import SHDDevice
 camera_router = APIRouter(tags=['cameras'])
 
 
@@ -22,6 +23,17 @@ async def configure_stream(request: Request, stream_info: StreamInfoModel):
     device_manager: DeviceManager = request.app.state.device_manager
 
     device_manager.configure_device_stream(stream_info)
+    
+    for device in device_manager.devices:
+        if device.bus_info == stream_info.bus_info:
+            if device.device_type != DeviceType.STELLARHD_FOLLOWER:
+                return {}
+            break
+    for device in device_manager.devices:
+        if device.device_type == DeviceType.STELLARHD_LEADER:
+            stellarhd_device = cast(SHDDevice, device)
+            if stream_info.bus_info in stellarhd_device.followers:
+                stellarhd_device.start_stream()
 
     return {}
 

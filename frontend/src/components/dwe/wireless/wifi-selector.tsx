@@ -75,10 +75,12 @@ export function WifiSelector() {
     return () => { };
   }, [connected]);
 
-  const toggleWifi = () => {
+  const toggleWifi = async () => {
+    await API_CLIENT.POST(isWifiEnabled ? "/wifi/off" : "/wifi/on");
     setIsWifiEnabled(!isWifiEnabled);
     if (isWifiEnabled) {
       // Disconnect from all networks when turning WiFi off
+
       setNetworks(
         networks.map((network) => ({ ...network, connected: false }))
       );

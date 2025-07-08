@@ -11,8 +11,8 @@ jobs:
   build_and_upload_image:
     runs-on: ubuntu-latest
     steps:
-      - name: "Checkout code"
-        uses: actions/checkout@v4
+    #   - name: "Checkout code"
+    #     uses: actions/checkout@v4
 
       - name: "Set up Python"
         uses: actions/setup-python@v5
@@ -32,6 +32,12 @@ jobs:
         with:
           repository: DeepWaterExploration/pi-gen
           path: pi-gen
+      - name: "Install Dependencies for Pi Image Build"
+        run: |
+          echo "Installing dependencies..."
+          sudo apt-get install coreutils quilt parted qemu-user-static debootstrap zerofree zip \
+          dosfstools libarchive-tools libcap2-bin grep rsync xz-utils file git curl bc \
+          gpg pigz xxd arch-test
 
       - name: "Build Pi Image"
         run: |

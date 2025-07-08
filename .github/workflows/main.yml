@@ -61,7 +61,7 @@ jobs:
         run: |
           echo "Building Pi Image..."
           cd pi-gen
-          export DWE_VERSION=${{github.event.release.name}}
+          echo "DWE_VERSION=${{github.event.release.name}}" >> config
           sudo ./build.sh -c ./config
 
       - name: "Fix Permissions of Deploy Directory"
@@ -70,7 +70,7 @@ jobs:
       - name: "Find Pi Image File"
         id: find_image
         run: |
-          IMAGE_FILE=$(find pi-gen/deploy -name "*.tar.gz" | head -1)
+          IMAGE_FILE=$(find pi-gen/deploy -name "*.zip" | head -1)
           echo "image_file=$IMAGE_FILE" >> $GITHUB_OUTPUT
 
       - name: "Upload Pi Image to Release"
@@ -78,7 +78,7 @@ jobs:
         with:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: ${{ steps.find_image.outputs.image_file }}
-          asset_name: DWE_OS_${{ github.event.release.name }}.tar.gz
-          asset_content_type: application/gzip
+          asset_name: DWE_OS_${{ github.event.release.name }}.zip
+          asset_content_type: application/zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

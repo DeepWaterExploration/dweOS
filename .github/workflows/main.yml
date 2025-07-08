@@ -102,6 +102,11 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: "Build Project"
+        run: |
+            ./install_requirements.sh
+            ./create_release.sh << ${{ github.event.release.name }}
+
       - name: "Build Docker Image"
         run: |
           echo "Building Docker Image..."

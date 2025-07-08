@@ -110,11 +110,11 @@ jobs:
       - name: "Build Docker Image"
         run: |
           echo "Building Docker Image..."
-          sudo docker buildx build --platform linux/arm/v7 -t dwe_os_2 --load -f docker/Dockerfile .
-          docker tag dwe_os_2 dwe_os_2:${{ github.event.release.name }}
+          sudo docker buildx build --platform linux/arm/v7 -t deepwaterexploration/dwe_os_2 --load -f docker/Dockerfile .
+          docker tag deepwaterexploration/dwe_os_2 deepwaterexploration/dwe_os_2:${{ github.event.release.name }}
 
       - name: "Push Docker Image"
         run: |
           echo "Pushing Docker Image..."
-          docker push dwe_os_2:${{ github.event.release.name }}
-          docker push dwe_os_2:latest
+          docker push deepwaterexploration/dwe_os_2:${{ github.event.release.name }}
+          docker push deepwaterexploration/dwe_os_2:latest

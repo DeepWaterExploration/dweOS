@@ -334,3 +334,4 @@ release.tar.gz
 **/device_settings.json
 **/server_preferences.json
 .env
+pi-gen

@@ -1,0 +1,51 @@
+name: Build and Release Pi Image
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write # Required to upload release assets
+
+jobs:
+  build_and_upload_image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v4
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: "Set up Node.js"
+        uses: actions/setup-node@v
+        with:
+          node-version: '22'
+
+      - name: "Run Create Release Script"
+        run: ./create_release.sh
+
+      - name: "Checkout Pi Image Repository"
+        uses: actions/checkout@v4
+        with:
+          repository: DeepWaterExploration/pi-gen
+          path: pi-gen
+
+      - name: "Build Pi Image"
+        run: |
+          echo "Building Pi Image..."
+          cd pi-gen
+          sudo ./build.sh -c ./config
+
+      - name: "Fix Permissions of Deploy Directory"
+        run: sudo chown -R runner:runner pi-gen/deploy
+
+      - name: "Upload Pi Image to Release"
+        uses: actions/upload-release-asset@v1 # v1 is still the standard for this action
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: pi-gen/deploy/*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

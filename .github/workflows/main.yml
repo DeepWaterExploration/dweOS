@@ -23,9 +23,13 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '22'
-
+      - name: "Install Dependencies"
+        run: |
+            echo "Installing dependencies..."
+            ./install_requirements.sh
+            
       - name: "Run Create Release Script"
-        run: ./create_release.sh
+        run: ./create_release.sh << ${{ github.event.release.name }}
       - name: "Upload release"
         uses: actions/upload-release-asset@v1
         with:
@@ -61,5 +65,7 @@ jobs:
         with:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: pi-gen/deploy/*.tar.gz
+          asset_name: DWE_OS_${{ github.event.release.name }}.tar.gz
+          asset_content_type: application/gzip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

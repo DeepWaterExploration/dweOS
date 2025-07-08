@@ -61,7 +61,7 @@ jobs:
         run: |
           echo "Building Pi Image..."
           cd pi-gen
-          echo "DWE_VERSION=\"${{ github.event.release.name }}\"" >> config # BUG: This does not work and defaults to latest, but it shouldn't mattter cause this will run on the lastest release anyways
+          echo "DWE_VERSION=\"${{ github.event.release.name }}\"" >> config
           sudo ./build.sh -c ./config
 
       - name: "Fix Permissions of Deploy Directory"

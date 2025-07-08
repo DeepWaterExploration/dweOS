@@ -61,7 +61,7 @@ jobs:
         run: |
           echo "Building Pi Image..."
           cd pi-gen
-          echo "DWE_VERSION=${{github.event.release.name}}" >> config
+          echo "DWE_VERSION=\"${{ github.event.release.name }}\"" >> config
           sudo ./build.sh -c ./config
 
       - name: "Fix Permissions of Deploy Directory"

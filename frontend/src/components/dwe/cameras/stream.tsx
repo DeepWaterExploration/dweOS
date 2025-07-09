@@ -131,7 +131,7 @@ const Endpoint = ({
               <Input
                 value={youtubeKey}
                 placeholder="Youtube Key"
-                className="h-8"
+                className="h-8 col-span-2"
                 onChange={(e) => {
                   setYoutubeKey(e.target.value);
                   if (e.target.value.trim() === "") {

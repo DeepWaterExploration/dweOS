@@ -130,6 +130,7 @@ class DeviceManager(events.EventEmitter):
         """
         Configure a device's stream with the given stream info
         """
+
         device = self._find_device_with_bus_info(stream_info.bus_info)
 
         stream_format = stream_info.stream_format
@@ -138,9 +139,10 @@ class DeviceManager(events.EventEmitter):
         interval = stream_format.interval
         encode_type: StreamEncodeTypeEnum = stream_info.encode_type
         endpoints = stream_info.endpoints
+        stream_type: StreamTypeEnum = stream_info.stream_type
 
         device.configure_stream(
-            encode_type, width, height, interval, StreamTypeEnum.UDP, endpoints
+            encode_type, width, height, interval, stream_type, endpoints
         )
 
         if stream_info.enabled:

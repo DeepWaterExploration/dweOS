@@ -21,9 +21,8 @@ def get_devices(request: Request) -> List[DeviceModel]:
 @camera_router.post('/devices/configure_stream', summary='Configure a stream')
 async def configure_stream(request: Request, stream_info: StreamInfoModel):
     device_manager: DeviceManager = request.app.state.device_manager
-
     device_manager.configure_device_stream(stream_info)
-    
+    print(f"{stream_info.stream_type} stream configured for device: {stream_info.bus_info}")
     for device in device_manager.devices:
         if device.bus_info == stream_info.bus_info:
             if device.device_type != DeviceType.STELLARHD_FOLLOWER:

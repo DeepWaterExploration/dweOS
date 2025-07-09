@@ -774,6 +774,8 @@ export interface components {
             host: string;
             /** Port */
             port: number;
+
+            rtmp_url: string | null;
         };
         /** StreamFormatModel */
         StreamFormatModel: {

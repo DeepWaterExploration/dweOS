@@ -25,7 +25,14 @@ class Stream(events.EventEmitter):
     software_h264_bitrate = 5000
 
     def _construct_pipeline(self):
-        return f"{self._build_source()} ! {self._construct_caps()} ! {self._build_payload()} ! {self._build_sink()}"
+        video_pipeline = f"{self._build_source()} ! {self._construct_caps()} ! {self._build_payload()}"
+        
+        if self.stream_type == StreamTypeEnum.RTMP:
+            # Add silent audio source for RTMP streams
+            audio_pipeline = "audiotestsrc wave=silence ! audioconvert ! voaacenc ! queue"
+            return f"{video_pipeline} ! mux. {audio_pipeline} ! mux. flvmux name=mux ! rtmpsink location={self.endpoints[0].rtmp_url if self.endpoints else ''}"
+        else:
+            return f"{video_pipeline} ! {self._build_sink()}"
 
     def _get_format(self):
         match self.encode_type:
@@ -47,11 +54,20 @@ class Stream(events.EventEmitter):
     def _build_payload(self):
         match self.encode_type:
             case StreamEncodeTypeEnum.H264:
-                return "h264parse ! queue ! rtph264pay config-interval=10 pt=96"
+                if self.stream_type == StreamTypeEnum.RTMP:
+                    return "h264parse ! queue"
+                else:
+                    return "h264parse ! queue ! rtph264pay config-interval=10 pt=96"
             case StreamEncodeTypeEnum.MJPG:
-                return "rtpjpegpay"
+                if self.stream_type == StreamTypeEnum.RTMP:
+                    return "queue"  # MJPEG can't be used directly with RTMP
+                else:
+                    return "rtpjpegpay"
             case StreamEncodeTypeEnum.SOFTWARE_H264:
-                return f"jpegdec ! queue ! x264enc byte-stream=true tune=zerolatency bitrate={self.software_h264_bitrate} speed-preset=ultrafast ! rtph264pay config-interval=10 pt=96"
+                if self.stream_type == StreamTypeEnum.RTMP:
+                    return f"jpegdec ! queue ! x264enc byte-stream=true tune=zerolatency bitrate={self.software_h264_bitrate} speed-preset=ultrafast"
+                else:
+                    return f"jpegdec ! queue ! x264enc byte-stream=true tune=zerolatency bitrate={self.software_h264_bitrate} speed-preset=ultrafast ! rtph264pay config-interval=10 pt=96"
             case _:
                 return ""
 
@@ -67,6 +83,14 @@ class Stream(events.EventEmitter):
                         sink += ","
 
                 return sink
+            case StreamTypeEnum.RTMP:
+                if len(self.endpoints) == 0 or not self.endpoints[0].rtmp_url:
+                    return "fakesink"
+                # For RTMP streaming without audio (handled in _construct_pipeline when audio is enabled)
+                if not self.include_audio:
+                    return f"flvmux ! rtmpsink location={self.endpoints[0].rtmp_url}"
+                else:
+                    return ""  # Handled in _construct_pipeline
             case _:
                 return ""
 
@@ -117,6 +141,9 @@ class StreamRunner(events.EventEmitter):
     def _run_pipeline(self):
         pipeline_str = self._construct_pipeline()
         self.logger.info(pipeline_str)
+        
+        # Use shell=True to handle complex GStreamer pipelines properly
+        # This is safer for GStreamer commands with complex arguments
         self._process = subprocess.Popen(
             f"gst-launch-1.0 {pipeline_str}".split(" "),
             stdout=subprocess.DEVNULL,

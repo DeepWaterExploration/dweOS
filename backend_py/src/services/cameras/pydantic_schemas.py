@@ -35,6 +35,7 @@ class StreamEncodeTypeEnum(str, Enum):
 
 class StreamTypeEnum(str, Enum):
     UDP = "UDP"
+    RTMP = "RTMP"
 
 
 class H264Mode(IntEnum):
@@ -134,6 +135,8 @@ class DeviceOptionsModel(BaseModel):
 class StreamEndpointModel(BaseModel):
     host: str
     port: int
+    # For RTMP streams, this will be the full RTMP URL
+    rtmp_url: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -201,6 +204,7 @@ class StreamInfoModel(BaseModel):
     encode_type: StreamEncodeTypeEnum
     enabled: bool
     endpoints: List[StreamEndpointModel]
+    stream_type: Optional[StreamTypeEnum] = StreamTypeEnum.UDP
 
     class Config:
         from_attributes = True

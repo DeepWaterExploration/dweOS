@@ -14,11 +14,11 @@ import {
   CameraIcon,
   Check,
   Edit2Icon,
+  MonitorPlayIcon,
   PauseIcon,
   PlayIcon,
   PlusIcon,
   Trash2Icon,
-  TrashIcon,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import DeviceContext from "@/contexts/DeviceContext";
@@ -36,6 +36,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { set } from "date-fns";
 
 // Options for StreamSelector should provide label and value for each choice
 type StreamOption = { label: string; value: string };
@@ -93,30 +94,54 @@ const Endpoint = ({
 
   const [tempHost, setTempHost] = useState(endpoint.host);
   const [tempPort, setTempPort] = useState(endpoint.port);
+  const [tempRtmpUrl, setTempRtmpUrl] = useState(endpoint.rtmp_url);
+  const [youtubeKey, setYoutubeKey] = useState(tempRtmpUrl?.split("/").pop() || "");
+
+  const [hideYt, setHideYt] = useState(endpoint.rtmp_url !== null);
 
   return (
     <li className="flex items-start space-x-3">
-      {/* ListItemIcon */}
       <div className="flex-shrink-0 text-muted-foreground pt-1">
-        <CameraIcon className="w-5 h-5" />
+        {endpointState.rtmp_url ? (
+          <MonitorPlayIcon className="w-5 h-5" />
+        ) : (
+          <CameraIcon className="w-5 h-5" />
+        )}
       </div>
 
       {/* Content */}
       {isEditing ? (
         <div className="min-w-0 flex-1 flex items-center justify-between">
           <div className="grid grid-cols-2 gap-2 flex-1 mr-2">
-            <Input
-              value={tempHost}
-              placeholder="IP Address"
-              className="h-8"
-              onChange={(e) => setTempHost(e.target.value)}
-            />
-            <Input
-              value={tempPort}
-              placeholder="Port"
-              className="h-8"
-              onChange={(e) => setTempPort(parseInt(e.target.value))}
-            />
+            {!hideYt ? (
+              <>
+                <Input
+                  value={tempHost}
+                  placeholder="IP Address"
+                  className="h-8"
+                  onChange={(e) => setTempHost(e.target.value)}
+                />
+
+                <Input
+                  value={tempPort}
+                  placeholder="Port"
+                  className="h-8"
+                  onChange={(e) => setTempPort(parseInt(e.target.value))}
+                /></>) : (
+              <Input
+                value={youtubeKey}
+                placeholder="Youtube Key"
+                className="h-8"
+                onChange={(e) => {
+                  setYoutubeKey(e.target.value);
+                  if (e.target.value.trim() === "") {
+                    setTempRtmpUrl(null);
+                    return;
+                  }
+                  setTempRtmpUrl(`rtmp://a.rtmp.youtube.com/live2/${e.target.value}`);
+                }}
+              />
+            )}
           </div>
           <div className="flex space-x-1 flex-shrink-0">
             <Button
@@ -125,8 +150,12 @@ const Endpoint = ({
               className="h-8 w-8 p-0"
               onClick={() => {
                 setIsEditing(false);
+                if (tempRtmpUrl === null) {
+                  setHideYt(false)
+                }
                 endpoint.host = tempHost;
                 endpoint.port = tempPort;
+                endpoint.rtmp_url = tempRtmpUrl || null;
               }}
             >
               <Check className="h-4 w-4" />
@@ -137,12 +166,49 @@ const Endpoint = ({
       ) : (
         <div className="min-w-0 flex-1 flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium">Address: {endpointState.host}</p>
-            <p className="text-xs text-muted-foreground">
-              Port: {endpointState.port}
-            </p>
+            {endpointState.rtmp_url ? (
+              <>
+                <p className="text-sm font-medium">Youtube Livestream</p>
+                <p className="text-xs text-muted-foreground">
+                  Key: {youtubeKey}
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-medium">Address: {endpointState.host}</p>
+                <p className="text-xs text-muted-foreground">
+                  Port: {endpointState.port}
+                </p>
+              </>
+            )}
           </div>
           <div className="flex flex-shrink-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 mr-1"
+              onClick={() => {
+                if (hideYt) {
+                  setTempRtmpUrl(null);
+                  setYoutubeKey("");
+                  endpoint.rtmp_url = null;
+                };
+                setHideYt(!hideYt);
+                setIsEditing(true);
+              }}
+            >
+              {!hideYt ? (
+                <>
+                  <MonitorPlayIcon className="h-4 w-4" />
+                  <span className="sr-only">Stop</span>
+                </>
+              ) : (
+                <>
+                  <CameraIcon className="h-4 w-4" />
+                  <span className="sr-only">Start</span>
+                </>
+              )}
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -163,8 +229,9 @@ const Endpoint = ({
             </Button>
           </div>
         </div>
-      )}
-    </li>
+      )
+      }
+    </li >
   );
 };
 
@@ -172,15 +239,31 @@ const EndpointList = ({
   defaultHost,
   nextPort,
   setShouldPostFlag,
+  ChangeFromMJPEG,
 }: {
   defaultHost: string;
   nextPort: number;
   setShouldPostFlag: React.Dispatch<React.SetStateAction<boolean>>;
+  ChangeFromMJPEG: () => void;
 }) => {
   const device = useContext(DeviceContext);
 
   // readonly device state
   const deviceState = useSnapshot(device!);
+
+  useEffect(() => {
+    // Check if any endpoint has YouTube RTMP URL and current format is MJPEG
+    const hasYoutubeEndpoint = deviceState.stream.endpoints.some((e) => e.rtmp_url !== null);
+
+    if (hasYoutubeEndpoint && deviceState.stream.encode_type === "MJPG") {
+      ChangeFromMJPEG(); // YouTube does not support MJPEG, so we need to change the format
+      setShouldPostFlag(true);
+    }
+    if (deviceState.stream.endpoints.some((e) => e.rtmp_url !== null) && deviceState.stream.endpoints.some((e) => e.rtmp_url === null)) {
+      device!.stream.endpoints = deviceState.stream.endpoints.filter((e) => e.rtmp_url !== null);
+      setShouldPostFlag(true);
+    }
+  }, [deviceState.stream.endpoints, deviceState.stream.encode_type]);
 
   return (
     <>
@@ -230,8 +313,10 @@ const EndpointList = ({
               device!.stream.endpoints.push({
                 host: defaultHost,
                 port: nextPort,
+                rtmp_url: null, // Default to null for RTMP
               })
             }
+            disabled={device!.stream.endpoints.some((e) => e.rtmp_url === null)}
           >
             <PlusIcon />
           </Button>
@@ -468,6 +553,10 @@ export const CameraStream = ({
   const configureStream = () => {
     const [width, height] = getResolution(resolution);
     if (width === null || height === null) return;
+    var stream_type = "UDP";
+    if (device.stream.endpoints.every((e) => e.rtmp_url !== null)) {
+      stream_type = "RTMP";
+    }
     API_CLIENT.POST("/devices/configure_stream", {
       body: {
         bus_info: device.bus_info,
@@ -478,10 +567,25 @@ export const CameraStream = ({
           height,
           interval: { numerator: 1, denominator: Number(fps) }, // use local state
         },
+        stream_type,
         enabled: streamEnabled, // use local state
       },
     });
   };
+
+  function ChangeFromMJPEG() {
+    console.log("Changing from MJPEG to another format");
+    if (device.stream.encode_type === "MJPG") {
+      toast({
+        title: "Changing stream format",
+        description: `Changing from MJPEG to ${encoders.filter((e) => e !== "MJPG")[0]}.`,
+        duration: 1000
+      });
+    } else {
+      return;
+    }
+    setFormat(encoders.filter((e) => e !== "MJPG")[0]);
+  }
 
   useEffect(() => {
     device.stream.enabled = streamEnabled;
@@ -609,6 +713,8 @@ export const CameraStream = ({
         defaultHost={defaultHost}
         nextPort={nextPort}
         setShouldPostFlag={setShouldPostFlag}
+        ChangeFromMJPEG={ChangeFromMJPEG}
+
       />
       <Separator className="my-2" />
 
@@ -621,8 +727,8 @@ export const CameraStream = ({
             {deviceState.is_managed
               ? "managed"
               : streamEnabled
-              ? "enabled"
-              : "disabled"}
+                ? "enabled"
+                : "disabled"}
           </span>
         </div>
         <Button

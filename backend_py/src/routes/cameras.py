@@ -10,6 +10,7 @@ from ..services.cameras.pydantic_schemas import DeviceType
 from ..services.cameras.shd import SHDDevice
 camera_router = APIRouter(tags=['cameras'])
 
+logger = logging.getLogger(__name__)
 
 @camera_router.get('/devices', summary='Get all devices')
 def get_devices(request: Request) -> List[DeviceModel]:
@@ -24,16 +25,27 @@ async def configure_stream(request: Request, stream_info: StreamInfoModel):
 
     device_manager.configure_device_stream(stream_info)
     
+    # Check if this is a follower or leader device and sync accordingly
     for device in device_manager.devices:
         if device.bus_info == stream_info.bus_info:
-            if device.device_type != DeviceType.STELLARHD_FOLLOWER:
-                return {}
+            
+            # If this is a leader device, we need to configure all its followers with the same settings
+            if device.device_type == DeviceType.STELLARHD_LEADER and isinstance(device, SHDDevice):
+                stellarhd_device = cast(SHDDevice, device)
+                for follower_bus_info in stellarhd_device.followers:
+                    # Find the follower device
+                    for follower_device in device_manager.devices:
+
+                        if follower_device.bus_info == follower_bus_info:
+                            # Configure the follower with the same stream settings as the leader
+                            follower_stream_info = StreamInfoModel.model_validate(stream_info)
+                            follower_stream_info.bus_info = follower_bus_info
+                            follower_stream_info.endpoints = follower_device.stream.endpoints
+                            follower_stream_info.enabled = False
+                            device_manager.configure_device_stream(follower_stream_info)
+                            break
             break
-    for device in device_manager.devices:
-        if device.device_type == DeviceType.STELLARHD_LEADER:
-            stellarhd_device = cast(SHDDevice, device)
-            if stream_info.bus_info in stellarhd_device.followers:
-                stellarhd_device.start_stream()
+        
 
     return {}
 

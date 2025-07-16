@@ -87,6 +87,10 @@ export const CameraControls = () => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
 
+  subscribe(device, () => {
+    device.controls = device.controls;
+  });
+
   const resetControls = () => {
     controls.forEach((control) => {
       if (control.value !== control.flags.default_value) {
@@ -103,7 +107,7 @@ export const CameraControls = () => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="w-full">
+        <Button variant="outline" className="w-full" disabled={device.is_managed}>
           Camera Controls
         </Button>
       </DialogTrigger>

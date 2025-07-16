@@ -1,9 +1,9 @@
 import { API_CLIENT } from "@/api";
 import { CameraCard } from "./camera-card";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useRef } from "react";
 import type { components } from "@/schemas/dwe_os_2";
 import WebsocketContext from "@/contexts/WebsocketContext";
-import { proxy, subscribe } from "valtio";
+import { proxy, snapshot, subscribe } from "valtio";
 import DeviceContext from "@/contexts/DeviceContext";
 import {
   Card,
@@ -14,7 +14,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import DevicesContext from "@/contexts/DevicesContext";
-import { getDeviceByBusInfo } from "@/lib/utils";
 import NotConnected from "../not-connected";
 
 type DeviceModel = components["schemas"]["DeviceModel"];
@@ -111,8 +110,39 @@ const DeviceListLayout = () => {
       return filteredDevices;
     });
   };
+  const updateDevice = (bus_info: string, updatedData: Partial<DeviceModel>) => {
+    setDevices((prevDevices) => {
+      const deviceIndex = prevDevices.findIndex((d) => d.bus_info === bus_info);
+      if (deviceIndex === -1) return prevDevices; // Device not found
 
+      const updatedDevice = {
+        ...prevDevices[deviceIndex],
+        ...updatedData,
+      };
+
+      const newDevices = [...prevDevices];
+      newDevices[deviceIndex] = createDeviceProxy(updatedDevice);
+      setNextPort(getNextPort(newDevices));
+      return newDevices;
+    });
+  };
+
+  const setDevicesProvider = (devices: DeviceModel[]) => {
+    setDevices((prevDevices) => {
+      // Update existing proxy devices or create new ones
+      const updatedDevices = devices.map((device) => {
+
+        return createDeviceProxy(device);
+
+      });
+
+      setNextPort(getNextPort(updatedDevices));
+      return updatedDevices;
+    });
+  }
   useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null;
+
     const getDevices = async () => {
       const initialDevices = (await API_CLIENT.GET("/devices")).data!;
 
@@ -128,8 +158,9 @@ const DeviceListLayout = () => {
       setNextPort(getNextPort(initialDevices));
 
       setSavedPreferences(newPreferences);
-      setDevices(initialDevices.map((d) => createDeviceProxy(d)));
+      setDevicesProvider(initialDevices);
     };
+
 
     const handleDeviceAdded = (device: DeviceModel) => {
       addDevice(device);
@@ -139,7 +170,7 @@ const DeviceListLayout = () => {
       removeDevice(id);
     };
 
-    const getSavedPreferences = async () => {};
+    const getSavedPreferences = async () => { };
 
     if (connected) {
       socket?.on("device_added", handleDeviceAdded);
@@ -147,6 +178,9 @@ const DeviceListLayout = () => {
 
       getDevices();
       getSavedPreferences();
+
+      // Start polling for device updates
+      intervalId = setInterval(getDevices, 5000);
     } else {
       setDevices([]);
     }
@@ -154,13 +188,27 @@ const DeviceListLayout = () => {
     return () => {
       socket?.off("device_added", handleDeviceAdded);
       socket?.off("device_removed", handleDeviceRemoved);
+
+      // Clean up the interval
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
     };
   }, [socket, connected]);
 
   const enableStream = (bus_info: string) => {
-    const device = { ...getDeviceByBusInfo(devices, bus_info) };
-    device.stream.enabled = true;
+    setDevices((prevDevices) => {
+      return prevDevices.map((device) => {
+        if (device.bus_info === bus_info) {
+          const updatedDevice = { ...device };
+          updatedDevice.stream.enabled = true;
+          return updatedDevice;
+        }
+        return device;
+      });
+    });
   };
+
 
   return (
     <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(350px,1fr))]">
@@ -169,6 +217,7 @@ const DeviceListLayout = () => {
           devices,
           followerModels: devices.filter((d) => d.device_type == 2),
           enableStream,
+          setDevices: setDevicesProvider,
         }}
       >
         {devices.map((device, index) => (

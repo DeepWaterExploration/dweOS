@@ -18,13 +18,11 @@ import {
   PlayIcon,
   PlusIcon,
   Trash2Icon,
-  TrashIcon,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import DeviceContext from "@/contexts/DeviceContext";
 import { subscribe, useSnapshot } from "valtio";
 import { components } from "@/schemas/dwe_os_2";
-import { useToast } from "@/hooks/use-toast";
 import DevicesContext from "@/contexts/DevicesContext";
 import { getDeviceByBusInfo } from "@/lib/utils";
 import { API_CLIENT } from "@/api";
@@ -242,6 +240,39 @@ const EndpointList = ({
   );
 };
 
+const FollowerRow = ({
+  follower,
+  followerDevice,
+  onDelete,
+}: {
+  follower: string;
+  followerDevice: components["schemas"]["DeviceModel"] | undefined;
+  onDelete: () => void;
+}) => {
+  // Always call useSnapshot, but handle the case where followerDevice is undefined
+  const followerSnapshot = followerDevice ? useSnapshot(followerDevice) : null;
+
+  return (
+    <tr className="border-b hover:bg-muted/10">
+      <td className="px-4 py-2">
+        <div className="grid grid-cols-[1fr_auto] items-center gap-2">
+          <span className="truncate text-xs">{follower}</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onDelete}
+            className="h-6 w-6 p-0"
+          >
+            <Trash2Icon className="w-4 h-4" />
+            <span className="sr-only">Remove</span>
+          </Button>
+        </div>
+      </td>
+
+    </tr>
+  );
+};
+
 const FollowerList = () => {
   const device = useContext(DeviceContext)!;
 
@@ -252,9 +283,12 @@ const FollowerList = () => {
 
   const { devices } = useContext(DevicesContext)!;
 
+
   subscribe(device.followers, () => {
     setFollowers(device.followers);
   });
+
+
 
   const [potentialFollowers, setPotentialFollowers] = useState<string[]>([]);
 
@@ -275,36 +309,60 @@ const FollowerList = () => {
   useEffect(() => {
     followers
       .filter((value) => !deviceState.followers.includes(value))
-      .forEach((newFollower) => {
+      .forEach(async (newFollower) => {
         device.followers = followers;
-        API_CLIENT.POST("/devices/add_follower", {
-          body: {
-            leader_bus_info: deviceState.bus_info,
-            follower_bus_info: newFollower,
-          },
-        });
-        const dev = getDeviceByBusInfo(devices, newFollower);
-        if (dev) dev.is_managed = true;
-        updatePotentialFollowers();
 
-        setSelectedBusInfo("Select a device...");
+        try {
+          // Wait for the API call to complete
+          await API_CLIENT.POST("/devices/add_follower", {
+            body: {
+              leader_bus_info: deviceState.bus_info,
+              follower_bus_info: newFollower,
+            },
+          });
+
+          // Update local state immediately (optimistic update)
+          let dev = getDeviceByBusInfo(devices, newFollower);
+          if (dev) dev.is_managed = true;
+
+          // Refresh devices from API to ensure consistency
+          const updateDevices = async () => {
+            location.reload();
+          }
+
+          await updateDevices();
+          updatePotentialFollowers();
+          setSelectedBusInfo("Select a device...");
+        } catch (error) {
+          console.error("Failed to add follower:", error);
+          // Revert local state if API call failed
+          device.followers = device.followers.filter(f => f !== newFollower);
+        }
       });
 
     deviceState.followers
       .filter((value) => !followers.includes(value))
-      .forEach((removedFollower) => {
+      .forEach(async (removedFollower) => {
         device.followers = followers;
-        API_CLIENT.POST("/devices/remove_follower", {
-          body: {
-            leader_bus_info: deviceState.bus_info,
-            follower_bus_info: removedFollower,
-          },
-        });
-        const dev = getDeviceByBusInfo(devices, removedFollower);
-        if (dev) dev.is_managed = false;
-        updatePotentialFollowers();
 
-        setSelectedBusInfo("Select a device...");
+        try {
+          await API_CLIENT.POST("/devices/remove_follower", {
+            body: {
+              leader_bus_info: deviceState.bus_info,
+              follower_bus_info: removedFollower,
+            },
+          });
+
+          const dev = getDeviceByBusInfo(devices, removedFollower);
+          if (dev) dev.is_managed = false;
+
+          updatePotentialFollowers();
+          setSelectedBusInfo("Select a device...");
+        } catch (error) {
+          console.error("Failed to remove follower:", error);
+          // Revert local state if API call failed
+          device.followers = [...device.followers, removedFollower];
+        }
       });
   }, [followers]);
 
@@ -364,34 +422,25 @@ const FollowerList = () => {
                 <table className="w-full table-fixed text-sm text-left">
                   <thead className="bg-muted/30 border-b">
                     <tr>
-                      <th className="px-4 py-2 w-1/2 truncate font-medium">
-                        Port
+                      <th className="px-4 py-2 w-1/4 truncate font-medium">
+                        Device
                       </th>
-                      <th className="px-4 py-2 w-1/2 truncate font-medium">
-                        Device Type
-                      </th>
+
                     </tr>
                   </thead>
                   <tbody>
-                    {followers.map((follower, index) => (
-                      <tr key={index} className="border-b hover:bg-muted/10">
-                        <td className="px-4 py-2 truncate">{follower}</td>
-                        <td className="px-4 py-2">
-                          <div className="grid grid-cols-[1fr_auto] items-center gap-2">
-                            <span className="truncate">stellarHD</span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteFollower(follower)}
-                              className="h-6 w-6 p-0"
-                            >
-                              <Trash2Icon className="w-4 h-4" />
-                              <span className="sr-only">Remove</span>
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                    {followers.map((follower, index) => {
+                      const followerDevice = getDeviceByBusInfo(devices, follower);
+
+                      return (
+                        <FollowerRow
+                          key={index}
+                          follower={follower}
+                          followerDevice={followerDevice}
+                          onDelete={() => handleDeleteFollower(follower)}
+                        />
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -441,8 +490,8 @@ export const CameraStream = ({
   nextPort: number;
 }) => {
   const device = useContext(DeviceContext)!;
+  const { devices } = useContext(DevicesContext)!;
 
-  const { toast } = useToast();
 
   // readonly device state
   const deviceState = useSnapshot(device);
@@ -522,7 +571,16 @@ export const CameraStream = ({
     }
   });
 
+  subscribe(device, () => {
+    setResolutions(getResolutions(device, deviceState.stream.encode_type));
+    setResolution(`${device.stream.width}x${device.stream.height}`);
+    setFps("" + device.stream.interval.denominator);
+    setFormat(device.stream.encode_type);
+
+  });
+
   useEffect(() => {
+    if (device === undefined || !device) return;
     const cameraFormat = device.stream.encode_type;
     const newIntervals: string[] = [];
     for (const camera of device.cameras!) {
@@ -568,10 +626,25 @@ export const CameraStream = ({
             placeholder="Resolution"
             label="Resolution"
             value={resolution}
-            // disabled={deviceState.is_managed}
+            disabled={deviceState.is_managed}
             onChange={(newResolution) => {
               setResolution(newResolution);
               setShouldPostFlag(true);
+              if (device.followers.length > 0) {
+                device.followers.forEach((follower) => {
+                  const followerDevice = getDeviceByBusInfo(
+                    devices,
+                    follower
+                  );
+                  if (followerDevice) {
+                    const [width, height] = getResolution(newResolution);
+                    if (width !== null && height !== null) {
+                      followerDevice.stream.width = width;
+                      followerDevice.stream.height = height;
+                    }
+                  }
+                });
+              }
             }}
           />
         </div>
@@ -582,10 +655,21 @@ export const CameraStream = ({
             placeholder="FPS"
             label="Frame Rate"
             value={fps}
-            // disabled={deviceState.is_managed}
+            disabled={deviceState.is_managed}
             onChange={(newFps) => {
               setFps(newFps);
               setShouldPostFlag(true);
+              if (device.followers.length > 0) {
+                device.followers.forEach((follower) => {
+                  const followerDevice = getDeviceByBusInfo(
+                    devices,
+                    follower
+                  );
+                  if (followerDevice) {
+                    followerDevice.stream.interval.denominator = parseInt(newFps);
+                  }
+                });
+              }
             }}
           />
         </div>
@@ -596,10 +680,21 @@ export const CameraStream = ({
             placeholder="Format"
             label="Format"
             value={format}
-            // disabled={deviceState.is_managed}
+            disabled={deviceState.is_managed}
             onChange={(fmt) => {
               setFormat(fmt as components["schemas"]["StreamEncodeTypeEnum"]);
               setShouldPostFlag(true);
+              if (device.followers.length > 0) {
+                device.followers.forEach((follower) => {
+                  const followerDevice = getDeviceByBusInfo(
+                    devices,
+                    follower
+                  );
+                  if (followerDevice) {
+                    followerDevice.stream.encode_type = fmt as components["schemas"]["StreamEncodeTypeEnum"];
+                  }
+                });
+              }
             }}
           />
         </div>
@@ -621,8 +716,8 @@ export const CameraStream = ({
             {deviceState.is_managed
               ? "managed"
               : streamEnabled
-              ? "enabled"
-              : "disabled"}
+                ? "enabled"
+                : "disabled"}
           </span>
         </div>
         <Button

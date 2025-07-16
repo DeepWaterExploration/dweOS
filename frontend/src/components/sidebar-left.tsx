@@ -7,6 +7,7 @@ import {
   SettingsIcon,
   LogsIcon,
   TerminalIcon,
+  VideoIcon,
 } from "lucide-react";
 
 import DWELogo from "@/assets/dwe-logo.svg";
@@ -35,6 +36,11 @@ const data = {
       title: "Cameras",
       url: "/cameras",
       icon: CameraIcon,
+    },
+    {
+      title: "Recordings",
+      url: "/recordings",
+      icon: VideoIcon,
     },
     {
       title: "Preferences",

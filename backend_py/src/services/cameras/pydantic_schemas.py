@@ -36,6 +36,8 @@ class StreamEncodeTypeEnum(str, Enum):
 class StreamTypeEnum(str, Enum):
     UDP = "UDP"
 
+    RECORDING = "RECORDING"
+
 
 class H264Mode(IntEnum):
     """
@@ -197,6 +199,7 @@ class StreamFormatModel(BaseModel):
 
 class StreamInfoModel(BaseModel):
     bus_info: str
+    stream_type: StreamTypeEnum
     stream_format: StreamFormatModel
     encode_type: StreamEncodeTypeEnum
     enabled: bool

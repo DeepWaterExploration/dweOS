@@ -122,7 +122,7 @@ export interface paths {
         head?: never;
         patch?: never;
         trace?: never;
-    },
+    };
     "/wifi/on": {
         parameters: {
             query?: never;
@@ -463,6 +463,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/recordings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get all recordings */
+        get: operations["get_recordings_recordings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/recordings/{recording_path}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a recording */
+        delete: operations["delete_recording_recordings__recording_path__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/features": {
         parameters: {
             query?: never;
@@ -720,6 +754,19 @@ export interface components {
         /** NetworkPriorityInformation */
         NetworkPriorityInformation: {
             network_priority: components["schemas"]["NetworkPriority"];
+        };
+        /** RecordingInfo */
+        RecordingInfo: {
+            /** Path */
+            path: string;
+            /** Name */
+            name: string;
+            /** Format */
+            format: string;
+            /** Duration */
+            duration: string;
+            /** Size */
+            size: string;
         };
         /** SavedPreferencesModel */
         SavedPreferencesModel: {
@@ -1004,7 +1051,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SimpleRequestStatusModel"];
+                    "application/json": unknown;
                 };
             };
         };
@@ -1024,7 +1071,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SimpleRequestStatusModel"];
+                    "application/json": unknown;
                 };
             };
         };
@@ -1537,6 +1584,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LogSchema"][];
+                };
+            };
+        };
+    };
+    get_recordings_recordings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordingInfo"][];
+                };
+            };
+        };
+    };
+    delete_recording_recordings__recording_path__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recording_path: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

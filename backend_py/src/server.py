@@ -104,6 +104,8 @@ class Server:
 
         self.system_manager = SystemManager()
 
+        self.recordings_service = RecordingsService()
+
         # TTYD
         if self.feature_support.ttyd:
             self.ttyd_manager = TTYDManager()
@@ -121,12 +123,14 @@ class Server:
         self.app.state.wifi_manager = (
             self.wifi_manager if self.feature_support.wifi else None
         )
+        self.app.state.recordings_service = self.recordings_service
 
         self.app.include_router(camera_router)
         self.app.include_router(preferences_router)
         self.app.include_router(system_router)
         self.app.include_router(lights_router)
         self.app.include_router(logs_router)
+        self.app.include_router(recordings_router)
 
         self.app.add_api_route(
             "/features",

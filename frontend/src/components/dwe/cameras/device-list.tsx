@@ -1,9 +1,9 @@
 import { API_CLIENT } from "@/api";
 import { CameraCard } from "./camera-card";
-import { useContext, useEffect, useState, useRef } from "react";
+import { useContext, useEffect, useState } from "react";
 import type { components } from "@/schemas/dwe_os_2";
 import WebsocketContext from "@/contexts/WebsocketContext";
-import { proxy, snapshot, subscribe } from "valtio";
+import { proxy, subscribe } from "valtio";
 import DeviceContext from "@/contexts/DeviceContext";
 import {
   Card,
@@ -110,25 +110,10 @@ const DeviceListLayout = () => {
       return filteredDevices;
     });
   };
-  const updateDevice = (bus_info: string, updatedData: Partial<DeviceModel>) => {
-    setDevices((prevDevices) => {
-      const deviceIndex = prevDevices.findIndex((d) => d.bus_info === bus_info);
-      if (deviceIndex === -1) return prevDevices; // Device not found
 
-      const updatedDevice = {
-        ...prevDevices[deviceIndex],
-        ...updatedData,
-      };
-
-      const newDevices = [...prevDevices];
-      newDevices[deviceIndex] = createDeviceProxy(updatedDevice);
-      setNextPort(getNextPort(newDevices));
-      return newDevices;
-    });
-  };
 
   const setDevicesProvider = (devices: DeviceModel[]) => {
-    setDevices((prevDevices) => {
+    setDevices(() => {
       // Update existing proxy devices or create new ones
       const updatedDevices = devices.map((device) => {
 

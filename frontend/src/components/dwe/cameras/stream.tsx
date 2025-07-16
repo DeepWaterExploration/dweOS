@@ -242,16 +242,11 @@ const EndpointList = ({
 
 const FollowerRow = ({
   follower,
-  followerDevice,
   onDelete,
 }: {
   follower: string;
-  followerDevice: components["schemas"]["DeviceModel"] | undefined;
   onDelete: () => void;
 }) => {
-  // Always call useSnapshot, but handle the case where followerDevice is undefined
-  const followerSnapshot = followerDevice ? useSnapshot(followerDevice) : null;
-
   return (
     <tr className="border-b hover:bg-muted/10">
       <td className="px-4 py-2">
@@ -432,13 +427,11 @@ const FollowerList = () => {
                   </thead>
                   <tbody>
                     {followers.map((follower, index) => {
-                      const followerDevice = getDeviceByBusInfo(devices, follower);
 
                       return (
                         <FollowerRow
                           key={index}
                           follower={follower}
-                          followerDevice={followerDevice}
                           onDelete={() => handleDeleteFollower(follower)}
                         />
                       );

@@ -83,7 +83,6 @@ const ControlWrapper = ({
 export const CameraControls = () => {
   const device = useContext(DeviceContext)!;
   const controls = device.controls;
-  const bus_info = device.bus_info;
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
 

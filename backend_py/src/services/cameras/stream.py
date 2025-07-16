@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
+import stat
 from typing import List
 import subprocess
 import threading
@@ -49,7 +50,7 @@ class Stream(events.EventEmitter):
         match self.encode_type:
             case StreamEncodeTypeEnum.H264:
                 if self.stream_type == StreamTypeEnum.RECORDING:
-                    return "h264parse ! mp4mux"
+                    return "h264parse ! video/x-h264,stream-format=avc,alignment=au ! queue ! mp4mux faststart=true fragment-duration=1000"
                 else:
                     return "h264parse ! queue ! rtph264pay config-interval=10 pt=96"
             case StreamEncodeTypeEnum.MJPG:
@@ -59,7 +60,7 @@ class Stream(events.EventEmitter):
                     return "rtpjpegpay"
             case StreamEncodeTypeEnum.SOFTWARE_H264:
                 if self.stream_type == StreamTypeEnum.RECORDING:
-                    return f"jpegdec ! queue ! x264enc byte-stream=true tune=zerolatency bitrate={self.software_h264_bitrate} speed-preset=ultrafast ! mp4mux"
+                    return f"jpegdec ! queue ! x264enc byte-stream=false tune=zerolatency bitrate={self.software_h264_bitrate} speed-preset=ultrafast ! h264parse ! video/x-h264,stream-format=avc,alignment=au ! queue ! mp4mux faststart=true fragment-duration=1000"
                 else:
                     return f"jpegdec ! queue ! x264enc byte-stream=true tune=zerolatency bitrate={self.software_h264_bitrate} speed-preset=ultrafast ! rtph264pay config-interval=10 pt=96"
             case _:
@@ -82,7 +83,9 @@ class Stream(events.EventEmitter):
                 video_dir = os.path.join(home_dir, "videos")
                 if not os.path.exists(video_dir):
                     os.makedirs(video_dir)
-                extension = "mp4" if self.encode_type == StreamEncodeTypeEnum.H264 else "avi"
+                permissions = stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH
+                os.chmod(video_dir, permissions)
+                extension = "avi" if self.encode_type == StreamEncodeTypeEnum.MJPG else "mp4"
                 timestamp = datetime.now().strftime("%F-%T")
                 unique_filename = f"{self.device_path.split('/')[-1]}_{timestamp}.{extension}"
                 unique_path = os.path.join(video_dir, unique_filename)
@@ -130,10 +133,23 @@ class StreamRunner(events.EventEmitter):
 
             self.logger.info("Stopping stream")
             self.started = False
-            self._process.kill()
+            
+            # Try graceful shutdown first
+            try:
+                self._process.terminate()
+                self._process.wait(timeout=5)  # Wait up to 5 seconds for graceful shutdown
+            except subprocess.TimeoutExpired:
+                # If graceful shutdown fails, force kill
+                self.logger.warning("Graceful shutdown timed out, force killing process")
+                self._process.kill()
+                self._process.wait()
+            except:
+                # If terminate fails, force kill
+                self._process.kill()
+                self._process.wait()
+                
             if self._process.stderr:
                 self._process.stderr.close()
-            self._process.wait()
             self._process = None
             self.error_thread.join()
 

@@ -281,7 +281,7 @@ const FollowerList = () => {
 
   console.log(device.followers);
 
-  const { devices } = useContext(DevicesContext)!;
+  const { devices, setDevices } = useContext(DevicesContext)!;
 
 
   subscribe(device.followers, () => {
@@ -327,8 +327,10 @@ const FollowerList = () => {
 
           // Refresh devices from API to ensure consistency
           const updateDevices = async () => {
-            location.reload();
-          }
+            const newDevices = (await API_CLIENT.GET("/devices")).data!;
+            setDevices(newDevices);
+          };
+
 
           await updateDevices();
           updatePotentialFollowers();

@@ -9,6 +9,7 @@ permissions:
 
 jobs:
   build_and_upload_image:
+    timeout-minutes: 60
     runs-on: ubuntu-22.04-arm
     steps:
       - name: "Checkout code"

@@ -242,6 +242,7 @@ const EndpointList = ({
   );
 };
 
+
 const FollowerList = () => {
   const device = useContext(DeviceContext)!;
 
@@ -473,6 +474,7 @@ export const CameraStream = ({
         bus_info: device.bus_info,
         encode_type: format, // use local state
         endpoints: device.stream.endpoints, // or lift endpoints into state too
+        stream_type: device.stream.stream_type, // use local state
         stream_format: {
           width,
           height,
@@ -604,12 +606,17 @@ export const CameraStream = ({
           />
         </div>
       </div>
-
-      <EndpointList
+      {device.stream.stream_type === "UDP" && <EndpointList
         defaultHost={defaultHost}
         nextPort={nextPort}
         setShouldPostFlag={setShouldPostFlag}
-      />
+      />}
+
+      <Button className="w-full" onClick={() => { device.stream.stream_type = device.stream.stream_type === "RECORDING" ? "UDP" : "RECORDING"; setShouldPostFlag(true); }}>
+        Switch to {device.stream.stream_type === "RECORDING" ? "Stream" : "Recording"} mode
+      </Button>
+
+
       <Separator className="my-2" />
 
       {deviceState.device_type == 1 && <FollowerList />}
@@ -617,12 +624,12 @@ export const CameraStream = ({
       <div className="flex justify-between items-center">
         <div>
           <span className="text-sm font-medium">
-            Stream{" "}
+            {device.stream.stream_type === "RECORDING" ? "Recording" : "Stream"}{" "}
             {deviceState.is_managed
               ? "managed"
               : streamEnabled
-              ? "enabled"
-              : "disabled"}
+                ? "enabled"
+                : "disabled"}
           </span>
         </div>
         <Button

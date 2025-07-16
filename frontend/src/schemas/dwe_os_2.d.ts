@@ -787,6 +787,7 @@ export interface components {
         StreamInfoModel: {
             /** Bus Info */
             bus_info: string;
+            stream_type: components["schemas"]["StreamTypeEnum"];
             stream_format: components["schemas"]["StreamFormatModel"];
             encode_type: components["schemas"]["StreamEncodeTypeEnum"];
             /** Enabled */
@@ -814,7 +815,7 @@ export interface components {
          * StreamTypeEnum
          * @enum {string}
          */
-        StreamTypeEnum: "UDP";
+        StreamTypeEnum: "UDP" | "RECORDING";
         /** UVCControlModel */
         UVCControlModel: {
             /** Bus Info */

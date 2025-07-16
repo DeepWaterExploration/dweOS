@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import List
 import subprocess
 import threading
@@ -7,7 +8,7 @@ import event_emitter as events
 from .pydantic_schemas import *
 
 import logging
-
+import os
 
 @dataclass
 class Stream(events.EventEmitter):
@@ -47,11 +48,20 @@ class Stream(events.EventEmitter):
     def _build_payload(self):
         match self.encode_type:
             case StreamEncodeTypeEnum.H264:
-                return "h264parse ! queue ! rtph264pay config-interval=10 pt=96"
+                if self.stream_type == StreamTypeEnum.RECORDING:
+                    return "h264parse ! mp4mux"
+                else:
+                    return "h264parse ! queue ! rtph264pay config-interval=10 pt=96"
             case StreamEncodeTypeEnum.MJPG:
-                return "rtpjpegpay"
+                if self.stream_type == StreamTypeEnum.RECORDING:
+                    return "queue ! avimux"
+                else:
+                    return "rtpjpegpay"
             case StreamEncodeTypeEnum.SOFTWARE_H264:
-                return f"jpegdec ! queue ! x264enc byte-stream=true tune=zerolatency bitrate={self.software_h264_bitrate} speed-preset=ultrafast ! rtph264pay config-interval=10 pt=96"
+                if self.stream_type == StreamTypeEnum.RECORDING:
+                    return f"jpegdec ! queue ! x264enc byte-stream=true tune=zerolatency bitrate={self.software_h264_bitrate} speed-preset=ultrafast ! mp4mux"
+                else:
+                    return f"jpegdec ! queue ! x264enc byte-stream=true tune=zerolatency bitrate={self.software_h264_bitrate} speed-preset=ultrafast ! rtph264pay config-interval=10 pt=96"
             case _:
                 return ""
 
@@ -67,6 +77,19 @@ class Stream(events.EventEmitter):
                         sink += ","
 
                 return sink
+            case StreamTypeEnum.RECORDING:
+                home_dir = os.getcwd()
+                video_dir = os.path.join(home_dir, "videos")
+                if not os.path.exists(video_dir):
+                    os.makedirs(video_dir)
+                extension = "mp4" if self.encode_type == StreamEncodeTypeEnum.H264 else "avi"
+                timestamp = datetime.now().strftime("%F-%T")
+                unique_filename = f"{self.device_path.split('/')[-1]}_{timestamp}.{extension}"
+                unique_path = os.path.join(video_dir, unique_filename)
+                if os.path.exists(unique_path):
+                    unique_filename = f"{self.device_path.split('/')[-1]}_{timestamp}_{os.getpid()}.{extension}"
+                unique_path = os.path.join(video_dir, unique_filename)
+                return f"filesink location={unique_path} sync=true"
             case _:
                 return ""
 
@@ -136,14 +159,20 @@ class StreamRunner(events.EventEmitter):
         error_block = []
         try:
             for stderr_line in iter(self._process.stderr.readline, ""):
-                if stderr_line:
+                line_stripped = stderr_line.strip()
+
+                # Log all stderr output but only stop on actual errors
+                if any(error_keyword in line_stripped.lower() for error_keyword in ['error', 'failed', 'critical']):
                     error_block.append(stderr_line)
-                    self.logger.error(
-                        f"GStreamer Error: {stderr_line.strip()}")
+                    self.logger.error(f"GStreamer Error: {line_stripped}")
                     self.stop()
                     break
                 else:
-                    break
+                    # Log as debug/info for non-error messages
+                    if 'warning' in line_stripped.lower():
+                        self.logger.warning(f"GStreamer Warning: {line_stripped}")
+                    else:
+                        self.logger.debug(f"GStreamer Info: {line_stripped}")
         except:
             pass
         if len(error_block) > 0:

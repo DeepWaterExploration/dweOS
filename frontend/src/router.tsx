@@ -5,6 +5,7 @@ import DeviceListLayout from "./components/dwe/cameras/device-list";
 import PreferencesLayout from "./components/dwe/preferences/preferences";
 import { LogViewer } from "./components/dwe/log-page/log-viewer";
 import Terminal from "./components/dwe/terminal/terminal";
+import Recordings from "./components/dwe/recordings/recordings";
 
 export const router = createBrowserRouter([
   {
@@ -16,6 +17,7 @@ export const router = createBrowserRouter([
       { path: "/preferences", element: <PreferencesLayout /> },
       { path: "/log-viewer", element: <LogViewer /> },
       { path: "/terminal", element: <Terminal /> },
+      { path: "/recordings", element: <Recordings /> },
     ],
   },
 ]);

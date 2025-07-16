@@ -164,13 +164,20 @@ class StreamRunner(events.EventEmitter):
         try:
             for stderr_line in iter(self._process.stderr.readline, ""):
                 if stderr_line:
-                    error_block.append(stderr_line)
-                    self.logger.error(
-                        f"GStreamer Error: {stderr_line.strip()}")
-                    self.stop()
-                    break
-                else:
-                    break
+                    line_stripped = stderr_line.strip()
+
+                    # Log all stderr output but only stop on actual errors
+                    if any(error_keyword in line_stripped.lower() for error_keyword in ['error', 'failed', 'critical']):
+                        error_block.append(stderr_line)
+                        self.logger.error(f"GStreamer Error: {line_stripped}")
+                        self.stop()
+                        break
+                    else:
+                        # Log as debug/info for non-error messages
+                        if 'warning' in line_stripped.lower():
+                            self.logger.warning(f"GStreamer Warning: {line_stripped}")
+                        else:
+                            self.logger.debug(f"GStreamer Info: {line_stripped}")
         except:
             pass
         if len(error_block) > 0:

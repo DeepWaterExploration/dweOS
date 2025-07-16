@@ -19,6 +19,7 @@ import {
   PlayIcon,
   PlusIcon,
   Trash2Icon,
+  HelpCircleIcon,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import DeviceContext from "@/contexts/DeviceContext";
@@ -36,7 +37,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { set } from "date-fns";
 
 // Options for StreamSelector should provide label and value for each choice
 type StreamOption = { label: string; value: string };
@@ -128,20 +128,24 @@ const Endpoint = ({
                   className="h-8"
                   onChange={(e) => setTempPort(parseInt(e.target.value))}
                 /></>) : (
-              <Input
-                value={youtubeKey}
-                placeholder="Youtube Key"
-                className="h-8 col-span-2"
-                onChange={(e) => {
-                  setYoutubeKey(e.target.value);
-                  if (e.target.value.trim() === "") {
-                    setTempRtmpUrl(null);
-                    return;
-                  }
-                  setTempRtmpUrl(`rtmp://a.rtmp.youtube.com/live2/${e.target.value}`);
-                }}
-              />
+              <div className="col-span-2 relative inner-block">
+                <Input
+                  value={youtubeKey}
+                  placeholder="Youtube Key"
+                  className="h-8 col-span-2"
+                  onChange={(e) => {
+                    setYoutubeKey(e.target.value);
+                    if (e.target.value.trim() === "") {
+                      setTempRtmpUrl(null);
+                      return;
+                    }
+                    setTempRtmpUrl(`rtmp://a.rtmp.youtube.com/live2/${e.target.value}`);
+                  }}
+                />
+                <Button onClick={() => window.open("https://support.google.com/youtube/answer/9854503?hl=en#zippy=%2Cstream-key", "_blank")} className="h-8 col-span-2 absolute right-0 top-[50%] transform -translate-y-1/2" variant={"ghost"}><HelpCircleIcon /></Button>
+              </div>
             )}
+
           </div>
           <div className="flex space-x-1 flex-shrink-0">
             <Button

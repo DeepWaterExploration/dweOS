@@ -62,7 +62,7 @@ class Stream(events.EventEmitter):
                     return "rtpjpegpay"
             case StreamEncodeTypeEnum.SOFTWARE_H264:
                 if self.stream_type == StreamTypeEnum.RECORDING:
-                    return f"jpegdec ! queue ! x264enc byte-stream=false tune=zerolatency bitrate={self.software_h264_bitrate} speed-preset=ultrafast ! h264parse ! video/x-h264,stream-format=avc,alignment=au ! queue ! mp4mux faststart=true fragment-duration=1000 streamable=true"
+                    return f"jpegdec ! queue ! x264enc byte-stream=false tune=zerolatency bitrate={self.software_h264_bitrate} speed-preset=ultrafast ! h264parse ! video/x-h264,width={self.width},height={self.height},framerate={self.interval.denominator}/{self.interval.numerator} ! queue ! mp4mux"
                 else:
                     return f"jpegdec ! queue ! x264enc byte-stream=true tune=zerolatency bitrate={self.software_h264_bitrate} speed-preset=ultrafast ! rtph264pay config-interval=10 pt=96"
             case _:

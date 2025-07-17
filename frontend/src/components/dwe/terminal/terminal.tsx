@@ -1,6 +1,6 @@
 import { useContext, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { useTheme } from "@/components/theme-provider";
+import { useTheme } from "@/components/themes/theme-provider";
 import { Xterm, ClientOptions } from "./xterm";
 import { ITerminalOptions } from "@xterm/xterm";
 import WebsocketContext from "@/contexts/WebsocketContext";

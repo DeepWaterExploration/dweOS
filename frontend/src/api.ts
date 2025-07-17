@@ -1,5 +1,5 @@
 import createClient from "openapi-fetch";
-import type {paths} from "./schemas/dwe_os_2";
+import type { paths } from "@/schemas/dwe_os_2";
 
 export const hostAddress: string = window.location.hostname;
 

@@ -1,4 +1,4 @@
-import { SidebarLeft } from "@/components/sidebar-left";
+import { SidebarLeft } from "@/components/nav/sidebar-left";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -13,14 +13,14 @@ import {
 } from "@/components/ui/sidebar";
 
 import { Outlet } from "react-router-dom";
-import { ThemeProvider } from "@/components/theme-provider";
-import { ModeToggle } from "./components/mode-toggle";
+import { ThemeProvider } from "@/components/themes/theme-provider";
+import { ModeToggle } from "./components/themes/mode-toggle";
 import { CommandPalette } from "./components/dwe/app/command-palette";
 import { io, Socket } from "socket.io-client";
 import { useEffect, useRef, useState } from "react";
 import WebsocketContext from "./contexts/WebsocketContext";
 import { Toaster } from "@/components/ui/toaster";
-import { WifiSelector } from "./components/dwe/wireless/wifi-selector";
+import { WifiDropdown } from "./components/dwe/wireless/wifi-dropdown";
 import { WiredDropdown } from "./components/dwe/wireless/wired-dropdown";
 import { SystemDropdown } from "./components/dwe/system/system-dropdown";
 
@@ -77,7 +77,7 @@ function App() {
                 <ModeToggle />
                 <CommandPalette />
                 <WiredDropdown />
-                <WifiSelector />
+                <WifiDropdown />
                 <SystemDropdown />
               </div>
             </header>

@@ -17,9 +17,9 @@ import {
 import { subscribe } from "valtio";
 import { RotateCcwIcon } from "lucide-react"; // Added SettingsIcon
 
-import IntegerControl from "./integer-control";
-import BooleanControl from "./boolean-control";
-import MenuControl from "./menu-control";
+import IntegerControl from "./controls/integer-control";
+import BooleanControl from "./controls/boolean-control";
+import MenuControl from "./controls/menu-control";
 import { components } from "@/schemas/dwe_os_2";
 import { API_CLIENT } from "@/api";
 import { useToast } from "@/hooks/use-toast";

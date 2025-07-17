@@ -1,5 +1,5 @@
 // pages/index.tsx
-import { Markdown } from "@/components/markdown";
+import { Markdown } from "./markdown";
 
 const markdown = `
 # DWE OS Overview

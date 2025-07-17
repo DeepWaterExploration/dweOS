@@ -1,5 +1,6 @@
 import { API_CLIENT } from "@/api";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { components } from "@/schemas/dwe_os_2";
 import { useEffect, useState } from "react";
 type RecordingInfo = components["schemas"]["RecordingInfo"];
@@ -10,34 +11,48 @@ const Recordings = () => {
 
     const [recordings, setRecordings] = useState<RecordingInfo[]>([]);
     const [selectedRecording, setSelectedRecording] = useState<RecordingInfo | null>(null);
+
+    const [loading, setLoading] = useState<boolean>(true);
     useEffect(() => {
         // Fetch recordings data from the backend
         API_CLIENT.GET("/recordings")
             .then(data => setRecordings(data.data!))
-            .catch(error => console.error('Error fetching recordings:', error));
+            .catch(error => console.error('Error fetching recordings:', error))
+            .finally(() => setLoading(false));
     }, []);
     return (
         <div className="flex">
+            {loading ? <div className="flex items-center justify-center h-full w-full">Loading...</div> : (
+                <Table>
+                    <TableRow>
+                        <TableCell className="text-left">Name</TableCell>
+                        <TableCell className="text-left">Format</TableCell>
+                        <TableCell className="text-left">Duration</TableCell>
+                        <TableCell className="text-left">Size</TableCell>
+                    </TableRow>
+                    <TableBody>
+                        {recordings.map((recording) => (
+                            <TableRow key={recording.name} onClick={() => setSelectedRecording(recording)}>
+                                <TableCell className="text-left">{recording.name}</TableCell>
+                                <TableCell className="text-left">{recording.format}</TableCell>
+                                <TableCell className="text-left">~{recording.duration}</TableCell>
+                                <TableCell className="text-left">{recording.size}</TableCell>
+                            </TableRow>
+                        ))}
 
-            <Table>
-                <TableRow>
-                    <TableCell className="text-left">Name</TableCell>
-                    <TableCell className="text-left">Format</TableCell>
-                    <TableCell className="text-left">Duration</TableCell>
-                    <TableCell className="text-left">Size</TableCell>
-                </TableRow>
-                <TableBody>
-                    {recordings.map((recording) => (
-                        <TableRow key={recording.name} onClick={() => setSelectedRecording(recording)}>
-                            <TableCell className="text-left">{recording.name}</TableCell>
-                            <TableCell className="text-left">{recording.format}</TableCell>
-                            <TableCell className="text-left">{recording.duration}</TableCell>
-                            <TableCell className="text-left">{recording.size}</TableCell>
-                        </TableRow>
-                    ))}
+                    </TableBody>
+                    {recordings.length !== 0 && (
+                        <TableFooter>
+                            <TableRow>
+                                <TableCell colSpan={4} className="text-center">
+                                    Video durations are an estimate and may not be accurate.
+                                </TableCell>
+                            </TableRow>
 
-                </TableBody>
-            </Table>
+                        </TableFooter>
+                    )}
+                </Table>
+            )}
             {selectedRecording && (
                 <div className="mt-4 w-[50%] p-4 rounded h-full">
                     <h2 className="text-lg font-semibold">Selected Recording</h2>
@@ -49,13 +64,30 @@ const Recordings = () => {
                     <video
                         controls
                         className="w-full h-64 mt-4"
-                        src={`${baseUrl}/recordings/${selectedRecording.name}`}
                     >
+                        <source src={`${baseUrl}/static/${selectedRecording.name}.${selectedRecording.format}`} type={`video/${selectedRecording.format}`} />
                         Your browser does not support the video tag.
                     </video>
+                    <Button variant="outline" className="mt-4" onClick={() => console.log('Download recording')}>
+                        Download
+                    </Button>
+                    <Button
+                        variant="outline"
+                        className="mt-4 ml-2 text-red-500 border-red-500"
+                        onClick={async () => {
+                            // @ts-ignore-next-line
+                            const new_recordings = (await API_CLIENT.DELETE(`/recordings/${selectedRecording.name}.${selectedRecording.format}`, {})).data! as RecordingInfo[];
+                            setRecordings(new_recordings);
+                            setSelectedRecording(null);
+                        }}
+                    >
+                        Delete
+                    </Button>
                 </div>
-            )}
-        </div>
+
+            )
+            }
+        </div >
     );
 };
 

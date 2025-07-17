@@ -1,6 +1,6 @@
 import { API_CLIENT } from "@/api";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableFooter, TableRow } from "@/components/ui/table"
 import { components } from "@/schemas/dwe_os_2";
 import { useEffect, useState } from "react";
 type RecordingInfo = components["schemas"]["RecordingInfo"];

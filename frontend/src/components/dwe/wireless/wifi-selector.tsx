@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Wifi, WifiOff, Check, Lock } from "lucide-react";
 import {
   DropdownMenu,
@@ -123,12 +123,7 @@ export function WifiSelector() {
     setPasswordDialogOpen(false);
   };
 
-  const closePasswordDialog = useCallback(() => {
-    setPasswordDialogOpen(false);
-    setSelectedNetwork(null);
-    setPassword(undefined);
-    setIsConnecting(false); // Ensure connecting state is reset
-  }, []); // No dependencies needed
+
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -272,7 +267,6 @@ interface SignalStrengthProps {
 function SignalStrength({ strength }: SignalStrengthProps) {
   const thresholds = [20, 50, 70];
 
-  const h_values = ["h-[0.25rem]", "h-2", "h-3", "h-4"];
 
   return (
     <div className="flex h-4 items-end gap-[2px]">

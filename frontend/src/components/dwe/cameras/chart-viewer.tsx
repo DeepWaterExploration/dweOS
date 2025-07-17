@@ -16,7 +16,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { Badge } from "./ui/badge";
+import { Badge } from "@/components/ui/badge";
 
 interface ChartViewerProps {
   label: string;

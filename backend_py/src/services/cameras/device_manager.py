@@ -102,6 +102,10 @@ class DeviceManager(events.EventEmitter):
         """
         Helper function to append a gst error
         """
+        self.sio.emit("gst_error", {
+            "errors": self.gst_errors,
+            "bus_info": device.bus_info
+        })
         device.stream.enabled = False
         self.gst_errors.append(device.bus_info)
 

@@ -124,7 +124,6 @@ export function WifiSelector() {
   };
 
   const closePasswordDialog = useCallback(() => {
-    console.log("closing");
     setPasswordDialogOpen(false);
     setSelectedNetwork(null);
     setPassword(undefined);
@@ -175,7 +174,6 @@ export function WifiSelector() {
 
                 .sort((a, b) => {
                   const connectedId = wifiStatus?.connection?.id;
-                  console.log(connectedId);
 
                   if (a.ssid === connectedId) return -1; // a is connected, put first
                   if (b.ssid === connectedId) return 1; // b is connected, put first

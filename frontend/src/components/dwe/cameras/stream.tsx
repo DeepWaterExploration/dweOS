@@ -24,7 +24,6 @@ import { Input } from "@/components/ui/input";
 import DeviceContext from "@/contexts/DeviceContext";
 import { subscribe, useSnapshot } from "valtio";
 import { components } from "@/schemas/dwe_os_2";
-import { useToast } from "@/hooks/use-toast";
 import DevicesContext from "@/contexts/DevicesContext";
 import { getDeviceByBusInfo } from "@/lib/utils";
 import { API_CLIENT } from "@/api";
@@ -249,13 +248,16 @@ const FollowerList = () => {
   const deviceState = useSnapshot(device);
   const [followers, setFollowers] = useState(device.followers);
 
-  console.log(device.followers);
 
   const { devices } = useContext(DevicesContext)!;
 
-  subscribe(device.followers, () => {
-    setFollowers(device.followers);
-  });
+  useEffect(() => {
+    const unsubscribe = subscribe(device.followers, () => {
+      setFollowers(device.followers);
+    });
+
+    return unsubscribe;
+  }, [device]);
 
   const [potentialFollowers, setPotentialFollowers] = useState<string[]>([]);
 
@@ -443,8 +445,6 @@ export const CameraStream = ({
 }) => {
   const device = useContext(DeviceContext)!;
 
-  const { toast } = useToast();
-
   // readonly device state
   const deviceState = useSnapshot(device);
 
@@ -469,39 +469,29 @@ export const CameraStream = ({
   const configureStream = () => {
     const [width, height] = getResolution(resolution);
     if (width === null || height === null) return;
+
+    // Update device state only when sending to server
+    device.stream.width = width;
+    device.stream.height = height;
+    device.stream.interval.denominator = parseInt(fps);
+    device.stream.encode_type = format;
+    device.stream.enabled = streamEnabled;
+
     API_CLIENT.POST("/devices/configure_stream", {
       body: {
         bus_info: device.bus_info,
-        encode_type: format, // use local state
-        endpoints: device.stream.endpoints, // or lift endpoints into state too
-        stream_type: device.stream.stream_type, // use local state
+        encode_type: format,
+        endpoints: device.stream.endpoints,
+        stream_type: device.stream.stream_type,
         stream_format: {
           width,
           height,
-          interval: { numerator: 1, denominator: Number(fps) }, // use local state
+          interval: { numerator: 1, denominator: Number(fps) },
         },
-        enabled: streamEnabled, // use local state
+        enabled: streamEnabled,
       },
     });
   };
-
-  useEffect(() => {
-    device.stream.enabled = streamEnabled;
-  }, [device.stream, streamEnabled]);
-
-  useEffect(() => {
-    device.stream.enabled = streamEnabled;
-  }, [streamEnabled]);
-
-  useEffect(() => {
-    const [width, height] = getResolution(resolution);
-    device.stream.width = width!;
-    device.stream.height = height!;
-  }, [resolution]);
-
-  useEffect(() => {
-    device.stream.interval.denominator = parseInt(fps);
-  }, [device, fps]);
 
   useEffect(() => {
     if (shouldPostFlag) {
@@ -511,18 +501,16 @@ export const CameraStream = ({
   }, [shouldPostFlag]);
 
   useEffect(() => {
-    device.stream.encode_type = format;
-  }, [device, format]);
+    const unsubscribe = subscribe(device.stream, () => {
+      setResolutions(getResolutions(device, device.stream.encode_type));
+      setStreamEnabled(device.stream.enabled);
+      setResolution(`${device.stream.width}x${device.stream.height}`);
+      setFps("" + device.stream.interval.denominator);
+      setFormat(device.stream.encode_type);
+    });
 
-  subscribe(device.stream, () => {
-    setResolutions(getResolutions(device, deviceState.stream.encode_type));
-
-    if (device.stream.enabled && !streamEnabled) {
-      setStreamEnabled(true);
-    } else if (!device.stream.enabled && streamEnabled) {
-      setStreamEnabled(false);
-    }
-  });
+    return unsubscribe;
+  }, [device]);
 
   useEffect(() => {
     const cameraFormat = device.stream.encode_type;
@@ -541,9 +529,13 @@ export const CameraStream = ({
     setIntervals(newIntervals);
   }, [resolutions, device]);
 
-  subscribe(device.stream.endpoints, () => {
-    setShouldPostFlag(true);
-  });
+  useEffect(() => {
+    const unsubscribe = subscribe(device.stream.endpoints, () => {
+      setShouldPostFlag(true);
+    });
+
+    return unsubscribe;
+  }, [device]);
 
   useEffect(() => {
     const newEncoders = [];
@@ -637,10 +629,8 @@ export const CameraStream = ({
           className="w-4 h-8"
           disabled={deviceState.is_managed}
           onClick={() => {
-            setStreamEnabled((prev) => {
-              const newState = !prev;
-              return newState;
-            });
+            const newEnabledState = !streamEnabled;
+            setStreamEnabled(newEnabledState);
             setShouldPostFlag(true);
           }}
         >

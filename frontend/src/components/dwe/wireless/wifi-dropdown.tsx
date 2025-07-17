@@ -25,7 +25,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 
-export function WifiSelector() {
+export function WifiDropdown() {
   const { toast } = useToast();
   const { connected, socket } = useContext(WebsocketContext)!;
 

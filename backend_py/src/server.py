@@ -133,7 +133,6 @@ class Server:
         self.app.include_router(lights_router)
         self.app.include_router(logs_router)
         self.app.include_router(recordings_router)
-        self.app.mount("/static", StaticFiles(directory="videos"), name="static")
 
         self.app.add_api_route(
             "/features",

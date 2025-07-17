@@ -21,8 +21,6 @@ import { useEffect, useRef, useState } from "react";
 import WebsocketContext from "./contexts/WebsocketContext";
 import { Toaster } from "@/components/ui/toaster";
 import { WifiSelector } from "./components/dwe/wireless/wifi-selector";
-import { EthernetPort, EthernetPortIcon } from "lucide-react";
-import { Button } from "./components/ui/button";
 import { WiredDropdown } from "./components/dwe/wireless/wired-dropdown";
 import { SystemDropdown } from "./components/dwe/system/system-dropdown";
 

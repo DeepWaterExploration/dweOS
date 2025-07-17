@@ -120,9 +120,9 @@ export class Xterm {
     }
 
     setTheme(theme: ITheme) {
-      if (this.terminal) {
-        this.terminal.options['theme'] = theme
-      }
+        if (this.terminal) {
+            this.terminal.options['theme'] = theme
+        }
     }
 
     dispose() {
@@ -460,7 +460,6 @@ export class Xterm {
             disposeWebglRenderer();
             try {
                 this.terminal.loadAddon(this.canvasAddon);
-                console.log('[ttyd] canvas renderer loaded');
             } catch (e) {
                 console.log('[ttyd] canvas renderer could not be loaded, falling back to dom renderer', e);
                 disposeCanvasRenderer();
@@ -475,7 +474,6 @@ export class Xterm {
                     this.webglAddon?.dispose();
                 });
                 terminal.loadAddon(this.webglAddon);
-                console.log('[ttyd] WebGL renderer loaded');
             } catch (e) {
                 console.log('[ttyd] WebGL renderer could not be loaded, falling back to canvas renderer', e);
                 disposeWebglRenderer();
@@ -493,7 +491,6 @@ export class Xterm {
             case 'dom':
                 disposeWebglRenderer();
                 disposeCanvasRenderer();
-                console.log('[ttyd] dom renderer loaded');
                 break;
             default:
                 break;

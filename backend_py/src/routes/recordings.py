@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, Request
 from typing import List
-from fastapi.staticfiles import StaticFiles
 from ..services import RecordingsService, RecordingInfo
 
 recordings_router = APIRouter(tags=['recordings'])
@@ -15,15 +14,8 @@ def get_recordings(request: Request) -> List[RecordingInfo]:
 def delete_recording(request: Request, recording_path: str):
     recordings_service: RecordingsService = request.app.state.recordings_service
 
-    success = recordings_service.delete_recording(recording_path)
-    if not success:
+    response = recordings_service.delete_recording(recording_path)
+    if response == False:
         return {"error": "Recording not found or could not be deleted"}
 
-    return {"message": "Recording deleted successfully"}
-
-
-recordings_router.mount(
-    "/recordings",
-    StaticFiles(directory="videos"),
-    name="recordings"
-)
+    return response

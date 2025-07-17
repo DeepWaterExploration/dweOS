@@ -1,5 +1,7 @@
+from functools import lru_cache
 import os
 import subprocess
+import threading
 
 from pydantic import BaseModel
 
@@ -16,6 +18,7 @@ class RecordingsService:
         self.recordings_path = os.path.join(os.getcwd(), "videos")
         self.recordings: list[RecordingInfo] = []
 
+        threading.Thread(target=self.get_recordings, daemon=True).start()
     def get_recordings(self):
         if not os.path.exists(self.recordings_path):
             os.makedirs(self.recordings_path)
@@ -29,32 +32,36 @@ class RecordingsService:
                     path=file_path,
                     name=filename.split('.')[0],
                     format=filename.split('.')[-1],
-                    duration=self._get_duration(file_path),
+                    duration=self._get_duration(file_stat.st_size),
                     size=f"{file_stat.st_size / (1024 * 1024):.2f} MB"
                 )
                 self.recordings.append(recording_info)
 
         return self.recordings
     
+    @lru_cache(maxsize=10000)
+    def _get_duration(self, size: int) -> str:
+        # Estimate duration based on file size and a rough average bitrate
+        average_bitrate = 5 * 1024 * 1024  # 5 MB
+        # Convert size to seconds
+        duration_seconds = size / average_bitrate
+        if duration_seconds < 60:
+            return f"00:00:{int(duration_seconds):02d}"
+        elif duration_seconds < 3600:
+            minutes = int(duration_seconds // 60)
+            seconds = int(duration_seconds % 60)
+            return f"00:{minutes:02d}:{seconds:02d}"
+        else:
+            hours = int(duration_seconds // 3600)
+            minutes = int((duration_seconds % 3600) // 60)
+            seconds = int(duration_seconds % 60)
+            return f"{hours}:{minutes:02d}:{seconds:02d}"
 
-    def _get_duration(self, file_path: str) -> str:
-        command = ["gst-discoverer-1.0", file_path]
-        try:
-            result = subprocess.run(command, capture_output=True, text=True)
-            if result.returncode == 0:
-                # Parse the output to extract duration
-                for line in result.stdout.splitlines():
-                    if "Duration" in line:
-                        return line.split(":", 1)[-1].strip()
-        except Exception as e:
-            print(f"Error getting duration: {e}")
-        # If we can't get the duration, return a placeholder
-        return "Unknown"
-
-    def delete_recording(self, recording_path: str):
+    def delete_recording(self, filename: str):
+        recording_path = os.path.join(self.recordings_path, filename)
         if os.path.exists(recording_path):
             os.remove(recording_path)
             self.recordings = [rec for rec in self.recordings if rec.path != recording_path]
-            return True
+            return self.recordings
         return False
     

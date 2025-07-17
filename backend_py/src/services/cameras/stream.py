@@ -50,7 +50,7 @@ class Stream(events.EventEmitter):
         match self.encode_type:
             case StreamEncodeTypeEnum.H264:
                 if self.stream_type == StreamTypeEnum.RECORDING:
-                    return "h264parse ! video/x-h264,stream-format=avc,alignment=au ! queue ! mp4mux faststart=true fragment-duration=1000"
+                    return f"h264parse ! video/x-h264,width={self.width},height={self.height},framerate={self.interval.denominator}/{self.interval.numerator} ! queue ! mp4mux"
                 else:
                     return "h264parse ! queue ! rtph264pay config-interval=10 pt=96"
             case StreamEncodeTypeEnum.MJPG:
@@ -60,7 +60,7 @@ class Stream(events.EventEmitter):
                     return "rtpjpegpay"
             case StreamEncodeTypeEnum.SOFTWARE_H264:
                 if self.stream_type == StreamTypeEnum.RECORDING:
-                    return f"jpegdec ! queue ! x264enc byte-stream=false tune=zerolatency bitrate={self.software_h264_bitrate} speed-preset=ultrafast ! h264parse ! video/x-h264,stream-format=avc,alignment=au ! queue ! mp4mux faststart=true fragment-duration=1000"
+                    return f"jpegdec ! queue ! x264enc byte-stream=false tune=zerolatency bitrate={self.software_h264_bitrate} speed-preset=ultrafast ! h264parse ! video/x-h264,stream-format=avc,alignment=au ! queue ! mp4mux faststart=true fragment-duration=1000 streamable=true"
                 else:
                     return f"jpegdec ! queue ! x264enc byte-stream=true tune=zerolatency bitrate={self.software_h264_bitrate} speed-preset=ultrafast ! rtph264pay config-interval=10 pt=96"
             case _:
@@ -134,30 +134,56 @@ class StreamRunner(events.EventEmitter):
             self.logger.info("Stopping stream")
             self.started = False
             
-            # Try graceful shutdown first
-            try:
-                self._process.terminate()
-                self._process.wait(timeout=5)  # Wait up to 5 seconds for graceful shutdown
-            except subprocess.TimeoutExpired:
-                # If graceful shutdown fails, force kill
-                self.logger.warning("Graceful shutdown timed out, force killing process")
-                self._process.kill()
-                self._process.wait()
-            except:
-                # If terminate fails, force kill
-                self._process.kill()
-                self._process.wait()
+            # For recording streams, send EOS to properly finalize the file
+            has_recording_stream = any(stream.stream_type == StreamTypeEnum.RECORDING for stream in self.streams)
+            
+            if has_recording_stream:
+                try:
+                    # Send EOS signal to properly close the file
+                    self._process.send_signal(2)  # SIGINT for graceful EOS
+                    self._process.wait(timeout=10)  # Wait longer for recording finalization
+                except subprocess.TimeoutExpired:
+                    self.logger.warning("EOS timeout, force killing recording process")
+                    self._process.kill()
+                    self._process.wait()
+                except:
+                    self._process.kill()
+                    self._process.wait()
+                if self._process.stderr:
+                    self._process.stderr.close()
+                self._process = None
+                self.error_thread.join()
+                    
                 
-            if self._process.stderr:
-                self._process.stderr.close()
-            self._process = None
-            self.error_thread.join()
+                self._process = None
+                if self.error_thread and self.error_thread.is_alive():
+                    self.error_thread.join(timeout=2)
+            else:
+                try:
+                    self._process.terminate()
+                    self._process.wait(timeout=5)  # Wait up to 5 seconds for graceful shutdown
+                except subprocess.TimeoutExpired:
+                    # If graceful shutdown fails, force kill
+                    self.logger.warning("Graceful shutdown timed out, force killing process")
+                    self._process.kill()
+                    self._process.wait()
+                except:
+                    # If terminate fails, force kill
+                    self._process.kill()
+                    self._process.wait()
+                if self._process.stderr:
+                    self._process.stderr.close()
+                self._process = None
+                self.error_thread.join()
+                
+            
 
     def _run_pipeline(self):
         pipeline_str = self._construct_pipeline()
         self.logger.info(pipeline_str)
+        has_recording_stream = any(stream.stream_type == StreamTypeEnum.RECORDING for stream in self.streams)
         self._process = subprocess.Popen(
-            f"gst-launch-1.0 {pipeline_str}".split(" "),
+            f"gst-launch-1.0 {'-e' if has_recording_stream else ''} {pipeline_str}".split(" "),
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
             text=True,

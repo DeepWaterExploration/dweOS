@@ -12,8 +12,6 @@ const Recordings = () => {
     const [recordings, setRecordings] = useState<RecordingInfo[]>([]);
     const [selectedRecording, setSelectedRecording] = useState<RecordingInfo | null>(null);
 
-    const [isFirefox, setIsFirefox] = useState<boolean>(navigator.userAgent.toLowerCase().includes('firefox'));
-
     const [loading, setLoading] = useState<boolean>(true);
     useEffect(() => {
         // Fetch recordings data from the backend
@@ -63,15 +61,18 @@ const Recordings = () => {
                     <p><strong>Duration:</strong> {selectedRecording.duration}</p>
                     <p><strong>Size:</strong> {selectedRecording.size}</p>
 
-                    <video
-                        key={`${selectedRecording.name}.${selectedRecording.format}`}
-                        controls
-                        className="w-full h-64 mt-4"
-                    >
-                        <source src={`${baseUrl}/recordings/${selectedRecording.name}.${selectedRecording.format}`} type={`video/${selectedRecording.format}`} />
-                        {isFirefox && (<p>Firefox does not support this MP4 format, download the recording instead.</p>)}
-                        Your browser does not support the video tag.
-                    </video>
+                    {selectedRecording.format === "mp4" ?
+                        <video
+                            key={`${selectedRecording.name}.${selectedRecording.format}`}
+                            controls
+                            className="w-full h-64 mt-4"
+                        >
+                            <source src={`${baseUrl}/recordings/${selectedRecording.name}.${selectedRecording.format}`} type="video/mp4" />
+                            Your browser does not support the video tag.
+                        </video> : <div className="w-full h-64 mt-4 bg-gray color-red-900 flex items-center justify-center flex-col flex-wrap">
+                            <p className="color-red-900">.{selectedRecording.format} is not supported in the browser video player.<br />Use the download button to download the file and play it in a compatible player.</p>
+                        </div>
+                    }
                     <Button
                         variant="outline"
                         className="mt-4"

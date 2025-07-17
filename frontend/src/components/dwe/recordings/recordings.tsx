@@ -12,6 +12,8 @@ const Recordings = () => {
     const [recordings, setRecordings] = useState<RecordingInfo[]>([]);
     const [selectedRecording, setSelectedRecording] = useState<RecordingInfo | null>(null);
 
+    const [isFirefox, setIsFirefox] = useState<boolean>(navigator.userAgent.toLowerCase().includes('firefox'));
+
     const [loading, setLoading] = useState<boolean>(true);
     useEffect(() => {
         // Fetch recordings data from the backend
@@ -62,14 +64,22 @@ const Recordings = () => {
                     <p><strong>Size:</strong> {selectedRecording.size}</p>
 
                     <video
+                        key={`${selectedRecording.name}.${selectedRecording.format}`}
                         controls
                         className="w-full h-64 mt-4"
                     >
-                        <source src={`${baseUrl}/static/${selectedRecording.name}.${selectedRecording.format}`} type={`video/${selectedRecording.format}`} />
+                        <source src={`${baseUrl}/recordings/${selectedRecording.name}.${selectedRecording.format}`} type={`video/${selectedRecording.format}`} />
+                        {isFirefox && (<p>Firefox does not support this MP4 format, download the recording instead.</p>)}
                         Your browser does not support the video tag.
                     </video>
-                    <Button variant="outline" className="mt-4" onClick={() => console.log('Download recording')}>
-                        Download
+                    <Button
+                        variant="outline"
+                        className="mt-4"
+                        asChild
+                    >
+                        <a href={`${baseUrl}/recordings/${selectedRecording.name}.${selectedRecording.format}?download=true`} download>
+                            Download
+                        </a>
                     </Button>
                     <Button
                         variant="outline"

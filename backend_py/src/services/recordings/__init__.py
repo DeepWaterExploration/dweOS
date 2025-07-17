@@ -56,7 +56,14 @@ class RecordingsService:
             minutes = int((duration_seconds % 3600) // 60)
             seconds = int(duration_seconds % 60)
             return f"{hours}:{minutes:02d}:{seconds:02d}"
-
+        
+    def get_recording(self, filename: str) -> RecordingInfo | None:
+        self.get_recordings()
+        recording_path = os.path.join(self.recordings_path, filename)
+        for recording in self.recordings:
+            if recording.path == recording_path:
+                return recording
+        return None
     def delete_recording(self, filename: str):
         recording_path = os.path.join(self.recordings_path, filename)
         if os.path.exists(recording_path):

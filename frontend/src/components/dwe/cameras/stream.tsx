@@ -18,7 +18,6 @@ import {
   PlayIcon,
   PlusIcon,
   Trash2Icon,
-  TrashIcon,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import DeviceContext from "@/contexts/DeviceContext";

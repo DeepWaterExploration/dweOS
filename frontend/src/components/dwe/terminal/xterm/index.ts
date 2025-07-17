@@ -1,3 +1,6 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
+
 /**
  * Based on https://github.com/tsl0922/ttyd/blob/main/html/src/components/terminal/xterm/index.ts
  */

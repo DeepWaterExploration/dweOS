@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef } from "react";
+import { useContext, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useTheme } from "@/components/theme-provider";
 import { Xterm, ClientOptions } from "./xterm";
@@ -83,7 +83,7 @@ export const Terminal = () => {
           allowProposedApi: true,
         } as ITerminalOptions,
       },
-      () => {}
+      () => { }
     )
   );
 

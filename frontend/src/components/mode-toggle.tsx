@@ -1,19 +1,12 @@
-import { Monitor, Moon, Sun, SunMoon } from "lucide-react";
+import { Moon, Sun, SunMoon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
 import { useTheme } from "@/components/theme-provider";
-import { useState } from "react";
 
 export function ModeToggle() {
   const { setTheme, theme } = useTheme();
 
-  const [mode, setMode] = useState(theme);
 
   const modes: ("dark" | "light" | "system")[] = ["light", "dark", "system"];
 

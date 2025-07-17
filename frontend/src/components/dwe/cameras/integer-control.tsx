@@ -17,7 +17,7 @@ const IntegerControl = ({
   // State to hold the potentially invalid input string
   const [inputValue, setInputValue] = useState(control.value.toString());
 
-  const { min_value, max_value, step, default_value } = control.flags;
+  const { min_value, max_value, step } = control.flags;
   const controlId = `control-${control.control_id}-${control.name}`; // Unique ID for label association
 
   // Update local state when the global control value changes

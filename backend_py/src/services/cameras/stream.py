@@ -26,6 +26,8 @@ class Stream(events.EventEmitter):
 
     software_h264_bitrate = 5000
 
+    file_path: str|None = None
+
     def _construct_pipeline(self):
         return f"{self._build_source()} ! {self._construct_caps()} ! {self._build_payload()} ! {self._build_sink()}"
 
@@ -92,6 +94,7 @@ class Stream(events.EventEmitter):
                 if os.path.exists(unique_path):
                     unique_filename = f"{self.device_path.split('/')[-1]}_{timestamp}_{os.getpid()}.{extension}"
                 unique_path = os.path.join(video_dir, unique_filename)
+                self.file_path = unique_path
                 return f"filesink location={unique_path} sync=true"
             case _:
                 return ""
@@ -205,6 +208,17 @@ class StreamRunner(events.EventEmitter):
 
                 # Log all stderr output but only stop on actual errors
                 if any(error_keyword in line_stripped.lower() for error_keyword in ['error', 'failed', 'critical']):
+                    if "Failed to allocate required memory" in line_stripped and any(
+                        stream.stream_type == StreamTypeEnum.RECORDING for stream in self.streams
+                    ):
+                        for stream in self.streams:
+                            if stream.stream_type == StreamTypeEnum.RECORDING and stream.file_path:
+                                print(str(stream.file_path))
+                                # If we never get to write the file, remove it
+                                os.remove(stream.file_path)
+                                stream.file_path = None
+                        
+
                     error_block.append(stderr_line)
                     self.logger.error(f"GStreamer Error: {line_stripped}")
                     self.stop()

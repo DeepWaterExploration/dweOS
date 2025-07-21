@@ -2,7 +2,7 @@ from functools import lru_cache
 import os
 import subprocess
 import threading
-
+import zipfile
 from pydantic import BaseModel
 
 class RecordingInfo(BaseModel):
@@ -64,6 +64,7 @@ class RecordingsService:
             if recording.path == recording_path:
                 return recording
         return None
+    
     def delete_recording(self, filename: str):
         recording_path = os.path.join(self.recordings_path, filename)
         if os.path.exists(recording_path):
@@ -72,3 +73,14 @@ class RecordingsService:
             return self.recordings
         return False
     
+
+    def zip_recordings(self):
+        self.get_recordings()  # Refresh the recordings list
+        if not self.recordings:
+            return None
+            
+        zip_filename = os.path.join(self.recordings_path, "recordings.zip")
+        with zipfile.ZipFile(zip_filename, 'w') as zipf:
+            for recording in self.recordings:
+                zipf.write(recording.path, arcname=recording.name + '.' + recording.format)
+        return zip_filename

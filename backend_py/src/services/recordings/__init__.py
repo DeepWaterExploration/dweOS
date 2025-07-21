@@ -80,6 +80,7 @@ class RecordingsService:
             return None
             
         zip_filename = os.path.join(self.recordings_path, "recordings.zip")
+        
         with zipfile.ZipFile(zip_filename, 'w') as zipf:
             for recording in self.recordings:
                 zipf.write(recording.path, arcname=recording.name + '.' + recording.format)

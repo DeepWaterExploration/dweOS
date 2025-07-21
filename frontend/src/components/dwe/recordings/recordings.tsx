@@ -1,9 +1,19 @@
 import { API_CLIENT } from "@/api";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableFooter, TableRow } from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table"
 import { components } from "@/schemas/dwe_os_2";
 import { useEffect, useState } from "react";
 type RecordingInfo = components["schemas"]["RecordingInfo"];
+
+const formatFileSize = (sizeInMB: number): string => {
+    if (sizeInMB >= 1024 * 1024) {
+        return `${(sizeInMB / (1024 * 1024)).toFixed(2)} TB`;
+    } else if (sizeInMB >= 1024) {
+        return `${(sizeInMB / 1024).toFixed(2)} GB`;
+    } else {
+        return `${sizeInMB.toFixed(2)} MB`;
+    }
+};
 
 const Recordings = () => {
     const hostAddress: string = window.location.hostname;
@@ -21,84 +31,90 @@ const Recordings = () => {
             .finally(() => setLoading(false));
     }, []);
     return (
-        <div className="flex">
-            {loading ? <div className="flex items-center justify-center h-full w-full">Loading...</div> : (
-                <Table>
-                    <TableRow>
-                        <TableCell className="text-left">Name</TableCell>
-                        <TableCell className="text-left">Format</TableCell>
-                        <TableCell className="text-left">Duration</TableCell>
-                        <TableCell className="text-left">Size</TableCell>
-                    </TableRow>
-                    <TableBody>
-                        {recordings.map((recording) => (
-                            <TableRow key={recording.name} onClick={() => setSelectedRecording(recording)}>
-                                <TableCell className="text-left">{recording.name}</TableCell>
-                                <TableCell className="text-left">{recording.format}</TableCell>
-                                <TableCell className="text-left">~{recording.duration}</TableCell>
-                                <TableCell className="text-left">{recording.size}</TableCell>
-                            </TableRow>
-                        ))}
+        <div className="relative">
+            <div className="flex pb-20">
+                {loading ? <div className="flex items-center justify-center h-full w-full">Loading...</div> : (
+                    <Table>
+                        <TableRow>
+                            <TableCell className="text-left">Name</TableCell>
+                            <TableCell className="text-left">Format</TableCell>
+                            <TableCell className="text-left">Size</TableCell>
+                        </TableRow>
+                        <TableBody>
+                            {recordings.map((recording) => (
+                                <TableRow key={recording.name} onClick={() => setSelectedRecording(recording)}>
+                                    <TableCell className="text-left">{recording.name}</TableCell>
+                                    <TableCell className="text-left">{recording.format}</TableCell>
+                                    <TableCell className="text-left">{formatFileSize(recording.size ? parseFloat(recording.size) : 0)}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                )}
+                {selectedRecording && (
+                    <div className="mt-4 w-[50%] p-4 rounded h-full">
+                        <h2 className="text-lg font-semibold">Selected Recording</h2>
+                        <p><strong>Name:</strong> {selectedRecording.name}</p>
+                        <p><strong>Format:</strong> {selectedRecording.format}</p>
+                        <p><strong>Duration:</strong> {selectedRecording.duration}</p>
+                        <p><strong>Size:</strong> {formatFileSize(selectedRecording.size ? parseFloat(selectedRecording.size) : 0)}</p>
 
-                    </TableBody>
-                    {recordings.length !== 0 && (
-                        <TableFooter>
-                            <TableRow>
-                                <TableCell colSpan={4} className="text-center">
-                                    Video durations are an estimate and may not be accurate.
-                                </TableCell>
-                            </TableRow>
-
-                        </TableFooter>
-                    )}
-                </Table>
-            )}
-            {selectedRecording && (
-                <div className="mt-4 w-[50%] p-4 rounded h-full">
-                    <h2 className="text-lg font-semibold">Selected Recording</h2>
-                    <p><strong>Name:</strong> {selectedRecording.name}</p>
-                    <p><strong>Format:</strong> {selectedRecording.format}</p>
-                    <p><strong>Duration:</strong> {selectedRecording.duration}</p>
-                    <p><strong>Size:</strong> {selectedRecording.size}</p>
-
-                    {selectedRecording.format === "mp4" ?
-                        <video
-                            key={`${selectedRecording.name}.${selectedRecording.format}`}
-                            controls
-                            className="w-full h-64 mt-4"
+                        {selectedRecording.format === "mp4" ?
+                            <video
+                                key={`${selectedRecording.name}.${selectedRecording.format}`}
+                                controls
+                                className="w-full h-64 mt-4"
+                            >
+                                <source src={`${baseUrl}/recordings/${selectedRecording.name}.${selectedRecording.format}`} type="video/mp4" />
+                                Your browser does not support the video tag.
+                            </video> : <div className="w-full h-64 mt-4 bg-gray color-red-900 flex items-center justify-center flex-col flex-wrap">
+                                <p className="color-red-900">.{selectedRecording.format} is not supported in the browser video player.<br />Use the download button to download the file and play it in a compatible player.</p>
+                            </div>
+                        }
+                        <Button
+                            variant="outline"
+                            className="mt-4"
+                            asChild
                         >
-                            <source src={`${baseUrl}/recordings/${selectedRecording.name}.${selectedRecording.format}`} type="video/mp4" />
-                            Your browser does not support the video tag.
-                        </video> : <div className="w-full h-64 mt-4 bg-gray color-red-900 flex items-center justify-center flex-col flex-wrap">
-                            <p className="color-red-900">.{selectedRecording.format} is not supported in the browser video player.<br />Use the download button to download the file and play it in a compatible player.</p>
-                        </div>
-                    }
+                            <a href={`${baseUrl}/recordings/${selectedRecording.name}.${selectedRecording.format}?download=true`} download>
+                                Download
+                            </a>
+                        </Button>
+                        <Button
+                            variant="outline"
+                            className="mt-4 ml-2 text-red-500 border-red-500"
+                            onClick={async () => {
+                                // @ts-ignore-next-line
+                                const new_recordings = (await API_CLIENT.DELETE(`/recordings/${selectedRecording.name}.${selectedRecording.format}`, {})).data! as RecordingInfo[];
+                                setRecordings(new_recordings);
+                                setSelectedRecording(null);
+                            }}
+                        >
+                            Delete
+                        </Button>
+                    </div>
+                )}
+            </div>
+
+            {/* Sticky footer at bottom of viewport */}
+            <div className="fixed bottom-0 left-0 right-0 border-t bg-black border-gray-200 p-4 shadow-lg z-10">
+                <div className="flex justify-between items-center max-w-full">
                     <Button
                         variant="outline"
-                        className="mt-4"
                         asChild
                     >
-                        <a href={`${baseUrl}/recordings/${selectedRecording.name}.${selectedRecording.format}?download=true`} download>
-                            Download
+                        <a href={`${baseUrl}/recording/zip`} download>
+                            Download All as ZIP
                         </a>
                     </Button>
-                    <Button
-                        variant="outline"
-                        className="mt-4 ml-2 text-red-500 border-red-500"
-                        onClick={async () => {
-                            // @ts-ignore-next-line
-                            const new_recordings = (await API_CLIENT.DELETE(`/recordings/${selectedRecording.name}.${selectedRecording.format}`, {})).data! as RecordingInfo[];
-                            setRecordings(new_recordings);
-                            setSelectedRecording(null);
-                        }}
-                    >
-                        Delete
-                    </Button>
+                    <div className="flex gap-6">
+                        <span>Total Recordings: {recordings.length}</span>
+                        <span>Total Size: {formatFileSize(recordings.reduce((acc, rec) => acc + (rec.size ? parseFloat(rec.size) : 0), 0))}</span>
+                    </div>
                 </div>
 
-            )
-            }
-        </div >
+            </div>
+        </div>
     );
 };
 

@@ -1,7 +1,6 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, HTTPException
 from fastapi.responses import FileResponse
 from typing import List
-import os
 from ..services import RecordingsService, RecordingInfo
 
 recordings_router = APIRouter(tags=['recordings'])
@@ -12,13 +11,13 @@ def get_recordings(request: Request) -> List[RecordingInfo]:
 
     return recordings_service.get_recordings()
 @recordings_router.get('/recordings/{recording_path}', summary='Get a specific recording')
-def get_recording(request: Request, recording_path: str) -> RecordingInfo:
+def get_recording(request: Request, recording_path: str):
 
     recordings_service: RecordingsService = request.app.state.recordings_service
 
     recording_info = recordings_service.get_recording(recording_path)
     if not recording_info:
-        return {"error": "Recording not found"}
+        raise HTTPException(status_code=404, detail="Recording not found")
     
     headers = {}
     if request.query_params.get('download', 'false').lower() == 'true':
@@ -31,6 +30,17 @@ def delete_recording(request: Request, recording_path: str):
 
     response = recordings_service.delete_recording(recording_path)
     if response == False:
-        return {"error": "Recording not found or could not be deleted"}
+        raise HTTPException(status_code=404, detail="Recording not found or could not be deleted")
 
-    return response
+    return {"message": "Recording deleted successfully"}
+
+@recordings_router.get('/recording/zip', summary='Download all recordings as a zip file')
+def zip_recordings(request: Request):
+    recordings_service: RecordingsService = request.app.state.recordings_service
+
+    zip_file_path = recordings_service.zip_recordings()
+    if not zip_file_path:
+        raise HTTPException(status_code=404, detail="No recordings to zip")
+
+    resp = FileResponse(zip_file_path, media_type='application/zip', filename='recordings.zip', headers={"Content-Disposition": "attachment; filename=recordings.zip"})
+    return resp

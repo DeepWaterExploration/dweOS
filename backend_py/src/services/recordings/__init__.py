@@ -1,4 +1,5 @@
 from functools import lru_cache
+import json
 import os
 import subprocess
 import threading
@@ -43,13 +44,24 @@ class RecordingsService:
     def _get_duration(self, file_path: str) -> str:
         try:
             result = subprocess.run(
-                ['exiftool', '-Duration', '-s3', file_path],
+                ['exiftool', '-json', file_path],
                 capture_output=True,
                 text=True
             )
             output = result.stdout.strip()
-            if ":" in output or "s" in output:
-                return output
+            if output:
+                data = json.loads(output)
+                if file_path.endswith('.mp4'):
+                    return data[0].get('Duration', '00:00:00')
+                totalFrameCount = data[0].get('TotalFrameCount', 0)
+                frameRate = data[0].get('FrameRate', 0)
+                if frameRate > 0:
+                    duration = totalFrameCount / frameRate
+                    hours = int(duration // 3600)
+                    minutes = int((duration % 3600) // 60)
+                    seconds = int(duration % 60)
+                    return f"{hours:02}:{minutes:02}:{seconds:02}"
+            return "00:00:00"
         except Exception as e:
             print(f"Error getting duration: {e}")
         return "Unknown"

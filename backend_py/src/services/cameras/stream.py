@@ -208,6 +208,11 @@ class StreamRunner(events.EventEmitter):
 
                 # Log all stderr output but only stop on actual errors
                 if any(error_keyword in line_stripped.lower() for error_keyword in ['error', 'failed', 'critical']):
+                    # Ignore known non-critical DMA warnings that don't affect functionality
+                    if "_dma_fmt_to_dma_drm_fmts: assertion 'fmt != GST_VIDEO_FORMAT_UNKNOWN' failed" in line_stripped:
+                        self.logger.warning(f"GStreamer DMA Warning (non-critical): {line_stripped}")
+                        continue
+                        
                     if "Failed to allocate required memory" in line_stripped and any(
                         stream.stream_type == StreamTypeEnum.RECORDING for stream in self.streams
                     ):

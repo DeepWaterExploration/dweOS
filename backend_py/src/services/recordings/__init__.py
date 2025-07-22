@@ -12,6 +12,7 @@ class RecordingInfo(BaseModel):
     format: str
     duration: str
     size: str
+    created: str
 
 class RecordingsService:
     def __init__(self):
@@ -34,12 +35,15 @@ class RecordingsService:
                     name=filename.split('.')[0],
                     format=filename.split('.')[-1],
                     duration=self._get_duration(file_path),
+                    created=self._epoch_to_readable(file_stat.st_ctime),
                     size=f"{file_stat.st_size / (1024 * 1024):.2f} MB"
                 )
                 self.recordings.append(recording_info)
 
         return self.recordings
-    
+    def _epoch_to_readable(self, epoch: float) -> str:
+        from datetime import datetime
+        return datetime.fromtimestamp(epoch).strftime('%Y-%m-%d %H:%M:%S')
     @lru_cache(maxsize=10000)
     def _get_duration(self, file_path: str) -> str:
         try:

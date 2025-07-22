@@ -102,6 +102,10 @@ class DeviceManager(events.EventEmitter):
         """
         Helper function to append a gst error
         """
+        self.sio.emit("gst_error", {
+            "errors": self.gst_errors,
+            "bus_info": device.bus_info
+        })
         device.stream.enabled = False
         self.gst_errors.append(device.bus_info)
 
@@ -137,10 +141,11 @@ class DeviceManager(events.EventEmitter):
         height: int = stream_format.height
         interval = stream_format.interval
         encode_type: StreamEncodeTypeEnum = stream_info.encode_type
+        stream_type: StreamTypeEnum = stream_info.stream_type
         endpoints = stream_info.endpoints
 
         device.configure_stream(
-            encode_type, width, height, interval, StreamTypeEnum.UDP, endpoints
+            encode_type, width, height, interval, stream_type, endpoints
         )
 
         if stream_info.enabled:

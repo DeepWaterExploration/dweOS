@@ -7,7 +7,7 @@
 import { ITerminalAddon, Terminal } from '@xterm/xterm';
 
 export class OverlayAddon implements ITerminalAddon {
-    private terminal: Terminal;
+    private terminal!: Terminal;
     private overlayNode: HTMLElement;
     private overlayTimeout?: number;
 
@@ -39,7 +39,7 @@ position: absolute;
         this.showOverlay = this.showOverlay.bind(this);
     }
 
-    dispose(): void {}
+    dispose(): void { }
 
     showOverlay(msg: string, timeout?: number): void {
         const { terminal, overlayNode } = this;

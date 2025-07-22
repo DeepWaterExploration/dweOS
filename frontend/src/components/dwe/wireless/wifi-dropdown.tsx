@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Wifi, WifiOff, Check, Lock } from "lucide-react";
 import {
   DropdownMenu,
@@ -25,7 +25,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 
-export function WifiSelector() {
+export function WifiDropdown() {
   const { toast } = useToast();
   const { connected, socket } = useContext(WebsocketContext)!;
 
@@ -123,13 +123,7 @@ export function WifiSelector() {
     setPasswordDialogOpen(false);
   };
 
-  const closePasswordDialog = useCallback(() => {
-    console.log("closing");
-    setPasswordDialogOpen(false);
-    setSelectedNetwork(null);
-    setPassword(undefined);
-    setIsConnecting(false); // Ensure connecting state is reset
-  }, []); // No dependencies needed
+
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -175,7 +169,6 @@ export function WifiSelector() {
 
                 .sort((a, b) => {
                   const connectedId = wifiStatus?.connection?.id;
-                  console.log(connectedId);
 
                   if (a.ssid === connectedId) return -1; // a is connected, put first
                   if (b.ssid === connectedId) return 1; // b is connected, put first
@@ -274,7 +267,6 @@ interface SignalStrengthProps {
 function SignalStrength({ strength }: SignalStrengthProps) {
   const thresholds = [20, 50, 70];
 
-  const h_values = ["h-[0.25rem]", "h-2", "h-3", "h-4"];
 
   return (
     <div className="flex h-4 items-end gap-[2px]">

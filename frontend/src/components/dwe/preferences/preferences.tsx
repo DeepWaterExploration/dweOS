@@ -2,13 +2,10 @@ import { API_CLIENT } from "@/api";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -77,7 +74,7 @@ const PreferencesLayout = () => {
   const updateHost = async () => {
     setHost(
       (await API_CLIENT.GET("/preferences/get_recommended_host")).data![
-        "host"
+      "host"
       ] as string
     );
   };

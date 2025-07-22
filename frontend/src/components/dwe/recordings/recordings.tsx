@@ -2,7 +2,7 @@ import { API_CLIENT } from "@/api";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table"
 import { components } from "@/schemas/dwe_os_2";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 type RecordingInfo = components["schemas"]["RecordingInfo"];
 
 const formatFileSize = (sizeInMB: number): string => {
@@ -23,6 +23,30 @@ const Recordings = () => {
     const [selectedRecording, setSelectedRecording] = useState<RecordingInfo | null>(null);
 
     const [loading, setLoading] = useState<boolean>(true);
+
+    const [showMenu, setShowMenu] = useState(false);
+    const [xPos, setXPos] = useState(0);
+    const [yPos, setYPos] = useState(0);
+    const [rightClickedRecording, setRightClickedRecording] = useState<RecordingInfo | null>(null);
+    const menuRef = useRef<HTMLDivElement | null>(null);
+
+    const handleContextMenu = (selected: RecordingInfo, event: React.MouseEvent<HTMLTableRowElement>) => {
+        event.preventDefault();
+
+        // Get the bounding rect of the container
+        const container = event.currentTarget.closest('.relative') as HTMLElement;
+        const containerRect = container?.getBoundingClientRect() || { left: 0, top: 0 };
+
+        // Calculate position relative to the container
+        const relativeX = event.clientX - containerRect.left;
+        const relativeY = event.clientY - containerRect.top;
+
+        // Set position with some offset to avoid covering the cursor
+        setXPos(relativeX + 5);
+        setYPos(relativeY + 5);
+        setShowMenu(true);
+        setRightClickedRecording(selected);
+    };
     useEffect(() => {
         // Fetch recordings data from the backend
         API_CLIENT.GET("/recordings")
@@ -32,9 +56,56 @@ const Recordings = () => {
     }, []);
     return (
         <div className="relative">
+
             <div className="flex pb-20">
                 {loading ? <div className="flex items-center justify-center h-full w-full">Loading...</div> : (
                     <Table>
+                        {showMenu && (
+
+                            <div
+                                style={{ left: xPos, top: yPos }}
+                                className={`absolute bg-background border border-gray-300 p-2 rounded shadow-lg z-50`}
+                                ref={menuRef}
+                            >
+                                <p className="px-4 pt-2 pb-4">{rightClickedRecording?.name}.{rightClickedRecording?.format}</p>
+
+                                <div
+                                    className="px-4 py-2 hover:bg-muted cursor-pointer rounded"
+                                    onClick={() => {
+                                        const newName = prompt(`Enter new name for "${rightClickedRecording?.name}":`, rightClickedRecording?.name);
+                                        if (newName && newName.trim() && rightClickedRecording) {
+                                            // @ts-ignore-next-line
+                                            API_CLIENT.PATCH(`/recordings/${rightClickedRecording.name}.${rightClickedRecording.format}/${newName.trim()}.${rightClickedRecording.format}`, {})
+                                                .then((newRecs) => {
+                                                    setRecordings(newRecs.data! as RecordingInfo[]);
+                                                    setShowMenu(false);
+                                                })
+                                                .catch(error => console.error('Error renaming recording:', error));
+                                        } else {
+                                            setShowMenu(false);
+                                        }
+                                    }}
+                                >
+                                    Rename
+                                </div>
+                                <div
+                                    className="px-4 py-2 hover:bg-muted cursor-pointer text-red-500 rounded"
+                                    onClick={() => {
+                                        if (rightClickedRecording) {
+                                            // @ts-ignore-next-line
+                                            API_CLIENT.DELETE(`/recordings/${rightClickedRecording.name}.${rightClickedRecording.format}`, {})
+                                                .then((newRecs) => {
+                                                    setRecordings(newRecs.data! as RecordingInfo[]);
+                                                    setShowMenu(false);
+                                                })
+                                                .catch(error => console.error('Error deleting recording:', error));
+                                        }
+                                    }}
+                                >
+                                    Delete
+                                </div>
+                            </div>
+                        )}
                         <TableRow>
                             <TableCell className="text-left">Name</TableCell>
                             <TableCell className="text-left">Format</TableCell>
@@ -43,7 +114,7 @@ const Recordings = () => {
                         </TableRow>
                         <TableBody>
                             {recordings.map((recording) => (
-                                <TableRow key={recording.name} onClick={() => setSelectedRecording(recording)}>
+                                <TableRow key={recording.name} onClick={() => setSelectedRecording(recording)} onContextMenu={(e) => handleContextMenu(recording, e)}>
                                     <TableCell className="text-left">{recording.name}</TableCell>
                                     <TableCell className="text-left">{recording.format}</TableCell>
                                     <TableCell className="text-left">{recording.duration}</TableCell>

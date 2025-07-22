@@ -802,6 +802,8 @@ export interface components {
             duration: string;
             /** Size */
             size: string;
+            /** Created */
+            created: string;
         };
         /** SavedPreferencesModel */
         SavedPreferencesModel: {

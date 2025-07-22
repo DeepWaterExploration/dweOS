@@ -108,17 +108,17 @@ const Recordings = () => {
                         )}
                         <TableRow>
                             <TableCell className="text-left">Name</TableCell>
-                            <TableCell className="text-left">Format</TableCell>
-                            <TableCell className="text-left">Duration</TableCell>
-                            <TableCell className="text-left">Size</TableCell>
+                            <TableCell className="text-left w-40">Created</TableCell>
+                            <TableCell className="text-left w-24">Duration</TableCell>
+                            <TableCell className="text-left w-24">Size</TableCell>
                         </TableRow>
                         <TableBody>
                             {recordings.map((recording) => (
                                 <TableRow key={recording.name} onClick={() => setSelectedRecording(recording)} onContextMenu={(e) => handleContextMenu(recording, e)}>
-                                    <TableCell className="text-left">{recording.name}</TableCell>
-                                    <TableCell className="text-left">{recording.format}</TableCell>
-                                    <TableCell className="text-left">{recording.duration}</TableCell>
-                                    <TableCell className="text-left">{formatFileSize(recording.size ? parseFloat(recording.size) : 0)}</TableCell>
+                                    <TableCell className="text-left">{recording.name}.{recording.format}</TableCell>
+                                    <TableCell className="text-left w-40">{recording.created}</TableCell>
+                                    <TableCell className="text-left w-24">{recording.duration}</TableCell>
+                                    <TableCell className="text-left w-24">{formatFileSize(recording.size ? parseFloat(recording.size) : 0)}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>

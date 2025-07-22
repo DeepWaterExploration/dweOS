@@ -82,6 +82,20 @@ class RecordingsService:
             return self.recordings
         return False
     
+    def rename_recording(self, old_name: str, new_name: str):
+        old_path = os.path.join(self.recordings_path, old_name)
+        new_path = os.path.join(self.recordings_path, new_name)
+        
+        if os.path.exists(old_path):
+            os.rename(old_path, new_path)
+            for recording in self.recordings:
+                if recording.path == old_path:
+                    recording.name = new_name.split('.')[0]
+                    recording.path = new_path
+                    recording.format = new_name.split('.')[-1]
+            return self.recordings
+        return False
+    
 
     def zip_recordings(self):
         self.get_recordings()  # Refresh the recordings list

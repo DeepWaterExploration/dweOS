@@ -32,8 +32,16 @@ def delete_recording(request: Request, recording_path: str):
     if response == False:
         raise HTTPException(status_code=404, detail="Recording not found or could not be deleted")
 
-    return {"message": "Recording deleted successfully"}
+    return response
+@recordings_router.patch('/recordings/{old_name}/{new_name}', summary='Rename a recording')
+def rename_recording(request: Request, old_name: str, new_name: str):
+    recordings_service: RecordingsService = request.app.state.recordings_service
 
+    response = recordings_service.rename_recording(old_name, new_name)
+    if response == False:
+        raise HTTPException(status_code=404, detail="Recording not found or could not be renamed")
+
+    return response
 @recordings_router.get('/recording/zip', summary='Download all recordings as a zip file')
 def zip_recordings(request: Request):
     recordings_service: RecordingsService = request.app.state.recordings_service

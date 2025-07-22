@@ -498,7 +498,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/recordings/zip": {
+    "/recordings/{old_name}/{new_name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Rename a recording */
+        patch: operations["rename_recording_recordings__old_name___new_name__patch"];
+        trace?: never;
+    };
+    "/recording/zip": {
         parameters: {
             query?: never;
             header?: never;
@@ -506,7 +523,7 @@ export interface paths {
             cookie?: never;
         };
         /** Download all recordings as a zip file */
-        get: operations["zip_recordings_recordings_zip_get"];
+        get: operations["zip_recordings_recording_zip_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1643,7 +1660,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RecordingInfo"];
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
@@ -1688,7 +1705,39 @@ export interface operations {
             };
         };
     };
-    zip_recordings_recordings_zip_get: {
+    rename_recording_recordings__old_name___new_name__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                old_name: string;
+                new_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    zip_recordings_recording_zip_get: {
         parameters: {
             query?: never;
             header?: never;

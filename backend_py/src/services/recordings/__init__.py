@@ -32,7 +32,7 @@ class RecordingsService:
                     path=file_path,
                     name=filename.split('.')[0],
                     format=filename.split('.')[-1],
-                    duration=self._get_duration(file_stat.st_size),
+                    duration=self._get_duration(file_path),
                     size=f"{file_stat.st_size / (1024 * 1024):.2f} MB"
                 )
                 self.recordings.append(recording_info)
@@ -40,23 +40,20 @@ class RecordingsService:
         return self.recordings
     
     @lru_cache(maxsize=10000)
-    def _get_duration(self, size: int) -> str:
-        # Estimate duration based on file size and a rough average bitrate
-        average_bitrate = 5 * 1024 * 1024  # 5 MB
-        # Convert size to seconds
-        duration_seconds = size / average_bitrate
-        if duration_seconds < 60:
-            return f"00:00:{int(duration_seconds):02d}"
-        elif duration_seconds < 3600:
-            minutes = int(duration_seconds // 60)
-            seconds = int(duration_seconds % 60)
-            return f"00:{minutes:02d}:{seconds:02d}"
-        else:
-            hours = int(duration_seconds // 3600)
-            minutes = int((duration_seconds % 3600) // 60)
-            seconds = int(duration_seconds % 60)
-            return f"{hours}:{minutes:02d}:{seconds:02d}"
-        
+    def _get_duration(self, file_path: str) -> str:
+        try:
+            result = subprocess.run(
+                ['exiftool', '-Duration', '-s3', file_path],
+                capture_output=True,
+                text=True
+            )
+            output = result.stdout.strip()
+            if ":" in output or "s" in output:
+                return output
+        except Exception as e:
+            print(f"Error getting duration: {e}")
+        return "Unknown"
+
     def get_recording(self, filename: str) -> RecordingInfo | None:
         self.get_recordings()
         recording_path = os.path.join(self.recordings_path, filename)

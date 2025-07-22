@@ -38,6 +38,7 @@ const Recordings = () => {
                         <TableRow>
                             <TableCell className="text-left">Name</TableCell>
                             <TableCell className="text-left">Format</TableCell>
+                            <TableCell className="text-left">Duration</TableCell>
                             <TableCell className="text-left">Size</TableCell>
                         </TableRow>
                         <TableBody>
@@ -45,6 +46,7 @@ const Recordings = () => {
                                 <TableRow key={recording.name} onClick={() => setSelectedRecording(recording)}>
                                     <TableCell className="text-left">{recording.name}</TableCell>
                                     <TableCell className="text-left">{recording.format}</TableCell>
+                                    <TableCell className="text-left">{recording.duration}</TableCell>
                                     <TableCell className="text-left">{formatFileSize(recording.size ? parseFloat(recording.size) : 0)}</TableCell>
                                 </TableRow>
                             ))}
@@ -68,7 +70,7 @@ const Recordings = () => {
                                 <source src={`${baseUrl}/recordings/${selectedRecording.name}.${selectedRecording.format}`} type="video/mp4" />
                                 Your browser does not support the video tag.
                             </video> : <div className="w-full h-64 mt-4 bg-gray color-red-900 flex items-center justify-center flex-col flex-wrap">
-                                <p className="color-red-900">.{selectedRecording.format} is not supported in the browser video player.<br />Use the download button to download the file and play it in a compatible player.</p>
+                                <p className="color-red-900">.{selectedRecording.format} is not supported in the browser video player.<br />Use the download button to download the file and play it in a compatible player like VLC.</p>
                             </div>
                         }
                         <Button

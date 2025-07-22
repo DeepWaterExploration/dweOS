@@ -8,6 +8,7 @@ from ..services import (
     Connection,
     IPConfiguration,
     NetworkPriorityInformation,
+    ConnectionResultModel
 )
 
 wifi_router = APIRouter(tags=["wifi"])
@@ -23,7 +24,21 @@ def wifi_status(request: Request) -> Status:
 @wifi_router.get("/wifi/access_points", summary="Get the scanned access points")
 def access_points(request: Request) -> List[AccessPoint]:
     wifi_manager: AsyncNetworkManager = request.app.state.wifi_manager
-    return wifi_manager.get_access_points()
+    aps = wifi_manager.get_access_points()
+
+    ap_list = []
+    for ap in aps:
+        try:
+            requires_password = wifi_manager._requires_password(ap)
+            ap_list.append({
+                "ssid": ap.ssid,
+                "strength": ap.strength,
+                "requires_password": requires_password
+            })
+        except Exception as e:
+            #Network is no longer available, ignore it
+            continue
+    return ap_list
 
 
 @wifi_router.get("/wifi/connections", summary="Get the known WiFi connections list")
@@ -33,11 +48,11 @@ def list_wifi_connections(request: Request) -> List[Connection]:
 
 
 @wifi_router.post("/wifi/connect", summary="Connect to a network")
-async def connect(request: Request, network_config: NetworkConfig):
+async def connect(request: Request, network_config: NetworkConfig) -> ConnectionResultModel:
     wifi_manager: AsyncNetworkManager = request.app.state.wifi_manager
     result = await wifi_manager.connect(network_config.ssid, network_config.password)
 
-    return {"result": result}
+    return ConnectionResultModel(result=result)
 
 
 @wifi_router.post("/wifi/disconnect", summary="Disconnect from the connected network")
@@ -50,3 +65,12 @@ async def disconnect(request: Request):
 async def forget(request: Request, network_config: NetworkConfig):
     wifi_manager: AsyncNetworkManager = request.app.state.wifi_manager
     return {"status": await wifi_manager.forget(network_config.ssid)}
+
+@wifi_router.post("/wifi/off", summary="Turn off WiFi")
+async def wifi_off(request: Request):
+    wifi_manager: AsyncNetworkManager = request.app.state.wifi_manager
+    return {"status": await wifi_manager.turn_off_wifi()}
+@wifi_router.post("/wifi/on", summary="Turn on WiFi")
+async def wifi_on(request: Request):
+    wifi_manager: AsyncNetworkManager = request.app.state.wifi_manager
+    return {"status": await wifi_manager.turn_on_wifi()}

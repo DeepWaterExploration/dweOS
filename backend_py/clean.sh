@@ -9,3 +9,6 @@ find . -type d -name "__pycache__" -exec rm -rf {} +
 # Remove the device_settings.json file if it exists
 rm -f device_settings.json || true
 rm -f server_preferences.json || true
+
+find . -type f -name "*.log.*" -exec rm {} +
+find . -type f -name "*.log" -exec rm {} +

@@ -42,7 +42,7 @@ def lookup_pid_vid(vid: int, pid: int) -> Tuple[str, DeviceType]:
         dev = PID_VIDS[name]
         if dev["VID"] == vid and dev["PID"] == pid:
             return (name, dev["device_type"])
-    return None
+    return (None, None)
 
 
 class Camera:
@@ -239,6 +239,9 @@ class Device(events.EventEmitter):
         for device_path in device_info.device_paths:
             self.cameras.append(Camera(device_path))
 
+        self.logger = logging.getLogger("dwe_os_2.cameras.Device")
+        self.logger.setLevel(logging.DEBUG)
+
         self.device_info = device_info
         self.vid = device_info.vid
         self.pid = device_info.pid
@@ -246,9 +249,7 @@ class Device(events.EventEmitter):
         if self.name is not None:
             self.manufacturer = "DeepWater Exploration Inc."
         else:
-            logging.error(
-                "VID/PID not found. Code should not reach here, but will still work."
-            )
+            # Device is not DWE
             return
         self.bus_info = device_info.bus_info
         self.nickname = ""
@@ -274,14 +275,12 @@ class Device(events.EventEmitter):
                     )
                     break
 
-        self.v4l2_device = device.Device(self.cameras[0].path)  # for control purposes
+        self.v4l2_device = device.Device(
+            self.cameras[0].path)  # for control purposes
         self.v4l2_device.open()
 
         # This must be configured by the implementing class
         self._options: Dict[str, BaseOption] = self._get_options()
-
-        # Options dict
-        # self.options = {}
 
         # list the controls and store them
         self.controls = []
@@ -298,7 +297,8 @@ class Device(events.EventEmitter):
         self.controls: List[ControlModel] = []
 
         for ctrl in self.v4l2_device.controls.values():
-            control_type = ControlTypeEnum(ctrl.type)
+            internal_enum = V4LControlTypeEnum(ctrl.type)
+            control_type = ControlTypeEnum(internal_enum.name)
 
             max_value = 0
             min_value = 0
@@ -357,7 +357,7 @@ class Device(events.EventEmitter):
         stream_type: StreamTypeEnum,
         stream_endpoints: List[StreamEndpointModel] = [],
     ):
-        logging.info(self._fmt_log("Configuring stream"))
+        self.logger.info(self._fmt_log("Configuring stream"))
 
         camera: Camera = None
         match encode_type:
@@ -371,7 +371,7 @@ class Device(events.EventEmitter):
                 pass
 
         if not camera:
-            logging.warn(
+            self.logger.warning(
                 "Attempting to select incompatible encoding type. This is undefined behavior."
             )
             return
@@ -383,7 +383,6 @@ class Device(events.EventEmitter):
         self.stream.endpoints = stream_endpoints
         self.stream.encode_type = encode_type
         self.stream.stream_type = stream_type
-        self.stream.configured = True
 
     def add_control_from_option(
         self,
@@ -414,16 +413,21 @@ class Device(events.EventEmitter):
             )
             self._id_counter += 1
         except AttributeError:
-            logging.error(
+            self.logger.error(
                 f"Unknown attribute: {self.__class__.__name__}._options[{option_name}]"
             )
-            logging.error("Failed to add option to controls list.")
+            self.logger.error("Failed to add option to controls list.")
 
     def start_stream(self):
+        self.stream.enabled = True
         self.stream_runner.start()
 
+    def stop_stream(self):
+        self.stream.enabled = False
+        self.stream_runner.stop()
+
     def load_settings(self, saved_device: SavedDeviceModel):
-        logging.info(self._fmt_log("Loading device settings"))
+        self.logger.info(self._fmt_log("Loading device settings"))
 
         for control in saved_device.controls:
             try:
@@ -439,16 +443,14 @@ class Device(events.EventEmitter):
             saved_device.stream.stream_type,
             saved_device.stream.endpoints,
         )
-        self.stream.configured = saved_device.stream.configured
+        self.stream.enabled = saved_device.stream.enabled
         self.nickname = saved_device.nickname
-        if self.stream.configured:
+        if self.stream.enabled:
             self.start_stream()
 
     def unconfigure_stream(self):
-        self.stream.configured = False
         self.stream_runner.stop()
-
-        logging.info(self._fmt_log(f"Stream stopped"))
+        self.logger.info(self._fmt_log(f"Stream stopped"))
 
     def get_pu(self, control_id: int):
         control = self.v4l2_device.controls[control_id]
@@ -467,14 +469,20 @@ class Device(events.EventEmitter):
             return  # in case the id does not exist in controls
 
         control = self.v4l2_device.controls[control_id]
-        logging.debug(self._fmt_log(f"Setting UVC control - {control.name} to {value}"))
+        self.logger.debug(
+            self._fmt_log(f"Setting UVC control - {control.name} to {value}")
+        )
         try:
             control.value = value
         except (AttributeError, PermissionError) as e:
-            logging.debug(f"Error setting control value: {e.strerror}")
+            self.logger.debug(f"Error setting control value: {e.strerror}")
+            return False
         for ctrl in self.controls:
             if ctrl.control_id == control_id:
                 ctrl.value = value
+                break
+
+        return True
 
     # get an option
     def get_option(self, opt: str) -> Any:
@@ -484,7 +492,7 @@ class Device(events.EventEmitter):
 
     # set an option
     def set_option(self, opt: str, value: Any):
-        logging.debug(self._fmt_log(f"Setting option - {opt} to {value}"))
+        self.logger.debug(self._fmt_log(f"Setting option - {opt} to {value}"))
         if opt in self._options:
             return self._options[opt].set_value(value)
         return None

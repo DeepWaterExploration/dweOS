@@ -56,7 +56,11 @@ class RecordingsService:
             if output:
                 data = json.loads(output)
                 if file_path.endswith('.mp4'):
-                    return data[0].get('Duration', '00:00:00')
+                    duration = data[0].get('Duration', '00:00:00')
+                    if "s" in duration:
+                        duration = float(duration.replace(" s", ""))
+                        return f"00:00:{round(duration):02}"
+                    return duration
                 totalFrameCount = data[0].get('TotalFrameCount', 0)
                 frameRate = data[0].get('FrameRate', 0)
                 if frameRate > 0:
@@ -64,7 +68,7 @@ class RecordingsService:
                     hours = int(duration // 3600)
                     minutes = int((duration % 3600) // 60)
                     seconds = int(duration % 60)
-                    return f"{hours:02}:{minutes:02}:{seconds:02}"
+                    return f"{hours:02}:{minutes:02}:{seconds:02d}"
             return "00:00:00"
         except Exception as e:
             print(f"Error getting duration: {e}")

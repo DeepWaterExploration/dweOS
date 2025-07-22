@@ -22,6 +22,39 @@ const Recordings = () => {
     const [recordings, setRecordings] = useState<RecordingInfo[]>([]);
     const [selectedRecording, setSelectedRecording] = useState<RecordingInfo | null>(null);
 
+    const [sortColumn, setSortColumn] = useState<keyof RecordingInfo | null>(null);
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null);
+
+    const sortRecordings = () => {
+        var modifier = (x: any) => x;
+        if (sortColumn === 'size') {
+            modifier = (x: string) => parseFloat(x);
+        }
+        if (sortColumn) {
+            const sorted = [...recordings].sort((a, b) => {
+                if (sortDirection === 'asc') {
+                    return modifier(a[sortColumn]) > modifier(b[sortColumn]) ? 1 : -1;
+                } else {
+                    return modifier(a[sortColumn]) < modifier(b[sortColumn]) ? 1 : -1;
+                }
+            });
+            setRecordings(sorted);
+        }
+    };
+
+    useEffect(() => {
+        sortRecordings();
+    }, [sortColumn, sortDirection]);
+
+    const handleSort = (column: keyof RecordingInfo) => {
+        if (sortColumn === column) {
+            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortColumn(column);
+            setSortDirection('asc');
+        }
+    };
+
     const [loading, setLoading] = useState<boolean>(true);
 
     const [showMenu, setShowMenu] = useState(false);
@@ -51,6 +84,7 @@ const Recordings = () => {
         // Fetch recordings data from the backend
         API_CLIENT.GET("/recordings")
             .then(data => setRecordings(data.data!))
+            .then(() => { sortRecordings(); })
             .catch(error => console.error('Error fetching recordings:', error))
             .finally(() => setLoading(false));
     }, []);
@@ -107,14 +141,24 @@ const Recordings = () => {
                             </div>
                         )}
                         <TableRow>
-                            <TableCell className="text-left">Name</TableCell>
-                            <TableCell className="text-left w-40">Created</TableCell>
-                            <TableCell className="text-left w-24">Duration</TableCell>
-                            <TableCell className="text-left w-24">Size</TableCell>
+                            <TableCell className="text-left" onClick={() => handleSort('name')}>Name&nbsp;&nbsp;{sortColumn === "name" && (sortDirection === "asc" ? "▲" : "▼")}</TableCell>
+                            <TableCell className="text-left w-40" onClick={() => handleSort('created')}>Created&nbsp;&nbsp;{sortColumn === "created" && (sortDirection === "asc" ? "▲" : "▼")}</TableCell>
+                            <TableCell className="text-left w-24" onClick={() => handleSort('duration')}>Duration&nbsp;&nbsp;{sortColumn === "duration" && (sortDirection === "asc" ? "▲" : "▼")}</TableCell>
+                            <TableCell className="text-left w-24" onClick={() => handleSort('size')}>Size&nbsp;&nbsp;{sortColumn === "size" && (sortDirection === "asc" ? "▲" : "▼")}</TableCell>
                         </TableRow>
                         <TableBody>
                             {recordings.map((recording) => (
-                                <TableRow key={recording.name} onClick={() => setSelectedRecording(recording)} onContextMenu={(e) => handleContextMenu(recording, e)}>
+                                <TableRow
+                                    key={recording.name}
+                                    onClick={() => {
+                                        if (selectedRecording === recording) {
+                                            setSelectedRecording(null)
+                                        } else {
+                                            setSelectedRecording(recording)
+                                        }
+                                    }}
+                                    onContextMenu={(e) => handleContextMenu(recording, e)}
+                                    className={selectedRecording === recording ? "bg-muted/50" : ""}>
                                     <TableCell className="text-left">{recording.name}.{recording.format}</TableCell>
                                     <TableCell className="text-left w-40">{recording.created}</TableCell>
                                     <TableCell className="text-left w-24">{recording.duration}</TableCell>
@@ -127,8 +171,9 @@ const Recordings = () => {
                 {selectedRecording && (
                     <div className="mt-4 w-[50%] p-4 rounded h-full">
                         <h2 className="text-lg font-semibold">Selected Recording</h2>
-                        <p><strong>Name:</strong> {selectedRecording.name}</p>
-                        <p><strong>Format:</strong> {selectedRecording.format}</p>
+                        <p><strong>Name:</strong> {selectedRecording.name}.{selectedRecording.format}</p>
+                        <p><strong>Format:</strong> {selectedRecording.format.toLocaleUpperCase().replace("MP4", "MPEG-4")}</p>
+                        <p><strong>Created:</strong> {selectedRecording.created}</p>
                         <p><strong>Duration:</strong> {selectedRecording.duration}</p>
                         <p><strong>Size:</strong> {formatFileSize(selectedRecording.size ? parseFloat(selectedRecording.size) : 0)}</p>
 
@@ -187,7 +232,7 @@ const Recordings = () => {
                 </div>
 
             </div>
-        </div>
+        </div >
     );
 };
 

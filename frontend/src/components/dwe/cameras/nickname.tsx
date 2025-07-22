@@ -28,7 +28,6 @@ export const CameraNickname = () => {
 
   const saveNickname = () => {
     const trimmedNickname = tempNickname.trim();
-    console.log(trimmedNickname);
     setNickname(trimmedNickname);
     setIsEditing(false);
 

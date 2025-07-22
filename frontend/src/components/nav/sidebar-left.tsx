@@ -7,15 +7,16 @@ import {
   SettingsIcon,
   LogsIcon,
   TerminalIcon,
+  VideoIcon,
 } from "lucide-react";
 
 import DWELogo from "@/assets/dwe-logo.svg";
 import DWELogoDark from "@/assets/dwe-logo-dark.svg";
 
-import { NavMain } from "@/components/nav-main";
+import { NavMain } from "@/components/nav/nav-main";
 import { Sidebar, SidebarHeader } from "@/components/ui/sidebar";
-import { Badge } from "./ui/badge";
-import { useTheme } from "./theme-provider";
+import { Badge } from "../ui/badge";
+import { useTheme } from "../themes/theme-provider";
 import WebsocketContext from "@/contexts/WebsocketContext";
 
 const data = {
@@ -35,6 +36,11 @@ const data = {
       title: "Cameras",
       url: "/cameras",
       icon: CameraIcon,
+    },
+    {
+      title: "Recordings",
+      url: "/recordings",
+      icon: VideoIcon,
     },
     {
       title: "Preferences",

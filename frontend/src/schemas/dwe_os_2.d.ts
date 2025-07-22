@@ -122,7 +122,7 @@ export interface paths {
         head?: never;
         patch?: never;
         trace?: never;
-    },
+    };
     "/wifi/on": {
         parameters: {
             query?: never;
@@ -463,6 +463,75 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/recordings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get all recordings */
+        get: operations["get_recordings_recordings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/recordings/{recording_path}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a specific recording */
+        get: operations["get_recording_recordings__recording_path__get"];
+        put?: never;
+        post?: never;
+        /** Delete a recording */
+        delete: operations["delete_recording_recordings__recording_path__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/recordings/{old_name}/{new_name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Rename a recording */
+        patch: operations["rename_recording_recordings__old_name___new_name__patch"];
+        trace?: never;
+    };
+    "/recording/zip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download all recordings as a zip file */
+        get: operations["zip_recordings_recording_zip_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/features": {
         parameters: {
             query?: never;
@@ -721,6 +790,21 @@ export interface components {
         NetworkPriorityInformation: {
             network_priority: components["schemas"]["NetworkPriority"];
         };
+        /** RecordingInfo */
+        RecordingInfo: {
+            /** Path */
+            path: string;
+            /** Name */
+            name: string;
+            /** Format */
+            format: string;
+            /** Duration */
+            duration: string;
+            /** Size */
+            size: string;
+            /** Created */
+            created: string;
+        };
         /** SavedPreferencesModel */
         SavedPreferencesModel: {
             /** @default {
@@ -787,6 +871,7 @@ export interface components {
         StreamInfoModel: {
             /** Bus Info */
             bus_info: string;
+            stream_type: components["schemas"]["StreamTypeEnum"];
             stream_format: components["schemas"]["StreamFormatModel"];
             encode_type: components["schemas"]["StreamEncodeTypeEnum"];
             /** Enabled */
@@ -814,7 +899,7 @@ export interface components {
          * StreamTypeEnum
          * @enum {string}
          */
-        StreamTypeEnum: "UDP";
+        StreamTypeEnum: "UDP" | "RECORDING";
         /** UVCControlModel */
         UVCControlModel: {
             /** Bus Info */
@@ -1003,7 +1088,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SimpleRequestStatusModel"];
+                    "application/json": unknown;
                 };
             };
         };
@@ -1023,7 +1108,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SimpleRequestStatusModel"];
+                    "application/json": unknown;
                 };
             };
         };
@@ -1536,6 +1621,140 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LogSchema"][];
+                };
+            };
+        };
+    };
+    get_recordings_recordings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordingInfo"][];
+                };
+            };
+        };
+    };
+    get_recording_recordings__recording_path__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recording_path: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_recording_recordings__recording_path__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recording_path: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rename_recording_recordings__old_name___new_name__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                old_name: string;
+                new_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    zip_recordings_recording_zip_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
         };

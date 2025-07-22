@@ -16,6 +16,7 @@ import {
 import DevicesContext from "@/contexts/DevicesContext";
 import { getDeviceByBusInfo } from "@/lib/utils";
 import NotConnected from "../not-connected";
+import { useToast } from "@/hooks/use-toast";
 
 type DeviceModel = components["schemas"]["DeviceModel"];
 
@@ -51,6 +52,8 @@ const NoDevicesConnected = () => {
 
 const DeviceListLayout = () => {
   const { socket, connected } = useContext(WebsocketContext)!;
+
+  const { toast } = useToast();
 
   const [devices, setDevices] = useState([] as DeviceModel[]);
 
@@ -102,6 +105,7 @@ const DeviceListLayout = () => {
     });
   };
 
+
   const removeDevice = (bus_info: string) => {
     setDevices((prevDevices) => {
       const filteredDevices = prevDevices.filter(
@@ -124,11 +128,12 @@ const DeviceListLayout = () => {
         ).data!["host"] as string;
       }
 
-      // Get the initial next port
-      setNextPort(getNextPort(initialDevices));
-
       setSavedPreferences(newPreferences);
-      setDevices(initialDevices.map((d) => createDeviceProxy(d)));
+
+      // Update existing devices instead of replacing them
+      initialDevices.forEach((device) => {
+        addDevice(device);
+      });
     };
 
     const handleDeviceAdded = (device: DeviceModel) => {
@@ -139,9 +144,28 @@ const DeviceListLayout = () => {
       removeDevice(id);
     };
 
-    const getSavedPreferences = async () => {};
+    const handleGstError = (data: { errors: string[]; bus_info: string }) => {
+      console.log("GStreamer Error:", data.errors, data.bus_info);
+      setDevices((currentDevices) => {
+        const device = getDeviceByBusInfo(currentDevices, data.bus_info);
+        console.log(currentDevices.map(d => d.bus_info));
+        console.log("Device affected by error:", device);
+        if (device) {
+          device.stream.enabled = false;
+        }
+        return [...currentDevices]; // Return a new array to trigger re-render
+      });
+      toast({
+        title: "GStreamer Error",
+        description: `An error occurred with the device ${data.bus_info}. Please check the logs for more details.`,
+        variant: "destructive",
+      });
+    }
+
+    const getSavedPreferences = async () => { };
 
     if (connected) {
+      socket?.on("gst_error", handleGstError);
       socket?.on("device_added", handleDeviceAdded);
       socket?.on("device_removed", handleDeviceRemoved);
 
@@ -154,6 +178,7 @@ const DeviceListLayout = () => {
     return () => {
       socket?.off("device_added", handleDeviceAdded);
       socket?.off("device_removed", handleDeviceRemoved);
+      socket?.off("gst_error", handleGstError);
     };
   }, [socket, connected]);
 

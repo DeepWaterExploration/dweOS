@@ -246,7 +246,7 @@ export function LogViewer() {
                     </div>
                   </TableCell>
                   <TableCell title={log.message}>
-                    <div className="font-mono text-xs whitespace-normal break-words max-w-[150px] line-clamp-3">
+                    <div className="font-mono text-xs whitespace-normal break-words line-clamp-2 pr-2">
                       {log.message}
                     </div>
                   </TableCell>

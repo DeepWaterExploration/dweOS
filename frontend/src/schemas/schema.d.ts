@@ -199,7 +199,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get the network priority */
-        get: operations["getet_network_priority_wired_get_network_priority_get"];
+        get: operations["get_network_priority_wired_get_network_priority_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -276,7 +276,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/devices/set_leader": {
+    "/devices/add_follower": {
         parameters: {
             query?: never;
             header?: never;
@@ -285,15 +285,15 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Set a device as a leader */
-        post: operations["set_leader_devices_set_leader_post"];
+        /** Add a device as a follower to another device */
+        post: operations["add_follower_devices_add_follower_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/devices/remove_leader": {
+    "/devices/remove_follower": {
         parameters: {
             query?: never;
             header?: never;
@@ -302,8 +302,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Remove a device as a leader */
-        post: operations["remove_leader_devices_remove_leader_post"];
+        /** Add a device as a follower to another device */
+        post: operations["remove_follower_devices_remove_follower_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -463,6 +463,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/recordings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get all recordings */
+        get: operations["get_recordings_recordings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/recordings/{recording_path}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a recording */
+        delete: operations["delete_recording_recordings__recording_path__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/features": {
         parameters: {
             query?: never;
@@ -492,6 +526,13 @@ export interface components {
             strength: number;
             /** Requires Password */
             requires_password: boolean;
+        };
+        /** AddFollowerPayload */
+        AddFollowerPayload: {
+            /** Leader Bus Info */
+            leader_bus_info: string;
+            /** Follower Bus Info */
+            follower_bus_info: string;
         };
         /** CameraModel */
         CameraModel: {
@@ -540,9 +581,9 @@ export interface components {
         };
         /**
          * ControlTypeEnum
-         * @enum {integer}
+         * @enum {string}
          */
-        ControlTypeEnum: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+        ControlTypeEnum: "INTEGER" | "BOOLEAN" | "MENU" | "BUTTON" | "INTEGER64" | "CTRL_CLASS" | "STRING" | "BITMASK" | "INTEGER_MENU";
         /** DeviceDescriptorModel */
         DeviceDescriptorModel: {
             /** Bus Info */
@@ -560,13 +601,6 @@ export interface components {
             vid: number;
             /** Pid */
             pid: number;
-        };
-        /** DeviceLeaderModel */
-        DeviceLeaderModel: {
-            /** Follower */
-            follower: string;
-            /** Leader */
-            leader?: string | null;
         };
         /** DeviceModel */
         DeviceModel: {
@@ -589,12 +623,16 @@ export interface components {
             nickname: string;
             device_info?: components["schemas"]["DeviceInfoModel"] | null;
             device_type: components["schemas"]["DeviceType"];
-            /** Is Leader */
-            is_leader?: boolean | null;
-            /** Leader */
-            leader?: string | null;
-            /** Follower */
-            follower?: string | null;
+            /**
+             * Followers
+             * @default []
+             */
+            followers: string[];
+            /**
+             * Is Managed
+             * @default false
+             */
+            is_managed: boolean;
         };
         /** DeviceNicknameModel */
         DeviceNicknameModel: {
@@ -717,6 +755,19 @@ export interface components {
         NetworkPriorityInformation: {
             network_priority: components["schemas"]["NetworkPriority"];
         };
+        /** RecordingInfo */
+        RecordingInfo: {
+            /** Path */
+            path: string;
+            /** Name */
+            name: string;
+            /** Format */
+            format: string;
+            /** Duration */
+            duration: string;
+            /** Size */
+            size: string;
+        };
         /** SavedPreferencesModel */
         SavedPreferencesModel: {
             /** @default {
@@ -736,6 +787,14 @@ export interface components {
             index: number;
             /** Intensity */
             intensity: number;
+        };
+        /** SimpleRequestStatusModel */
+        SimpleRequestStatusModel: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
         };
         /** Status */
         Status: {
@@ -775,6 +834,7 @@ export interface components {
         StreamInfoModel: {
             /** Bus Info */
             bus_info: string;
+            stream_type: components["schemas"]["StreamTypeEnum"];
             stream_format: components["schemas"]["StreamFormatModel"];
             encode_type: components["schemas"]["StreamEncodeTypeEnum"];
             /** Enabled */
@@ -795,8 +855,6 @@ export interface components {
             /** Height */
             height: number;
             interval: components["schemas"]["IntervalModel"];
-            /** Configured */
-            configured: boolean;
             /** Enabled */
             enabled: boolean;
         };
@@ -804,7 +862,7 @@ export interface components {
          * StreamTypeEnum
          * @enum {string}
          */
-        StreamTypeEnum: "UDP";
+        StreamTypeEnum: "UDP" | "RECORDING";
         /** UVCControlModel */
         UVCControlModel: {
             /** Bus Info */
@@ -1033,7 +1091,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["IPConfiguration"];
+                    "application/json": components["schemas"]["IPConfiguration"] | null;
                 };
             };
         };
@@ -1104,7 +1162,7 @@ export interface operations {
             };
         };
     };
-    getet_network_priority_wired_get_network_priority_get: {
+    get_network_priority_wired_get_network_priority_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1243,7 +1301,7 @@ export interface operations {
             };
         };
     };
-    set_leader_devices_set_leader_post: {
+    add_follower_devices_add_follower_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -1252,7 +1310,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DeviceLeaderModel"];
+                "application/json": components["schemas"]["AddFollowerPayload"];
             };
         };
         responses: {
@@ -1262,7 +1320,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["SimpleRequestStatusModel"];
                 };
             };
             /** @description Validation Error */
@@ -1276,7 +1334,7 @@ export interface operations {
             };
         };
     };
-    remove_leader_devices_remove_leader_post: {
+    remove_follower_devices_remove_follower_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -1285,7 +1343,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DeviceLeaderModel"];
+                "application/json": components["schemas"]["AddFollowerPayload"];
             };
         };
         responses: {
@@ -1295,7 +1353,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["SimpleRequestStatusModel"];
                 };
             };
             /** @description Validation Error */
@@ -1526,6 +1584,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LogSchema"][];
+                };
+            };
+        };
+    };
+    get_recordings_recordings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordingInfo"][];
+                };
+            };
+        };
+    };
+    delete_recording_recordings__recording_path__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recording_path: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

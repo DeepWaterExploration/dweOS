@@ -6,10 +6,11 @@ type DeviceModel = components["schemas"]["DeviceModel"];
 // Relative global State
 const DevicesContext = React.createContext<
   | {
-      devices: DeviceModel[];
-      followerModels: DeviceModel[];
-      enableStream: (bus_info: string) => void;
-    }
+    devices: DeviceModel[];
+    followerModels: DeviceModel[];
+    enableStream: (bus_info: string) => void;
+    setDevices: (devices: DeviceModel[]) => void;
+  }
   | undefined
 >(undefined);
 

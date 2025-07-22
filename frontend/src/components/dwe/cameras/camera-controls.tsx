@@ -83,9 +83,12 @@ const ControlWrapper = ({
 export const CameraControls = () => {
   const device = useContext(DeviceContext)!;
   const controls = device.controls;
-  const bus_info = device.bus_info;
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
+
+  subscribe(device, () => {
+    device.controls = device.controls;
+  });
 
   const resetControls = () => {
     controls.forEach((control) => {
@@ -103,7 +106,7 @@ export const CameraControls = () => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="w-full">
+        <Button variant="outline" className="w-full" disabled={device.is_managed}>
           Camera Controls
         </Button>
       </DialogTrigger>

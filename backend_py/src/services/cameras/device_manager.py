@@ -9,6 +9,7 @@ from .settings import SettingsManager
 from .enumeration import list_devices
 from .device_utils import list_diff, find_device_with_bus_info
 from .exceptions import DeviceNotFoundException
+from .saved_pydantic_schemas import SavedDeviceModel, SavedLeaderFollowerPairModel
 
 import socketio
 
@@ -217,6 +218,9 @@ class DeviceManager(events.EventEmitter):
         leader_device = cast(SHDDevice, leader_device)
         follower_device = cast(SHDDevice, follower_device)
         leader_device.add_follower(follower_device)
+        leader_settings = SavedDeviceModel.model_validate(leader_device)
+        leader_settings.followers = None
+        follower_device.load_settings(leader_settings)
 
         self.settings_manager.save_device(leader_device)
         self.settings_manager.save_device(follower_device)

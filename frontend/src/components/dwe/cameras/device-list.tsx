@@ -14,7 +14,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import DevicesContext from "@/contexts/DevicesContext";
-import { getDeviceByBusInfo } from "@/lib/utils";
 import NotConnected from "../not-connected";
 
 type DeviceModel = components["schemas"]["DeviceModel"];
@@ -112,7 +111,23 @@ const DeviceListLayout = () => {
     });
   };
 
+
+  const setDevicesProvider = (devices: DeviceModel[]) => {
+    setDevices(() => {
+      // Update existing proxy devices or create new ones
+      const updatedDevices = devices.map((device) => {
+
+        return createDeviceProxy(device);
+
+      });
+
+      setNextPort(getNextPort(updatedDevices));
+      return updatedDevices;
+    });
+  }
   useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null;
+
     const getDevices = async () => {
       const initialDevices = (await API_CLIENT.GET("/devices")).data!;
 
@@ -128,8 +143,9 @@ const DeviceListLayout = () => {
       setNextPort(getNextPort(initialDevices));
 
       setSavedPreferences(newPreferences);
-      setDevices(initialDevices.map((d) => createDeviceProxy(d)));
+      setDevicesProvider(initialDevices);
     };
+
 
     const handleDeviceAdded = (device: DeviceModel) => {
       addDevice(device);
@@ -139,7 +155,7 @@ const DeviceListLayout = () => {
       removeDevice(id);
     };
 
-    const getSavedPreferences = async () => {};
+    const getSavedPreferences = async () => { };
 
     if (connected) {
       socket?.on("device_added", handleDeviceAdded);
@@ -147,6 +163,9 @@ const DeviceListLayout = () => {
 
       getDevices();
       getSavedPreferences();
+
+      // Start polling for device updates
+      intervalId = setInterval(getDevices, 5000);
     } else {
       setDevices([]);
     }
@@ -154,13 +173,27 @@ const DeviceListLayout = () => {
     return () => {
       socket?.off("device_added", handleDeviceAdded);
       socket?.off("device_removed", handleDeviceRemoved);
+
+      // Clean up the interval
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
     };
   }, [socket, connected]);
 
   const enableStream = (bus_info: string) => {
-    const device = { ...getDeviceByBusInfo(devices, bus_info) };
-    device.stream.enabled = true;
+    setDevices((prevDevices) => {
+      return prevDevices.map((device) => {
+        if (device.bus_info === bus_info) {
+          const updatedDevice = { ...device };
+          updatedDevice.stream.enabled = true;
+          return updatedDevice;
+        }
+        return device;
+      });
+    });
   };
+
 
   return (
     <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(350px,1fr))]">
@@ -169,6 +202,7 @@ const DeviceListLayout = () => {
           devices,
           followerModels: devices.filter((d) => d.device_type == 2),
           enableStream,
+          setDevices: setDevicesProvider,
         }}
       >
         {devices.map((device, index) => (

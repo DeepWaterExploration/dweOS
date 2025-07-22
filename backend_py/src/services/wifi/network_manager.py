@@ -1,72 +1,47 @@
-import json
-import dbus
-from typing import List, Callable, Dict, Any
-from .wifi_types import Connection, AccessPoint, IPConfiguration, IPType
+import ipaddress
+from typing import List, Dict, Any
+# from .wifi_types import Connection, AccessPoint, IPConfiguration, IPType
 import logging
-import socket
-import struct
-
-
-class NMException(Exception):
-    """Exception raised when there is a network manager issue"""
-
-    pass
-
-
-class NMNotSupportedError(NMException):
-    """Exception raised when NetworkManager is not supported"""
-
-    pass
-
-
-def handle_dbus_exceptions(func: Callable):
-    """
-    Decorator to handle dbus exceptions, raising NMExceptions for more verbosity
-    """
-
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except dbus.DBusException as e:
-            raise NMException(f"DBusException occurred: {str(e)}") from e
-
-    return wrapper
-
-
-def ip_to_uint32(ip_str: str) -> dbus.UInt32:
-    """Convert dotted IPv4 string to a 32-bit unsigned integer (network byte order)."""
-    packed = socket.inet_aton(ip_str)  # e.g. b'\x08\x08\x08\x08'
-    val = struct.unpack("!I", packed)[0]  # e.g. 134744072 (0x08080808)
-    return dbus.UInt32(val)
-
-
+import time
+import sdbus
+import sdbus
+from sdbus_block.networkmanager import NetworkManagerSettings, NetworkManager as NetworkManagerDBUS, ActiveConnection, NetworkDeviceGeneric, DeviceType, NetworkDeviceWired, NetworkConnectionSettings, NetworkDeviceWireless, IPv4Config, AccessPoint, ConnectionType, NetworkManagerConnectionProperties 
+from sdbus_block.networkmanager.exceptions import NmConnectionInvalidPropertyError
+import uuid
+import subprocess
 class NetworkManager:
     """
     Class for interfacing with NetworkManager over dbus
     """
 
-    @handle_dbus_exceptions
     def __init__(self) -> None:
         self._last_scan_timestamp: int | None = None
 
         # Get the system bus
-        self.bus = dbus.SystemBus()
+        self.bus =  sdbus.sd_bus_open_system()
+        sdbus.set_default_bus(self.bus)
+        self.networkmanager = NetworkManagerDBUS()
         # Get a local proxy to the NetworkManager object
-        self.proxy = self.bus.get_object(
-            "org.freedesktop.NetworkManager", "/org/freedesktop/NetworkManager"
-        )
+        
+        self.logger = logging.getLogger("dwe_os_2.wifi.NetworkManager")
 
-        # The proxy does not exist, since NetworkManager does not exist
-        if not self.proxy:
-            raise NMNotSupportedError("NetworkManager is not installed on this system.")
+    def reinit(self):
+        self.bus.close()
 
-        # Get an interface to the NetworkManager object from the proxy
-        self.interface = dbus.Interface(self.proxy, "org.freedesktop.NetworkManager")
-        # Get an interface to the properties object
-        self.props = dbus.Interface(self.proxy, "org.freedesktop.DBus.Properties")
+        del self.bus
+        del self.networkmanager
+        time.sleep(0.1)
 
-    @handle_dbus_exceptions
-    def get_ip_info(self, interface_name: str | None = None) -> IPConfiguration:
+        # Get the system bus
+        self.bus = sdbus.sd_bus_open_system()
+
+        sdbus.set_default_bus(self.bus)
+        self.networkmanager = NetworkManagerDBUS()
+
+ 
+
+    
+    def get_ip_info(self, interface_name: str | None = None) -> Dict[str, Any] | None:
         """
         Get the IP address
 
@@ -75,218 +50,93 @@ class NetworkManager:
 
         # TODO: get ip of either active ethernet or wireless
 
-        (ethernet_device, ethernet_proxy, _, connection_id) = (
-            self._get_eth_device_and_connection()
-        )
+        ethernet_device, connection = self._get_eth_device_and_connection()
+        
 
-        ethernet_device, ethernet_proxy = self._get_ethernet_device(interface_name)
+        ethernet_device = self._get_ethernet_device(
+            interface_name)
         if ethernet_device is None:
-            raise NMException("No ethernet device found")
+            raise Exception("No ethernet device found")
 
-        dev_props = dbus.Interface(ethernet_proxy, "org.freedesktop.DBus.Properties")
 
-        ipv4_config_path = dev_props.Get(
-            "org.freedesktop.NetworkManager.Device", "Ip4Config"
-        )
-        if not ipv4_config_path or ipv4_config_path == "/":
-            raise NMException("No IPv4 configuration found")
-
-        ipv4_config_proxy = self.bus.get_object(
-            "org.freedesktop.NetworkManager", ipv4_config_path
-        )
-        ipv4_config_props = dbus.Interface(
-            ipv4_config_proxy, "org.freedesktop.DBus.Properties"
+        ipv4_config = IPv4Config(
+            ethernet_device.ip4_config, self.bus
         )
 
-        addresses = ipv4_config_props.Get(
-            "org.freedesktop.NetworkManager.IP4Config", "AddressData"
-        )
+        addresses = ipv4_config.address_data
 
-        method = self.get_connection_method(connection_id)
 
-        dns_int_arr = self.get_ipv4_settings(connection_id).get("dns") or []
-        dns_arr: List[str] = []
-        for dns_int in dns_int_arr:
-            dns_arr.append(socket.inet_ntoa(struct.pack("!I", dns_int)))
+        # method = self.get_connection_method(connection.id)
+        dns_arr = [i['address'] for i in ipv4_config.nameserver_data or []]
 
         if len(addresses) == 0:
             return None
+        method = self.get_connection_method(connection)
 
-        return IPConfiguration(
-            static_ip=addresses[0]["address"],
-            prefix=addresses[0]["prefix"],
-            gateway=self.get_ip_gateway(),
-            ip_type=IPType.STATIC if method == "manual" else IPType.DYNAMIC,
-            dns=dns_arr,
+        return dict(
+            static_ip=addresses[0]["address"][1],
+            prefix=addresses[0]["prefix"][1],
+            gateway=self.get_ip_gateway(connection),
+            dns=[i[1] for i in dns_arr],
+            ip_type="STATIC" if method == "manual" else "DYNAMIC",
         )
 
-    @handle_dbus_exceptions
-    def get_settings(self, connection_id: str = "Wired connection 1"):
-        connection_path = self._find_connection_by_id(connection_id)
-        if not connection_path:
-            raise NMException(f"Connection {connection_id} not found")
 
-        settings_proxy = self.bus.get_object(
-            "org.freedesktop.NetworkManager", connection_path
-        )
-        settings_interface = dbus.Interface(
-            settings_proxy, "org.freedesktop.NetworkManager.Settings.Connection"
-        )
-        config = settings_interface.GetSettings()
-        return config
+    
+    def get_ipv4_settings(self, connection: ActiveConnection) -> Dict:
+        return NetworkConnectionSettings(connection.connection, self.bus).get_settings().get("ipv4")
 
-    @handle_dbus_exceptions
-    def get_ipv4_settings(self, connection_id: str = "Wired connection 1"):
-        config = self.get_settings(connection_id)
-        return config.get("ipv4", {})
 
-    @handle_dbus_exceptions
-    def get_ip_gateway(self, connection_id: str = "Wired connection 1"):
-        ipv4_settings = self.get_ipv4_settings(connection_id)
-        return ipv4_settings.get("gateway")
+    
+    def get_ip_gateway(self, connection: ActiveConnection):
+        ipv4_settings = IPv4Config(connection.ip4_config, self.bus)
+        return ipv4_settings.gateway
 
-    @handle_dbus_exceptions
-    def get_connection_method(self, connection_id: str = "Wired connection 1") -> str:
+    
+    def get_connection_method(self, connection: ActiveConnection) -> str:
         """
         Get the method of a connection
 
         :param connection_id: The ID of the connection to get the method of
         :return: The method of the connection (manual = static, auto = dynamic)
         """
-        ipv4_settings = self.get_ipv4_settings(connection_id)
-        return ipv4_settings.get("method")
-
-    @handle_dbus_exceptions
-    def update_connection(
-        self,
-        settings: Dict[str, Any],
-        activate: bool = True,
-        interface_name: str | None = None,
-        connection_id: str | None = None,
-    ):
-        """
-        Update a connection
-
-        :param interface_name: The name of the interface to update the connection on
-        :param connection_id: The ID of the connection to update
-        :param settings: The settings to update the connection with
-        :param activate: Whether to activate the connection after updating it
-        :return: The interface name of the ethernet device
-        """
-        ethernet_device, ethernet_proxy = self._get_ethernet_device(interface_name)
-        if ethernet_device is None:
-            raise NMException("No ethernet device found")
-
-        # Get the interface name of the ethernet device
-        dev_props = dbus.Interface(ethernet_proxy, "org.freedesktop.DBus.Properties")
-        dev_interface = dev_props.Get(
-            "org.freedesktop.NetworkManager.Device", "Interface"
-        )
-
-        existing_conn_path = self._find_connection_by_id(connection_id)
-        settings_proxy = self.bus.get_object(
-            "org.freedesktop.NetworkManager", "/org/freedesktop/NetworkManager/Settings"
-        )
-        settings_interface = dbus.Interface(
-            settings_proxy, "org.freedesktop.NetworkManager.Settings"
-        )
-
-        if existing_conn_path:
-            existing_conn_proxy = self.bus.get_object(
-                "org.freedesktop.NetworkManager", existing_conn_path
-            )
-            existing_conn_iface = dbus.Interface(
-                existing_conn_proxy,
-                "org.freedesktop.NetworkManager.Settings.Connection",
-            )
-            existing_conn_iface.Update(settings)
-        else:
-            # TODO: Add a new connection
-            raise NMException("No existing connection found")
-
-        if activate:
-            self.interface.ActivateConnection(
-                existing_conn_path, ethernet_proxy, ethernet_device
-            )
-
-        return dev_interface
+        ipv4_settings = self.get_ipv4_settings(connection)
+        return ipv4_settings.get("method")[1]
 
     def _get_eth_device_and_connection(
         self, interface_name: str | None = None, connection_id: str | None = None
-    ):
+    ) -> 'tuple[NetworkDeviceWired, ActiveConnection]':
         # Get the first ethernet device
-        (ethernet_device, ethernet_proxy) = self._get_ethernet_device(interface_name)
-        dev_props = dbus.Interface(ethernet_proxy, "org.freedesktop.DBus.Properties")
-        # enp3s0 or eth0
-        dev_interface = dev_props.Get(
-            "org.freedesktop.NetworkManager.Device", "Interface"
+        ethernet_device = self._get_ethernet_device(interface_name)
+        connection = ActiveConnection(
+            ethernet_device.active_connection, self.bus
         )
-
-        # Get the connection id -- usually Wired connection 1
-        ethernet_connection = None
-        for connection in self._list_connections():
-            config = connection.GetSettings()
-            if config["connection"]["type"] == "802-3-ethernet":
-                ethernet_connection = config
-
-        # There was no supplied connection id, so we need to use the one we got earlier
-        if connection_id is None:
-            if ethernet_connection is None:
-                # If we did not get supplied a connection ID, we will not create one automatically
-                logging.error(
-                    "There is no existing ethernet connection to configure and creating one is not currently supported."
-                )
-                return
-            # We have the connection ID
-            connection_id = ethernet_connection["connection"]["id"]
-
-        # This 99/100 times will be good enough, unless for some reason someone has two ethernet cards on their device
-        # TODO: Support infinite ethernet cards
-        # print(dev_interface, connection_id)
-
-        return (ethernet_device, ethernet_proxy, dev_interface, "Wired connection 1")
+        return (ethernet_device, connection)
 
     def _update_ipv4_settings(
         self,
-        settings: Dict[str, object],
-        interface_name: str | None = None,
-        connection_id: str | None = None,
+        settings: Dict[str, any],
+        connection: ActiveConnection | None = None
     ):
-        (_, _, dev_interface, connection_id) = self._get_eth_device_and_connection(
-            interface_name
-        )
+        if connection is None:
+            _, connection = self._get_eth_device_and_connection()
+        network_settings = NetworkConnectionSettings(connection.connection, self.bus)
+        
+        all_connection_settings = network_settings.get_settings()
+        all_connection_settings["ipv4"] = settings
+        network_settings.update(all_connection_settings)
+        network_settings.save()
 
-        # Given no interface name, we need to guess
-        if interface_name is None:
-            # This 99/100 times will be good enough, unless for some reason someone has two ethernet cards on their device
-            # TODO: Support infinite ethernet cards
-            interface_name = dev_interface
 
-        # Grab the connection settings
-        connection_settings = self.get_settings(connection_id)
-
-        # Update the IPv4 configuration, leaving everything else the same
-        connection_settings["ipv4"] = settings
-
-        logging.info(
-            f"Updating IP Config for connection: {connection_id} on {interface_name}"
-        )
-
-        # Update the connection and return the result
-        return self.update_connection(
-            connection_settings, True, interface_name, connection_id
-        )
-
-    @handle_dbus_exceptions
+    
     def set_static_ip(
         self,
         ip_address: str,
         prefix: int,
         gateway: str | None = None,
         dns_servers: List[str] = [],
-        interface_name: str | None = None,
         prioritize_wireless=False,
-        connection_id: str | None = None,
+        connection: ActiveConnection | None = None,
     ):
         """
         Set the static IP address
@@ -300,41 +150,38 @@ class NetworkManager:
         :return: The interface name of the ethernet device
         """
 
+
+        print(f"Setting static IP {ip_address}/{prefix} with gateway {gateway} and DNS servers {dns_servers}")
         # Update the IPv4 configuration, leaving everything else the same
         ipv4_settings = {
-            "method": "manual",
-            "address-data": dbus.Array(
-                [
-                    {
-                        "address": ip_address,
-                        "prefix": dbus.UInt32(int(prefix)),
-                    }
-                ],
-                signature=dbus.Signature("a{sv}"),
-            ),
-            "dns": dbus.Array(
-                [ip_to_uint32(dns) for dns in dns_servers],
-                signature=dbus.Signature("u"),
-            ),
+            "method": ("s", "manual"),
+            "address-data": 
+                ("aa{sv}", [{
+                    "address":  ("s", ip_address),
+                    "prefix":  ("u", int(prefix)),
+                }]),
+            "dns": ("au", [int(ipaddress.IPv4Address(dns).packed.hex(), 16) for dns in dns_servers]),
+
         }
 
         # If we prioritize wireless, there is no reason to have a default gateway, since we will always use the wireless one
         if prioritize_wireless:
-            ipv4_settings["route-metric"] = 200
+            ipv4_settings["route-metric"] = ("u",200)
             # ipv4_settings["never-default"] = True
         else:
-            ipv4_settings["route-metric"] = 0
-            ipv4_settings["gateway"] = gateway
+            ipv4_settings["route-metric"] = ("u",0)
+            if gateway is not None:
+                ipv4_settings["gateway"] = ("s",gateway)
 
         # Update the connection and return the result
-        return self._update_ipv4_settings(ipv4_settings, interface_name, connection_id)
+        return self._update_ipv4_settings(ipv4_settings, connection=connection)
 
-    @handle_dbus_exceptions
+    
     def set_dynamic_ip(
         self,
         interface_name: str | None = None,
         prioritize_wireless=False,
-        connection_id: str | None = None,
+        connection: ActiveConnection | None = None,
     ):
         """
         Set the dynamic IP address
@@ -344,175 +191,158 @@ class NetworkManager:
         :return: The interface name of the ethernet device
         """
         ipv4_settings = {
-            "method": "auto",
-            "never-default": True,
+            "method": ("s","auto"),
+            "never-default": ("b", True),
         }
 
         if prioritize_wireless:
-            ipv4_settings["route-metric"] = 200
-            ipv4_settings["never-default"] = True
+            ipv4_settings["route-metric"] = ("u", 200)
+            ipv4_settings["never-default"] = ("b", True)
 
-        return self._update_ipv4_settings(ipv4_settings, interface_name, connection_id)
+        return self._update_ipv4_settings(ipv4_settings, connection=connection)
 
-    def _find_connection_by_id(self, connection_id: str):
+    def _find_connection_by_id(self, connection_id: str) -> ActiveConnection | None:
         """
         Find a connection by its ID
         """
         for connection in self._list_connections():
-            if connection.GetSettings()["connection"]["id"] == connection_id:
-                return connection.object_path
+            if connection.id == connection_id:
+                return connection
 
-    def _get_ethernet_device(self, interface_name: str | None = None):
+    def _get_ethernet_device(self, interface_name: str | None = None) -> NetworkDeviceWired:
         """
         Get the path of the ethernet device with the given interface name
 
         :param interface_name: The name of the interface to get the ethernet device for
         :return: The path of the ethernet device
         """
-        devices = self.interface.GetDevices()
+        devices = self.networkmanager.get_devices()
 
         if not devices:
-            raise NMException("No devices found")
+            raise Exception("No devices found")
 
         devs = []
 
         for dev_path in devices:
-            dev_proxy = self.bus.get_object("org.freedesktop.NetworkManager", dev_path)
-            dev_props = dbus.Interface(dev_proxy, "org.freedesktop.DBus.Properties")
-            dev_type = dev_props.Get(
-                "org.freedesktop.NetworkManager.Device", "DeviceType"
-            )
-            dev_interface = dev_props.Get(
-                "org.freedesktop.NetworkManager.Device", "Interface"
-            )
+            device = NetworkDeviceGeneric(dev_path, self.bus)
 
-            if dev_type == 1:
-                devs.append((dev_path, dev_proxy, dev_interface))
+            dev_type = device.device_type
+
+            if dev_type == DeviceType.ETHERNET:
+                devs.append(NetworkDeviceWired(
+                    dev_path, self.bus
+                ))
 
         if len(devs) == 0:
-            raise NMException("No ethernet devices found")
+            raise Exception("No ethernet devices found")
 
         # If an interface name is provided, return the device with the matching interface name
         # Otherwise, return the first ethernet device found
         if interface_name:
-            for dev_path, dev_proxy, dev_interface in devs:
-                if dev_interface == interface_name:
-                    return (dev_path, dev_proxy)
+            for device in devs:
+                if device.interface == interface_name:
+                    return device
+        return devs[0]
 
-        return devs[0][0:2]
+    
+    def connect(self, ssid: str, password="")->bool:
+        """
+        Connects to a Wi-Fi network using the provided SSID and password.
 
-    @handle_dbus_exceptions
-    def connect(self, ssid: str, password=""):
-        # Check if the SSID already exists as a known connection
+        Args:
+            ssid: The SSID (network name) of the Wi-Fi network.
+            password: The password for the Wi-Fi network.
+
+        Returns:
+            True if the connection was successful, False otherwise.
+        """
+        wifi_device = self._get_wifi_device()
+
+        if not wifi_device:
+            return False
+
+
+        # Try to find an existing connection for this SSID
         existing_connection = None
-        for connection in self.list_wireless_connections():
-            if connection.id == ssid:
-                existing_connection = connection
-                break
+        for connection in self.networkmanager.active_connections:
+            try:
+                settings = NetworkConnectionSettings(connection, self.bus).get_settings()
+                if 'ssid' in settings.get('802-11-wireless', {}) and \
+                settings['802-11-wireless']['ssid'].decode('utf-8') == ssid:
+                    existing_connection = connection
+                    break
+            except:
+                # Device becomes out of range, turns off, etc.
+                continue
 
-        # Get the WiFi device
-        (wifi_dev, dev_proxy) = self._get_wifi_device()
-        if wifi_dev is None:
-            raise NMException("No WiFi device found")
-
-        # If the connection already exists, just activate it, no need for any password
         if existing_connection:
-            connection_path = self._find_connection_by_id(
-                connection_id=existing_connection.id
-            )
-            if not connection_path:
-                raise NMException(f"Known connection for SSID {ssid} not found")
-            self.interface.ActivateConnection(connection_path, dev_proxy, "/")
-            return
+            try:
+                self.networkmanager.activate_connection(existing_connection, wifi_device, '/')
+                
+                return True
+            except Exception as e:
+                return False
+        else:
+            
 
-        wifi_interface = dbus.Interface(
-            dev_proxy, "org.freedesktop.NetworkManager.Device.Wireless"
-        )
-        # Do not need to request a scan since the scan must have happened for the user to know this network exists
-        access_points = wifi_interface.GetAllAccessPoints()
+            uuid_id = str(uuid.uuid4())
 
-        ap_path = None
-        ap_requires_password = False
-        for ap in access_points:
-            ap_proxy = self.bus.get_object("org.freedesktop.NetworkManager", ap)
-            ap_props = dbus.Interface(ap_proxy, "org.freedesktop.DBus.Properties")
-            ap_ssid = ap_props.Get("org.freedesktop.NetworkManager.AccessPoint", "Ssid")
-            ssid_str = "".join([chr(byte) for byte in ap_ssid])
-
-            if ssid_str == ssid:
-                ap_path = ap
-
-                # Check the security of the AP
-                flags = ap_props.Get(
-                    "org.freedesktop.NetworkManager.AccessPoint", "Flags"
-                )
-                wpa_flags = ap_props.Get(
-                    "org.freedesktop.NetworkManager.AccessPoint", "WpaFlags"
-                )
-                rsn_flags = ap_props.Get(
-                    "org.freedesktop.NetworkManager.AccessPoint", "RsnFlags"
-                )
-                ap_requires_password = self._ap_requires_password(
-                    flags, wpa_flags, rsn_flags
-                )
-                break
-
-        if ap_path is None:
-            raise NMException(f"Access point with SSID {ssid} not found")
-
-        # Create the settings object assuming no password is needed
-        connection_settings = {
-            "802-11-wireless": {
-                "ssid": dbus.ByteArray(ssid.encode("utf-8")),
-                "mode": "infrastructure",
-            },
-            "connection": {"id": ssid, "type": "802-11-wireless"},
-            "ipv4": {"method": "auto"},
-            "ipv6": {"method": "ignore"},
-        }
-
-        # Add security settings if the network requires a password
-        if ap_requires_password:
-            connection_settings["802-11-wireless-security"] = {
-                "key-mgmt": "wpa-psk",
-                "psk": password,
+            connection_id = ssid
+    
+            properties: NetworkManagerConnectionProperties = {
+                "connection": {
+                    "id": ("s", ssid),
+                    "uuid": ("s", uuid_id),
+                    "type": ("s", "802-11-wireless"),
+                    "autoconnect": ("b", bool(True)),
+                },
+                "802-11-wireless": {
+                    "mode": ("s", "infrastructure"),
+                    "security": ("s", "802-11-wireless-security"),
+                    "ssid": ("ay", ssid.encode("utf-8")),
+                },
+                "802-11-wireless-security": {
+                    "key-mgmt": ("s", "wpa-psk"),
+                    "psk": ("s", password),
+                },
+                "ipv4": {"method": ("s", "auto")},
+                "ipv6": {"method": ("s", "auto")},
             }
+            nm_settings = NetworkManagerSettings(self.bus)
+            try:
+                nm_settings.add_connection(properties)
+            except NmConnectionInvalidPropertyError as e:
+                raise Exception("Can't Connect to wifi. Make sure password is correct")
+            password_bytes = str(password + '\n')
+            activate_cmd = ["nmcli", "--ask", "connection", "up", connection_id]
+            subprocess.run(activate_cmd, input=password_bytes, capture_output=True, text=True, check=True)
+            
 
-        settings_proxy = self.bus.get_object(
-            "org.freedesktop.NetworkManager", "/org/freedesktop/NetworkManager/Settings"
-        )
-        settings_interface = dbus.Interface(
-            settings_proxy, "org.freedesktop.NetworkManager.Settings"
-        )
+            
+            
 
-        connection_path = settings_interface.AddConnection(connection_settings)
-        self.interface.ActivateConnection(connection_path, dev_proxy, ap_path)
-
-    @handle_dbus_exceptions
+    
     def disconnect(self):
         """
         Disconnect from any connected network
         """
-        (wifi_dev, dev_proxy) = self._get_wifi_device()
+        wifi_dev = self._get_wifi_device()
 
         if not wifi_dev:
             raise Exception("No WiFi device found")
 
-        dev_props = dbus.Interface(dev_proxy, "org.freedesktop.DBus.Properties")
-        active_connection = dev_props.Get(
-            "org.freedesktop.NetworkManager.Device", "ActiveConnection"
-        )
-        self.interface.DeactivateConnection(active_connection)
+        active_connection = ActiveConnection(wifi_dev.active_connection, self.bus)
+        self.networkmanager.deactivate_connection(active_connection)
 
-    @handle_dbus_exceptions
-    def list_wireless_connections(self) -> List[Connection]:
+    
+    def list_wireless_connections(self) -> List[ActiveConnection]:
         """
         Get a list of the active wireless connections
         """
         return self.list_connections()
 
-    @handle_dbus_exceptions
-    def get_active_wireless_connection(self) -> Connection | None:
+    
+    def get_active_wireless_connection(self) -> ActiveConnection | None:
         """
         Get the first active wireless connection
         """
@@ -523,112 +353,81 @@ class NetworkManager:
             else active_wireless_conections[0]
         )
 
-    @handle_dbus_exceptions
-    def list_connections(self, only_wireless=True) -> List[Connection]:
+    
+    def list_connections(self, only_wireless=True) -> List[ActiveConnection]:
         """
         Get a list of all the connections saved
         """
         connections = []
         for connection in self._list_connections():
-            config = connection.GetSettings()
-            new_connection = Connection(
-                id=config["connection"]["id"], type=config["connection"]["type"]
-            )
-            # Filter
             if (
                 not only_wireless
-                or "wireless" in config["connection"]["type"]
-                and new_connection not in connections
+                or connection.connection_type == ConnectionType.WIRELESS
+                and connection not in connections
             ):
-                connections.append(new_connection)
+                connections.append(connection)
         return connections
 
-    @handle_dbus_exceptions
-    def get_active_connections(self, wireless_only=True) -> List[Connection]:
+    
+    def get_active_connections(self, wireless_only=True) -> List[ActiveConnection]:
         """
         Get a list of active connections, including wired
         """
-        active_connections = self.props.Get(
-            "org.freedesktop.NetworkManager", "ActiveConnections"
-        )
+        active_connections = self.networkmanager.active_connections
         connections = []
         for connection_path in active_connections:
-            active_conn_proxy = self.bus.get_object(
-                "org.freedesktop.NetworkManager", connection_path
-            )
-            active_conn = dbus.Interface(
-                active_conn_proxy, "org.freedesktop.DBus.Properties"
-            )
+            connection = ActiveConnection(connection_path, self.bus)
 
-            settings_path = active_conn.Get(
-                "org.freedesktop.NetworkManager.Connection.Active", "Connection"
-            )
-            conn_proxy = self.bus.get_object(
-                "org.freedesktop.NetworkManager", settings_path
-            )
-            connection = dbus.Interface(
-                conn_proxy, "org.freedesktop.NetworkManager.Settings.Connection"
-            )
-            config = connection.GetSettings()
 
-            if not wireless_only or "wireless" in config["connection"]["type"]:
+            if not wireless_only or connection.connection_type == ConnectionType.WIFI:
                 connections.append(
-                    Connection(
-                        id=config["connection"]["id"], type=config["connection"]["type"]
-                    )
+                    connection
                 )
 
         return connections
 
-    @handle_dbus_exceptions
+    
     def get_access_points(self) -> List[AccessPoint]:
         """
         Get wifi networks without a scan
         """
-        (wifi_dev, _) = self._get_wifi_device()
+        wifi_dev = self._get_wifi_device()
+        
         if not wifi_dev:
-            raise NMException("No WiFi device found")
+            raise Exception("No WiFi device found")
         return self._get_access_points(wifi_dev)
 
-    @handle_dbus_exceptions
+    
     def request_wifi_scan(self) -> None:
         """
         Scan wifi networks
         """
-        (wifi_dev, dev_proxy) = self._get_wifi_device()
+        wifi_dev = self._get_wifi_device()
 
         if not wifi_dev:
-            raise NMException("No WiFi device found")
+            raise Exception("No WiFi device found")
 
-        wifi_props = dbus.Interface(dev_proxy, "org.freedesktop.DBus.Properties")
 
         # get the timestamp of the last scan
-        self._last_scan_timestamp = wifi_props.Get(
-            "org.freedesktop.NetworkManager.Device.Wireless", "LastScan"
-        )
+        self._last_scan_timestamp = wifi_dev.last_scan
 
         # request a scan
-        wifi_dev.RequestScan({})
+        wifi_dev.request_scan({})
 
-    @handle_dbus_exceptions
+    
     def has_finished_scan(self):
-        (wifi_dev, dev_proxy) = self._get_wifi_device()
+        wifi_dev = self._get_wifi_device()
 
         if not wifi_dev:
-            raise NMException("No WiFi device found")
+            raise Exception("No WiFi device found")
 
-        wifi_props = dbus.Interface(dev_proxy, "org.freedesktop.DBus.Properties")
-
-        current_scan = wifi_props.Get(
-            "org.freedesktop.NetworkManager.Device.Wireless", "LastScan"
-        )
-
+        current_scan = wifi_dev.last_scan
         if current_scan != self._last_scan_timestamp:
             return True
 
         return False
 
-    @handle_dbus_exceptions
+    
     def forget(self, ssid: str):
         """
         Forget a network
@@ -637,75 +436,19 @@ class NetworkManager:
             config = connection.GetSettings()
             # ensure config being None cannot cause issues
             if config is None:
-                logging.warning("Failed to get config from connection")
+                self.logger.warning("Failed to get config from connection")
                 continue
             try:
                 if config["connection"]["id"] == ssid:
                     connection.Delete()
             except KeyError as e:
-                raise NMException(
+                raise Exception(
                     f"Error occurred when attempting to forget network: {str(e)}"
                 )
 
     """
     NOTE: All private functions should not have DBusException error handling
     """
-
-    def _get_wifi_device(self):
-        devices = self.interface.GetDevices()
-        if devices is None:
-            logging.warning("Failed to retrieve device list")
-            devices = []
-        for dev_path in devices:
-            dev_proxy = self.bus.get_object("org.freedesktop.NetworkManager", dev_path)
-            dev_props = dbus.Interface(dev_proxy, "org.freedesktop.DBus.Properties")
-            dev_type = dev_props.Get(
-                "org.freedesktop.NetworkManager.Device", "DeviceType"
-            )
-
-            # is wifi device
-            if dev_type == 2:
-                wifi_dev = dbus.Interface(
-                    dev_proxy, "org.freedesktop.NetworkManager.Device.Wireless"
-                )
-                return (wifi_dev, dev_proxy)
-        return (None, None)
-
-    def _get_access_points(self, wifi_dev) -> List[AccessPoint]:
-        """
-        Get a list of access points. Should only be called after scanning for networks
-        """
-        access_points: List[AccessPoint] = []
-        wifi_access_points = wifi_dev.GetAccessPoints()
-        if wifi_access_points is None:
-            return []
-        for ap_path in wifi_access_points:
-            ap_proxy = self.bus.get_object("org.freedesktop.NetworkManager", ap_path)
-            ap_props = dbus.Interface(ap_proxy, "org.freedesktop.DBus.Properties")
-
-            ssid = ap_props.Get("org.freedesktop.NetworkManager.AccessPoint", "Ssid")
-            strength = ap_props.Get(
-                "org.freedesktop.NetworkManager.AccessPoint", "Strength"
-            )
-            flags = ap_props.Get("org.freedesktop.NetworkManager.AccessPoint", "Flags")
-            wpa_flags = ap_props.Get(
-                "org.freedesktop.NetworkManager.AccessPoint", "WpaFlags"
-            )
-            rsn_flags = ap_props.Get(
-                "org.freedesktop.NetworkManager.AccessPoint", "RsnFlags"
-            )
-
-            requires_password = self._ap_requires_password(flags, wpa_flags, rsn_flags)
-
-            access_points.append(
-                AccessPoint(
-                    ssid="".join([chr(byte) for byte in ssid]),
-                    strength=int(strength),
-                    requires_password=requires_password,
-                )
-            )
-
-        return sorted(access_points, key=lambda ap: ap.strength, reverse=True)
 
     def _ap_requires_password(self, flags: int, wpa_flags: int, rsn_flags: int):
         """
@@ -718,43 +461,89 @@ class NetworkManager:
             flags & NM_802_11_AP_FLAGS_PRIVACY == 1 or wpa_flags != 0 or rsn_flags != 0
         )
 
-    def _get_connection_proxy(self, active_connection):
-        # Get the connection details from the active connection
-        connection_proxy = dbus.Interface(
-            self.bus.get_object("org.freedesktop.NetworkManager", active_connection),
-            "org.freedesktop.DBus.Properties",
-        )
+    def _get_wifi_device(self) -> NetworkDeviceWireless| None:
+        devices = self.networkmanager.get_devices()
+        if devices is None:
+            self.logger.warning("Failed to retrieve device list")
+            devices = []
+        for dev_path in devices:
+            device = NetworkDeviceGeneric(dev_path, self.bus)
+            dev_type = device.device_type
 
-        # Get the connection path (this will give us the object path for the connection)
-        connection_path = connection_proxy.Get(
-            "org.freedesktop.NetworkManager.Connection.Active", "Connection"
-        )
+            # is wifi device
+            if dev_type == DeviceType.WIFI:
+                return NetworkDeviceWireless(dev_path, self.bus)
+        return None
 
-        # Return the connection proxy object based on the connection path
-        return self.bus.get_object("org.freedesktop.NetworkManager", connection_path)
+    def _get_access_points(self, wifi_dev: NetworkDeviceWireless) -> List[AccessPoint]:
+        """
+        Get a list of access points. Should only be called after scanning for networks
+        """
+        access_points: List[AccessPoint] = []
+        wifi_access_points = wifi_dev.access_points
+        if wifi_access_points is None:
+            return []
+        for ap_path in wifi_access_points:
+            access_points.append(
+                AccessPoint(ap_path, self.bus)
+            )
 
-    def _list_connections(self) -> List[dbus.Interface]:
+        return sorted(access_points, key=lambda ap: ap.strength, reverse=True)
+
+    
+    def _list_connections(self) -> List[ActiveConnection]:
         connections = []
-
-        settings_proxy = self.bus.get_object(
-            "org.freedesktop.NetworkManager", "/org/freedesktop/NetworkManager/Settings"
-        )
-        settings = dbus.Interface(
-            settings_proxy, "org.freedesktop.NetworkManager.Settings"
-        )
 
         # List all the connections saved
         # This might have repeats for some reason, so this needs to be filtered
-        connections_list = settings.ListConnections()
-        if connections_list is None:
-            return []
-        for connection_path in connections_list:
-            proxy = self.bus.get_object(
-                "org.freedesktop.NetworkManager", connection_path
-            )
-            connection = dbus.Interface(
-                proxy, "org.freedesktop.NetworkManager.Settings.Connection"
-            )
+        for device in self.networkmanager.get_devices():
+            if device is None:
+                continue
+            if not isinstance(device, NetworkDeviceGeneric):
+                continue
+            if device.active_connection is None:
+                continue
+
+            connection = ActiveConnection(device.active_connection, self.bus)
             connections.append(connection)
 
+
         return connections
+
+    def turn_off_wifi(self):
+        """
+        Turn off the WiFi device completely
+        """
+        wifi_dev = self._get_wifi_device()
+
+        if not wifi_dev:
+            raise Exception("No WiFi device found")
+
+        
+        # Alternative approach using nmcli command for more reliable wifi disabling
+        try:
+            subprocess.run(["nmcli", "radio", "wifi", "off"], check=True, capture_output=True)
+        except subprocess.CalledProcessError as e:
+            self.logger.error(f"Failed to turn off WiFi using nmcli: {e}")
+            raise Exception("Failed to turn off WiFi")
+
+    def turn_on_wifi(self):
+        """
+        Turn on the WiFi device
+        """
+        try:
+            subprocess.run(["nmcli", "radio", "wifi", "on"], check=True, capture_output=True)
+        except subprocess.CalledProcessError as e:
+            self.logger.error(f"Failed to turn on WiFi using nmcli: {e}")
+            raise Exception("Failed to turn on WiFi")
+
+
+    def is_wifi_enabled(self) -> bool:
+        """
+        Check if WiFi is currently enabled
+        """
+        try:
+            result = subprocess.run(["nmcli", "radio", "wifi"], check=True, capture_output=True, text=True)
+            return result.stdout.strip() == "enabled"
+        except subprocess.CalledProcessError:
+            return False

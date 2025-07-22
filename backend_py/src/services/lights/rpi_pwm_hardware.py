@@ -3,8 +3,9 @@ from .pwm_controller import PWMController
 from typing import Dict
 import logging
 
+
 class RPiHardwarePWMController(PWMController):
-    NAME = 'Hardware PWM Controller'
+    NAME = "Hardware PWM Controller"
 
     # Tested working value for frequency
     PWM_FREQUENCY = 7812.5
@@ -15,25 +16,24 @@ class RPiHardwarePWMController(PWMController):
         self.pwm_supported = True
 
         if pins is None:
-            pins = {
-                18: 0,
-                19: 1
-            }
+            pins = {18: 0, 19: 1}
         self.PWM_PINS = pins
 
         self.pwm_objects: Dict[int, HardwarePWM] = {}
 
         for pin in self.PWM_PINS.keys():
             try:
-                self.pwm_objects[pin] = HardwarePWM(pwm_channel=self.PWM_PINS[pin], hz=self.PWM_FREQUENCY, chip=chip)
+                self.pwm_objects[pin] = HardwarePWM(
+                    pwm_channel=self.PWM_PINS[pin], hz=self.PWM_FREQUENCY, chip=chip
+                )
             except HardwarePWMException:
-                logging.warning(
+                self.logger.warning(
                     "Hardware PWM is not enabled. Please add 'dtoverlay=pwm-2chan' to /boot/firmware/config.txt and reboot."
                 )
                 self.pwm_supported = False
                 break
             except OSError as e:
-                logging.warning(f"An OSError occurred with Hardware PWM: {e}")
+                self.logger.warning(f"An OSError occurred with Hardware PWM: {e}")
                 self.pwm_supported = False
                 break
             self.pwm_objects[pin].start(0)
@@ -43,11 +43,11 @@ class RPiHardwarePWMController(PWMController):
             self.pwm_objects = {}
 
     def is_pwm_pin(self, pin: int) -> bool:
-        '''
+        """
         Return true if the pin is supported but will always return false if pwm is not supported entirely
-        '''
+        """
         return pin in self.PWM_PINS.keys() if self.pwm_supported else False
-    
+
     def disable_pin(self, pin: int):
         # FIXME: Not implemented
         # Planned to be implemented soon
@@ -55,7 +55,9 @@ class RPiHardwarePWMController(PWMController):
 
     def set_intensity(self, pin: int, intensity: float):
         if not self.is_pwm_pin(pin):
-            logging.warning(f'Attempted to use pin: {pin}, which is not supported by this device')
+            self.logger.warning(
+                f"Attempted to use pin: {pin}, which is not supported by this device"
+            )
             return
 
         duty_cycle = max(0, min(100, intensity))

@@ -1,9 +1,6 @@
 from dataclasses import dataclass, field
 from typing import List
 import subprocess
-from multiprocessing import Process
-import time
-import shlex
 import threading
 import event_emitter as events
 
@@ -23,7 +20,7 @@ class Stream(events.EventEmitter):
     interval: IntervalModel = field(
         default_factory=lambda: IntervalModel(numerator=1, denominator=30)
     )
-    configured: bool = False
+    enabled: bool = False
 
     software_h264_bitrate = 5000
 
@@ -89,26 +86,37 @@ class StreamRunner(events.EventEmitter):
         self.loop = None
         self.started = False
         self.error_thread = None
+        self.started_time = 0
+        self._lock = threading.RLock()
+
+        self.logger = logging.getLogger("dwe_os_2.cameras.StreamRunner")
 
     def start(self):
-        if self.started:
-            logging.info("Joining thread")
-            self.stop()
-            self.error_thread.join()
-        self.started = True
-        self._run_pipeline()
+        with self._lock:
+            self.logger.info(
+                f"Starting stream for followers: {[stream.device_path for stream in self.streams]}")
+            if self.started:
+                self.stop()
+            self.started = True
+            self._run_pipeline()
 
     def stop(self):
-        if not self.started or not self._process:
-            return
-        self.started = False
-        self._process.kill()
-        self._process.wait()
-        del self._process
+        with self._lock:
+            if not self.started or not self._process:
+                return
+
+            self.logger.info("Stopping stream")
+            self.started = False
+            self._process.kill()
+            if self._process.stderr:
+                self._process.stderr.close()
+            self._process.wait()
+            self._process = None
+            self.error_thread.join()
 
     def _run_pipeline(self):
         pipeline_str = self._construct_pipeline()
-        logging.info(pipeline_str)
+        self.logger.info(pipeline_str)
         self._process = subprocess.Popen(
             f"gst-launch-1.0 {pipeline_str}".split(" "),
             stdout=subprocess.DEVNULL,
@@ -121,19 +129,19 @@ class StreamRunner(events.EventEmitter):
     def _construct_pipeline(self):
         pipeline_strs = []
         for stream in self.streams:
-            if stream.configured:
-                pipeline_strs.append(stream._construct_pipeline())
+            pipeline_strs.append(stream._construct_pipeline())
         return " ".join(pipeline_strs)
 
     def _log_errors(self):
         error_block = []
         try:
             for stderr_line in iter(self._process.stderr.readline, ""):
-                stderr_line = self._process.stderr.readline()
                 if stderr_line:
                     error_block.append(stderr_line)
-                    logging.error(stderr_line)
+                    self.logger.error(
+                        f"GStreamer Error: {stderr_line.strip()}")
                     self.stop()
+                    break
                 else:
                     break
         except:

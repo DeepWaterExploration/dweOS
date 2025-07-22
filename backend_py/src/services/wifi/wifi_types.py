@@ -47,3 +47,6 @@ class AccessPoint(BaseModel):
     ssid: str
     strength: int
     requires_password: bool
+
+class ConnectionResultModel(BaseModel):
+    result: bool

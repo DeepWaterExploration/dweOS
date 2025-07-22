@@ -1,22 +1,96 @@
-import Box from "@mui/material/Box";
-import CssBaseline from "@mui/material/CssBaseline";
-import "./App.css";
-import "./main.css";
-import { SnackbarProvider } from "notistack";
+import { SidebarLeft } from "@/components/sidebar-left";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 
-import NavigationBar from "./components/NavigationBar";
-import React from "react";
+import { Outlet } from "react-router-dom";
+import { ThemeProvider } from "@/components/theme-provider";
+import { ModeToggle } from "./components/mode-toggle";
+import { CommandPalette } from "./components/dwe/app/command-palette";
+import { io, Socket } from "socket.io-client";
+import { useEffect, useRef, useState } from "react";
+import WebsocketContext from "./contexts/WebsocketContext";
+import { Toaster } from "@/components/ui/toaster";
+import { WifiSelector } from "./components/dwe/wireless/wifi-selector";
+import { EthernetPort, EthernetPortIcon } from "lucide-react";
+import { Button } from "./components/ui/button";
+import { WiredDropdown } from "./components/dwe/wireless/wired-dropdown";
+import { SystemDropdown } from "./components/dwe/system/system-dropdown";
 
 function App() {
-    return (
-        <SnackbarProvider autoHideDuration={3000} maxSnack={4}>
-            <Box sx={{ display: "flex" }}>
-                <CssBaseline>
-                    <NavigationBar />
-                </CssBaseline>
-            </Box>
-        </SnackbarProvider>
+  const socket = useRef<Socket | undefined>(undefined);
+  const [connected, setConnected] = useState(false);
+
+  const connectWebsocket = () => {
+    if (socket.current) delete socket.current;
+
+    socket.current = io(
+      import.meta.env.DEV ? `http://${window.location.hostname}:5000` : undefined,
+      { transports: ["websocket"] }
     );
+
+    socket.current.on("disconnect", () => {
+      setConnected(false);
+    });
+
+    socket.current.on("connect", () => {
+      setConnected(true);
+    });
+  };
+
+  useEffect(() => {
+    if (!connected) {
+      connectWebsocket();
+    } else {
+      //
+    }
+  }, [connected]);
+
+  return (
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <Toaster />
+      <WebsocketContext.Provider value={{ socket: socket.current, connected }}>
+        <SidebarProvider>
+          <SidebarLeft />
+          <SidebarInset>
+            <header className="sticky top-0 flex h-14 shrink-0 items-center gap-2 bg-background z-50">
+              <div className="flex flex-1 items-center gap-2 px-3">
+                <SidebarTrigger />
+                <Separator orientation="vertical" className="mr-2 h-4" />
+                <Breadcrumb>
+                  <BreadcrumbList>
+                    <BreadcrumbItem>
+                      <BreadcrumbPage className="line-clamp-1">
+                        DWE OS
+                      </BreadcrumbPage>
+                    </BreadcrumbItem>
+                  </BreadcrumbList>
+                </Breadcrumb>
+                <Separator orientation="vertical" className="mr-2 h-4" />
+                <ModeToggle />
+                <CommandPalette />
+                <WiredDropdown />
+                <WifiSelector />
+                <SystemDropdown />
+              </div>
+            </header>
+            <div className="flex flex-1 flex-col gap-4 p-4">
+              <Outlet />
+            </div>
+          </SidebarInset>
+        </SidebarProvider>
+      </WebsocketContext.Provider>
+    </ThemeProvider>
+  );
 }
 
 export default App;

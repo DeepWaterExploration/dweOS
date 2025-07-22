@@ -1,0 +1,21 @@
+import { createBrowserRouter } from "react-router-dom";
+import App from "./App";
+import OverviewLayout from "./components/Overview";
+import DeviceListLayout from "./components/dwe/cameras/device-list";
+import PreferencesLayout from "./components/dwe/preferences/preferences";
+import { LogViewer } from "./components/dwe/log-page/log-viewer";
+import Terminal from "./components/dwe/terminal/terminal";
+
+export const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <App />,
+    children: [
+      { index: true, element: <OverviewLayout /> },
+      { path: "/cameras", element: <DeviceListLayout /> },
+      { path: "/preferences", element: <PreferencesLayout /> },
+      { path: "/log-viewer", element: <LogViewer /> },
+      { path: "/terminal", element: <Terminal /> },
+    ],
+  },
+]);

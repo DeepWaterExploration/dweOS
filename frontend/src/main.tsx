@@ -1,12 +1,12 @@
-import ReactDOM from "react-dom/client";
-
-import AppBlock from "./App";
 import "./index.css";
-import React from "react";
 
-const rootElement = document.getElementById("root");
-if (rootElement) {
-    ReactDOM.createRoot(rootElement).render(<AppBlock />);
-} else {
-    console.error("Unable to find root element with ID 'root'");
-}
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { RouterProvider } from "react-router-dom";
+import { router } from "./router.tsx";
+
+createRoot(document.getElementById("root")!).render(
+  // <StrictMode>
+  <RouterProvider router={router} />
+  // </StrictMode>
+);

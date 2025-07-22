@@ -215,7 +215,7 @@ const Recordings = () => {
             </div>
 
             {/* Sticky footer at bottom of viewport */}
-            <div className="fixed bottom-0 left-0 right-0 border-t bg-black border-gray-200 p-4 shadow-lg z-10">
+            <div className="fixed bottom-0 left-0 right-0 border-t border-muted bg-background p-4 shadow-lg z-10">
                 <div className="flex justify-between items-center max-w-full">
                     <Button
                         variant="outline"

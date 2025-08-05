@@ -509,6 +509,21 @@ class NetworkManager:
 
 
         return connections
+    
+    def get_all_ip_addresses(self) -> List[str]:
+        """
+        Get all IP addresses of the system
+        """
+        ip_addresses = []
+        for device in self.networkmanager.get_devices():
+            device = NetworkDeviceGeneric(device, self.bus)
+            if not device.ip4_config or device.ip4_config == "/":
+                continue
+            ipv4_config = IPv4Config(device.ip4_config, self.bus)
+            addresses = ipv4_config.address_data
+            for address in addresses:
+                ip_addresses.append([device.interface, address["address"][1]])
+        return ip_addresses
 
     def turn_off_wifi(self):
         """
@@ -547,3 +562,7 @@ class NetworkManager:
             return result.stdout.strip() == "enabled"
         except subprocess.CalledProcessError:
             return False
+
+
+
+        

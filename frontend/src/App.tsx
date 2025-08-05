@@ -23,6 +23,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { WifiDropdown } from "./components/dwe/wireless/wifi-dropdown";
 import { WiredDropdown } from "./components/dwe/wireless/wired-dropdown";
 import { SystemDropdown } from "./components/dwe/system/system-dropdown";
+import IPDropdown from "./components/dwe/wireless/ip-dropdown";
 
 function App() {
   const socket = useRef<Socket | undefined>(undefined);
@@ -76,6 +77,7 @@ function App() {
                 <Separator orientation="vertical" className="mr-2 h-4" />
                 <ModeToggle />
                 <CommandPalette />
+                <IPDropdown />
                 <WiredDropdown />
                 <WifiDropdown />
                 <SystemDropdown />

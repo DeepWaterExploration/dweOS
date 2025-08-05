@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Request
 from typing import List
+
 from ..services import (
     AsyncNetworkManager,
     NetworkConfig,
@@ -8,7 +9,8 @@ from ..services import (
     Connection,
     IPConfiguration,
     NetworkPriorityInformation,
-    ConnectionResultModel
+    ConnectionResultModel,
+    IPListConfig
 )
 
 wifi_router = APIRouter(tags=["wifi"])
@@ -74,3 +76,9 @@ async def wifi_off(request: Request):
 async def wifi_on(request: Request):
     wifi_manager: AsyncNetworkManager = request.app.state.wifi_manager
     return {"status": await wifi_manager.turn_on_wifi()}
+
+@wifi_router.get("/wifi/ip_addresses", summary="List all IP addresses")
+async def list_ip_addresses(request: Request) -> List[IPListConfig]:
+    wifi_manager: AsyncNetworkManager = request.app.state.wifi_manager
+    ip_addresses = await wifi_manager.list_ip_addresses()
+    return [IPListConfig(ip_address=ip, device_name=device) for device, ip in ip_addresses]

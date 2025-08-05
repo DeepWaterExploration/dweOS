@@ -177,7 +177,16 @@ class AsyncNetworkManager(EventEmitter):
 
     def list_connections(self):
         return [Connection(id=i.id, type=i.type) for i in self.connections]
-
+    async def list_ip_addresses(self):
+        """
+        List all IP addresses of the device
+        """
+        try:
+            async with self._nm_lock:
+                return await asyncio.to_thread(self.nm.get_all_ip_addresses)
+        except Exception as e:
+            self.logger.error(f"Error occurred while listing IP addresses: {e}")
+            return []
     async def set_network_priority(self, network_priority: NetworkPriority):
         self._network_priority = network_priority
         cmd = Command(CommandType.CHANGE_NETWORK_PRIORITY, network_priority)
@@ -464,3 +473,4 @@ class AsyncNetworkManager(EventEmitter):
         except Exception as e:
             self.logger.error(f"Error occurred while turning on WiFi: {e}")
             return False
+

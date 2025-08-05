@@ -140,6 +140,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/wifi/ip_addresses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List all IP addresses */
+        get: operations["list_ip_addresses_wifi_ip_addresses_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/wired/get_ip_configuration": {
         parameters: {
             query?: never;
@@ -487,11 +504,46 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Get a specific recording */
+        get: operations["get_recording_recordings__recording_path__get"];
         put?: never;
         post?: never;
         /** Delete a recording */
         delete: operations["delete_recording_recordings__recording_path__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/recordings/{old_name}/{new_name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Rename a recording */
+        patch: operations["rename_recording_recordings__old_name___new_name__patch"];
+        trace?: never;
+    };
+    "/recording/zip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download all recordings as a zip file */
+        get: operations["zip_recordings_recording_zip_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -690,6 +742,13 @@ export interface components {
             /** Dns */
             dns?: string[] | null;
         };
+        /** IPListConfig */
+        IPListConfig: {
+            /** Ip Address */
+            ip_address: string;
+            /** Device Name */
+            device_name: string;
+        };
         /**
          * IPType
          * @enum {string}
@@ -767,6 +826,8 @@ export interface components {
             duration: string;
             /** Size */
             size: string;
+            /** Created */
+            created: string;
         };
         /** SavedPreferencesModel */
         SavedPreferencesModel: {
@@ -1072,6 +1133,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    list_ip_addresses_wifi_ip_addresses_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IPListConfig"][];
                 };
             };
         };
@@ -1608,6 +1689,37 @@ export interface operations {
             };
         };
     };
+    get_recording_recordings__recording_path__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recording_path: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     delete_recording_recordings__recording_path__delete: {
         parameters: {
             query?: never;
@@ -1635,6 +1747,58 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rename_recording_recordings__old_name___new_name__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                old_name: string;
+                new_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    zip_recordings_recording_zip_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
         };

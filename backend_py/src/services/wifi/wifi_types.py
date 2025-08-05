@@ -50,3 +50,7 @@ class AccessPoint(BaseModel):
 
 class ConnectionResultModel(BaseModel):
     result: bool
+
+class IPListConfig(BaseModel):
+    ip_address: str
+    device_name: str

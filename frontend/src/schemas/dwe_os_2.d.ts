@@ -140,6 +140,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/wifi/ip_addresses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List all IP addresses */
+        get: operations["list_ip_addresses_wifi_ip_addresses_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/wired/get_ip_configuration": {
         parameters: {
             query?: never;
@@ -725,6 +742,13 @@ export interface components {
             /** Dns */
             dns?: string[] | null;
         };
+        /** IPListConfig */
+        IPListConfig: {
+            /** Ip Address */
+            ip_address: string;
+            /** Device Name */
+            device_name: string;
+        };
         /**
          * IPType
          * @enum {string}
@@ -1109,6 +1133,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    list_ip_addresses_wifi_ip_addresses_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IPListConfig"][];
                 };
             };
         };

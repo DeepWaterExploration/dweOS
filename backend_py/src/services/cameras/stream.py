@@ -11,6 +11,7 @@ from .camera_types import *
 
 import logging
 
+
 @dataclass
 class Stream(events.EventEmitter):
     device_path: str = ''
@@ -70,6 +71,7 @@ class Stream(events.EventEmitter):
     def stop(*args):
         pass
 
+
 class StreamRunner(events.EventEmitter):
 
     def __init__(self, *streams: Stream) -> None:
@@ -79,12 +81,14 @@ class StreamRunner(events.EventEmitter):
         self.loop = None
         self.started = False
         self.error_thread = None
+        self.enable_gst_error = False
 
     def start(self):
         if self.started:
             logging.info('Joining thread')
             self.stop()
-            self.error_thread.join()
+            if self.enable_gst_error:
+                self.error_thread.join()
         self.started = True
         self._run_pipeline()
 
@@ -101,8 +105,9 @@ class StreamRunner(events.EventEmitter):
         logging.info(pipeline_str)
         self._process = subprocess.Popen(
             f'gst-launch-1.0 {pipeline_str}'.split(' '), stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
-        self.error_thread = threading.Thread(target=self._log_errors)
-        self.error_thread.start()
+        if self.enable_gst_error:
+            self.error_thread = threading.Thread(target=self._log_errors)
+            self.error_thread.start()
 
     def _construct_pipeline(self):
         pipeline_strs = []
@@ -110,7 +115,7 @@ class StreamRunner(events.EventEmitter):
             if stream.configured:
                 pipeline_strs.append(stream._construct_pipeline())
         return ' '.join(pipeline_strs)
-    
+
     def _log_errors(self):
         error_block = []
         try:

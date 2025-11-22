@@ -1,11 +1,12 @@
 import subprocess
+from typing import Optional
 
 class TTYDManager:
 
     TTYD_CMD = ['ttyd', '-p', '7681', 'login']
 
     def __init__(self) -> None:
-        self._process: subprocess.Popen | None = None
+        self._process: Optional[subprocess.Popen] = None
 
     def start(self) -> None:
         if self._process:

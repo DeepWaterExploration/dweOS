@@ -11,17 +11,15 @@ def fourcc2s(fourcc: int):
     return res
 
 def stream_encode_type_to_string(encode_type: StreamEncodeTypeEnum):
-    match encode_type:
-        case StreamEncodeTypeEnum.MJPG:
-            return 'MJPG'
-        case StreamEncodeTypeEnum.H264:
-            return 'H264'
+    if encode_type == StreamEncodeTypeEnum.MJPG:
+        return 'MJPG'
+    if encode_type == StreamEncodeTypeEnum.H264:
+        return 'H264'
     return None
 
 def string_to_stream_encode_type(encoding: str):
-    match encoding:
-        case 'MJPG':
-            return StreamEncodeTypeEnum.MJPG
-        case 'H264':
-            return StreamEncodeTypeEnum.H264
+    if encoding == 'MJPG':
+        return StreamEncodeTypeEnum.MJPG
+    if encoding == 'H264':
+        return StreamEncodeTypeEnum.H264
     return None

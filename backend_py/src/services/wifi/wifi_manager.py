@@ -1,3 +1,5 @@
+from typing import Optional
+
 from .wifi_types import NetworkConfig, Status, Connection
 from .schemas import AccessPointSchema, ConnectionSchema, StatusSchema
 import threading
@@ -20,9 +22,9 @@ class WiFiManager:
         self.scan_interval = scan_interval
         self.connections = []
 
-        self.to_forget: str | None = None
+        self.to_forget: Optional[str] = None
         self.to_disconnect = False
-        self.to_connect: NetworkConfig | None = None
+        self.to_connect: Optional[NetworkConfig] = None
 
         # Changed to true after successfully completed a scan
         self.status = Status(connection=Connection(), finished_first_scan=False, connected=False)

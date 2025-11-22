@@ -26,13 +26,11 @@ class Stream(events.EventEmitter):
         return f'{self._build_source()} ! {self._construct_caps()} ! {self._build_payload()} ! {self._build_sink()}'
 
     def _get_format(self):
-        match self.encode_type:
-            case StreamEncodeTypeEnum.H264:
-                return 'video/x-h264'
-            case StreamEncodeTypeEnum.MJPG:
-                return 'image/jpeg'
-            case _:
-                return ''
+        if self.encode_type == StreamEncodeTypeEnum.H264:
+            return 'video/x-h264'
+        if self.encode_type == StreamEncodeTypeEnum.MJPG:
+            return 'image/jpeg'
+        return ''
 
     def _build_source(self):
         return f'v4l2src device={self.device_path}'
@@ -41,28 +39,24 @@ class Stream(events.EventEmitter):
         return f'{self._get_format()},width={self.width},height={self.height},framerate={self.interval.denominator}/{self.interval.numerator}'
 
     def _build_payload(self):
-        match self.encode_type:
-            case StreamEncodeTypeEnum.H264:
-                return 'h264parse ! queue ! rtph264pay config-interval=10 pt=96'
-            case StreamEncodeTypeEnum.MJPG:
-                return 'rtpjpegpay'
-            case _:
-                return ''
+        if self.encode_type == StreamEncodeTypeEnum.H264:
+            return 'h264parse ! queue ! rtph264pay config-interval=10 pt=96'
+        if self.encode_type == StreamEncodeTypeEnum.MJPG:
+            return 'rtpjpegpay'
+        return ''
 
     def _build_sink(self):
-        match self.stream_type:
-            case StreamTypeEnum.UDP:
-                if len(self.endpoints) == 0:
-                    return 'fakesink'
-                sink = 'multiudpsink sync=true clients='
-                for endpoint, i in zip(self.endpoints, range(len(self.endpoints))):
-                    sink += f'{endpoint.host}:{endpoint.port}'
-                    if i < len(self.endpoints)-1:
-                        sink += ','
+        if self.stream_type == StreamTypeEnum.UDP:
+            if len(self.endpoints) == 0:
+                return 'fakesink'
+            sink = 'multiudpsink sync=true clients='
+            for endpoint, i in zip(self.endpoints, range(len(self.endpoints))):
+                sink += f'{endpoint.host}:{endpoint.port}'
+                if i < len(self.endpoints)-1:
+                    sink += ','
 
-                return sink
-            case _:
-                return ''
+            return sink
+        return ''
 
     def start(*args):
         pass

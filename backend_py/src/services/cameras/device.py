@@ -1,7 +1,7 @@
 from ctypes import *
 import struct
 from dataclasses import dataclass
-from typing import Dict, Callable, Any
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import event_emitter as events
 
@@ -39,7 +39,7 @@ PID_VIDS = {
     }
 }
 
-def lookup_pid_vid(vid: int, pid: int) -> Tuple[str, DeviceType]:
+def lookup_pid_vid(vid: int, pid: int) -> Optional[Tuple[str, DeviceType]]:
     for name in PID_VIDS:
         dev = PID_VIDS[name]
         if dev['VID'] == vid and dev['PID'] == pid:
@@ -116,8 +116,8 @@ class Option:
 
     def __init__(self, camera: Camera, fmt: str, unit: xu.Unit, ctrl: xu.Selector, command: xu.Command,
                  name: str,
-                 conversion_func_set: Callable[[Any],list|Any] = lambda val : val,
-                 conversion_func_get: Callable[[list|Any],Any] = lambda val : val,
+                 conversion_func_set: Callable[[Any], Union[List, Any]] = lambda val: val,
+                 conversion_func_get: Callable[[Union[List, Any]], Any] = lambda val: val,
                  size=11) -> None:
         self._camera = camera
         self._fmt = fmt
@@ -276,16 +276,15 @@ class Device(events.EventEmitter):
             control.flags.default_value = ctrl._info.default_value
             control.value = self.get_pu(ctrl.id)
 
-            match control.flags.control_type:
-                case ControlTypeEnum.MENU:
-                    for i in ctrl.data:
-                        menu_item = ctrl.data[i]
-                        control.flags.menu.append(
-                            MenuItem(i, menu_item))
+            if control.flags.control_type == ControlTypeEnum.MENU:
+                for i in ctrl.data:
+                    menu_item = ctrl.data[i]
+                    control.flags.menu.append(
+                        MenuItem(i, menu_item))
 
             self.controls.append(control)
 
-    def find_camera_with_format(self, fmt: str) -> Camera | None:
+    def find_camera_with_format(self, fmt: str) -> Optional[Camera]:
         for cam in self.cameras:
             if cam.has_format(fmt):
                 return cam
@@ -295,13 +294,10 @@ class Device(events.EventEmitter):
         logging.info(self._fmt_log('Configuring stream'))
 
         camera: Camera = None
-        match encode_type:
-            case StreamEncodeTypeEnum.H264:
-                camera = self.find_camera_with_format('H264')
-            case StreamEncodeTypeEnum.MJPG:
-                camera = self.find_camera_with_format('MJPG')
-            case _:
-                pass
+        if encode_type == StreamEncodeTypeEnum.H264:
+            camera = self.find_camera_with_format('H264')
+        elif encode_type == StreamEncodeTypeEnum.MJPG:
+            camera = self.find_camera_with_format('MJPG')
 
         if not camera:
             logging.warn('Attempting to select incompatible encoding type. This is undefined behavior.')

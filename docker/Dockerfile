@@ -1,5 +1,5 @@
 # Base image
-FROM python:3.10-slim-bullseye
+FROM python:3.9-slim-bullseye
 
 # Install dependencies
 RUN apt-get update -y && apt-get upgrade -y &&\

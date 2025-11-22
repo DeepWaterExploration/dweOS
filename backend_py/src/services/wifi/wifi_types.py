@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 @dataclass
 class NetworkConfig:
@@ -7,8 +8,8 @@ class NetworkConfig:
 
 @dataclass
 class Connection:
-    id: str | None = None
-    type: str | None = None
+    id: Optional[str] = None
+    type: Optional[str] = None
 
 @dataclass
 class Status:

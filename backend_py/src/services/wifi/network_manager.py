@@ -1,5 +1,5 @@
 import dbus
-from typing import List, Callable
+from typing import Callable, List, Optional
 import time
 from .wifi_types import Connection, AccessPoint
 import logging
@@ -129,7 +129,7 @@ class NetworkManager:
         return self.list_connections()
 
     @handle_dbus_exceptions
-    def get_active_wireless_connection(self) -> Connection | None:
+    def get_active_wireless_connection(self) -> Optional[Connection]:
         '''
         Get the first active wireless connection
         '''

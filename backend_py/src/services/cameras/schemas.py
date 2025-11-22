@@ -13,7 +13,7 @@ class UnionField(fields.Field):
     def __init__(self, *valid_types: typing.List[fields.Field]):
         self.valid_types = valid_types
 
-    def _serialize(self, value, attr: str | None, data: typing.Mapping[str, typing.Any], **kwargs):
+    def _serialize(self, value, attr: typing.Optional[str], data: typing.Mapping[str, typing.Any], **kwargs):
         errors = []
         for valid_type in self.valid_types:
             try:
@@ -23,7 +23,7 @@ class UnionField(fields.Field):
         if len(errors) > 0:
             raise exceptions.ValidationError(errors)
 
-    def _deserialize(self, value, attr: str | None, data: typing.Mapping[str, typing.Any] | None, **kwargs):
+    def _deserialize(self, value, attr: typing.Optional[str], data: typing.Optional[typing.Mapping[str, typing.Any]], **kwargs):
         errors = []
         for valid_type in self.valid_types:
             try:

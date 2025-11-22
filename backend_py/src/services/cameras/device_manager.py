@@ -1,4 +1,4 @@
-from typing import *
+from typing import Any, Dict, List, Optional, Union, cast
 import logging
 import time
 import threading
@@ -46,23 +46,25 @@ class DeviceManager(events.EventEmitter):
         for device in self.devices:
             device.stream.stop()
 
-    def create_device(self, device_info: DeviceInfo) -> Device | None:
+    def create_device(self, device_info: DeviceInfo) -> Optional[Device]:
         '''
         Create a new device based on enumerated device info
         '''
-        (_, device_type) = lookup_pid_vid(device_info.vid, device_info.pid)
+        lookup_result = lookup_pid_vid(device_info.vid, device_info.pid)
+        if not lookup_result:
+            return None
+        (_, device_type) = lookup_result
 
         device = None
-        match device_type:
-            case DeviceType.EXPLOREHD:
-                device = EHDDevice(device_info)
-            case DeviceType.STELLARHD_LEADER:
-                device = SHDDevice(device_info)
-            case DeviceType.STELLARHD_FOLLOWER:
-                device = SHDDevice(device_info, False)
-            case _:
-                # Not a DWE device
-                return None
+        if device_type == DeviceType.EXPLOREHD:
+            device = EHDDevice(device_info)
+        elif device_type == DeviceType.STELLARHD_LEADER:
+            device = SHDDevice(device_info)
+        elif device_type == DeviceType.STELLARHD_FOLLOWER:
+            device = SHDDevice(device_info, False)
+        else:
+            # Not a DWE device
+            return None
 
         # we need to broadcast that there was a gst error so that the frontend knows there may be a kernel issue
         device.stream_runner.on('gst_error', lambda errors: self._emit_gst_error(device, errors))
@@ -86,7 +88,7 @@ class DeviceManager(events.EventEmitter):
         device_list.sort(key=key)
         return device_list
 
-    def set_device_option(self, bus_info: str, option: str, option_value: int | bool) -> bool:
+    def set_device_option(self, bus_info: str, option: str, option_value: Union[int, bool]) -> bool:
         '''
         Set a device option
         '''
@@ -185,7 +187,7 @@ class DeviceManager(events.EventEmitter):
             return False
         return True
 
-    def _find_device_with_bus_info(self, bus_info: str) -> Device | None:
+    def _find_device_with_bus_info(self, bus_info: str) -> Optional[Device]:
         '''
         Utility to find a device with bus info
         '''

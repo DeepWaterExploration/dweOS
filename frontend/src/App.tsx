@@ -23,16 +23,20 @@ import { Toaster } from "@/components/ui/toaster";
 import { WifiDropdown } from "./components/dwe/wireless/wifi-dropdown";
 import { WiredDropdown } from "./components/dwe/wireless/wired-dropdown";
 import { SystemDropdown } from "./components/dwe/system/system-dropdown";
+import { API_CLIENT } from "./api";
 
 function App() {
   const socket = useRef<Socket | undefined>(undefined);
   const [connected, setConnected] = useState(false);
+  const [wifiAvailable, setWifiAvailable] = useState(false);
 
   const connectWebsocket = () => {
     if (socket.current) delete socket.current;
 
     socket.current = io(
-      import.meta.env.DEV ? `http://${window.location.hostname}:5000` : undefined,
+      import.meta.env.DEV
+        ? `http://${window.location.hostname}:5000`
+        : undefined,
       { transports: ["websocket"] }
     );
 
@@ -52,6 +56,12 @@ function App() {
       //
     }
   }, [connected]);
+
+  useEffect(() => {
+    API_CLIENT.GET("/features").then((data) =>
+      data.data?.wifi ? setWifiAvailable(true) : setWifiAvailable(false)
+    );
+  }, []);
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
@@ -76,8 +86,8 @@ function App() {
                 <Separator orientation="vertical" className="mr-2 h-4" />
                 <ModeToggle />
                 <CommandPalette />
-                <WiredDropdown />
-                <WifiDropdown />
+                {wifiAvailable ? <WiredDropdown /> : <></>}
+                {wifiAvailable ? <WifiDropdown /> : <></>}
                 <SystemDropdown />
               </div>
             </header>

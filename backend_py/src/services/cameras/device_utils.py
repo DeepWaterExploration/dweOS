@@ -1,3 +1,9 @@
+"""
+device_utils.py
+
+Utility functions for device_manager.py, specifically for finding added devices / removed devices
+"""
+
 from typing import List
 from .device import Device
 

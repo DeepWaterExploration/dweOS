@@ -1,6 +1,16 @@
+"""
+shd.py
+
+Adds additional features to stellarHD devices
+Uses options functionality to set defaults, ranges, and specifies registers for where these features store data
+"""
+
+import logging
+import subprocess
 from .saved_pydantic_schemas import SavedDeviceModel
 from .enumeration import DeviceInfo
 from .device import Device, BaseOption, ControlTypeEnum, StreamEncodeTypeEnum
+from . import xu_controls as xu
 from typing import Dict, List
 
 from event_emitter import EventEmitter
@@ -18,7 +28,90 @@ class StellarOption(BaseOption, EventEmitter):
 
     def get_value(self):
         return self.value
+    
+"""
+Stellar Dual Register Class
+"""
+class DualRegisterOption(StellarOption):
+    def __init__(
+        self,
+        camera,
+        high_cmd: xu.Command,
+        low_cmd: xu.Command,
+        name:str,
+        value: int = 0
+    ) -> None:
+        super().__init__(name, value)
 
+        self._camera = camera
+        self.high_reg = high_cmd
+        self.low_reg = low_cmd
+
+        self.script_path = "/opt/DWE_Stellar_Control/stellar_control.sh"
+        self.logger = logging.getLogger("dwe_os.cameras.DualRegisterOption")
+
+    # grab values from 2 registers and combine them to read
+    def get_value(self):
+        high_val = self._run_script("read", self._camera.path, self.high_reg)
+        if high_val is None:
+            return self.value
+        low_val = self._run_script("read", self._camera.path, self.low_reg)
+        if low_val is None:
+            return self.value
+        
+        try:
+            high_val = int(high_val.strip())
+            low_val = int(low_val.strip())
+            total_val = (high_val << 8) | low_val
+
+            self.value = total_val
+            return total_val
+        except ValueError:
+            return self.value
+        
+    # split value across 2 registers to set
+    def set_value(self, value):
+        try:
+            inputTotal = int(value)
+        except ValueError:
+            return
+
+        self.value = inputTotal
+        
+        high_val = (inputTotal >> 8) & 0xFF
+        low_val = inputTotal & 0xFF 
+    
+        device_path = self._camera.path
+
+        self._run_script("write", device_path, self.high_reg, high_val)
+        self._run_script("write", device_path, self.low_reg, low_val)
+
+        self.emit("value_changed")
+        
+
+    def _run_script(self, operation, dev_path, register, value=None):
+        # create arguements
+        register = f"0x{register.value:04x}"
+        cmd = [
+                self.script_path,
+                "--dev", dev_path,
+                operation,
+                register
+            ]
+        if operation == "write" and value is not None:
+            cmd.append(str(value))
+
+        # run command
+        try:
+            result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+            if operation == "read":
+                return result.stdout.strip()
+            else:
+                self.logger.info(f"Write output: {result.stdout.strip()}")
+                return None
+        except subprocess.CalledProcessError as e:
+            self.logger.error(f"{operation} Failed on {register}: {e.stderr}")
+            return None
 
 class SHDDevice(Device):
     """
@@ -26,6 +119,9 @@ class SHDDevice(Device):
     """
 
     def __init__(self, device_info: DeviceInfo) -> None:
+        # Specifies if SHD device is Stellar Pro
+        self.is_pro = True # self.pid == 0x6369
+
         super().__init__(device_info)
 
         # Copy MJPEG over to Software H264, since they are the same thing
@@ -45,6 +141,15 @@ class SHDDevice(Device):
         self.add_control_from_option(
             "bitrate", 5, ControlTypeEnum.INTEGER, 10, 0.1, 0.1
         )
+
+        if self.is_pro:
+            self.add_control_from_option(
+                'shutter', 100, ControlTypeEnum.INTEGER, 10000, 1, 1
+            )
+
+            self.add_control_from_option(
+                'iso', 400, ControlTypeEnum.INTEGER, 6400, 100, 100
+            )
 
     def add_follower(self, device: 'SHDDevice'):
         if device.bus_info in self.followers:
@@ -118,6 +223,15 @@ class SHDDevice(Device):
         )
 
         options["bitrate"] = self.bitrate_option
+
+        if self.is_pro:
+            # UVC xu shutter speed control
+            options['shutter'] = DualRegisterOption(
+                self.cameras[0], xu.Command.SHUTTER_COARSE, xu.Command.SHUTTER_FINE, "Shutter Speed")
+
+            # UVC xu ISO control
+            options['iso'] = DualRegisterOption(
+                self.cameras[0], xu.Command.ISO_COARSE, xu.Command.ISO_FINE, "ISO")
 
         return options
 

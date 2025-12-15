@@ -1,3 +1,13 @@
+"""
+device_manager.py
+
+Handles functionality of device and montiors for devices
+When it finds a new device, it creates a new device object and updates the device list and that devices settings
+When it sees a missing device, it removes that device ojbect from the device list
+Manages a devices streaming state as well as changes to device name
+Manages the leader follower connections
+"""
+
 from typing import *
 import logging
 import event_emitter as events

@@ -1,8 +1,15 @@
+"""
+ehd.py
+
+Adds additional features to exploreHD devices through extension units (xu) as per UVC protocol
+Uses options functionality to set defaults, ranges, and specifies registers for where these features store data
+"""
+
 from typing import Dict
 from .enumeration import DeviceInfo
 from .device import Device, Option, ControlTypeEnum
 from .pydantic_schemas import H264Mode
-from . import ehd_controls as xu
+from . import xu_controls as xu
 
 class EHDDevice(Device):
     '''
@@ -45,8 +52,8 @@ class EHDDevice(Device):
         # Maybe rename mode to vbr etc.
         options['vbr'] = Option(
             self.cameras[2], 'B', xu.Unit.USR_ID, xu.Selector.USR_H264_CTRL, xu.Command.H264_MODE_CTRL, 'Variable Bitrate',
-                lambda mode : H264Mode.MODE_VARIABLE_BITRATE.value if mode else H264Mode.MODE_CONSTANT_BITRATE.value, 
-                lambda mode_value : H264Mode(mode_value) == H264Mode.MODE_VARIABLE_BITRATE)
+            lambda mode : H264Mode.MODE_VARIABLE_BITRATE.value if mode else H264Mode.MODE_CONSTANT_BITRATE.value, 
+            lambda mode_value : H264Mode(mode_value) == H264Mode.MODE_VARIABLE_BITRATE)
 
         return options
 

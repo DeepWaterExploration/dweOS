@@ -1,3 +1,10 @@
+"""
+network_manager.py
+
+Manages system network connections by communicating with system NetworkManager through DBus
+Handles Wifi scanning and connection management (connect / disconnect / forget) and IP Configuration (static / dynamic) for wired/wireless interfaces
+"""
+
 import ipaddress
 from typing import List, Dict, Any
 # from .wifi_types import Connection, AccessPoint, IPConfiguration, IPType
@@ -50,36 +57,40 @@ class NetworkManager:
 
         # TODO: get ip of either active ethernet or wireless
 
-        ethernet_device, connection = self._get_eth_device_and_connection()
-        
+        try:
+            ethernet_device, connection = self._get_eth_device_and_connection()
+            
 
-        ethernet_device = self._get_ethernet_device(
-            interface_name)
-        if ethernet_device is None:
-            raise Exception("No ethernet device found")
-
-
-        ipv4_config = IPv4Config(
-            ethernet_device.ip4_config, self.bus
-        )
-
-        addresses = ipv4_config.address_data
+            ethernet_device = self._get_ethernet_device(
+                interface_name)
+            if ethernet_device is None:
+                raise Exception("No ethernet device found")
 
 
-        # method = self.get_connection_method(connection.id)
-        dns_arr = [i['address'] for i in ipv4_config.nameserver_data or []]
+            ipv4_config = IPv4Config(
+                ethernet_device.ip4_config, self.bus
+            )
 
-        if len(addresses) == 0:
+            addresses = ipv4_config.address_data
+
+
+            # method = self.get_connection_method(connection.id)
+            dns_arr = [i['address'] for i in ipv4_config.nameserver_data or []]
+
+            if len(addresses) == 0:
+                return None
+            method = self.get_connection_method(connection)
+
+            return dict(
+                static_ip=addresses[0]["address"][1],
+                prefix=addresses[0]["prefix"][1],
+                gateway=self.get_ip_gateway(connection),
+                dns=[i[1] for i in dns_arr],
+                ip_type="STATIC" if method == "manual" else "DYNAMIC",
+            )
+        except Exception:
             return None
-        method = self.get_connection_method(connection)
-
-        return dict(
-            static_ip=addresses[0]["address"][1],
-            prefix=addresses[0]["prefix"][1],
-            gateway=self.get_ip_gateway(connection),
-            dns=[i[1] for i in dns_arr],
-            ip_type="STATIC" if method == "manual" else "DYNAMIC",
-        )
+        
 
 
     

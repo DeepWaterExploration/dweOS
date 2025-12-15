@@ -1,3 +1,10 @@
+"""
+enumeration.py
+
+Searches the system for cameras using video4linux, create a DeviceInfo based on the camera, and then maps that to the camera's bus_info, 
+and return a sorted list of device_infos
+"""
+
 from dataclasses import dataclass
 from . import v4l2
 import fcntl

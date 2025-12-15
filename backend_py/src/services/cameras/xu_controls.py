@@ -1,3 +1,9 @@
+"""
+xu_controls.py
+
+Specifies the constants of where each extension unit feature's register address is stored
+"""
+
 from enum import Enum
 
 
@@ -7,7 +13,6 @@ EHD_DEVICE_TAG = 0x9A
 class Unit(Enum):
     SYS_ID = 0x02
     USR_ID = 0x04
-
 
 class Selector(Enum):
     SYS_ASIC_RW = 0x01
@@ -33,3 +38,7 @@ class Command(Enum):
     H264_BITRATE_CTRL = 0x02
     GOP_CTRL = 0x03
     H264_MODE_CTRL = 0x06
+    SHUTTER_COARSE = 0x3501
+    SHUTTER_FINE = 0x3502
+    ISO_COARSE = 0x3508
+    ISO_FINE = 0x3509

@@ -1,3 +1,10 @@
+"""
+pydantic_schemas.py
+
+Defines Pydantic models and Enums for camera and device configs
+Includes schemas for streams, controls, device info, and API request/response strutures
+"""
+
 from pydantic import BaseModel, Field
 from typing import List, Dict, Optional
 from enum import Enum, IntEnum
@@ -56,6 +63,8 @@ class DeviceType(IntEnum):
     EXPLOREHD = 0
     STELLARHD_LEADER = 1
     STELLARHD_FOLLOWER = 2
+    STELLARHD_LEADER_PRO = 3
+    STELLARHD_FOLLOWER_PRO = 4
 
 
 class IntervalModel(BaseModel):

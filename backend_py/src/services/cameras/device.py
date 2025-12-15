@@ -1,3 +1,10 @@
+"""
+device.py
+
+Base class for camera device management
+Handles v4l2 device finding, uvc controls, stream configuration, and device settings management
+"""
+
 from ctypes import *
 import struct
 from dataclasses import dataclass
@@ -10,7 +17,7 @@ from linuxpy.video import device
 from enum import Enum
 
 from . import v4l2
-from . import ehd_controls as xu
+from . import xu_controls as xu
 
 from .stream_utils import fourcc2s
 from .enumeration import *
@@ -33,6 +40,16 @@ PID_VIDS = {
         "VID": 0xC45,
         "PID": 0x6368,
         "device_type": DeviceType.STELLARHD_FOLLOWER,
+    },
+    "stellarHDPro: Leader": {
+        "VID": 0xC45,
+        "PID": 0x6369,
+        "device_type": DeviceType.STELLARHD_LEADER_PRO,
+    },
+    "stellarHDPro: Follower": {
+        "VID": 0xC45,
+        "PID": 0x6370,
+        "device_type": DeviceType.STELLARHD_FOLLOWER_PRO,
     },
 }
 
@@ -229,7 +246,6 @@ class Option(BaseOption):
 
     def _clear(self):
         self._data = b"\x00" * self._size
-
 
 class Device(events.EventEmitter):
 

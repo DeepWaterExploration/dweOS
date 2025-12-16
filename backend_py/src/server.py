@@ -2,7 +2,7 @@
 server.py
 
 Handles server logic and initializes all the managers (settings, devices, lights, etc)
-Starts device monitoring, wifi scan, and starts ttyd (typewriter terminal daemon) to run in the background
+Starts device monitoring, wifi scan, and starts ttyd (teletypewriter daemon) to run in the background
 """
 
 from ctypes import *

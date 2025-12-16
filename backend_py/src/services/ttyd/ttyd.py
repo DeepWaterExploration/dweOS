@@ -1,3 +1,9 @@
+"""
+ttyd.py
+
+Controls the terminal provided in DWE_OS
+"""
+
 import subprocess
 
 class TTYDManager:

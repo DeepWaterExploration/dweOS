@@ -1,3 +1,10 @@
+"""
+lights.py
+
+API endpoints for light device management
+Handles listing connected lights, setting intensity, and disabling lights
+"""
+
 from fastapi import APIRouter, Depends, Request
 from typing import List
 from ..services import LightManager, Light, DisableLightInfo, SetLightInfo

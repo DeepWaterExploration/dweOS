@@ -225,11 +225,11 @@ class SHDDevice(Device):
         options["bitrate"] = self.bitrate_option
 
         if self.is_pro:
-            # UVC xu shutter speed control
+            # UVC shutter speed control
             options['shutter'] = DualRegisterOption(
                 self.cameras[0], xu.Command.SHUTTER_COARSE, xu.Command.SHUTTER_FINE, "Shutter Speed")
 
-            # UVC xu ISO control
+            # UVC ISO control
             options['iso'] = DualRegisterOption(
                 self.cameras[0], xu.Command.ISO_COARSE, xu.Command.ISO_FINE, "ISO")
 

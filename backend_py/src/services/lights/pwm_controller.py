@@ -1,8 +1,8 @@
 """
 pwm_controller.py
 
-Abstract class definition / interface all PWN drivers must follow
-Maintains consistency with PWN functionality
+Abstract class definition / interface all PWM drivers must follow
+Maintains consistency with PWM functionality
 """
 
 from abc import ABC, abstractmethod

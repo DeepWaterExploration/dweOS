@@ -1,3 +1,10 @@
+"""
+recording.py
+
+API endpoints for accessing video file library
+Handles listing recording metadata, downloading / deleting / renaming recordings, and downloading all recordings as ZIP
+"""
+
 from fastapi import APIRouter, Depends, Request, HTTPException
 from fastapi.responses import FileResponse
 from typing import List

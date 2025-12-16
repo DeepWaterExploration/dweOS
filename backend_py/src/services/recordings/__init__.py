@@ -1,3 +1,10 @@
+"""
+recordings
+
+Handles locating recordings and extracting metadata from the files
+Allows for the renaming, deletion, and compression of the found recordings
+"""
+
 from functools import lru_cache
 import json
 import os

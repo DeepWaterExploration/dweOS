@@ -1,3 +1,11 @@
+"""
+rpi_pwm_hardware.py
+
+Talks to the Raspberry Pi's processor to set light intensity using Pulse Width Modulation
+Determines pins the lights are connected to as well as if they support pwm
+Raspberry Pi generates a square wave at set intensity (50% = square wave where 50% is on, 50% is off)
+"""
+
 from rpi_hardware_pwm import HardwarePWM, HardwarePWMException
 from .pwm_controller import PWMController
 from typing import Dict

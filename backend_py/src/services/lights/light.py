@@ -1,3 +1,10 @@
+"""
+light.py
+
+Defines Pydantic models for light API request / responses
+Includes schemas for Light objects (intensity, pin, controller info)
+"""
+
 from pydantic import BaseModel
 
 class Light(BaseModel):

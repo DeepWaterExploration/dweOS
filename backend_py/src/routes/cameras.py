@@ -1,3 +1,10 @@
+"""
+camera.py
+
+API endpoints for camera device management and streaming config
+Handles listing connected devices, updating stream settings (resolution / fps), setting UVC controls, and dealing with Leader/Follower for stereo cameras
+"""
+
 from fastapi import APIRouter, Depends, Request
 from ..services import DeviceManager, StreamInfoModel, DeviceNicknameModel, UVCControlModel, DeviceDescriptorModel, DeviceLeaderModel
 import logging

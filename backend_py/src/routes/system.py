@@ -1,3 +1,10 @@
+"""
+system.py
+
+API endpoints for csystem power control
+Handles rebooting / shutting down the system
+"""
+
 from fastapi import APIRouter, Request
 from ..services import SystemManager
 

@@ -1,3 +1,10 @@
+"""
+pwm_controller.py
+
+Abstract class definition / interface all PWN drivers must follow
+Maintains consistency with PWN functionality
+"""
+
 from abc import ABC, abstractmethod
 import logging
 

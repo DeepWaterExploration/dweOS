@@ -1,3 +1,9 @@
+"""
+async_network_manager.py
+
+Acts as an asyncronous wrapper for network_manager.py, preventing blocking in the FastAPI server
+Asycronizes the slow DBus calls (scanning / connecting) to separate threads, prevents freezing
+"""
 import asyncio
 import time
 from typing import Callable, List

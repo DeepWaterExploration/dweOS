@@ -24,8 +24,6 @@ export function CameraCard({
   // readonly device state
   const deviceState = useSnapshot(device);
 
-
-
   return (
     <Card className="w-full max-w-sm mx-auto">
       <CardHeader>
@@ -35,9 +33,9 @@ export function CameraCard({
           <br />
           USB Port ID: {deviceState.bus_info}
         </CardDescription>
+        <CameraNickname />
       </CardHeader>
       <CardContent>
-        <CameraNickname />
         <CameraStream defaultHost={defaultHost} nextPort={nextPort} />
       </CardContent>
     </Card>

@@ -36,7 +36,7 @@ export function LogDetailView({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-xl max-h-[90vh] bg-card/30 backdrop-blur-sm overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 leading-relaxed">
             <Badge className={getLevelColor(log.level)}>{log.level}</Badge>

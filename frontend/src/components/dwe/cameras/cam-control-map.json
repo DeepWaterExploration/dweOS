@@ -1,0 +1,31 @@
+{
+  "Exposure Controls": [
+    "ISO",
+    "Shutter Speed",
+    "Gain",
+    "Backlight Compensation",
+    "Auto Exposure",
+    "Exposure Time, Absolute",
+    "Exposure, Dynamic Framerate",
+    ""
+  ],
+  "Image Controls": [
+    "Brightness",
+    "Contrast",
+    "Saturation",
+    "Hue",
+    "White Balance, Automatic",
+    "Gamma",
+    "White Balance Temperature",
+    "Sharpness",
+    ""
+  ],
+  "System Controls": [
+    "Software H.264 Bitrate",
+    "Power Line Frequency",
+    "Bitrate",
+    "Group of Pictures",
+    "Variable Bitrate",
+    ""
+  ]
+}

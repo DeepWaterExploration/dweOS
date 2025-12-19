@@ -7,47 +7,47 @@ import WebsocketContext from "@/contexts/WebsocketContext";
 import { TTYD_TOKEN_URL, TTYD_WS } from "@/api";
 
 const darkTermColors = {
-  foreground: "#d2d2d2",
-  background: "#1f2937",
-  cursor: "#adadad",
-  black: "#000000",
-  red: "#d81e00",
-  green: "#5ea702",
-  yellow: "#cfae00",
-  blue: "#427ab3",
-  magenta: "#89658e",
-  cyan: "#00a7aa",
-  white: "#dbded8",
-  brightBlack: "#686a66",
-  brightRed: "#f54235",
-  brightGreen: "#99e343",
-  brightYellow: "#fdeb61",
-  brightBlue: "#84b0d8",
-  brightMagenta: "#bc94b7",
-  brightCyan: "#37e6e8",
-  brightWhite: "#f1f1f0",
+  background: "#1d1e23",
+  foreground: "#d8d9df",
+  cursor: "#a0a1ad",
+  black: "#33333b",
+  red: "#9d516a",
+  green: "#677440",
+  yellow: "#8e623d",
+  blue: "#417395",
+  magenta: "#775ca4",
+  cyan: "#40796e",
+  white: "#a0a1ad",
+  brightBlack: "#585964",
+  brightRed: "#b96681",
+  brightGreen: "#7d8b50",
+  brightYellow: "#aa774e",
+  brightBlue: "#538bb1",
+  brightMagenta: "#8e73bd",
+  brightCyan: "#509285",
+  brightWhite: "#cccdd5",
 };
 
 const lightTermColors = {
-  foreground: "#333333",
-  background: "#ffffff",
-  cursor: "#333333",
-  black: "#000000",
-  red: "#c92a2a",
-  green: "#2f9e44",
-  yellow: "#f08c00",
-  blue: "#1864ab",
-  magenta: "#5f3dc4",
-  cyan: "#1098ad",
-  white: "#f8f9fa",
-  brightBlack: "#868e96",
-  brightRed: "#fa5252",
-  brightGreen: "#40c057",
-  brightYellow: "#fcc419",
-  brightBlue: "#228be6",
-  brightMagenta: "#845ef7",
-  brightCyan: "#15aabf",
-  brightWhite: "#ffffff",
+  background: "#e0e2ee",
+  foreground: "#141522",
+  cursor: "#525476",
+  black: "#d2d3e6",
+  red: "#9d516a",
+  green: "#677440",
+  yellow: "#8e623d",
+  blue: "#417395",
+  magenta: "#775ca4",
+  cyan: "#40796e",
+  white: "#525476",
+  brightBlack: "#a0a2c5",
+  brightRed: "#b96681",
+  brightGreen: "#7d8b50",
+  brightYellow: "#aa774e",
+  brightBlue: "#538bb1",
+  brightMagenta: "#8e73bd",
+  brightCyan: "#509285",
+  brightWhite: "#2b2b41",
 };
 
 export const Terminal = () => {
@@ -83,7 +83,7 @@ export const Terminal = () => {
           allowProposedApi: true,
         } as ITerminalOptions,
       },
-      () => { }
+      () => {}
     )
   );
 
@@ -104,6 +104,23 @@ export const Terminal = () => {
     xterm.current.setTheme(colors);
   }, [themeColor]);
 
+  // Update terminal size
+  useEffect(() => {
+    if (!container.current) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      if (xterm.current) {
+        requestAnimationFrame(() => {
+          xterm.current.fit();
+        });
+      }
+    });
+
+    resizeObserver.observe(container.current);
+
+    return () => resizeObserver.disconnect();
+  }, []);
+
   // Restore document title on unmount
   useEffect(() => {
     return () => {
@@ -112,8 +129,16 @@ export const Terminal = () => {
   }, []);
 
   return (
-    <div className="h-full pl-2 pr-2 pb-4">
-      <Card className="h-full rounded-2xl shadow-xl overflow-hidden bg-white dark:bg-gray-800">
+    <div className="h-[calc(100vh-5.5rem)] pl-2 pr-2 pb-4">
+      <Card
+        className="h-full rounded-2xl shadow-xl overflow-hidden"
+        style={{
+          backgroundColor:
+            themeColor === "dark"
+              ? darkTermColors.background
+              : lightTermColors.background,
+        }}
+      >
         <CardContent className="h-full p-0">
           <div className="h-full p-2">
             <div ref={container} className="w-full h-full box-border" />

@@ -105,7 +105,6 @@ const DeviceListLayout = () => {
     });
   };
 
-
   const removeDevice = (bus_info: string) => {
     setDevices((prevDevices) => {
       const filteredDevices = prevDevices.filter(
@@ -148,7 +147,7 @@ const DeviceListLayout = () => {
       console.log("GStreamer Error:", data.errors, data.bus_info);
       setDevices((currentDevices) => {
         const device = getDeviceByBusInfo(currentDevices, data.bus_info);
-        console.log(currentDevices.map(d => d.bus_info));
+        console.log(currentDevices.map((d) => d.bus_info));
         console.log("Device affected by error:", device);
         if (device) {
           device.stream.enabled = false;
@@ -160,9 +159,9 @@ const DeviceListLayout = () => {
         description: `An error occurred with the device ${data.bus_info}. Please check the logs for more details.`,
         variant: "destructive",
       });
-    }
+    };
 
-    const getSavedPreferences = async () => { };
+    const getSavedPreferences = async () => {};
 
     if (connected) {
       socket?.on("gst_error", handleGstError);
@@ -188,7 +187,7 @@ const DeviceListLayout = () => {
   };
 
   return (
-    <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(350px,1fr))]">
+    <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(380px,0fr))] ">
       <DevicesContext.Provider
         value={{
           devices,

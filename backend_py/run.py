@@ -1,5 +1,6 @@
 # run.py runs the backend, creating a async socketio server and a FastAPI web framework, then
-# combines them in a uvicorn server
+# both are passed into a Server instance to handle logic, and a combination of the two is hosted 
+# as a uvicorn server, which handles traffic
 
 from src import Server, FeatureSupport
 import socketio

@@ -194,7 +194,7 @@ export function LogViewer() {
       </div>
 
       <div className="rounded-md border">
-        <Table>
+        <Table className="table-fixed">
           <TableHeader>
             <TableRow>
               <TableHead className="w-[180px]">Timestamp</TableHead>

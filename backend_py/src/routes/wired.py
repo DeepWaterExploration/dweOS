@@ -1,3 +1,10 @@
+"""
+wired.py
+
+API endpoints for connected ethernet networks
+Handles managing dyanmic / static addresses for ethernet, managing priority (prioritize wifi or ethernet)
+"""
+
 from fastapi import APIRouter, Depends, Request
 from typing import List
 from ..services import (

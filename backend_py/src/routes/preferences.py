@@ -1,3 +1,10 @@
+"""
+preferences.py
+
+API endpoints for server perferences
+Handles getting and setting preferences
+"""
+
 from fastapi import APIRouter, Depends, Request
 from typing import Dict
 from ..services import PreferencesManager, SavedPreferencesModel

@@ -1,8 +1,16 @@
+"""
+ttyd.py
+
+Controls the terminal provided in DWE_OS
+"""
+
 import subprocess
 
 class TTYDManager:
-
-    TTYD_CMD = ['ttyd', '-p', '7681', 'login']
+    
+    # TTYD_CMD = ['ttyd', '-p', '7681', 'login']
+    # For dev mode comment out above, comment in below:
+    TTYD_CMD = ['ttyd', '-W', '-a', '-p', '7681', 'bash']   
 
     def __init__(self) -> None:
         self._process: subprocess.Popen | None = None

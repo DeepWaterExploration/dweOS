@@ -1,3 +1,9 @@
+"""
+stream.py
+
+Creates the GStreamer pipeline command to begin streaming from a camera as well as the process for ending a stream
+"""
+
 from dataclasses import dataclass, field
 from datetime import datetime
 import stat

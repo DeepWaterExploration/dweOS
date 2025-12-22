@@ -7,7 +7,6 @@ import { useTheme } from "@/components/themes/theme-provider";
 export function ModeToggle() {
   const { setTheme, theme } = useTheme();
 
-
   const modes: ("dark" | "light" | "system")[] = ["light", "dark", "system"];
 
   const updateMode = () => {
@@ -16,7 +15,7 @@ export function ModeToggle() {
   };
 
   return (
-    <Button variant="outline" size="icon" onClick={updateMode}>
+    <Button variant="ghost" size="icon" onClick={updateMode}>
       {(() => {
         switch (theme) {
           case "dark":

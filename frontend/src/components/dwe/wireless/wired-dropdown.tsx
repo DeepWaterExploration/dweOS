@@ -217,7 +217,7 @@ export function WiredDropdown() {
               <Network className="h-5 w-5 text-muted-foreground" />
             )}
             {isLoading || isSaving ? (
-              <span className="absolute top-0 right-0 block h-3 w-3 animate-spin rounded-full border-2 border-white border-t-blue-600" />
+              <span className="absolute top-0 right-0 block h-3 w-3 animate-spin rounded-full border border-white border-t-blue-600" />
             ) : null}
           </Button>
         </DropdownMenuTrigger>
@@ -319,7 +319,7 @@ export function WiredDropdown() {
                 disabled={isLoading || isSaving || !formIpType} // Disable if loading, saving, or no type selected
               >
                 {isSaving && (
-                  <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-blue-600" />
+                  <span className="mr-2 h-4 w-4 animate-spin rounded-full border border-white border-t-blue-600" />
                 )}
                 Save Changes
               </Button>

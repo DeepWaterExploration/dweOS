@@ -104,9 +104,19 @@
     @apply bg-muted-foreground/40;
   }
 
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
   /* Firefox */
   * {
     scrollbar-width: thin;
     scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
   }
 }

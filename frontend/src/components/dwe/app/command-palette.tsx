@@ -56,11 +56,13 @@ export function CommandPalette() {
                 Cameras
               </CommandItem>
               <CommandItem
-                onSelect={() => runCommand(() => navigate("/videos"))}
+                onSelect={() => runCommand(() => navigate("/recordings"))}
               >
                 Recordings
               </CommandItem>
-              <CommandItem onSelect={() => runCommand(() => navigate("/log-viewer"))}>
+              <CommandItem
+                onSelect={() => runCommand(() => navigate("/log-viewer"))}
+              >
                 Logs
               </CommandItem>
               <CommandItem

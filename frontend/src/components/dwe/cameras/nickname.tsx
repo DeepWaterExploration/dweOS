@@ -5,6 +5,7 @@ import { Check, Edit2, X } from "lucide-react";
 import { useSnapshot } from "valtio";
 import DeviceContext from "@/contexts/DeviceContext";
 import { API_CLIENT } from "@/api";
+import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 
 export const CameraNickname = () => {
   const device = useContext(DeviceContext)!;
@@ -54,7 +55,7 @@ export const CameraNickname = () => {
   };
 
   return (
-    <div className="space-y-2 mb-4">
+    <div id={TOUR_STEP_IDS.DEVICE_NAME} className="space-y-2 mb-4">
       <div className="flex justify-between items-center w-full">
         <div className="flex flex-1 items-center space-x-2">
           <Input

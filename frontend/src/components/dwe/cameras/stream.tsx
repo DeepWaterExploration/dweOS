@@ -34,6 +34,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 
 // Options for StreamSelector should provide label and value for each choice
 type StreamOption = { label: string; value: string };
@@ -182,7 +183,7 @@ const EndpointList = ({
 
   return (
     <>
-      <div className="relative">
+      <div className="relative" id={TOUR_STEP_IDS.DEVICE_ENDPOINTS}>
         <Card className="overflow-hidden">
           <CardHeader className="bg-background mb-2">
             <span className="text-base -mt-2 font-xs leading-none mx-auto">
@@ -223,6 +224,7 @@ const EndpointList = ({
           {/* Add Button */}
           <Button
             variant="outline"
+            id={TOUR_STEP_IDS.ADD_ENDPOINTS}
             className="h-8 w-8 p-0 rounded-full shadow-md bg-card flex items-center justify-center hover:bg-accent hover:text-background"
             onClick={() =>
               device!.stream.endpoints.push({
@@ -551,7 +553,12 @@ export const CameraStream = ({
 
   return (
     <div className="space-y-4">
-      <Accordion type="single" collapsible defaultValue="stream configuration">
+      <Accordion
+        type="single"
+        collapsible
+        defaultValue="stream configuration"
+        id={TOUR_STEP_IDS.DEVICE_STREAM_CONFIG}
+      >
         <AccordionItem value="stream configuration">
           <AccordionTrigger className="text-sm font-semibold">
             Stream Configuration
@@ -619,6 +626,7 @@ export const CameraStream = ({
                     : "RECORDING";
                 setShouldPostFlag(true);
               }}
+              id={TOUR_STEP_IDS.DEVICE_MODE}
             >
               Switch to{" "}
               {device.stream.stream_type === "RECORDING"
@@ -633,7 +641,10 @@ export const CameraStream = ({
       {deviceState.device_type == 1 && <FollowerList />}
       <div className="flex flex-1 justify-between items-center">
         <CameraControls />
-        <div className="flex items-center gap-2">
+        <div
+          className="flex items-center gap-2 pl-2"
+          id={TOUR_STEP_IDS.DEVICE_STREAM}
+        >
           <div>
             <span className="text-sm font-medium">
               {deviceState.is_managed

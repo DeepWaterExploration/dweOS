@@ -5,6 +5,7 @@ import { Xterm, ClientOptions } from "./xterm";
 import { ITerminalOptions } from "@xterm/xterm";
 import WebsocketContext from "@/contexts/WebsocketContext";
 import { TTYD_TOKEN_URL, TTYD_WS } from "@/api";
+import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 
 const darkTermColors = {
   background: "#1d1e23",
@@ -29,7 +30,7 @@ const darkTermColors = {
 };
 
 const lightTermColors = {
-  background: "#e0e2ee",
+  background: "#ffffff",
   foreground: "#141522",
   cursor: "#525476",
   black: "#d2d3e6",
@@ -141,7 +142,11 @@ export const Terminal = () => {
       >
         <CardContent className="h-full p-0">
           <div className="h-full p-2">
-            <div ref={container} className="w-full h-full box-border" />
+            <div
+              ref={container}
+              className="w-full h-full box-border"
+              id={TOUR_STEP_IDS.TERMINAL}
+            />
           </div>
         </CardContent>
       </Card>

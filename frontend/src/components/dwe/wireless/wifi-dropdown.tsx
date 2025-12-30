@@ -25,6 +25,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
+import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 
 export function WifiDropdown() {
   const { toast } = useToast();
@@ -134,7 +135,7 @@ export function WifiDropdown() {
   };
 
   return (
-    <>
+    <div id={TOUR_STEP_IDS.WIFI_SWITCH}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="relative">
@@ -251,7 +252,7 @@ export function WifiDropdown() {
           </form>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }
 

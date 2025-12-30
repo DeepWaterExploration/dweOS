@@ -29,6 +29,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 
 type ControlModel = components["schemas"]["ControlModel"];
 
@@ -183,7 +184,11 @@ export const CameraControls = () => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="svg" className="w-6 h-8 z-10">
+        <Button
+          variant="svg"
+          className="w-6 h-8 z-10"
+          id={TOUR_STEP_IDS.DEVICE_SETTINGS}
+        >
           <SlidersHorizontal />
         </Button>
       </DialogTrigger>

@@ -24,10 +24,26 @@ import { WifiDropdown } from "./components/dwe/wireless/wifi-dropdown";
 import { WiredDropdown } from "./components/dwe/wireless/wired-dropdown";
 import { SystemDropdown } from "./components/dwe/system/system-dropdown";
 import { API_CLIENT } from "./api";
+import { TourAlertDialog, TourProvider, useTour } from "@/components/tour/tour";
+import { steps } from "./components/tour/tour-steps";
 
-function App() {
-  const socket = useRef<Socket | undefined>(undefined);
-  const [connected, setConnected] = useState(false);
+function WelcomeTourManager() {
+  const [openTour, setOpenTour] = useState(false);
+  const { setSteps } = useTour();
+
+  useEffect(() => {
+    setSteps(steps);
+    const timer = setTimeout(() => {
+      setOpenTour(true);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [setSteps]);
+
+  return <TourAlertDialog isOpen={openTour} setIsOpen={setOpenTour} />;
+}
+
+function AppContent() {
   const [wifiAvailable, setWifiAvailable] = useState(false);
 
   const location = useLocation();
@@ -52,6 +68,53 @@ function App() {
   };
 
   const pageTitle = getPageTitle(location.pathname);
+
+  useEffect(() => {
+    API_CLIENT.GET("/features").then((data) =>
+      data.data?.wifi ? setWifiAvailable(true) : setWifiAvailable(false)
+    );
+  }, []);
+
+  return (
+    <SidebarProvider>
+      <SidebarLeft />
+      <SidebarInset>
+        <header className="sticky top-0 flex h-14 shrink-0 items-center gap-2 bg-background z-50">
+          <div className="flex flex-1 items-center gap-2 px-3">
+            <SidebarTrigger />
+            <h1 className="text-xl font-bold sm:ml-2 text-nowrap">DWE OS</h1>
+            <Separator orientation="vertical" className="mx-2 h-4" />
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbPage className="italic text-muted-foreground font-bold">
+                    {pageTitle}
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+            <Separator orientation="vertical" className="mx-2 h-4" />
+            <ModeToggle />
+            <div className="ml-auto flex items-center">
+              <CommandPalette />
+              {wifiAvailable ? <WiredDropdown /> : <></>}
+              {wifiAvailable ? <WifiDropdown /> : <></>}
+              <SystemDropdown />
+            </div>
+          </div>
+        </header>
+        <div className="flex flex-1 flex-col gap-4 p-4 overflow-x-hidden">
+          <Outlet />
+        </div>
+      </SidebarInset>
+      <WelcomeTourManager />
+    </SidebarProvider>
+  );
+}
+
+function App() {
+  const socket = useRef<Socket | undefined>(undefined);
+  const [connected, setConnected] = useState(false);
 
   const connectWebsocket = () => {
     if (socket.current) delete socket.current;
@@ -80,48 +143,13 @@ function App() {
     }
   }, [connected]);
 
-  useEffect(() => {
-    API_CLIENT.GET("/features").then((data) =>
-      data.data?.wifi ? setWifiAvailable(true) : setWifiAvailable(false)
-    );
-  }, []);
-
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <Toaster />
       <WebsocketContext.Provider value={{ socket: socket.current, connected }}>
-        <SidebarProvider>
-          <SidebarLeft />
-          <SidebarInset>
-            <header className="sticky top-0 flex h-14 shrink-0 items-center gap-2 bg-background z-50">
-              <div className="flex flex-1 items-center gap-2 px-3">
-                <SidebarTrigger />
-                <h1 className="text-xl font-bold sm:ml-2 text-nowrap">
-                  DWE OS
-                </h1>
-                <Separator orientation="vertical" className="mx-2 h-4" />
-                <Breadcrumb>
-                  <BreadcrumbList>
-                    <BreadcrumbItem>
-                      <BreadcrumbPage className="italic text-muted-foreground font-bold">
-                        {pageTitle}
-                      </BreadcrumbPage>
-                    </BreadcrumbItem>
-                  </BreadcrumbList>
-                </Breadcrumb>
-                <Separator orientation="vertical" className="mx-2 h-4" />
-                <ModeToggle />
-                <CommandPalette />
-                <WiredDropdown />
-                {wifiAvailable ? <WifiDropdown /> : <></>}
-                <SystemDropdown />
-              </div>
-            </header>
-            <div className="flex flex-1 flex-col gap-4 p-4">
-              <Outlet />
-            </div>
-          </SidebarInset>
-        </SidebarProvider>
+        <TourProvider>
+          <AppContent />
+        </TourProvider>
       </WebsocketContext.Provider>
     </ThemeProvider>
   );

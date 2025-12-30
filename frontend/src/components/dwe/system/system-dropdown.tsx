@@ -18,6 +18,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { API_CLIENT } from "@/api";
 import { useState } from "react";
+import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 
 export function SystemDropdown() {
   const { toast } = useToast();
@@ -50,7 +51,7 @@ export function SystemDropdown() {
   };
 
   return (
-    <>
+    <div id={TOUR_STEP_IDS.POWER_SWITCH}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="relative">
@@ -99,6 +100,6 @@ export function SystemDropdown() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }

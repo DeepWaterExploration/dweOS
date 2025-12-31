@@ -171,7 +171,10 @@ export function LogViewer() {
   const displayedLogs = isActive ? DEMO_LOG : currentItems;
 
   return (
-    <div className="space-y-4" id={TOUR_STEP_IDS.LOGS_PAGE}>
+    <div
+      className="flex flex-col h-[calc(100vh-5.5rem)] gap-4"
+      id={TOUR_STEP_IDS.LOGS_PAGE}
+    >
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
         <div className="flex flex-1 items-center space-x-2">
           <Search className="h-5 w-5 text-gray-400" />
@@ -210,10 +213,10 @@ export function LogViewer() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1">
-        <div className="rounded-md border overflow-x-auto">
-          <Table className="table-fixed min-w-[900px]">
-            <TableHeader>
+      <div className="grid grid-cols-1 flex-1 min-h-0">
+        <div className="rounded-md border overflow-auto h-full">
+          <Table className="table-fixed min-w-[900px]" noWrapper>
+            <TableHeader className="bg-background sticky top-0 z-10">
               <TableRow>
                 <TableHead className="w-[100px]">Timestamp</TableHead>
                 <TableHead className="w-[90px]">Level</TableHead>

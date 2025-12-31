@@ -215,9 +215,7 @@ export const CameraControls = () => {
                   return (
                     <Accordion type="multiple">
                       <AccordionItem value={groupName}>
-                        <AccordionTrigger className="">
-                          {groupName}
-                        </AccordionTrigger>
+                        <AccordionTrigger>{groupName}</AccordionTrigger>
                         <AccordionContent>
                           {others && (
                             <div className="grid gap-4 mt-1">

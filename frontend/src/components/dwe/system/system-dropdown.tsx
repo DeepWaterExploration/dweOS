@@ -47,7 +47,10 @@ export function SystemDropdown() {
 
   const confirmAction = (type: "restart" | "shutdown") => {
     setAction(type);
-    setDialogOpen(true);
+    // radix dialog / dropdown race condition fix
+    setTimeout(() => {
+      setDialogOpen(true);
+    }, 100);
   };
 
   return (

@@ -27,7 +27,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-import { Torus, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Separator } from "../ui/separator";
 import { AnimatedWaves } from "@/assets/animated-waves";

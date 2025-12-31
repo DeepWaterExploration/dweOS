@@ -194,7 +194,7 @@ const IntegerControl = ({
             // CHANGE: Set step to 1 (visual smooth drag) instead of control.step (locking)
             step={1}
             value={[currentValue]}
-            className="[&>span]:group-hover:border-foreground pointer-events-none"
+            className="[&>span]:group-hover:border-white pointer-events-none"
             disabled={isDisabled}
           >
             <span className="text-xs font-bold text-foreground mix-blend-overlay absolute inset-0 z-10 flex items-center justify-center pointer-events-none">

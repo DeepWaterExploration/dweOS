@@ -1,6 +1,12 @@
 import { API_CLIENT } from "@/api";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { components } from "@/schemas/dwe_os_2";
 import { Separator } from "@/components/ui/separator";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -193,7 +199,7 @@ const Recordings = () => {
         {showMenu && (
           <div
             style={{ left: xPos, top: yPos }}
-            className={`fixed w-128 bg-muted border rounded-xl shadow-lg z-50 text-sm pb-1`}
+            className={`fixed w-128 bg-muted/50 backdrop-blur border rounded-xl shadow-lg z-50 text-sm pb-1`}
             ref={menuRef}
           >
             <p className="p-4 pb-2 truncate">
@@ -256,48 +262,51 @@ const Recordings = () => {
           </div>
         )}
         {/* handles recording display */}
-        <div className="flex-1 w-0 min-w-0 overflow-x-auto transition-all duration-500">
+        <div className="flex-1 overflow-x-auto transition-all duration-500 border rounded-xl">
           {" "}
           {loading ? (
             <div className="flex items-center justify-center h-full w-full">
               Loading...
             </div>
           ) : (
-            <Table>
-              <TableRow>
-                <TableCell
-                  className="text-left cursor-pointer hover:bg-muted rounded-t-xl"
-                  onClick={() => handleSort("name")}
-                >
-                  Name&nbsp;&nbsp;
-                  {sortColumn === "name" &&
-                    (sortDirection === "asc" ? "▲" : "▼")}
-                </TableCell>
-                <TableCell
-                  className="text-left w-40 cursor-pointer hover:bg-muted rounded-t-xl"
-                  onClick={() => handleSort("created")}
-                >
-                  Created&nbsp;&nbsp;
-                  {sortColumn === "created" &&
-                    (sortDirection === "asc" ? "▲" : "▼")}
-                </TableCell>
-                <TableCell
-                  className="text-left w-24 cursor-pointer hover:bg-muted rounded-t-xl"
-                  onClick={() => handleSort("duration")}
-                >
-                  Duration&nbsp;&nbsp;
-                  {sortColumn === "duration" &&
-                    (sortDirection === "asc" ? "▲" : "▼")}
-                </TableCell>
-                <TableCell
-                  className="text-left w-24 cursor-pointer hover:bg-muted rounded-t-xl"
-                  onClick={() => handleSort("size")}
-                >
-                  Size&nbsp;&nbsp;
-                  {sortColumn === "size" &&
-                    (sortDirection === "asc" ? "▲" : "▼")}
-                </TableCell>
-              </TableRow>
+            <Table noWrapper>
+              <TableHeader className="bg-background sticky top-0 z-10">
+                <TableRow className="text-left text-gray-500 font-bold">
+                  <TableCell
+                    className="cursor-pointer hover:bg-muted"
+                    onClick={() => handleSort("name")}
+                  >
+                    Name&nbsp;&nbsp;
+                    {sortColumn === "name" &&
+                      (sortDirection === "asc" ? "▲" : "▼")}
+                  </TableCell>
+                  <TableCell
+                    className="cursor-pointer hover:bg-muted"
+                    onClick={() => handleSort("created")}
+                  >
+                    Created&nbsp;&nbsp;
+                    {sortColumn === "created" &&
+                      (sortDirection === "asc" ? "▲" : "▼")}
+                  </TableCell>
+                  <TableCell
+                    className="cursor-pointer hover:bg-muted"
+                    onClick={() => handleSort("duration")}
+                  >
+                    Duration&nbsp;&nbsp;
+                    {sortColumn === "duration" &&
+                      (sortDirection === "asc" ? "▲" : "▼")}
+                  </TableCell>
+                  <TableCell
+                    className="cursor-pointer hover:bg-muted"
+                    onClick={() => handleSort("size")}
+                  >
+                    Size&nbsp;&nbsp;
+                    {sortColumn === "size" &&
+                      (sortDirection === "asc" ? "▲" : "▼")}
+                  </TableCell>
+                </TableRow>
+              </TableHeader>
+
               <TableBody>
                 {displayRecordings.map((recording) => (
                   <TableRow
@@ -339,26 +348,23 @@ const Recordings = () => {
         </div>
         {/* handles recording detailed view */}
         <div
-          className={`transition-all ease-in-out duration-500 rounded-xl ml-1 -mr-8 my-2 bg-sidebar overflow-hidden shrink-0
+          className={`transition-all flex absolute right-0 bottom-0 ease-in-out duration-500 rounded-l-xl bg-transparent overflow-hidden shrink-0
           ${
             selectedRecording
               ? "w-full md:w-[50%] md:min-w-[450px]"
               : "w-[0] min-w-0"
           }`}
         >
-          <div className="flex flex-col w-full h-full min-w-[400px] p-4 pr-8">
-            <div
-              className="flex text-muted-foreground items-center gap-2 cursor-pointer hover:text-foreground group"
-              onClick={() => setSelectedRecording(null)}
-            >
-              <X className="h-4 w-4" />
-              <p className="text-sm">Close</p>
-            </div>
+          <X
+            className="h-12 w-12 text-muted-foreground cursor-pointer hover:text-foreground bg-sidebar/50 backdrop-blur p-2 border border-r-0 rounded-l-xl"
+            onClick={() => setSelectedRecording(null)}
+          />
+          <div className="flex-col w-full h-full min-w-[400px] p-4 bg-sidebar/50 backdrop-blur border">
             {selectedRecording?.format === "mp4" ? (
               <video
                 key={`${selectedRecording.name}.${selectedRecording.format}`}
                 controls
-                className="w-fit h-fit my-2 border rounded-xl"
+                className="w-fit h-fit border rounded-xl"
               >
                 <source
                   src={`${baseUrl}/recordings/${selectedRecording.name}.${selectedRecording.format}`}
@@ -367,7 +373,7 @@ const Recordings = () => {
                 Your browser does not support the video tag.
               </video>
             ) : (
-              <div className="h-fit my-4 text-center border py-4 rounded-lg bg-background">
+              <div className="h-fit text-center border py-4 rounded-lg bg-background">
                 <p className="text-muted-foreground italic p-4 text-sm">
                   .{selectedRecording?.format} is not supported in the browser
                   video player.
@@ -409,7 +415,7 @@ const Recordings = () => {
                 </p>
               </div>
             </div>
-            <div className="flex flex-wrap gap-2 mt-auto">
+            <div className="flex flex-wrap gap-2 mt-4">
               <Button
                 variant="outline"
                 className="bg-accent flex-1 min-w-[140px] h-12 text-background"
@@ -444,9 +450,9 @@ const Recordings = () => {
           </div>
         </div>
       </div>
-      {/* Sticky footer at bottom of viewport */}
+      {/* footer at bottom of viewport */}
       <div
-        className="border-t border-muted bg-background p-4 z-10 mt-auto"
+        className="bg-background p-4 mt-auto"
         id={TOUR_STEP_IDS.RECORDING_FOOTER}
       >
         <div className="flex justify-between items-center max-w-full">

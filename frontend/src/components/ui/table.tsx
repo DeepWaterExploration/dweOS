@@ -2,18 +2,36 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+// https://medium.com/@shuhan.chan08/shadcn-ui-sticky-table-header-implementation-74b313d5c02e
+// use of sticky header shadcn fix here ^^^
+
 const Table = React.forwardRef<
   HTMLTableElement,
-  React.HTMLAttributes<HTMLTableElement>
->(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-auto">
-    <table
-      ref={ref}
-      className={cn("w-full caption-bottom text-sm", className)}
-      {...props}
-    />
-  </div>
-));
+  React.HTMLAttributes<HTMLTableElement> & {
+    noWrapper?: boolean;
+    divClassname?: string;
+  }
+>(({ className, noWrapper, divClassname, ...props }, ref) => {
+  if (noWrapper) {
+    return (
+      <table
+        ref={ref}
+        className={cn("w-full caption-bottom text-sm", className)}
+        {...props}
+      />
+    );
+  }
+
+  return (
+    <div className={cn("relative w-full overflow-auto", divClassname)}>
+      <table
+        ref={ref}
+        className={cn("w-full caption-bottom text-sm", className)}
+        {...props}
+      />
+    </div>
+  );
+});
 Table.displayName = "Table";
 
 const TableHeader = React.forwardRef<
@@ -58,7 +76,7 @@ const TableRow = React.forwardRef<
   <tr
     ref={ref}
     className={cn(
-      "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
+      "border-b transition-colors data-[state=selected]:bg-accent",
       className
     )}
     {...props}

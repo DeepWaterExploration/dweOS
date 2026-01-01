@@ -34,6 +34,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 
 // Options for StreamSelector should provide label and value for each choice
 type StreamOption = { label: string; value: string };
@@ -58,7 +59,7 @@ const StreamSelector = ({
         {label}
       </label>
       <Select value={value} onValueChange={onChange} disabled={disabled}>
-        <SelectTrigger className="w-full text-sm outline-none focus:ring-1 focus:ring-inset focus:ring-primary/50">
+        <SelectTrigger className="w-full text-sm text-foreground outline-none focus:ring-1 focus:ring-inset focus:ring-primary/50">
           <SelectValue
             placeholder={placeholder}
             className="truncate"
@@ -182,10 +183,10 @@ const EndpointList = ({
 
   return (
     <>
-      <div className="relative">
-        <Card>
-          <CardHeader>
-            <span className="text-base -m-2 font-xs leading-none">
+      <div className="relative" id={TOUR_STEP_IDS.DEVICE_ENDPOINTS}>
+        <Card className="overflow-hidden">
+          <CardHeader className="bg-background mb-2">
+            <span className="text-base -mt-2 font-xs leading-none mx-auto">
               Endpoints
             </span>
           </CardHeader>
@@ -223,7 +224,8 @@ const EndpointList = ({
           {/* Add Button */}
           <Button
             variant="outline"
-            className="h-8 w-8 p-0 rounded-full shadow-md bg-card dark:bg-card flex items-center justify-center hover:bg-accent hover:text-accent-foreground"
+            id={TOUR_STEP_IDS.ADD_ENDPOINTS}
+            className="h-8 w-8 p-0 rounded-full shadow-md bg-card flex items-center justify-center hover:bg-accent hover:text-background"
             onClick={() =>
               device!.stream.endpoints.push({
                 host: defaultHost,
@@ -240,13 +242,11 @@ const EndpointList = ({
   );
 };
 
-
 const FollowerList = () => {
   const device = useContext(DeviceContext)!;
 
   const deviceState = useSnapshot(device);
   const [followers, setFollowers] = useState(device.followers);
-
 
   const { devices } = useContext(DevicesContext)!;
 
@@ -357,14 +357,14 @@ const FollowerList = () => {
 
             {/* Follower Table */}
             {followers.length === 0 ? (
-              <div className="text-sm text-muted-foreground p-4 border rounded-md bg-muted/50">
+              <div className="text-sm text-muted-foreground p-4 rounded-md bg-muted/50">
                 No followers connected. Devices that mirror this stream will
                 appear here.
               </div>
             ) : (
-              <div className="rounded-md border w-full overflow-hidden">
+              <div className="rounded-md border border-background/30 w-full overflow-hidden">
                 <table className="w-full table-fixed text-sm text-left">
-                  <thead className="bg-muted/30 border-b">
+                  <thead className="bg-background/30">
                     <tr>
                       <th className="px-4 py-2 w-1/2 truncate font-medium">
                         Port
@@ -376,7 +376,10 @@ const FollowerList = () => {
                   </thead>
                   <tbody>
                     {followers.map((follower, index) => (
-                      <tr key={index} className="border-b hover:bg-muted/10">
+                      <tr
+                        key={index}
+                        className="border-b-2 border-background/30 bg-input last:border-0"
+                      >
                         <td className="px-4 py-2 truncate">{follower}</td>
                         <td className="px-4 py-2">
                           <div className="grid grid-cols-[1fr_auto] items-center gap-2">
@@ -550,94 +553,124 @@ export const CameraStream = ({
 
   return (
     <div className="space-y-4">
-      <h3 className="text-base font-medium leading-none">
-        Stream Configuration
-      </h3>
+      <Accordion
+        type="single"
+        collapsible
+        defaultValue="stream configuration"
+        id={TOUR_STEP_IDS.DEVICE_STREAM_CONFIG}
+      >
+        <AccordionItem value="stream configuration">
+          <AccordionTrigger className="text-sm font-semibold">
+            Stream Configuration
+          </AccordionTrigger>
+          <AccordionContent className="w-full space-y-4">
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-12">
+              <div className="sm:col-span-5">
+                <StreamSelector
+                  options={resolutions.map((r) => ({ label: r, value: r }))}
+                  placeholder="Resolution"
+                  label="Resolution"
+                  value={resolution}
+                  // disabled={deviceState.is_managed}
+                  onChange={(newResolution) => {
+                    setResolution(newResolution);
+                    setShouldPostFlag(true);
+                  }}
+                />
+              </div>
 
-      <div className="grid grid-cols-3 gap-3 grid grid-cols-1 sm:grid-cols-12 gap-3">
-        <div className="sm:col-span-5">
-          <StreamSelector
-            options={resolutions.map((r) => ({ label: r, value: r }))}
-            placeholder="Resolution"
-            label="Resolution"
-            value={resolution}
-            // disabled={deviceState.is_managed}
-            onChange={(newResolution) => {
-              setResolution(newResolution);
-              setShouldPostFlag(true);
-            }}
-          />
-        </div>
+              <div className="sm:col-span-3">
+                <StreamSelector
+                  options={intervals.map((i) => ({ label: i, value: i }))}
+                  placeholder="FPS"
+                  label="Frame Rate"
+                  value={fps}
+                  // disabled={deviceState.is_managed}
+                  onChange={(newFps) => {
+                    setFps(newFps);
+                    setShouldPostFlag(true);
+                  }}
+                />
+              </div>
 
-        <div className="sm:col-span-3">
-          <StreamSelector
-            options={intervals.map((i) => ({ label: i, value: i }))}
-            placeholder="FPS"
-            label="Frame Rate"
-            value={fps}
-            // disabled={deviceState.is_managed}
-            onChange={(newFps) => {
-              setFps(newFps);
-              setShouldPostFlag(true);
-            }}
-          />
-        </div>
+              <div className="sm:col-span-4">
+                <StreamSelector
+                  options={encoders.map((e) => ({ label: e, value: e }))}
+                  placeholder="Format"
+                  label="Format"
+                  value={format}
+                  // disabled={deviceState.is_managed}
+                  onChange={(fmt) => {
+                    setFormat(
+                      fmt as components["schemas"]["StreamEncodeTypeEnum"]
+                    );
+                    setShouldPostFlag(true);
+                  }}
+                />
+              </div>
+            </div>
+            {device.stream.stream_type === "UDP" && (
+              <EndpointList
+                defaultHost={defaultHost}
+                nextPort={nextPort}
+                setShouldPostFlag={setShouldPostFlag}
+              />
+            )}
 
-        <div className="sm:col-span-4">
-          <StreamSelector
-            options={encoders.map((e) => ({ label: e, value: e }))}
-            placeholder="Format"
-            label="Format"
-            value={format}
-            // disabled={deviceState.is_managed}
-            onChange={(fmt) => {
-              setFormat(fmt as components["schemas"]["StreamEncodeTypeEnum"]);
-              setShouldPostFlag(true);
-            }}
-          />
-        </div>
-      </div>
-      {device.stream.stream_type === "UDP" && <EndpointList
-        defaultHost={defaultHost}
-        nextPort={nextPort}
-        setShouldPostFlag={setShouldPostFlag}
-      />}
-
-      <Button className="w-full" onClick={() => { device.stream.stream_type = device.stream.stream_type === "RECORDING" ? "UDP" : "RECORDING"; setShouldPostFlag(true); }}>
-        Switch to {device.stream.stream_type === "RECORDING" ? "Stream" : "Recording"} mode
-      </Button>
-
-
-      <Separator className="my-2" />
+            <Button
+              className="w-full"
+              onClick={() => {
+                device.stream.stream_type =
+                  device.stream.stream_type === "RECORDING"
+                    ? "UDP"
+                    : "RECORDING";
+                setShouldPostFlag(true);
+              }}
+              id={TOUR_STEP_IDS.DEVICE_MODE}
+            >
+              Switch to{" "}
+              {device.stream.stream_type === "RECORDING"
+                ? "Stream"
+                : "Recording"}{" "}
+              mode
+            </Button>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       {deviceState.device_type == 1 && <FollowerList />}
-
-      <div className="flex justify-between items-center">
-        <div>
-          <span className="text-sm font-medium">
-            {device.stream.stream_type === "RECORDING" ? "Recording" : "Stream"}{" "}
-            {deviceState.is_managed
-              ? "managed"
-              : streamEnabled
-                ? "enabled"
-                : "disabled"}
-          </span>
-        </div>
-        <Button
-          variant={"ghost"}
-          className="w-4 h-8"
-          disabled={deviceState.is_managed}
-          onClick={() => {
-            const newEnabledState = !streamEnabled;
-            setStreamEnabled(newEnabledState);
-            setShouldPostFlag(true);
-          }}
+      <div className="flex flex-1 justify-between items-center">
+        <CameraControls />
+        <div
+          className="flex items-center gap-2 pl-2"
+          id={TOUR_STEP_IDS.DEVICE_STREAM}
         >
-          {streamEnabled ? <PauseIcon /> : <PlayIcon />}
-        </Button>
+          <div>
+            <span className="text-sm font-medium">
+              {deviceState.is_managed
+                ? "managed"
+                : streamEnabled
+                ? "Stop"
+                : "Start"}{" "}
+              {device.stream.stream_type === "RECORDING"
+                ? "recording"
+                : "stream"}
+            </span>
+          </div>
+          <Button
+            variant={"default"}
+            className="w-12 h-12 rounded-full"
+            disabled={deviceState.is_managed}
+            onClick={() => {
+              const newEnabledState = !streamEnabled;
+              setStreamEnabled(newEnabledState);
+              setShouldPostFlag(true);
+            }}
+          >
+            {streamEnabled ? <PauseIcon /> : <PlayIcon />}
+          </Button>
+        </div>
       </div>
-
-      <CameraControls />
     </div>
   );
 };

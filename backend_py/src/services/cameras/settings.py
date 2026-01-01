@@ -1,3 +1,10 @@
+"""
+settings.py
+
+Manages persisting device settings and configs (cameras, lights, etc)
+Handles loading and saving device configs to JSON, keeping setting across reboots, and manages background sync of settings
+"""
+
 from typing import List, Dict, cast
 import threading
 import time

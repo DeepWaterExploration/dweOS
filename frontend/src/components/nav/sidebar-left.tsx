@@ -8,6 +8,7 @@ import {
   LogsIcon,
   TerminalIcon,
   VideoIcon,
+  Unplug,
 } from "lucide-react";
 
 import DWELogo from "@/assets/dwe-logo.svg";
@@ -75,7 +76,7 @@ export function SidebarLeft({
   return (
     <Sidebar className="border-r-0" {...props}>
       <SidebarHeader>
-        <div className="flex mt-2 ml-2 items-center gap-2 mb-4 sm:mb-0">
+        <div className="flex justify-between mt-2 ml-2 items-center gap-2 mb-4 sm:mb-0">
           <div className="flex-shrink-0 flex items-center justify-center w-10">
             <a href="https://dwe.ai" target="_blank">
               <img
@@ -89,20 +90,21 @@ export function SidebarLeft({
               />
             </a>
           </div>
-          <div className="flex items-center gap-2 min-w-0 flex-1">
+          <div className="flex items-center">
             {/* <span className="truncate font-semibold text-sm">
               {data.main.name}
             </span> */}
             <Badge variant="secondary" className="flex-shrink-0">
               v2.0.0
             </Badge>
+
             {connected ? (
-              <Badge variant="success" className="flex-shrink-0">
-                Connected
+              <Badge variant="success" className="[&>svg]:size-5">
+                <Unplug />
               </Badge>
             ) : (
-              <Badge variant="destructive" className="flex-shrink-0">
-                Disconnected
+              <Badge variant="destructive" className="[&>svg]:size-5">
+                <Unplug />
               </Badge>
             )}
           </div>

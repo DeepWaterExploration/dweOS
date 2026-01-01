@@ -1,3 +1,10 @@
+"""
+pwm_controller.py
+
+Abstract class definition / interface all PWM drivers must follow
+Maintains consistency with PWM functionality
+"""
+
 from abc import ABC, abstractmethod
 import logging
 

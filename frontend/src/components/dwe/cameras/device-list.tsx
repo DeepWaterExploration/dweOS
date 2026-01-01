@@ -17,8 +17,56 @@ import DevicesContext from "@/contexts/DevicesContext";
 import { getDeviceByBusInfo } from "@/lib/utils";
 import NotConnected from "../not-connected";
 import { useToast } from "@/hooks/use-toast";
+import { useTour } from "@/components/tour/tour";
+import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 
 type DeviceModel = components["schemas"]["DeviceModel"];
+
+const DEMO_DEVICE: DeviceModel = {
+  bus_info: "demo-device",
+  device_type: 0,
+  nickname: "Demo Camera",
+  manufacturer: "DeepWater Exploration",
+  name: "exploreHD",
+
+  vid: 1234,
+  pid: 5678,
+
+  is_managed: false,
+  followers: [],
+  device_info: {
+    device_name: "exploreHD Demo",
+    bus_info: "demo-device",
+    device_paths: ["/dev/video99"],
+    vid: 1234,
+    pid: 5678,
+  },
+  controls: [],
+  stream: {
+    device_path: "/dev/video99",
+    encode_type: "H264",
+    stream_type: "UDP",
+    endpoints: [{ host: "192.168.1.100", port: 5600 }],
+    width: 1920,
+    height: 1080,
+    interval: { numerator: 1, denominator: 30 },
+    enabled: true,
+  },
+  cameras: [
+    {
+      path: "/dev/video99",
+      formats: {
+        H264: [
+          {
+            width: 1920,
+            height: 1080,
+            intervals: [{ numerator: 1, denominator: 30 }],
+          },
+        ],
+      },
+    },
+  ],
+};
 
 const NoDevicesConnected = () => {
   return (
@@ -55,6 +103,8 @@ const DeviceListLayout = () => {
 
   const { toast } = useToast();
 
+  const { isActive } = useTour();
+
   const [devices, setDevices] = useState([] as DeviceModel[]);
 
   const [savedPreferences, setSavedPreferences] = useState({
@@ -62,6 +112,7 @@ const DeviceListLayout = () => {
   } as components["schemas"]["SavedPreferencesModel"]);
 
   const [nextPort, setNextPort] = useState(5600);
+  const [demoDeviceProxy] = useState(() => proxy(DEMO_DEVICE));
 
   const getNextPort = (devs: DeviceModel[]) => {
     const allPorts = devs.flatMap((device) =>
@@ -105,7 +156,6 @@ const DeviceListLayout = () => {
     });
   };
 
-
   const removeDevice = (bus_info: string) => {
     setDevices((prevDevices) => {
       const filteredDevices = prevDevices.filter(
@@ -148,7 +198,7 @@ const DeviceListLayout = () => {
       console.log("GStreamer Error:", data.errors, data.bus_info);
       setDevices((currentDevices) => {
         const device = getDeviceByBusInfo(currentDevices, data.bus_info);
-        console.log(currentDevices.map(d => d.bus_info));
+        console.log(currentDevices.map((d) => d.bus_info));
         console.log("Device affected by error:", device);
         if (device) {
           device.stream.enabled = false;
@@ -160,9 +210,9 @@ const DeviceListLayout = () => {
         description: `An error occurred with the device ${data.bus_info}. Please check the logs for more details.`,
         variant: "destructive",
       });
-    }
+    };
 
-    const getSavedPreferences = async () => { };
+    const getSavedPreferences = async () => {};
 
     if (connected) {
       socket?.on("gst_error", handleGstError);
@@ -187,28 +237,40 @@ const DeviceListLayout = () => {
     device.stream.enabled = true;
   };
 
+  const displayDevices =
+    isActive && devices.length === 0 ? [demoDeviceProxy] : devices;
+
   return (
-    <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(350px,1fr))]">
-      <DevicesContext.Provider
-        value={{
-          devices,
-          followerModels: devices.filter((d) => d.device_type == 2),
-          enableStream,
-        }}
-      >
-        {devices.map((device, index) => (
-          <div key={`${device.bus_info}-${index}`}>
-            <DeviceContext.Provider value={device}>
-              <CameraCard
-                defaultHost={savedPreferences.default_stream!.host}
-                nextPort={nextPort}
-              />
-            </DeviceContext.Provider>
-          </div>
-        ))}
-        {devices.length === 0 &&
-          (connected ? <NoDevicesConnected /> : <NotConnected />)}
-      </DevicesContext.Provider>
+    <div className="h-full w-full" id={TOUR_STEP_IDS.CAMERAS}>
+      <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(380px,0fr))] ">
+        <DevicesContext.Provider
+          value={{
+            devices,
+            followerModels: devices.filter((d) => d.device_type == 2),
+            enableStream,
+          }}
+        >
+          {displayDevices.map((device, index) => (
+            <div
+              key={`${device.bus_info}-${index}`}
+              id={
+                device.bus_info === "demo-device" || (isActive && index === 0)
+                  ? TOUR_STEP_IDS.DEMO_DEVICE
+                  : undefined
+              }
+            >
+              <DeviceContext.Provider value={device}>
+                <CameraCard
+                  defaultHost={savedPreferences.default_stream!.host}
+                  nextPort={nextPort}
+                />
+              </DeviceContext.Provider>
+            </div>
+          ))}
+          {displayDevices.length === 0 &&
+            (connected ? <NoDevicesConnected /> : <NotConnected />)}
+        </DevicesContext.Provider>
+      </div>
     </div>
   );
 };

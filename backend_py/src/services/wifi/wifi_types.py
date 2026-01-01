@@ -1,3 +1,11 @@
+"""
+wifi_types.py
+
+Defines Pydantic models and Enums for wifi operations
+Includes schemas for wifi networks (ssid, signal stength), security requirements, and connection states used by system NetworkManager
+"""
+
+
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from enum import Enum

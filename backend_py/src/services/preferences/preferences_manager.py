@@ -1,3 +1,10 @@
+"""
+preference_manager.py
+
+Manages persistence of server settings by reading from / writing to server_preferences.json
+Handles loading saved prefs and updating the json when settings are modified
+"""
+
 import json
 from typing import Dict
 from .pydantic_schemas import SavedPreferencesModel

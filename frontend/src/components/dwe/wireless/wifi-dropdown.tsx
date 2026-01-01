@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import { Wifi, WifiOff, Check, Lock } from "lucide-react";
+import { Wifi, WifiOff, Dot, Lock } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +24,8 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { Switch } from "@/components/ui/switch";
+import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 
 export function WifiDropdown() {
   const { toast } = useToast();
@@ -72,7 +74,7 @@ export function WifiDropdown() {
       };
     }
 
-    return () => { };
+    return () => {};
   }, [connected]);
 
   const toggleWifi = async () => {
@@ -123,8 +125,6 @@ export function WifiDropdown() {
     setPasswordDialogOpen(false);
   };
 
-
-
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedNetwork) return;
@@ -135,7 +135,7 @@ export function WifiDropdown() {
   };
 
   return (
-    <>
+    <div id={TOUR_STEP_IDS.WIFI_SWITCH}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="relative">
@@ -152,14 +152,10 @@ export function WifiDropdown() {
         >
           <DropdownMenuLabel className="flex items-center justify-between">
             <span>WiFi</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={toggleWifi}
-              className="h-7 text-xs"
-            >
-              {isWifiEnabled ? "Turn Off" : "Turn On"}
-            </Button>
+            <Switch
+              checked={isWifiEnabled}
+              onCheckedChange={() => toggleWifi()}
+            />
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
 
@@ -196,7 +192,7 @@ export function WifiDropdown() {
                       )}
                     </div>
                     {wifiStatus?.connection?.id == network.ssid && (
-                      <Check className="h-4 w-4 text-green-500" />
+                      <div className="h-2 w-2 bg-green-500 rounded-full" />
                     )}
                   </DropdownMenuItem>
                 ))}
@@ -256,7 +252,7 @@ export function WifiDropdown() {
           </form>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }
 
@@ -266,7 +262,6 @@ interface SignalStrengthProps {
 
 function SignalStrength({ strength }: SignalStrengthProps) {
   const thresholds = [20, 50, 70];
-
 
   return (
     <div className="flex h-4 items-end gap-[2px]">

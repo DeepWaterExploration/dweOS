@@ -14,7 +14,14 @@ import {
   // DialogFooter, // Optional: if you want a dedicated footer
 } from "@/components/ui/dialog";
 import { subscribe, useSnapshot } from "valtio";
-import { RotateCcwIcon, SlidersHorizontal } from "lucide-react";
+import {
+  Aperture,
+  MonitorCog,
+  ImageIcon,
+  RotateCcwIcon,
+  SlidersHorizontal,
+  CircleEllipsis,
+} from "lucide-react";
 
 import IntegerControl from "./controls/integer-control";
 import BooleanControl from "./controls/boolean-control";
@@ -181,6 +188,13 @@ export const CameraControls = () => {
     "Miscellaneous",
   ];
 
+  const groupIcons: { [key: string]: React.ReactNode } = {
+    "Exposure Controls": <Aperture className="h-4 w-4" />,
+    "Image Controls": <ImageIcon className="h-4 w-4" />,
+    "System Controls": <MonitorCog className="h-4 w-4" />,
+    // misc / additional icon is handled in the Accordion
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -194,7 +208,12 @@ export const CameraControls = () => {
       </DialogTrigger>
       <DialogContent className="sm:max-w-xl max-h-[80vh] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="sticky top-0 z-50 pt-8 px-8">
-          <DialogTitle>Camera Controls</DialogTitle>
+          <DialogTitle>
+            <div className="flex items-center gap-2">
+              <SlidersHorizontal className="h-4 w-4" />
+              Camera Controls
+            </div>
+          </DialogTitle>
           <DialogDescription>
             Adjust settings for the selected camera. Changes are applied
             immediately.
@@ -213,9 +232,16 @@ export const CameraControls = () => {
                     (c) => c.flags.control_type !== "BOOLEAN"
                   );
                   return (
-                    <Accordion type="multiple">
+                    <Accordion type="multiple" key={groupName}>
                       <AccordionItem value={groupName}>
-                        <AccordionTrigger>{groupName}</AccordionTrigger>
+                        <AccordionTrigger>
+                          <div className="flex items-center gap-2">
+                            {groupIcons[groupName] || (
+                              <CircleEllipsis className="h-4 w-4" />
+                            )}
+                            {groupName}
+                          </div>
+                        </AccordionTrigger>
                         <AccordionContent>
                           {others && (
                             <div className="grid gap-4 mt-1">

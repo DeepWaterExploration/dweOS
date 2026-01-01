@@ -10,9 +10,22 @@ import {
 import { components } from "@/schemas/dwe_os_2";
 import { Separator } from "@/components/ui/separator";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Download, Trash, X } from "lucide-react";
+import {
+  Download,
+  FolderArchive,
+  Trash,
+  Video,
+  VideoOff,
+  X,
+} from "lucide-react";
 import { useTour } from "@/components/tour/tour";
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TruncatedTooltip,
+} from "@/components/ui/tooltip";
 
 type RecordingInfo = components["schemas"]["RecordingInfo"];
 
@@ -269,11 +282,11 @@ const Recordings = () => {
               Loading...
             </div>
           ) : (
-            <Table noWrapper>
+            <Table noWrapper className="table-fixed">
               <TableHeader className="bg-background sticky top-0 z-10">
                 <TableRow className="text-left text-gray-500 font-bold">
                   <TableCell
-                    className="cursor-pointer hover:bg-muted"
+                    className="cursor-pointer hover:bg-muted w-auto"
                     onClick={() => handleSort("name")}
                   >
                     Name&nbsp;&nbsp;
@@ -281,7 +294,7 @@ const Recordings = () => {
                       (sortDirection === "asc" ? "▲" : "▼")}
                   </TableCell>
                   <TableCell
-                    className="cursor-pointer hover:bg-muted"
+                    className="cursor-pointer hover:bg-muted w-44"
                     onClick={() => handleSort("created")}
                   >
                     Created&nbsp;&nbsp;
@@ -289,7 +302,7 @@ const Recordings = () => {
                       (sortDirection === "asc" ? "▲" : "▼")}
                   </TableCell>
                   <TableCell
-                    className="cursor-pointer hover:bg-muted"
+                    className="cursor-pointer hover:bg-muted w-24"
                     onClick={() => handleSort("duration")}
                   >
                     Duration&nbsp;&nbsp;
@@ -297,7 +310,7 @@ const Recordings = () => {
                       (sortDirection === "asc" ? "▲" : "▼")}
                   </TableCell>
                   <TableCell
-                    className="cursor-pointer hover:bg-muted"
+                    className="cursor-pointer hover:bg-muted w-24"
                     onClick={() => handleSort("size")}
                   >
                     Size&nbsp;&nbsp;
@@ -327,9 +340,31 @@ const Recordings = () => {
                     }
                   >
                     <TableCell className="text-left">
-                      {recording.name}.{recording.format}
+                      <div className="flex items-center gap-2 ">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span>
+                              {recording?.format === "mp4" ? (
+                                <Video className="h-8 w-8 border border-background rounded bg-accent text-background p-2" />
+                              ) : (
+                                <VideoOff className="h-8 w-8 border border-background rounded bg-muted text-foreground p-2" />
+                              )}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>
+                              {recording?.format === "mp4"
+                                ? "Playable in browser"
+                                : "Download required to play"}
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                        <TruncatedTooltip
+                          text={`${recording.name}.${recording.format}`}
+                        />
+                      </div>
                     </TableCell>
-                    <TableCell className="text-left w-40">
+                    <TableCell className="text-left w-40 font-mono text-xs">
                       {recording.created}
                     </TableCell>
                     <TableCell className="text-left w-24">
@@ -348,18 +383,20 @@ const Recordings = () => {
         </div>
         {/* handles recording detailed view */}
         <div
-          className={`transition-all flex absolute right-0 bottom-0 ease-in-out duration-500 rounded-l-xl bg-transparent overflow-hidden shrink-0
+          className={`transition-all flex absolute right-0 bottom-4 ease-in-out duration-500 rounded-l-xl bg-transparent overflow-hidden shrink-0
           ${
             selectedRecording
               ? "w-full md:w-[50%] md:min-w-[450px]"
               : "w-[0] min-w-0"
           }`}
         >
-          <X
-            className="h-12 w-12 text-muted-foreground cursor-pointer hover:text-foreground bg-sidebar/50 backdrop-blur p-2 border border-r-0 rounded-l-xl"
+          <div
             onClick={() => setSelectedRecording(null)}
-          />
-          <div className="flex-col w-full h-full min-w-[400px] p-4 bg-sidebar/50 backdrop-blur border">
+            className="flex flex-col justify-center my-8 h-auto cursor-pointer group hover:bg-accent bg-sidebar/50 backdrop-blur border border-r-0 rounded-l-2xl"
+          >
+            <X className="h-10 w-10 text-muted-foreground group-hover:text-foreground p-2" />
+          </div>
+          <div className="flex-col space-y-2 w-full h-full min-w-[400px] p-4 bg-sidebar/50 backdrop-blur border rounded-l-2xl">
             {selectedRecording?.format === "mp4" ? (
               <video
                 key={`${selectedRecording.name}.${selectedRecording.format}`}
@@ -384,7 +421,7 @@ const Recordings = () => {
               </div>
             )}
             <div className="p-2">
-              <h1 className="text-2xl font-bold">
+              <h1 className="text-2xl font-mono font-bold">
                 {selectedRecording?.name}.{selectedRecording?.format}
               </h1>
             </div>
@@ -392,21 +429,29 @@ const Recordings = () => {
               <Separator orientation="vertical" className="w-[2px]" />
               <div className="flex-col">
                 <p>
-                  <strong className="text-muted-foreground">Format:</strong>{" "}
+                  <strong className="text-muted-foreground font-mono">
+                    Format:
+                  </strong>{" "}
                   {selectedRecording?.format
                     .toLocaleUpperCase()
                     .replace("MP4", "MPEG-4")}
                 </p>
                 <p>
-                  <strong className="text-muted-foreground">Created:</strong>{" "}
+                  <strong className="text-muted-foreground font-mono">
+                    Created:
+                  </strong>{" "}
                   {selectedRecording?.created}
                 </p>
                 <p>
-                  <strong className="text-muted-foreground">Duration:</strong>{" "}
+                  <strong className="text-muted-foreground font-mono">
+                    Duration:
+                  </strong>{" "}
                   {selectedRecording?.duration}
                 </p>
                 <p>
-                  <strong className="text-muted-foreground">Size:</strong>{" "}
+                  <strong className="text-muted-foreground font-mono">
+                    Size:
+                  </strong>{" "}
                   {formatFileSize(
                     selectedRecording?.size
                       ? parseFloat(selectedRecording.size)
@@ -430,7 +475,7 @@ const Recordings = () => {
               </Button>
               <Button
                 variant="outline"
-                className="flex-1 min-w-[140px] h-12 text-background bg-red-500 hover:text-foreground hover:bg-red-500"
+                className="flex-1 min-w-[140px] h-12 text-background bg-destructive hover:text-foreground hover:bg-red-500"
                 onClick={async () => {
                   // @ts-ignore-next-line
                   const new_recordings = (
@@ -456,10 +501,13 @@ const Recordings = () => {
         id={TOUR_STEP_IDS.RECORDING_FOOTER}
       >
         <div className="flex justify-between items-center max-w-full">
-          <Button variant="outline" asChild>
-            <a href={`${baseUrl}/recording/zip`} download>
-              Download All as ZIP
-            </a>
+          <Button variant="outline" asChild className="cursor-pointer">
+            <div>
+              <FolderArchive />
+              <a href={`${baseUrl}/recording/zip`} download>
+                Download All
+              </a>
+            </div>
           </Button>
           <div className="flex gap-6">
             <span>Total Recordings: {recordings.length}</span>

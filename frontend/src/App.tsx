@@ -25,26 +25,31 @@ import { WiredDropdown } from "./components/dwe/wireless/wired-dropdown";
 import { SystemDropdown } from "./components/dwe/system/system-dropdown";
 import { API_CLIENT } from "./api";
 import { TourAlertDialog, TourProvider, useTour } from "@/components/tour/tour";
-import { steps } from "./components/tour/tour-steps";
+import { getSteps } from "./components/tour/tour-steps";
+import FeaturesContext from "./contexts/FeaturesContext";
+import { components } from "./schemas/dwe_os_2";
 
-function WelcomeTourManager() {
+type WelcomeTourProps = { features: components["schemas"]["FeatureSupport"] };
+function WelcomeTourManager(props: WelcomeTourProps) {
   const [openTour, setOpenTour] = useState(false);
   const { setSteps } = useTour();
 
   useEffect(() => {
-    setSteps(steps);
+    setSteps(getSteps(props.features));
     const timer = setTimeout(() => {
       setOpenTour(true);
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [setSteps]);
+  }, [setSteps, props.features]);
 
   return <TourAlertDialog isOpen={openTour} setIsOpen={setOpenTour} />;
 }
 
 function AppContent() {
-  const [wifiAvailable, setWifiAvailable] = useState(false);
+  const [features, setFeatures] = useState<
+    components["schemas"]["FeatureSupport"] | undefined
+  >(undefined);
 
   const location = useLocation();
 
@@ -70,9 +75,9 @@ function AppContent() {
   const pageTitle = getPageTitle(location.pathname);
 
   useEffect(() => {
-    API_CLIENT.GET("/features").then((data) =>
-      data.data?.wifi ? setWifiAvailable(true) : setWifiAvailable(false)
-    );
+    API_CLIENT.GET("/features").then((data) => {
+      if (data.data) setFeatures(data.data);
+    });
   }, []);
 
   return (
@@ -97,17 +102,19 @@ function AppContent() {
             <ModeToggle />
             <div className="ml-auto flex items-center">
               <CommandPalette />
-              {wifiAvailable ? <WiredDropdown /> : <></>}
-              {wifiAvailable ? <WifiDropdown /> : <></>}
+              {features?.wifi ? <WiredDropdown /> : <></>}
+              {features?.wifi ? <WifiDropdown /> : <></>}
               <SystemDropdown />
             </div>
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 overflow-x-hidden">
-          <Outlet />
+          <FeaturesContext.Provider value={features}>
+            <Outlet />
+          </FeaturesContext.Provider>
         </div>
       </SidebarInset>
-      <WelcomeTourManager />
+      {features && <WelcomeTourManager features={features} />}
     </SidebarProvider>
   );
 }

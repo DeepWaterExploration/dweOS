@@ -7,16 +7,20 @@ Uses options functionality to set defaults, ranges, and specifies registers for 
 
 import logging
 import subprocess
+import struct
+import time
+from event_emitter import EventEmitter
+from typing import Dict, List
+from enum import Enum
+
 from .saved_pydantic_schemas import SavedDeviceModel
 from .enumeration import DeviceInfo
 from .device import Device, BaseOption, ControlTypeEnum, StreamEncodeTypeEnum
 from . import xu_controls as xu
-from typing import Dict, List
-
-from event_emitter import EventEmitter
+from typing import Callable, Any
 
 
-class StellarOption(BaseOption, EventEmitter):
+class StorageOption(BaseOption, EventEmitter):
     def __init__(self, name: str, value):
         BaseOption.__init__(self, name)
         EventEmitter.__init__(self)
@@ -28,90 +32,21 @@ class StellarOption(BaseOption, EventEmitter):
 
     def get_value(self):
         return self.value
-    
-"""
-Stellar Dual Register Class
-"""
-class DualRegisterOption(StellarOption):
-    def __init__(
-        self,
-        camera,
-        high_cmd: xu.Command,
-        low_cmd: xu.Command,
-        name:str,
-        value: int = 0
-    ) -> None:
-        super().__init__(name, value)
 
-        self._camera = camera
-        self.high_reg = high_cmd
-        self.low_reg = low_cmd
 
-        self.script_path = "/opt/DWE_Stellar_Control/stellar_control.sh"
-        self.logger = logging.getLogger("dwe_os.cameras.DualRegisterOption")
+class CustomOption(BaseOption):
 
-    # grab values from 2 registers and combine them to read
-    def get_value(self):
-        high_val = self._run_script("read", self._camera.path, self.high_reg)
-        if high_val is None:
-            return self.value
-        low_val = self._run_script("read", self._camera.path, self.low_reg)
-        if low_val is None:
-            return self.value
-        
-        try:
-            high_val = int(high_val.strip())
-            low_val = int(low_val.strip())
-            total_val = (high_val << 8) | low_val
+    def __init__(self, name: str, setter: Callable[[Any], None], getter: Callable[[], Any]):
+        BaseOption.__init__(self, name)
+        self.setter = setter
+        self.getter = getter
 
-            self.value = total_val
-            return total_val
-        except ValueError:
-            return self.value
-        
-    # split value across 2 registers to set
     def set_value(self, value):
-        try:
-            inputTotal = int(value)
-        except ValueError:
-            return
+        self.setter(value)
 
-        self.value = inputTotal
-        
-        high_val = (inputTotal >> 8) & 0xFF
-        low_val = inputTotal & 0xFF 
-    
-        device_path = self._camera.path
+    def get_value(self):
+        return self.getter()
 
-        self._run_script("write", device_path, self.high_reg, high_val)
-        self._run_script("write", device_path, self.low_reg, low_val)
-
-        self.emit("value_changed")
-        
-
-    def _run_script(self, operation, dev_path, register, value=None):
-        # create arguements
-        register = f"0x{register.value:04x}"
-        cmd = [
-                self.script_path,
-                "--dev", dev_path,
-                operation,
-                register
-            ]
-        if operation == "write" and value is not None:
-            cmd.append(str(value))
-
-        # run command
-        try:
-            result = subprocess.run(cmd, check=True, capture_output=True, text=True)
-            if operation == "read":
-                return result.stdout.strip()
-            else:
-                self.logger.info(f"Write output: {result.stdout.strip()}")
-                return None
-        except subprocess.CalledProcessError as e:
-            self.logger.error(f"{operation} Failed on {register}: {e.stderr}")
-            return None
 
 class SHDDevice(Device):
     """
@@ -120,7 +55,7 @@ class SHDDevice(Device):
 
     def __init__(self, device_info: DeviceInfo) -> None:
         # Specifies if SHD device is Stellar Pro
-        self.is_pro = True # self.pid == 0x6369
+        self.is_pro = True  # self.pid == 0x6369
 
         super().__init__(device_info)
 
@@ -142,13 +77,16 @@ class SHDDevice(Device):
             "bitrate", 5, ControlTypeEnum.INTEGER, 10, 0.1, 0.1
         )
 
+        self._sensor_write(0x3501, 0)
+        self._sensor_write(0x3502, 0)
+
         if self.is_pro:
             self.add_control_from_option(
-                'shutter', 100, ControlTypeEnum.INTEGER, 10000, 1, 1
+                'shutter', 100, ControlTypeEnum.INTEGER, 2800, 0, 1
             )
 
             self.add_control_from_option(
-                'iso', 400, ControlTypeEnum.INTEGER, 6400, 100, 100
+                'iso', 400, ControlTypeEnum.INTEGER, 4095, 0, 1
             )
 
     def add_follower(self, device: 'SHDDevice'):
@@ -192,6 +130,115 @@ class SHDDevice(Device):
         if self.stream.enabled:
             self.start_stream()
 
+    # ASIC stuff
+    # Sensor writes are not supported by all firmwares
+    # Only recent stellarHD firmware, no exploreHD firmware - but explore does support asic writes as well
+
+    def _sensor_write_high_low(self, reg_high: int, reg_low: int, value: int):
+        '''
+        Write high byte from value to high register, low byte to low
+        '''
+        self._sensor_write(reg_high,
+                           (value >> 8) & 0xFF)
+        # This is extremely scuffed: switch to waiting for trigger register before release (See below)
+        time.sleep(0.1)
+        self._sensor_write(reg_low, value & 0xFF)
+
+        # TODO: add check for success (0xAA in REG_TRIG)
+
+    def _sensor_read_high_low(self, reg_high, reg_low) -> int | None:
+        '''
+        Read high byte from value to high register, low byte to low
+        '''
+        ret, high = self._sensor_read(reg_high)
+        if ret != 0:
+            return None
+        ret, low = self._sensor_read(reg_low)
+        if ret != 0:
+            return None
+
+        return (high << 8) | (low & 0xFF)
+
+    def _sensor_write(self, reg: int, val: int):
+        high = (reg >> 8) & 0xFF
+        low = reg & 0xFF
+
+        ret = 0
+
+        # Disable auto exposure
+        ret |= self._asic_write(xu.StellarRegisterMap.REG_AE, 0x00)
+        # Set address high
+        ret |= self._asic_write(xu.StellarRegisterMap.REG_ADDR_H, high)
+        # Set address low
+        ret |= self._asic_write(xu.StellarRegisterMap.REG_ADDR_L, low)
+        # Set data
+        ret |= self._asic_write(xu.StellarRegisterMap.REG_DATA, val)
+        # Set mode to write ('W' = 0x57)
+        ret |= self._asic_write(xu.StellarRegisterMap.REG_MODE, 0x57)
+        # Trigger the command (0x55)
+        ret |= self._asic_write(xu.StellarRegisterMap.REG_TRIG, 0x55)
+
+        return ret
+
+    def _sensor_read(self, reg: int):
+        high = (reg >> 8) & 0xFF
+        low = reg & 0xFF
+
+        ret = 0
+
+        # Disable auto exposure
+        ret |= self._asic_write(xu.StellarRegisterMap.REG_AE, 0x00)
+        # Set address high
+        ret |= self._asic_write(xu.StellarRegisterMap.REG_ADDR_H, high)
+        # Set address low
+        ret |= self._asic_write(xu.StellarRegisterMap.REG_ADDR_L, low)
+        # Set mode to write ('R' = 0x52)
+        ret |= self._asic_write(xu.StellarRegisterMap.REG_MODE, 0x52)
+        # Trigger the command (0x55)
+        ret |= self._asic_write(xu.StellarRegisterMap.REG_TRIG, 0x55)
+
+        if ret != 0:
+            return ret
+
+        ret, val = self._asic_read(xu.StellarRegisterMap.REG_DATA)
+
+        return ret, val
+
+    def _asic_write(self, addr: int | xu.StellarRegisterMap, data: int, dummy: bool = False) -> int:
+        unit = xu.Unit.SYS_ID
+        selector = xu.Selector.SYS_ASIC_RW
+        # Accept enum
+        addr_val = addr.value if hasattr(addr, 'value') else addr
+        size = 4
+
+        # Dummy writes are used for asic reading
+        write_mode = 0xFF if dummy else 0
+        # Little endian unsigned short (asic address), byte (data), byte (write mode: 0 = normal, 0xFF = dummy)
+        ctrl_data = struct.pack("<HBB", addr_val, data, write_mode)
+
+        return self.cameras[0].uvc_set_ctrl(unit.value, selector.value, ctrl_data, size)
+
+    def _asic_read(self, addr: int | xu.StellarRegisterMap) -> tuple[int, int]:
+        addr_val = addr.value if hasattr(addr, 'value') else addr
+
+        # perform a dummy write to select the correct address
+        ret = self._asic_write(addr_val, 0, True)
+        if ret != 0:
+            return ret
+
+        unit = xu.Unit.SYS_ID
+        selector = xu.Selector.SYS_ASIC_RW
+        size = 4
+
+        # address, data, dummy read
+        ctrl_data = struct.pack("<HBB", addr_val, 0, 0)
+
+        ret = self.cameras[0].uvc_get_ctrl(
+            unit.value, selector.value, ctrl_data, size)
+
+        val = ctrl_data[2]
+        return (ret, val)
+
     def remove_manual(self, follower_bus_info: str):
         '''
         This should be called in the case the follower no longer exists
@@ -206,10 +253,29 @@ class SHDDevice(Device):
             if self.stream.enabled:
                 self.start_stream()
 
-    def _get_options(self) -> Dict[str, StellarOption]:
+    # This goes against the architecture created in the exploreHD
+    # When we designed that, it was preferred to not have any functions that could control asic values.
+    # TODO: FIXME
+    def set_shutter_speed(self, value: int):
+        self._sensor_write_high_low(
+            xu.StellarSensorMap.SHUTTER_HIGH, xu.StellarSensorMap.SHUTTER_LOW, value)
+
+    def get_shutter_speed(self) -> int | None:
+        return self._sensor_read_high_low(
+            xu.StellarSensorMap.SHUTTER_HIGH, xu.StellarSensorMap.SHUTTER_LOW)
+
+    def set_iso(self, value: int):
+        self._sensor_write_high_low(
+            xu.StellarSensorMap.ISO_HIGH, xu.StellarSensorMap.ISO_LOW, value)
+
+    def get_iso(self) -> int | None:
+        return self._sensor_read_high_low(
+            xu.StellarSensorMap.ISO_HIGH, xu.StellarSensorMap.ISO_LOW)
+
+    def _get_options(self) -> Dict[str, BaseOption]:
         options = {}
 
-        self.bitrate_option = StellarOption(
+        self.bitrate_option = StorageOption(
             "Software H.264 Bitrate", 5)  # 5 mpbs
 
         def update_bitrate():
@@ -226,12 +292,12 @@ class SHDDevice(Device):
 
         if self.is_pro:
             # UVC shutter speed control
-            options['shutter'] = DualRegisterOption(
-                self.cameras[0], xu.Command.SHUTTER_COARSE, xu.Command.SHUTTER_FINE, "Shutter Speed")
+            options['shutter'] = CustomOption(
+                "Shutter Speed", self.set_shutter_speed, self.get_shutter_speed)
 
             # UVC ISO control
-            options['iso'] = DualRegisterOption(
-                self.cameras[0], xu.Command.ISO_COARSE, xu.Command.ISO_FINE, "ISO")
+            options['iso'] = CustomOption(
+                "ISO", self.set_iso, self.get_iso)
 
         return options
 

@@ -12,6 +12,7 @@ from typing import *
 import logging
 import event_emitter as events
 import asyncio
+import traceback
 
 from .pydantic_schemas import *
 from .device import Device, lookup_pid_vid, DeviceInfo, DeviceType
@@ -298,6 +299,7 @@ class DeviceManager(events.EventEmitter):
                 if not device:
                     continue
             except Exception as e:
+                traceback.print_exc()
                 self.logger.warning(e)
                 continue
             # append the device to the device list

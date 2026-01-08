@@ -77,12 +77,13 @@ class SHDDevice(Device):
             "bitrate", 5, ControlTypeEnum.INTEGER, 10, 0.1, 0.1
         )
 
-        self._sensor_write(0x3501, 0)
-        self._sensor_write(0x3502, 0)
-
         if self.is_pro:
             self.add_control_from_option(
                 'shutter', 100, ControlTypeEnum.INTEGER, 2800, 0, 1
+            )
+
+            self.add_control_from_option(
+                'ae', False, ControlTypeEnum.BOOLEAN
             )
 
             self.add_control_from_option(
@@ -165,8 +166,8 @@ class SHDDevice(Device):
 
         ret = 0
 
-        # Disable auto exposure
-        ret |= self._asic_write(xu.StellarRegisterMap.REG_AE, 0x00)
+        # # Disable auto exposure
+        # ret |= self._asic_write(xu.StellarRegisterMap.REG_AE, 0x00)
         # Set address high
         ret |= self._asic_write(xu.StellarRegisterMap.REG_ADDR_H, high)
         # Set address low
@@ -186,8 +187,8 @@ class SHDDevice(Device):
 
         ret = 0
 
-        # Disable auto exposure
-        ret |= self._asic_write(xu.StellarRegisterMap.REG_AE, 0x00)
+        # # Disable auto exposure
+        # ret |= self._asic_write(xu.StellarRegisterMap.REG_AE, 0x00)
         # Set address high
         ret |= self._asic_write(xu.StellarRegisterMap.REG_ADDR_H, high)
         # Set address low
@@ -272,6 +273,16 @@ class SHDDevice(Device):
         return self._sensor_read_high_low(
             xu.StellarSensorMap.ISO_HIGH, xu.StellarSensorMap.ISO_LOW)
 
+    def set_asic_ae(self, enabled: bool):
+        self._asic_write(xu.StellarRegisterMap.REG_AE,
+                         0x01 if enabled else 0x00)
+
+    def get_asic_ae(self) -> bool | None:
+        ret, val = self._asic_read(xu.StellarRegisterMap.REG_AE)
+        if ret != 0:
+            return None
+        return True if val == 0x01 else False
+
     def _get_options(self) -> Dict[str, BaseOption]:
         options = {}
 
@@ -291,6 +302,10 @@ class SHDDevice(Device):
         options["bitrate"] = self.bitrate_option
 
         if self.is_pro:
+            options['ae'] = CustomOption(
+                "Auto Exposure (ASIC)", self.set_asic_ae, self.get_asic_ae
+            )
+
             # UVC shutter speed control
             options['shutter'] = CustomOption(
                 "Shutter Speed", self.set_shutter_speed, self.get_shutter_speed)

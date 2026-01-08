@@ -39,10 +39,6 @@ class Command(Enum):
     H264_BITRATE_CTRL = 0x02
     GOP_CTRL = 0x03
     H264_MODE_CTRL = 0x06
-    # SHUTTER_COARSE = 0x3501
-    # SHUTTER_FINE = 0x3502
-    # ISO_COARSE = 0x3508
-    # ISO_FINE = 0x3509
 
 
 class StellarRegisterMap(Enum):

@@ -13,7 +13,7 @@ const BooleanControl = ({
   let VALUE_TRUE = 1,
     VALUE_FALSE = 0;
 
-  if (control.name.includes("Auto Exposure")) {
+  if (control.name == "Auto Exposure") {
     VALUE_TRUE = 3;
     VALUE_FALSE = 1;
   }

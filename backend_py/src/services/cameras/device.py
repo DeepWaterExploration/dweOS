@@ -75,13 +75,13 @@ class Camera:
 
     # uvc_set_ctrl function defined in uvc_functions.c
     def uvc_set_ctrl(
-        self, unit: xu.Unit, ctrl: xu.Selector, data: bytes, size: int
+        self, unit: int, ctrl: int, data: bytes, size: int
     ) -> int:
         return camera_helper.uvc_set_ctrl(self._fd, unit, ctrl, data, size)
 
     # uvc_get_ctrl function defined in uvc_functions.c
     def uvc_get_ctrl(
-        self, unit: xu.Unit, ctrl: xu.Selector, data: bytes, size: int
+        self, unit: int, ctrl: int, data: bytes, size: int
     ) -> int:
         return camera_helper.uvc_get_ctrl(self._fd, unit, ctrl, data, size)
 
@@ -150,6 +150,9 @@ class BaseOption(ABC):
         pass
 
 
+# Note: SHD version is asymmetric from this, despite being functionally similar.
+# One will need to be moved to match the other for maintainability
+# I prefer SHD version, because logic in the option class is not ideal - Brandon
 class Option(BaseOption):
     """
     EHD Option Class
@@ -218,7 +221,7 @@ class Option(BaseOption):
 
     def _set_ctrl(self):
         data = bytearray(self._size)
-        data[0] = xu.EHD_DEVICE_TAG
+        data[0] = xu.DWE_DEVICE_TAG
         data[1] = self._command.value
 
         # Switch command
@@ -232,7 +235,7 @@ class Option(BaseOption):
 
     def _get_ctrl(self):
         data = bytearray(self._size)
-        data[0] = xu.EHD_DEVICE_TAG
+        data[0] = xu.DWE_DEVICE_TAG
         data[1] = self._command.value
         self._data = bytes(self._size)
         # Switch command
@@ -246,6 +249,7 @@ class Option(BaseOption):
 
     def _clear(self):
         self._data = b"\x00" * self._size
+
 
 class Device(events.EventEmitter):
 
@@ -429,6 +433,8 @@ class Device(events.EventEmitter):
             )
             self._id_counter += 1
         except AttributeError:
+            import traceback
+            traceback.print_exc()
             self.logger.error(
                 f"Unknown attribute: {self.__class__.__name__}._options[{option_name}]"
             )
@@ -485,9 +491,9 @@ class Device(events.EventEmitter):
             return  # in case the id does not exist in controls
 
         control = self.v4l2_device.controls[control_id]
-        self.logger.debug(
-            self._fmt_log(f"Setting UVC control - {control.name} to {value}")
-        )
+        # self.logger.debug(
+        #     self._fmt_log(f"Setting UVC control - {control.name} to {value}")
+        # )
         try:
             control.value = value
         except (AttributeError, PermissionError) as e:
@@ -508,7 +514,7 @@ class Device(events.EventEmitter):
 
     # set an option
     def set_option(self, opt: str, value: Any):
-        self.logger.debug(self._fmt_log(f"Setting option - {opt} to {value}"))
+        # self.logger.debug(self._fmt_log(f"Setting option - {opt} to {value}"))
         if opt in self._options:
             return self._options[opt].set_value(value)
         return None

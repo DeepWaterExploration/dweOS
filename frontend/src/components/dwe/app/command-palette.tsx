@@ -7,8 +7,10 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Info } from "lucide-react";
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
@@ -20,12 +22,12 @@ export function CommandPalette() {
   };
 
   return (
-    <>
+    <div id={TOUR_STEP_IDS.HELP_SWITCH}>
       <button
         onClick={() => setOpen(true)}
-        className="ml-auto mr-4 text-sm text-muted-foreground hover:text-foreground"
+        className="text-sm text-muted-foreground hover:text-foreground p-2"
       >
-        Help
+        <Info className="h-5 w-5" />
       </button>
       <CommandDialog open={open} onOpenChange={setOpen}>
         <Command>
@@ -56,11 +58,13 @@ export function CommandPalette() {
                 Cameras
               </CommandItem>
               <CommandItem
-                onSelect={() => runCommand(() => navigate("/videos"))}
+                onSelect={() => runCommand(() => navigate("/recordings"))}
               >
                 Recordings
               </CommandItem>
-              <CommandItem onSelect={() => runCommand(() => navigate("/log-viewer"))}>
+              <CommandItem
+                onSelect={() => runCommand(() => navigate("/log-viewer"))}
+              >
                 Logs
               </CommandItem>
               <CommandItem
@@ -77,6 +81,6 @@ export function CommandPalette() {
           </CommandList>
         </Command>
       </CommandDialog>
-    </>
+    </div>
   );
 }

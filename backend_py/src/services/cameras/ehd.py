@@ -38,7 +38,7 @@ class EHDDevice(Device):
         # Standard integer options
         options['bitrate'] = Option(
             self.cameras[2], '>I', xu.Unit.USR_ID, xu.Selector.USR_H264_CTRL, xu.Command.H264_BITRATE_CTRL, 'Bitrate', 
-            lambda bitrate: int(bitrate * 1000000), # convert to bps from mpbs 
+            lambda bitrate: int(round(bitrate * 1000000)), # convert to bps from mpbs (round for float imprecision)
             lambda bitrate: bitrate / 1000000  # convert to mpbs from bps
         )
 

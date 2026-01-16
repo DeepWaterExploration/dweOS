@@ -11,12 +11,13 @@ import { API_CLIENT } from "@/api";
 import { components } from "@/schemas/dwe_os_2"; // Assuming your schema is at this path
 import WebsocketContext from "@/contexts/WebsocketContext";
 import { useToast } from "@/hooks/use-toast";
-import { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 
 // Import Shadcn UI components for form elements
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 
 // Import types from the generated schema
 type IPConfiguration = components["schemas"]["IPConfiguration"];
@@ -207,7 +208,7 @@ export function WiredDropdown() {
   }, [ipConfiguration]);
 
   return (
-    <>
+    <div id={TOUR_STEP_IDS.ETHERNET_SWITCH}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="relative">
@@ -336,6 +337,6 @@ export function WiredDropdown() {
           )}
         </DropdownMenuContent>
       </DropdownMenu>
-    </>
+    </div>
   );
 }

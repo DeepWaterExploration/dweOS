@@ -13,6 +13,7 @@ import {
   CameraIcon,
   Check,
   Edit2Icon,
+  GroupIcon,
   PauseIcon,
   PlayIcon,
   PlusIcon,
@@ -22,8 +23,6 @@ import { Input } from "@/components/ui/input";
 import DeviceContext from "@/contexts/DeviceContext";
 import { subscribe, useSnapshot } from "valtio";
 import { components } from "@/schemas/dwe_os_2";
-import DevicesContext from "@/contexts/DevicesContext";
-import { getDeviceByBusInfo } from "@/lib/utils";
 import { API_CLIENT } from "@/api";
 import { CameraControls } from "./camera-controls";
 
@@ -34,6 +33,9 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { DialogTitle } from "@radix-ui/react-dialog";
 
 // Options for StreamSelector should provide label and value for each choice
 type StreamOption = { label: string; value: string };
@@ -271,6 +273,84 @@ const getResolutions = (
 
 const ENCODERS = ["H264", "MJPG", "SOFTWARE_H264"];
 
+
+const SyncDialog = ({ }) => {
+  const [newGroupName, setNewGroupName] = useState("");
+  const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState("")
+
+  const existingGroups = [
+    "Group A", "E3D"
+  ]
+
+  return (
+    <Dialog open={isGroupDialogOpen} onOpenChange={setIsGroupDialogOpen} >
+      <DialogTrigger asChild>
+        <Button variant="outline" className="w-full gap-2">
+          <GroupIcon className="w-4 h-4" />
+          Add to Sync Group
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Sync Camera Group</DialogTitle>
+        </DialogHeader>
+
+        <div className="py-4 space-y-4">
+          {/* Option A: Join Existing */}
+          {existingGroups.length > 0 && (
+            <div className="space-y-2">
+              <Label>Join an active group</Label>
+              <Select
+                onValueChange={(val) => {
+                  setSelectedGroup(val);
+                  setNewGroupName(""); // Clear new input if selecting existing
+                }}
+                value={selectedGroup}
+                disabled={!!newGroupName} // Disable if user is typing a new name
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select existing group..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {existingGroups.map((group) => (
+                    <SelectItem key={group} value={group}>
+                      {group}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Option B: Create New */}
+          <div className="space-y-2">
+            <Label>Create a new group</Label>
+            <Input
+              placeholder="e.g. Stereo_Pair_1"
+              value={newGroupName}
+              onChange={(e) => {
+                setNewGroupName(e.target.value);
+                setSelectedGroup(""); // Clear dropdown if typing
+              }}
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setIsGroupDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button>
+            Join Group
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog >
+
+  );
+}
+
 export const CameraStream = ({
   defaultHost,
   nextPort,
@@ -502,6 +582,8 @@ export const CameraStream = ({
           </Button>
         </div>
       </div>
+
+      <SyncDialog />
     </div>
   );
 };

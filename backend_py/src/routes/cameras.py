@@ -6,12 +6,12 @@ Handles listing connected devices, updating stream settings (resolution / fps), 
 """
 
 from fastapi import APIRouter, Depends, Request
-from ..services import DeviceManager, StreamInfoModel, DeviceNicknameModel, UVCControlModel, DeviceDescriptorModel, DeviceLeaderModel
+from ..services import DeviceManager, StreamInfoModel, DeviceNicknameModel, UVCControlModel, DeviceDescriptorModel
 import logging
 
 from typing import List, cast
 
-from ..services.cameras.pydantic_schemas import StreamInfoModel, DeviceNicknameModel, UVCControlModel, DeviceLeaderModel, DeviceModel, AddFollowerPayload, SimpleRequestStatusModel
+from ..services.cameras.pydantic_schemas import StreamInfoModel, DeviceNicknameModel, UVCControlModel, DeviceModel, SimpleRequestStatusModel
 from ..services.cameras.exceptions import DeviceNotFoundException
 from ..services.cameras.pydantic_schemas import DeviceType
 from ..services.cameras.shd import SHDDevice
@@ -63,26 +63,6 @@ def set_uvc_control(request: Request, uvc_control: UVCControlModel):
         uvc_control.bus_info, uvc_control.control_id, uvc_control.value)
 
     return {}
-
-
-@camera_router.post('/devices/add_follower', summary='Add a device as a follower to another device')
-def add_follower(request: Request, payload: AddFollowerPayload) -> SimpleRequestStatusModel:
-    device_manager: DeviceManager = request.app.state.device_manager
-
-    success = device_manager.add_follower(
-        payload.leader_bus_info, payload.follower_bus_info)
-
-    return SimpleRequestStatusModel(success=success)
-
-
-@camera_router.post('/devices/remove_follower', summary='Add a device as a follower to another device')
-def remove_follower(request: Request, payload: AddFollowerPayload) -> SimpleRequestStatusModel:
-    device_manager: DeviceManager = request.app.state.device_manager
-
-    success = device_manager.remove_follower(
-        payload.leader_bus_info, payload.follower_bus_info)
-
-    return SimpleRequestStatusModel(success=success)
 
 
 @camera_router.post('/devices/restart_stream', summary='Restart a stream')

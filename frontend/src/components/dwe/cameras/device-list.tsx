@@ -33,7 +33,6 @@ const DEMO_DEVICE: DeviceModel = {
   pid: 5678,
 
   is_managed: false,
-  followers: [],
   device_info: {
     device_name: "exploreHD Demo",
     bus_info: "demo-device",
@@ -212,7 +211,7 @@ const DeviceListLayout = () => {
       });
     };
 
-    const getSavedPreferences = async () => {};
+    const getSavedPreferences = async () => { };
 
     if (connected) {
       socket?.on("gst_error", handleGstError);

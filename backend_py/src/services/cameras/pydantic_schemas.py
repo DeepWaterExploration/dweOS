@@ -185,8 +185,6 @@ class DeviceModel(BaseModel):
     device_info: Optional[DeviceInfoModel] = None
     # 0 (exploreHD), 1 (Leader), 2 (Follower)
     device_type: DeviceType
-    # Only required for stellarHD (remember, followers CAN be leaders in some circumstances)
-    followers: List[str] = []
     # True if is a follower and stream is managed by the leader
     is_managed: bool = False
 
@@ -235,21 +233,8 @@ class DeviceNicknameModel(BaseModel):
         from_attributes = True
 
 
-class DeviceLeaderModel(BaseModel):
-    follower: str
-    leader: Optional[str] = None
-
-    class Config:
-        from_attributes = True
-
-
 class DeviceDescriptorModel(BaseModel):
     bus_info: str
-
-
-class AddFollowerPayload(BaseModel):
-    leader_bus_info: str
-    follower_bus_info: str
 
 
 class SimpleRequestStatusModel(BaseModel):

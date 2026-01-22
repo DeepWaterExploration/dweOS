@@ -63,13 +63,6 @@ class SHDDevice(Device):
         mjpg_camera = self.find_camera_with_format("MJPG")
         mjpg_camera.formats["SOFTWARE_H264"] = mjpg_camera.formats["MJPG"]
 
-        # List of followers
-        # Zero inherent truth to the existance of these devices
-        self.followers: List[str] = []
-
-        # These exist
-        self.follower_devices: List['SHDDevice'] = []
-
         # Is true if it is managed, false otherwise
         self.is_managed = False
 
@@ -89,47 +82,6 @@ class SHDDevice(Device):
             self.add_control_from_option(
                 'iso', 400, ControlTypeEnum.INTEGER, 4095, 0, 1
             )
-
-    def add_follower(self, device: 'SHDDevice'):
-        if device.bus_info in self.followers:
-            self.logger.info(
-                'Trying to add follower to device that already has this device as a follower. Ignoring request.')
-            return
-        self.logger.info('Adding follower')
-
-        # For saving purposes
-        self.followers.append(device.bus_info)
-
-        # This is the real addition
-        self.follower_devices.append(device)
-
-        # Make the follower managed
-        device.set_is_managed(True)
-        # Append the new device stream
-        self.stream_runner.streams.append(device.stream)
-
-        if self.stream.enabled:
-            self.start_stream()
-
-    def remove_follower(self, device: 'SHDDevice'):
-        if not device.bus_info in self.followers:
-            self.logger.info(
-                "Cannot remove follower from device that does not contain it.")
-            return
-        # Reconstruct the list without the follower
-        self.followers = [
-            dev for dev in self.followers if dev != device.bus_info]
-        self.follower_devices = [
-            dev for dev in self.follower_devices if dev.bus_info != device.bus_info
-        ]
-
-        self.stream_runner.streams.remove(device.stream)
-        device.set_is_managed(False)
-
-        self.logger.info('Removing follower')
-
-        if self.stream.enabled:
-            self.start_stream()
 
     # ASIC stuff
     # Sensor writes are not supported by all firmwares
@@ -225,7 +177,7 @@ class SHDDevice(Device):
         # perform a dummy write to select the correct address
         ret = self._asic_write(addr_val, 0, True)
         if ret != 0:
-            return ret
+            return (ret, -1)
 
         unit = xu.Unit.SYS_ID
         selector = xu.Selector.SYS_ASIC_RW
@@ -239,12 +191,6 @@ class SHDDevice(Device):
 
         val = ctrl_data[2]
         return (ret, val)
-
-    def remove_manual(self, follower_bus_info: str):
-        '''
-        This should be called in the case the follower no longer exists
-        '''
-        self.followers.remove(follower_bus_info)
 
     def set_is_managed(self, is_managed: bool):
         self.is_managed = is_managed
@@ -333,7 +279,4 @@ class SHDDevice(Device):
         super().start_stream()
 
     def unconfigure_stream(self):
-        # remove leader when unconfiguring
-        if self.leader_device:
-            self.remove_leader()
         return super().unconfigure_stream()

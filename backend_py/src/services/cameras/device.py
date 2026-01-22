@@ -216,7 +216,7 @@ class Option(BaseOption):
         self._data = data + bytearray(self._size - len(data))
 
     # unpack data from internal buffer
-    def _unpack(self, fmt: str) -> list:
+    def _unpack(self, fmt: str) -> Tuple[Any, ...]:
         return struct.unpack_from(fmt, self._data)
 
     def _set_ctrl(self):
@@ -379,7 +379,7 @@ class Device(events.EventEmitter):
     ):
         self.logger.info(self._fmt_log("Configuring stream"))
 
-        camera: Camera = None
+        camera: Camera | None = None
         match encode_type:
             case StreamEncodeTypeEnum.H264:
                 camera = self.find_camera_with_format("H264")
@@ -478,7 +478,7 @@ class Device(events.EventEmitter):
         control = self.v4l2_device.controls[control_id]
         return control.value
 
-    def set_pu(self, control_id: int, value: int):
+    def set_pu(self, control_id: int, value: int | float):
         if control_id < 0:
             # DWE control
             for control in self.controls:

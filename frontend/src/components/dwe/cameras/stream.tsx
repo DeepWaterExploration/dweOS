@@ -241,172 +241,6 @@ const EndpointList = ({
   );
 };
 
-const FollowerList = () => {
-  const device = useContext(DeviceContext)!;
-
-  const deviceState = useSnapshot(device);
-  const [followers, setFollowers] = useState(device.followers);
-
-  const { devices } = useContext(DevicesContext)!;
-
-  useEffect(() => {
-    const unsubscribe = subscribe(device.followers, () => {
-      setFollowers(device.followers);
-    });
-
-    return unsubscribe;
-  }, [device]);
-
-  const [potentialFollowers, setPotentialFollowers] = useState<string[]>([]);
-
-  const updatePotentialFollowers = () => {
-    setPotentialFollowers([
-      "Select a device...",
-      ...devices
-        .filter((d) => d.device_type == 2)
-        .map((f) => f.bus_info)
-        .filter((value) => !followers.includes(value)),
-    ]);
-  };
-
-  useEffect(() => {
-    updatePotentialFollowers();
-  }, [devices]);
-
-  useEffect(() => {
-    followers
-      .filter((value) => !deviceState.followers.includes(value))
-      .forEach((newFollower) => {
-        device.followers = followers;
-        API_CLIENT.POST("/devices/add_follower", {
-          body: {
-            leader_bus_info: deviceState.bus_info,
-            follower_bus_info: newFollower,
-          },
-        });
-        const dev = getDeviceByBusInfo(devices, newFollower);
-        if (dev) dev.is_managed = true;
-        updatePotentialFollowers();
-
-        setSelectedBusInfo("Select a device...");
-      });
-
-    deviceState.followers
-      .filter((value) => !followers.includes(value))
-      .forEach((removedFollower) => {
-        device.followers = followers;
-        API_CLIENT.POST("/devices/remove_follower", {
-          body: {
-            leader_bus_info: deviceState.bus_info,
-            follower_bus_info: removedFollower,
-          },
-        });
-        const dev = getDeviceByBusInfo(devices, removedFollower);
-        if (dev) dev.is_managed = false;
-        updatePotentialFollowers();
-
-        setSelectedBusInfo("Select a device...");
-      });
-  }, [followers]);
-
-  const [selectedBusInfo, setSelectedBusInfo] = useState("Select a device...");
-
-  const handleAddFollower = () => {
-    const selected = devices.find(
-      (f) => f.bus_info === selectedBusInfo
-    )?.bus_info;
-    if (!selected) return;
-
-    setFollowers([...followers, selected]);
-  };
-
-  const handleDeleteFollower = (follower: string) => {
-    setFollowers((oldFollowers) => oldFollowers.filter((f) => f !== follower));
-  };
-
-  return (
-    <Accordion type="single" collapsible>
-      <AccordionItem value="followers">
-        <AccordionTrigger className="text-sm font-semibold">
-          Followers
-        </AccordionTrigger>
-        <AccordionContent className="w-full">
-          <div className="space-y-4">
-            {/* Add Dropdown */}
-            <div className="grid grid-cols-12 gap-3 w-full items-end">
-              <div className="col-span-9">
-                <StreamSelector
-                  options={potentialFollowers.map((f) => ({
-                    label: `${f}`,
-                    value: f,
-                  }))}
-                  placeholder="Select a device..."
-                  label="Add Follower"
-                  value={selectedBusInfo}
-                  onChange={setSelectedBusInfo}
-                />
-              </div>
-
-              <div className="col-span-3">
-                <Button onClick={handleAddFollower} className="w-full">
-                  Add
-                </Button>
-              </div>
-            </div>
-
-            {/* Follower Table */}
-            {followers.length === 0 ? (
-              <div className="text-sm text-muted-foreground p-4 rounded-md bg-muted/50">
-                No followers connected. Devices that mirror this stream will
-                appear here.
-              </div>
-            ) : (
-              <div className="rounded-md border border-background/30 w-full overflow-hidden">
-                <table className="w-full table-fixed text-sm text-left">
-                  <thead className="bg-background/30">
-                    <tr>
-                      <th className="px-4 py-2 w-1/2 truncate font-medium">
-                        Port
-                      </th>
-                      <th className="px-4 py-2 w-1/2 truncate font-medium">
-                        Device Type
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {followers.map((follower, index) => (
-                      <tr
-                        key={index}
-                        className="border-b-2 border-background/30 bg-input last:border-0"
-                      >
-                        <td className="px-4 py-2 truncate">{follower}</td>
-                        <td className="px-4 py-2">
-                          <div className="grid grid-cols-[1fr_auto] items-center gap-2">
-                            <span className="truncate">stellarHD</span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteFollower(follower)}
-                              className="h-6 w-6 p-0"
-                            >
-                              <Trash2Icon className="w-4 h-4" />
-                              <span className="sr-only">Remove</span>
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
-  );
-};
-
 const getResolution = (resolution: string) => {
   const split = resolution.split("x");
   if (split.length < 2) return [null, null];
@@ -636,8 +470,6 @@ export const CameraStream = ({
           </AccordionContent>
         </AccordionItem>
       </Accordion>
-
-      {deviceState.device_type == 1 && <FollowerList />}
       <div className="flex flex-1 justify-between items-center">
         <CameraControls />
         <div
@@ -649,8 +481,8 @@ export const CameraStream = ({
               {deviceState.is_managed
                 ? "managed"
                 : streamEnabled
-                ? "Stop"
-                : "Start"}{" "}
+                  ? "Stop"
+                  : "Start"}{" "}
               {device.stream.stream_type === "RECORDING"
                 ? "recording"
                 : "stream"}

@@ -276,40 +276,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/devices/add_follower": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Add a device as a follower to another device */
-        post: operations["add_follower_devices_add_follower_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/devices/remove_follower": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Add a device as a follower to another device */
-        post: operations["remove_follower_devices_remove_follower_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/devices/restart_stream": {
         parameters: {
             query?: never;
@@ -562,13 +528,6 @@ export interface components {
             /** Requires Password */
             requires_password: boolean;
         };
-        /** AddFollowerPayload */
-        AddFollowerPayload: {
-            /** Leader Bus Info */
-            leader_bus_info: string;
-            /** Follower Bus Info */
-            follower_bus_info: string;
-        };
         /** CameraModel */
         CameraModel: {
             /** Path */
@@ -659,11 +618,6 @@ export interface components {
             device_info?: components["schemas"]["DeviceInfoModel"] | null;
             device_type: components["schemas"]["DeviceType"];
             /**
-             * Followers
-             * @default []
-             */
-            followers: string[];
-            /**
              * Is Managed
              * @default false
              */
@@ -681,7 +635,7 @@ export interface components {
          * @description Device type Enum
          * @enum {integer}
          */
-        DeviceType: 0 | 1 | 2;
+        DeviceType: 0 | 1 | 2 | 3 | 4;
         /** FeatureSupport */
         FeatureSupport: {
             /** Ttyd */
@@ -824,14 +778,6 @@ export interface components {
             index: number;
             /** Intensity */
             intensity: number;
-        };
-        /** SimpleRequestStatusModel */
-        SimpleRequestStatusModel: {
-            /**
-             * Success
-             * @default true
-             */
-            success: boolean;
         };
         /** Status */
         Status: {
@@ -1325,72 +1271,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    add_follower_devices_add_follower_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AddFollowerPayload"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SimpleRequestStatusModel"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    remove_follower_devices_remove_follower_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AddFollowerPayload"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SimpleRequestStatusModel"];
                 };
             };
             /** @description Validation Error */

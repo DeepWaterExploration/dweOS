@@ -42,7 +42,6 @@ class SavedDeviceModel(BaseModel):
     stream: SavedStreamModel
     controls: List[SavedControlModel]
     device_type: DeviceType
-    followers: Optional[List[str]] = []
 
     class Config:
         from_attributes = True

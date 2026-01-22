@@ -156,9 +156,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-# lib/
-
-# !/frontend/src/lib/
+lib/
 
 lib64/
 parts/
@@ -336,3 +334,5 @@ release.tar.gz
 .env
 pi-gen
 videos
+
+!frontend/src/lib/

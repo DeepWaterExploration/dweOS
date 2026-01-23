@@ -113,6 +113,8 @@ const DeviceListLayout = () => {
   const [nextPort, setNextPort] = useState(5600);
   const [demoDeviceProxy] = useState(() => proxy(DEMO_DEVICE));
 
+  const [streams, setStreams] = useState([]);
+
   const getNextPort = (devs: DeviceModel[]) => {
     const allPorts = devs.flatMap((device) =>
       device.stream.endpoints.map((endpoint) => endpoint.port)

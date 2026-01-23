@@ -63,6 +63,8 @@ class SHDDevice(Device):
         mjpg_camera = self.find_camera_with_format("MJPG")
         mjpg_camera.formats["SOFTWARE_H264"] = mjpg_camera.formats["MJPG"]
 
+        self.sync_group: str | None = None
+
         # Is true if it is managed, false otherwise
         self.is_managed = False
 

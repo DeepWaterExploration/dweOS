@@ -20,6 +20,7 @@ from .settings import SettingsManager
 from .enumeration import list_devices
 from .device_utils import list_diff, find_device_with_bus_info
 from .exceptions import DeviceNotFoundException
+from .stream import StreamRunner
 
 import socketio
 
@@ -67,6 +68,11 @@ class DeviceManager(events.EventEmitter):
         # List of devices with gstreamer errors
         self.gst_errors: List[str] = []
 
+        self.sync_groups: List[str] = []
+
+        # Each stream runner takes in a sequence of streams metadata stored in the device objects
+        self.stream_runners: List[StreamRunner] = []
+
         self.logger = logging.getLogger("dwe_os_2.cameras.DeviceManager")
 
     def start_monitoring(self):
@@ -85,6 +91,24 @@ class DeviceManager(events.EventEmitter):
         for device in self.devices:
             device.stream.stop()
 
+    def add_to_sync_group(self, bus_info: str, group: str):
+        """
+        Add a given device to a sync group
+        """
+        if group not in self.sync_groups:
+            self.sync_groups.append(group)
+
+        dev = self._find_device_with_bus_info(bus_info)
+        if not dev:
+            return False
+
+        if dev.device_type == DeviceType.STELLARHD_LEADER or dev.device_type == DeviceType.STELLARHD_FOLLOWER:
+            device: SHDDevice = cast(SHDDevice, dev)
+            device.sync_group = group
+            self.settings_manager.save_device(device)
+
+        return True
+
     def create_device(self, device_info: DeviceInfo) -> Device | None:
         """
         Create a new device based on enumerated device info
@@ -102,10 +126,6 @@ class DeviceManager(events.EventEmitter):
             case _:
                 # Not a DWE device
                 return None
-
-        # we need to broadcast that there was a gst error so that the frontend knows there may be a kernel issue
-        device.stream_runner.on(
-            "gst_error", lambda _: self._append_gst_error(device))
 
         return device
 
@@ -158,11 +178,6 @@ class DeviceManager(events.EventEmitter):
         device.configure_stream(
             encode_type, width, height, interval, stream_type, endpoints
         )
-
-        if stream_info.enabled:
-            device.start_stream()
-        else:
-            device.stop_stream()
 
         self.settings_manager.save_device(device)
         return True
@@ -273,6 +288,10 @@ class DeviceManager(events.EventEmitter):
         return True
 
     def _find_device_with_bus_info(self, bus_info: str) -> Device | None:
+        if stream_info.enabled:
+            device.start_stream()
+        else:
+            device.stop_stream()
         """
         Utility to find a device with bus info
         """
@@ -318,45 +337,10 @@ class DeviceManager(events.EventEmitter):
             bus_info = self.gst_errors.pop()
             await self._emit_gst_error(bus_info, "GST Error")
 
-        if len(removed_devices) > 0 or len(new_devices) > 0:
-            # make sure to load the leader followers in case there are new ones to check
-            self.settings_manager.link_followers(self.devices)
-
         # remove the old devices
         for device_info in removed_devices:
             for device in self.devices:
                 if device.device_info == device_info:
-                    device.stream_runner.stop()
-
-                    # What to do when a device is unplugged
-                    # If it is a leader, just have the followers detatch temporarily
-                    # If it is a follower, remove self from the leaders streams
-                    # This means we need to handle situations like the following
-                    #   Leader gets unplugged and follower gets new leader
-                    #   Follower gets unplugged and now there is no inherent truth to the
-                    #       existance of a given follower
-                    if device.device_type == DeviceType.STELLARHD_LEADER:
-                        leader_casted = cast(SHDDevice, device)
-                        for follower_bus_info in leader_casted.followers:
-                            # This can be optimized, but it truly does not matter
-                            follower = self._find_device_with_bus_info(
-                                follower_bus_info)
-                            # Remember, follower might not exist now - never inherent truth to its existance
-                            if follower:
-                                follower_casted = cast(SHDDevice, follower)
-                                leader_casted.remove_follower(follower_casted)
-                    elif device.device_type == DeviceType.STELLARHD_FOLLOWER:
-                        follower_casted = cast(SHDDevice, device)
-                        if follower_casted.is_managed:
-                            # TODO: Fix this
-                            for device in self.devices:
-                                if device.device_type == DeviceType.STELLARHD_LEADER:
-                                    leader_casted = cast(SHDDevice, device)
-                                    if follower_casted.bus_info in leader_casted.followers:
-                                        leader_casted.stream_runner.streams.remove(
-                                            follower_casted.stream)
-                                        leader_casted.stream_runner.start()
-
                     self.devices.remove(device)
                     self.logger.info(f"Device Removed: {device_info.bus_info}")
 

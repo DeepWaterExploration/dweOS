@@ -22,12 +22,9 @@ class SavedControlModel(BaseModel):
 
 class SavedStreamModel(BaseModel):
     encode_type: StreamEncodeTypeEnum
-    stream_type: StreamTypeEnum
-    endpoints: List[StreamEndpointModel]
     width: int
     height: int
-    interval: IntervalModel
-    enabled: bool
+    fps: int
 
     class Config:
         # use_enum_values = True
@@ -42,6 +39,7 @@ class SavedDeviceModel(BaseModel):
     stream: SavedStreamModel
     controls: List[SavedControlModel]
     device_type: DeviceType
+    sync_group: Optional[str]
 
     class Config:
         from_attributes = True

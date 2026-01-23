@@ -11,6 +11,7 @@ import { CameraStream } from "./stream";
 import { useSnapshot } from "valtio";
 import { useContext } from "react";
 import DeviceContext from "@/contexts/DeviceContext";
+import { SyncDialog } from "./sync-dialog";
 
 export function CameraCard({
   defaultHost,
@@ -37,6 +38,7 @@ export function CameraCard({
       </CardHeader>
       <CardContent>
         <CameraStream defaultHost={defaultHost} nextPort={nextPort} />
+        <SyncDialog />
       </CardContent>
     </Card>
   );

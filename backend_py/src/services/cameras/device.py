@@ -275,9 +275,6 @@ class Device(events.EventEmitter):
         self.nickname = ""
         self.stream = Stream()
 
-        # each device has a streamrunner, but not all of them are used if they are a follower (shd)
-        self.stream_runner = StreamRunner(self.stream)
-
         for camera in self.cameras:
             for encoding in camera.formats:
                 encode_type = string_to_stream_encode_type(encoding)
@@ -287,14 +284,11 @@ class Device(events.EventEmitter):
                     # Most users will use this, however it is available to be changed in the frontend
                     self.stream.width = camera.formats[encoding][0].width
                     self.stream.height = camera.formats[encoding][0].height
-                    self.stream.interval.denominator = (
-                        camera.formats[encoding][0].intervals[0].denominator
-                    )
-                    self.stream.interval.numerator = (
-                        camera.formats[encoding][0].intervals[0].numerator
-                    )
+                    self.stream.fps = camera.formats[encoding][0].intervals[0].denominator
+                    
                     break
 
+        # TODO: REPLACE
         self.v4l2_device = device.Device(
             self.cameras[0].path)  # for control purposes
         self.v4l2_device.open()
@@ -373,9 +367,7 @@ class Device(events.EventEmitter):
         encode_type: StreamEncodeTypeEnum,
         width: int,
         height: int,
-        interval: IntervalModel,
-        stream_type: StreamTypeEnum,
-        stream_endpoints: List[StreamEndpointModel] = [],
+        fps: int
     ):
         self.logger.info(self._fmt_log("Configuring stream"))
 
@@ -399,10 +391,8 @@ class Device(events.EventEmitter):
         self.stream.device_path = camera.path
         self.stream.width = width
         self.stream.height = height
-        self.stream.interval = interval
-        self.stream.endpoints = stream_endpoints
+        self.stream.fps = fps
         self.stream.encode_type = encode_type
-        self.stream.stream_type = stream_type
 
     def add_control_from_option(
         self,
@@ -440,14 +430,6 @@ class Device(events.EventEmitter):
             )
             self.logger.error("Failed to add option to controls list.")
 
-    def start_stream(self):
-        self.stream.enabled = True
-        self.stream_runner.start()
-
-    def stop_stream(self):
-        self.stream.enabled = False
-        self.stream_runner.stop()
-
     def load_settings(self, saved_device: SavedDeviceModel):
         self.logger.info(self._fmt_log("Loading device settings"))
 
@@ -461,18 +443,9 @@ class Device(events.EventEmitter):
             saved_device.stream.encode_type,
             saved_device.stream.width,
             saved_device.stream.height,
-            saved_device.stream.interval,
-            saved_device.stream.stream_type,
-            saved_device.stream.endpoints,
+            saved_device.stream.fps
         )
-        self.stream.enabled = saved_device.stream.enabled
         self.nickname = saved_device.nickname
-        if self.stream.enabled:
-            self.start_stream()
-
-    def unconfigure_stream(self):
-        self.stream_runner.stop()
-        self.logger.info(self._fmt_log(f"Stream stopped"))
 
     def get_pu(self, control_id: int):
         control = self.v4l2_device.controls[control_id]
@@ -497,7 +470,7 @@ class Device(events.EventEmitter):
         try:
             control.value = value
         except (AttributeError, PermissionError) as e:
-            self.logger.debug(f"Error setting control value: {e.strerror}")
+            # self.logger.debug(f"Error setting control value: {e.strerror}")
             return False
         for ctrl in self.controls:
             if ctrl.control_id == control_id:

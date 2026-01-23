@@ -153,12 +153,9 @@ class StreamEndpointModel(BaseModel):
 class StreamModel(BaseModel):
     device_path: str
     encode_type: StreamEncodeTypeEnum
-    stream_type: StreamTypeEnum
-    endpoints: List[StreamEndpointModel]
     width: int
     height: int
-    interval: IntervalModel
-    enabled: bool
+    fps: int
 
     class Config:
         from_attributes = True
@@ -187,6 +184,8 @@ class DeviceModel(BaseModel):
     device_type: DeviceType
     # True if is a follower and stream is managed by the leader
     is_managed: bool = False
+    # To identify the synchronization group a camera is in (stellarHD only)
+    sync_group: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -214,6 +213,11 @@ class StreamInfoModel(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class SyncGroupModel(BaseModel):
+    bus_info: str
+    group: str
 
 
 class UVCControlModel(BaseModel):

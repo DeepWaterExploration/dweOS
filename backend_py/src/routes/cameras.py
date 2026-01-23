@@ -11,7 +11,7 @@ import logging
 
 from typing import List, cast
 
-from ..services.cameras.pydantic_schemas import StreamInfoModel, DeviceNicknameModel, UVCControlModel, DeviceModel, SimpleRequestStatusModel
+from ..services.cameras.pydantic_schemas import StreamInfoModel, DeviceNicknameModel, UVCControlModel, DeviceModel, SimpleRequestStatusModel, SyncGroupModel
 from ..services.cameras.exceptions import DeviceNotFoundException
 from ..services.cameras.pydantic_schemas import DeviceType
 from ..services.cameras.shd import SHDDevice
@@ -24,6 +24,20 @@ def get_devices(request: Request) -> List[DeviceModel]:
 
     return device_manager.get_devices()
 
+@camera_router.get('/devices/sync_groups', summary='Get a list of the synchronization groups')
+def get_sync_groups(request: Request) -> List[str]:
+    device_manager: DeviceManager = request.app.state.device_manager
+    
+    return device_manager.sync_groups
+
+
+@camera_router.post('/devices/set_sync_group', summary='Add a camera to a sync group (will create a new one if it does not already exist)')
+def set_sync_group(request: Request, sync_group: SyncGroupModel):
+    device_manager: DeviceManager = request.app.state.device_manager
+
+    device_manager.add_to_sync_group(sync_group.bus_info, sync_group.group)
+
+    return {}
 
 @camera_router.post('/devices/configure_stream', summary='Configure a stream')
 async def configure_stream(request: Request, stream_info: StreamInfoModel):
@@ -43,7 +57,6 @@ async def configure_stream(request: Request, stream_info: StreamInfoModel):
                 stellarhd_device.start_stream()
 
     return {}
-
 
 @camera_router.post('/devices/set_nickname', summary='Set a device nickname')
 def set_nickname(request: Request, device_nickname: DeviceNicknameModel):

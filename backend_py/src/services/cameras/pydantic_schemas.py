@@ -182,8 +182,6 @@ class DeviceModel(BaseModel):
     device_info: Optional[DeviceInfoModel] = None
     # 0 (exploreHD), 1 (Leader), 2 (Follower)
     device_type: DeviceType
-    # True if is a follower and stream is managed by the leader
-    is_managed: bool = False
     # To identify the synchronization group a camera is in (stellarHD only)
     sync_group: Optional[str] = None
 

@@ -65,9 +65,6 @@ class SHDDevice(Device):
 
         self.sync_group: str | None = None
 
-        # Is true if it is managed, false otherwise
-        self.is_managed = False
-
         self.add_control_from_option(
             "bitrate", 5, ControlTypeEnum.INTEGER, 10, 0.1, 0.1
         )
@@ -194,14 +191,6 @@ class SHDDevice(Device):
         val = ctrl_data[2]
         return (ret, val)
 
-    def set_is_managed(self, is_managed: bool):
-        self.is_managed = is_managed
-
-        # Configure stream if needbe
-        if not is_managed:
-            if self.stream.enabled:
-                self.start_stream()
-
     # This goes against the architecture created in the exploreHD
     # When we designed that, it was preferred to not have any functions that could control asic values.
     # TODO: FIXME
@@ -238,8 +227,9 @@ class SHDDevice(Device):
             "Software H.264 Bitrate", 5)  # 5 mpbs
 
         def update_bitrate():
-            if self.stream.enabled and self.stream.encode_type == StreamEncodeTypeEnum.SOFTWARE_H264:
-                self.start_stream()
+            pass
+            # if self.stream.enabled and self.stream.encode_type == StreamEncodeTypeEnum.SOFTWARE_H264:
+            #     self.start_stream()
 
         # Only restart if it's being used
         self.bitrate_option.on(

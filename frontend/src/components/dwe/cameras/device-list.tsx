@@ -44,12 +44,9 @@ const DEMO_DEVICE: DeviceModel = {
   stream: {
     device_path: "/dev/video99",
     encode_type: "H264",
-    stream_type: "UDP",
-    endpoints: [{ host: "192.168.1.100", port: 5600 }],
     width: 1920,
     height: 1080,
-    interval: { numerator: 1, denominator: 30 },
-    enabled: true,
+    fps: 30
   },
   cameras: [
     {
@@ -115,14 +112,14 @@ const DeviceListLayout = () => {
 
   const [streams, setStreams] = useState([]);
 
-  const getNextPort = (devs: DeviceModel[]) => {
-    const allPorts = devs.flatMap((device) =>
-      device.stream.endpoints.map((endpoint) => endpoint.port)
-    );
-    return allPorts.length > 0
-      ? Math.max(...allPorts) + 1
-      : savedPreferences.default_stream!.port;
-  };
+  // const getNextPort = (devs: DeviceModel[]) => {
+  //   const allPorts = devs.flatMap((device) =>
+  //     device.stream.endpoints.map((endpoint) => endpoint.port)
+  //   );
+  //   return allPorts.length > 0
+  //     ? Math.max(...allPorts) + 1
+  //     : savedPreferences.default_stream!.port;
+  // };
 
   const createDeviceProxy = (device: DeviceModel) => {
     const proxyDevice = proxy(device);
@@ -132,7 +129,7 @@ const DeviceListLayout = () => {
         const updatedDevices = prevDevices.map((d) =>
           d.bus_info === proxyDevice.bus_info ? proxyDevice : d
         );
-        setNextPort(getNextPort(updatedDevices));
+        // setNextPort(getNextPort(updatedDevices));
         return updatedDevices;
       });
     });
@@ -147,11 +144,11 @@ const DeviceListLayout = () => {
         const updatedDevices = prevDevices.map((d) =>
           d.bus_info === device.bus_info ? device : d
         );
-        setNextPort(getNextPort(updatedDevices));
+        // setNextPort(getNextPort(updatedDevices));
         return updatedDevices;
       } else {
         const newDevices = [...prevDevices, createDeviceProxy(device)];
-        setNextPort(getNextPort(newDevices));
+        // setNextPort(getNextPort(newDevices));
         return newDevices;
       }
     });
@@ -162,7 +159,7 @@ const DeviceListLayout = () => {
       const filteredDevices = prevDevices.filter(
         (d) => d.bus_info !== bus_info
       );
-      setNextPort(getNextPort(filteredDevices));
+      // setNextPort(getNextPort(filteredDevices));
       return filteredDevices;
     });
   };
@@ -202,7 +199,7 @@ const DeviceListLayout = () => {
         console.log(currentDevices.map((d) => d.bus_info));
         console.log("Device affected by error:", device);
         if (device) {
-          device.stream.enabled = false;
+          // device.stream.enabled = false;
         }
         return [...currentDevices]; // Return a new array to trigger re-render
       });
@@ -235,7 +232,7 @@ const DeviceListLayout = () => {
 
   const enableStream = (bus_info: string) => {
     const device = { ...getDeviceByBusInfo(devices, bus_info) };
-    device.stream.enabled = true;
+    // device.stream.enabled = true;
   };
 
   const displayDevices =

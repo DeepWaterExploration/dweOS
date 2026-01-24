@@ -76,10 +76,10 @@ const ControlWrapper = ({
   const dependencyName = control.name.includes("Exposure Time, Absolute")
     ? "Auto Exposure"
     : control.name.includes("White Balance Temperature")
-    ? "White Balance, Auto"
-    : control.name.includes("Bitrate")
-    ? "Variable Bitrate"
-    : null;
+      ? "White Balance, Auto"
+      : control.name.includes("Bitrate")
+        ? "Variable Bitrate"
+        : null;
 
   const dependencyControl = dependencyName
     ? device.controls.find((c) => c.name.includes(dependencyName))
@@ -127,7 +127,7 @@ const ControlWrapper = ({
   }
 };
 
-export const CameraControls = () => {
+export const CameraControls = ({ className }: { className: string }) => {
   const device = useContext(DeviceContext)!;
   const controls = device.controls;
   const { toast } = useToast();
@@ -200,7 +200,7 @@ export const CameraControls = () => {
       <DialogTrigger asChild>
         <Button
           variant="svg"
-          className="w-6 h-8 z-10"
+          className={`w-6 h-8 z-10 ${className}`}
           id={TOUR_STEP_IDS.DEVICE_SETTINGS}
         >
           <SlidersHorizontal />

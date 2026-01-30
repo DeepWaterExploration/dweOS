@@ -220,11 +220,6 @@ class DeviceManager(events.EventEmitter):
         leader_device = self._find_device_with_bus_info(leader_bus_info)
         follower_device = self._find_device_with_bus_info(follower_bus_info)
 
-        if leader_device.device_type != DeviceType.STELLARHD_LEADER:
-            self.logger.warning(
-                'Attempted to add follower to device of non-leader type.')
-            return False
-
         if follower_device.device_type != DeviceType.STELLARHD_FOLLOWER:
             self.logger.warning(
                 'Attempted to add follower of non-follower type')
@@ -254,10 +249,11 @@ class DeviceManager(events.EventEmitter):
             leader_device.remove_manual(follower_bus_info)
             return
 
-        if leader_device.device_type != DeviceType.STELLARHD_LEADER:
-            self.logger.warning(
-                'Attempted to remove follower from device of non-leader type.')
-            return False
+        # This is allowed
+        # if leader_device.device_type != DeviceType.STELLARHD_LEADER:
+        #     self.logger.warning(
+        #         'Attempted to remove follower from device of non-leader type.')
+        #     return False
 
         if follower_device.device_type != DeviceType.STELLARHD_FOLLOWER:
             self.logger.warning(

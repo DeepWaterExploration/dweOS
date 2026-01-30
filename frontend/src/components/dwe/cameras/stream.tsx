@@ -263,7 +263,7 @@ const FollowerList = () => {
     setPotentialFollowers([
       "Select a device...",
       ...devices
-        .filter((d) => d.device_type == 2)
+        .filter((d) => d.device_type == 2 && d.bus_info !== device.bus_info)
         .map((f) => f.bus_info)
         .filter((value) => !followers.includes(value)),
     ]);
@@ -313,7 +313,7 @@ const FollowerList = () => {
 
   const handleAddFollower = () => {
     const selected = devices.find(
-      (f) => f.bus_info === selectedBusInfo
+      (f) => f.bus_info === selectedBusInfo,
     )?.bus_info;
     if (!selected) return;
 
@@ -418,7 +418,7 @@ const getResolution = (resolution: string) => {
  */
 const getResolutions = (
   device: Readonly<components["schemas"]["DeviceModel"]>,
-  encodeFormat: components["schemas"]["StreamEncodeTypeEnum"]
+  encodeFormat: components["schemas"]["StreamEncodeTypeEnum"],
 ) => {
   const newResolutions: string[] = [];
 
@@ -450,19 +450,19 @@ export const CameraStream = ({
   const deviceState = useSnapshot(device);
 
   const [streamEnabled, setStreamEnabled] = useState(
-    deviceState.stream.enabled
+    deviceState.stream.enabled,
   );
   const [resolution, setResolution] = useState(
-    `${deviceState.stream.width}x${deviceState.stream.height}`
+    `${deviceState.stream.width}x${deviceState.stream.height}`,
   );
   const [fps, setFps] = useState("" + deviceState.stream.interval.denominator);
   const [format, setFormat] = useState(device.stream.encode_type);
   const [resolutions, setResolutions] = useState(
-    getResolutions(device, deviceState.stream.encode_type)
+    getResolutions(device, deviceState.stream.encode_type),
   );
   const [intervals, setIntervals] = useState([] as string[]);
   const [encoders, setEncoders] = useState(
-    [] as components["schemas"]["StreamEncodeTypeEnum"][]
+    [] as components["schemas"]["StreamEncodeTypeEnum"][],
   );
 
   const [shouldPostFlag, setShouldPostFlag] = useState(false);
@@ -601,14 +601,14 @@ export const CameraStream = ({
                   // disabled={deviceState.is_managed}
                   onChange={(fmt) => {
                     setFormat(
-                      fmt as components["schemas"]["StreamEncodeTypeEnum"]
+                      fmt as components["schemas"]["StreamEncodeTypeEnum"],
                     );
                     setShouldPostFlag(true);
                   }}
                 />
               </div>
             </div>
-            {device.stream.stream_type === "UDP" && (
+            {!deviceState.is_managed && device.stream.stream_type === "UDP" && (
               <EndpointList
                 defaultHost={defaultHost}
                 nextPort={nextPort}
@@ -616,28 +616,34 @@ export const CameraStream = ({
               />
             )}
 
-            <Button
-              className="w-full"
-              onClick={() => {
-                device.stream.stream_type =
-                  device.stream.stream_type === "RECORDING"
-                    ? "UDP"
-                    : "RECORDING";
-                setShouldPostFlag(true);
-              }}
-              id={TOUR_STEP_IDS.DEVICE_MODE}
-            >
-              Switch to{" "}
-              {device.stream.stream_type === "RECORDING"
-                ? "Stream"
-                : "Recording"}{" "}
-              mode
-            </Button>
+            {/* TODO: Manage this logic in backend too */}
+            {!deviceState.is_managed && (
+              <Button
+                className="w-full"
+                onClick={() => {
+                  device.stream.stream_type =
+                    device.stream.stream_type === "RECORDING"
+                      ? "UDP"
+                      : "RECORDING";
+                  setShouldPostFlag(true);
+                }}
+                id={TOUR_STEP_IDS.DEVICE_MODE}
+              >
+                Switch to{" "}
+                {device.stream.stream_type === "RECORDING"
+                  ? "Stream"
+                  : "Recording"}{" "}
+                mode
+              </Button>
+            )}
           </AccordionContent>
         </AccordionItem>
       </Accordion>
 
-      {deviceState.device_type == 1 && <FollowerList />}
+      {(deviceState.device_type == 1 ||
+        (deviceState.device_type === 2 && !deviceState.is_managed)) && (
+        <FollowerList />
+      )}
       <div className="flex flex-1 justify-between items-center">
         <CameraControls />
         <div
@@ -647,13 +653,13 @@ export const CameraStream = ({
           <div>
             <span className="text-sm font-medium">
               {deviceState.is_managed
-                ? "managed"
+                ? "Managed"
                 : streamEnabled
-                ? "Stop"
-                : "Start"}{" "}
+                  ? "Stop"
+                  : "Start"}{" "}
               {device.stream.stream_type === "RECORDING"
-                ? "recording"
-                : "stream"}
+                ? "Recording"
+                : "Stream"}
             </span>
           </div>
           <Button

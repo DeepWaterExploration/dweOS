@@ -22,7 +22,7 @@ from . import xu_controls as xu
 from .stream_utils import fourcc2s
 from .enumeration import *
 from .camera_helper.camera_helper_loader import *
-from .stream import *
+from .stream_runner import Stream, StreamRunner
 from .stream_utils import string_to_stream_encode_type
 from .pydantic_schemas import *
 from .saved_pydantic_schemas import *
@@ -276,7 +276,8 @@ class Device(events.EventEmitter):
         self.stream = Stream()
 
         # each device has a streamrunner, but not all of them are used if they are a follower (shd)
-        self.stream_runner = StreamRunner(self.stream)
+        self.stream_runner = StreamRunner(
+            self.stream)
 
         for camera in self.cameras:
             for encoding in camera.formats:
@@ -308,6 +309,10 @@ class Device(events.EventEmitter):
         self._id_counter = 1
 
         self._get_controls()
+
+    def _on_gst_error(self, err: str):
+        self.logger.error(err)
+        # TODO
 
     def _get_options(self) -> Dict[str, BaseOption]:
         return {}

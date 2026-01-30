@@ -1,7 +1,7 @@
 {
     "name": "frontend",
     "private": true,
-    "version": "temp",
+    "version": "v0.5.1-asic-control",
     "type": "module",
     "scripts": {
         "dev": "vite --host",

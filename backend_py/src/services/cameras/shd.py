@@ -95,6 +95,12 @@ class SHDDevice(Device):
             self.logger.info(
                 'Trying to add follower to device that already has this device as a follower. Ignoring request.')
             return
+
+        if device.bus_info == self.bus_info:
+            self.logger.info(
+                'Trying to add follower of same bus id as self. This is not allowed.')
+            return
+
         self.logger.info('Adding follower')
 
         # For saving purposes
@@ -105,8 +111,6 @@ class SHDDevice(Device):
 
         # Make the follower managed
         device.set_is_managed(True)
-        # Append the new device stream
-        self.stream_runner.streams.append(device.stream)
 
         if self.stream.enabled:
             self.start_stream()
@@ -324,6 +328,16 @@ class SHDDevice(Device):
             self.logger.warning(
                 f"{self.bus_info if not self.nickname else self.nickname}: Cannot start stream that is managed.")
             return
+
+        self.stream_runner.streams = [self.stream]
+
+        for follower_device in self.follower_devices:
+            # A not so hacky fix (very clever :]) to ensure the stream's device_path is set
+            follower_device.configure_stream(self.stream.encode_type, self.stream.width,
+                                             self.stream.height, self.stream.interval, self.stream.stream_type, [])
+
+            # Append the new device stream
+            self.stream_runner.streams.append(follower_device.stream)
 
         # mbps to kbit/sec
         self.stream.software_h264_bitrate = int(

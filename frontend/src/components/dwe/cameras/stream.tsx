@@ -35,6 +35,8 @@ import {
 } from "@/components/ui/accordion";
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 
+type DeviceModel = components["schemas"]["DeviceModel"];
+
 // Options for StreamSelector should provide label and value for each choice
 type StreamOption = { label: string; value: string };
 const StreamSelector = ({
@@ -257,15 +259,18 @@ const FollowerList = () => {
     return unsubscribe;
   }, [device]);
 
-  const [potentialFollowers, setPotentialFollowers] = useState<string[]>([]);
+  const [potentialFollowers, setPotentialFollowers] = useState<DeviceModel[]>(
+    [],
+  );
 
   const updatePotentialFollowers = () => {
     setPotentialFollowers([
-      "Select a device...",
-      ...devices
-        .filter((d) => d.device_type == 2 && d.bus_info !== device.bus_info)
-        .map((f) => f.bus_info)
-        .filter((value) => !followers.includes(value)),
+      ...devices.filter(
+        (d) =>
+          d.device_type == 2 &&
+          d.bus_info !== device.bus_info &&
+          !followers.find((f) => f == d.bus_info),
+      ),
     ]);
   };
 
@@ -336,10 +341,16 @@ const FollowerList = () => {
             <div className="grid grid-cols-12 gap-3 w-full items-end">
               <div className="col-span-9">
                 <StreamSelector
-                  options={potentialFollowers.map((f) => ({
-                    label: `${f}`,
-                    value: f,
-                  }))}
+                  options={[
+                    {
+                      label: "Select a device...",
+                      value: "Select a device...",
+                    },
+                    ...potentialFollowers.map((f) => ({
+                      label: `${f.nickname == "" ? f.bus_info : f.nickname}`,
+                      value: f.bus_info,
+                    })),
+                  ]}
                   placeholder="Select a device..."
                   label="Add Follower"
                   value={selectedBusInfo}

@@ -116,7 +116,7 @@ const DeviceListLayout = () => {
 
   const getNextPort = (devs: DeviceModel[]) => {
     const allPorts = devs.flatMap((device) =>
-      device.stream.endpoints.map((endpoint) => endpoint.port)
+      device.stream.endpoints.map((endpoint) => endpoint.port),
     );
     return allPorts.length > 0
       ? Math.max(...allPorts) + 1
@@ -129,7 +129,7 @@ const DeviceListLayout = () => {
     subscribe(proxyDevice, () => {
       setDevices((prevDevices) => {
         const updatedDevices = prevDevices.map((d) =>
-          d.bus_info === proxyDevice.bus_info ? proxyDevice : d
+          d.bus_info === proxyDevice.bus_info ? proxyDevice : d,
         );
         setNextPort(getNextPort(updatedDevices));
         return updatedDevices;
@@ -144,10 +144,11 @@ const DeviceListLayout = () => {
       const exists = prevDevices.some((d) => d.bus_info === device.bus_info);
       if (exists) {
         const updatedDevices = prevDevices.map((d) =>
-          d.bus_info === device.bus_info ? device : d
+          d.bus_info === device.bus_info ? createDeviceProxy(device) : d,
         );
         setNextPort(getNextPort(updatedDevices));
         return updatedDevices;
+        // return prevDevices;
       } else {
         const newDevices = [...prevDevices, createDeviceProxy(device)];
         setNextPort(getNextPort(newDevices));
@@ -159,7 +160,7 @@ const DeviceListLayout = () => {
   const removeDevice = (bus_info: string) => {
     setDevices((prevDevices) => {
       const filteredDevices = prevDevices.filter(
-        (d) => d.bus_info !== bus_info
+        (d) => d.bus_info !== bus_info,
       );
       setNextPort(getNextPort(filteredDevices));
       return filteredDevices;

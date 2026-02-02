@@ -116,7 +116,7 @@ class GStreamerProcessEngine(BaseStreamEngine):
             if self.started:
                 self.stop()
             self.started = True
-            # self._run_pipeline()
+            self._run_pipeline()
 
     def _run_pipeline(self):
         pipeline_str = self._construct_pipeline()

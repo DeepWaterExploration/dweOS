@@ -204,6 +204,15 @@ class V4L2Camera:
         self._buffers.clear()
 
         if self.fd is not None:
+            try:
+                req = v4l2.v4l2_requestbuffers()
+                req.count = 0  # Request 0 buffers to free memory
+                req.type = v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE
+                req.memory = v4l2.V4L2_MEMORY_MMAP
+                self._ioctl(v4l2.VIDIOC_REQBUFS, req)
+            except Exception:
+                pass  # Ignore errors here, we are closing anyway
+
             os.close(self.fd)
             self.fd = None
 

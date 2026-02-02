@@ -44,6 +44,7 @@ class StreamRunner(events.EventEmitter):
 
     def _on_engine_error(self, error_data):
         """Callback to bubble up errors from the engine to the runner's listeners."""
+        # TODO: change to general stream error
         self.emit("gst_error", error_data)
         self.stop()
 

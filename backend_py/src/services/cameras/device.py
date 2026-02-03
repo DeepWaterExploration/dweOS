@@ -416,7 +416,7 @@ class Device(events.EventEmitter):
         control_type: ControlTypeEnum,
         max_value: float = 0,
         min_value: float = 0,
-        step: float = 0,
+        step: float = 0
     ):
         try:
             option = self._options[option_name]
@@ -432,7 +432,7 @@ class Device(events.EventEmitter):
                         max_value=max_value,
                         min_value=min_value,
                         step=step,
-                        control_type=control_type,
+                        control_type=control_type
                     ),
                 ),
             )
@@ -484,6 +484,7 @@ class Device(events.EventEmitter):
         return control.value
 
     def set_pu(self, control_id: int, value: int):
+
         if control_id < 0:
             # DWE control
             for control in self.controls:
@@ -491,14 +492,16 @@ class Device(events.EventEmitter):
                     control.value = value
                     for option_name in self._options:
                         if self._options[option_name].name == control.name:
+                            self.logger.debug(
+                                self._fmt_log(
+                                    f"Setting UVC control - {control.name} to {value}")
+                            )
                             self.set_option(option_name, value)
                             return
             return  # in case the id does not exist in controls
 
         control = self.v4l2_device.controls[control_id]
-        # self.logger.debug(
-        #     self._fmt_log(f"Setting UVC control - {control.name} to {value}")
-        # )
+
         try:
             control.value = value
         except (AttributeError, PermissionError) as e:

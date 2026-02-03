@@ -48,6 +48,7 @@ class StellarRegisterMap(Enum):
     REG_DATA = 0x1676
     REG_MODE = 0x1677
     REG_TRIG = 0x1678
+    REG_STROBE_ENABLED = 0x8100
 
 
 class StellarSensorMap:
@@ -55,3 +56,5 @@ class StellarSensorMap:
     SHUTTER_LOW = 0x3502
     ISO_HIGH = 0x3508
     ISO_LOW = 0x3509
+    STROBE_WIDTH_HIGH = 0x3927
+    STROBE_WIDTH_LOW = 0x3927

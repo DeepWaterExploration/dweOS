@@ -30,7 +30,7 @@ async def configure_stream(request: Request, stream_info: StreamInfoModel):
     device_manager: DeviceManager = request.app.state.device_manager
 
     device_manager.configure_device_stream(stream_info)
-    
+
     for device in device_manager.devices:
         if device.bus_info == stream_info.bus_info:
             if device.device_type != DeviceType.STELLARHD_FOLLOWER:
@@ -96,4 +96,4 @@ def restart_stream(request: Request, device_descriptor: DeviceDescriptorModel):
     except DeviceNotFoundException:
         return SimpleRequestStatusModel(success=False)
     dev.start_stream()
-    return {}
+    return SimpleRequestStatusModel(success=True)

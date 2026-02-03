@@ -25,7 +25,7 @@ const IntegerControl = ({
 
   const [currentValue, setCurrentValue] = useState(control.value);
   const [inputValue, setInputValue] = useState(
-    control.value.toFixed(precision).toString()
+    control.value.toFixed(precision).toString(),
   );
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -57,14 +57,13 @@ const IntegerControl = ({
       if (!step || step <= 0) return val;
       return Math.round((val - min_value) / safeStep) * safeStep + min_value;
     },
-    [min_value, step]
+    [min_value, step],
   );
 
   const commitValue = useCallback(
     (newValue: number) => {
       let validatedValue = clamp(newValue);
 
-      // We enforce the strict 'step' here, at the end of the interaction
       validatedValue = snapToStep(validatedValue);
 
       setCurrentValue(validatedValue);
@@ -74,7 +73,7 @@ const IntegerControl = ({
         control.value = validatedValue;
       }
     },
-    [control, min_value, max_value, clamp, snapToStep]
+    [control, min_value, max_value, clamp, snapToStep],
   );
 
   const handlePointerDown = (e: React.PointerEvent) => {
@@ -101,7 +100,7 @@ const IntegerControl = ({
     const range = max_value - min_value;
     const valueDelta = (deltaX / containerWidth) * range;
 
-    let newValue = clamp(startValue + valueDelta);
+    const newValue = clamp(startValue + valueDelta);
 
     setCurrentValue(newValue);
     setInputValue(newValue.toFixed(precision).toString());
@@ -157,32 +156,18 @@ const IntegerControl = ({
       return;
     }
 
-    // stepUp and stepDown don't call on change like the arrow keys do, so we need to update react from the dom
     const newValue = inputRef.current.value;
     setInputValue(newValue);
     setCurrentValue(parseFloat(newValue));
 
     inputRef.current.focus();
   };
-  // // Handle slider live updates
-  // const handleSliderChange = (value: number[]) => {
-  //   // We allow the "raw" value (step 1) to flow through here for smooth UI
-  //   const val = value[0];
-  //   setCurrentValue(val);
-  //   setInputValue(val.toString());
-  // };
-
-  // // Handle slider release (commit)
-  // const handleSliderCommit = (value: number[]) => {
-  //   // When user lets go, we snap the raw value to the nearest valid step
-  //   commitValue(value[0]);
-  // };
 
   return (
     <div
       className={cn(
         "space-y-2",
-        isDisabled && "opacity-50 pointer-events-none"
+        isDisabled && "opacity-50 pointer-events-none",
       )}
     >
       <div className="flex items-center gap-3">
@@ -191,7 +176,6 @@ const IntegerControl = ({
             id={controlId}
             min={min_value}
             max={max_value}
-            // CHANGE: Set step to 1 (visual smooth drag) instead of control.step (locking)
             step={1}
             value={[currentValue]}
             className="[&>span]:group-hover:border-white pointer-events-none"
@@ -218,7 +202,6 @@ const IntegerControl = ({
             onKeyDown={handleInputKeyDown}
             min={min_value}
             max={max_value}
-            // KEEP: The input box should still respect the logical step for arrow keys
             step={step}
             className="w-20 h-8 text-sm border-border hover:border-foreground"
             onWheel={(e) => (e.target as HTMLInputElement).blur()}

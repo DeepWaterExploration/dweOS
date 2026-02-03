@@ -90,6 +90,12 @@ class SHDDevice(Device):
                 'iso', 400, ControlTypeEnum.INTEGER, 4095, 0, 1
             )
 
+            self.add_control_from_option(
+                'strobe_width', 0, ControlTypeEnum.INTEGER, 4095, 0, 1)
+
+            self.add_control_from_option(
+                'strobe_enabled', False, ControlTypeEnum.BOOLEAN)
+
     def add_follower(self, device: 'SHDDevice'):
         if device.bus_info in self.followers:
             self.logger.info(
@@ -153,7 +159,7 @@ class SHDDevice(Device):
 
     def _sensor_read_high_low(self, reg_high, reg_low) -> int | None:
         '''
-        Read high byte from value to high register, low byte to low
+        Read high byte from high register to value, low byte to low
         '''
         ret, high = self._sensor_read(reg_high)
         if ret != 0:
@@ -287,6 +293,23 @@ class SHDDevice(Device):
             return None
         return True if val == 0x01 else False
 
+    def set_strobe_width(self, value: int):
+        self._sensor_write_high_low(
+            xu.StellarSensorMap.STROBE_WIDTH_HIGH, xu.StellarSensorMap.STROBE_WIDTH_LOW, value)
+
+    def get_strobe_width(self) -> int | None:
+        return self._sensor_read_high_low(xu.StellarSensorMap.STROBE_WIDTH_HIGH, xu.StellarSensorMap.STROBE_WIDTH_LOW)
+
+    def set_strobe_enabled(self, enabled: bool):
+        self._asic_write(
+            xu.StellarRegisterMap.REG_STROBE_ENABLED, 1 if enabled else 0)
+
+    def get_strobe_enabled(self) -> bool | None:
+        ret, val = self._asic_read(xu.StellarRegisterMap.REG_STROBE_ENABLED)
+        if ret != 0:
+            return None
+        return True if val == 0x01 else False
+
     def _get_options(self) -> Dict[str, BaseOption]:
         options = {}
 
@@ -317,6 +340,12 @@ class SHDDevice(Device):
             # UVC ISO control
             options['iso'] = CustomOption(
                 "ISO", self.set_iso, self.get_iso)
+
+            options['strobe_enabled'] = CustomOption(
+                "Strobe Enabled", self.set_strobe_enabled, self.get_strobe_enabled)
+
+            options['strobe_width'] = CustomOption(
+                "Strobe Width", self.set_strobe_width, self.get_strobe_width)
 
         return options
 

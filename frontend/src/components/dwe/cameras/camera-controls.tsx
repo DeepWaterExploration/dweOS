@@ -13,7 +13,7 @@ import {
   DialogTrigger,
   // DialogFooter, // Optional: if you want a dedicated footer
 } from "@/components/ui/dialog";
-import { subscribe, useSnapshot } from "valtio";
+import { subscribe } from "valtio";
 import {
   Aperture,
   MonitorCog,
@@ -57,7 +57,7 @@ const ControlWrapper = ({
   const setUVCControl = (
     bus_info: string,
     value: number,
-    control_id: number
+    control_id: number,
   ) => {
     API_CLIENT.POST("/devices/set_uvc_control", {
       body: {
@@ -76,25 +76,21 @@ const ControlWrapper = ({
   const dependencyName = control.name.includes("Exposure Time, Absolute")
     ? "Auto Exposure"
     : control.name.includes("White Balance Temperature")
-    ? "White Balance, Auto"
-    : control.name.includes("Bitrate")
-    ? "Variable Bitrate"
-    : null;
+      ? "White Balance, Auto"
+      : control.name.includes("Bitrate")
+        ? "Variable Bitrate"
+        : null;
 
   const dependencyControl = dependencyName
     ? device.controls.find((c) => c.name.includes(dependencyName))
     : null;
 
-  const dependencySnap = dependencyControl
-    ? useSnapshot(dependencyControl)
-    : null;
-
   let isDisabled = false;
-  if (dependencySnap) {
+  if (dependencyControl) {
     if (control.name.includes("Exposure Time, Absolute")) {
-      isDisabled = dependencySnap.value !== 1;
+      isDisabled = dependencyControl.value !== 1;
     } else {
-      isDisabled = !!dependencySnap.value;
+      isDisabled = !!dependencyControl.value;
     }
   }
 
@@ -143,7 +139,7 @@ export const CameraControls = () => {
   };
 
   const supportedControls = controls.filter((c) =>
-    ["INTEGER", "BOOLEAN", "MENU"].includes(c.flags.control_type || "")
+    ["INTEGER", "BOOLEAN", "MENU"].includes(c.flags.control_type || ""),
   );
 
   const getGroupName = (controlName: string) => {
@@ -152,7 +148,7 @@ export const CameraControls = () => {
         return groupName;
       }
     }
-    return "Miscellaneous";
+    return undefined;
   };
 
   const getTypeRank = (a: ControlModel, b: ControlModel, order: string[]) => {
@@ -170,6 +166,9 @@ export const CameraControls = () => {
     (acc, control) => {
       const groupName = getGroupName(control.name);
 
+      // We do this so that not every control is displayed.
+      if (!groupName) return acc;
+
       if (!acc[groupName]) {
         acc[groupName] = [];
       }
@@ -177,7 +176,7 @@ export const CameraControls = () => {
       acc[groupName].push(control);
       return acc;
     },
-    {}
+    {},
   );
   const typeOrder = ["INTEGER", "MENU"];
 
@@ -226,10 +225,10 @@ export const CameraControls = () => {
                 .sort((a, b) => groupOrder.indexOf(a) - groupOrder.indexOf(b))
                 .map((groupName) => {
                   const booleans = groupedControls[groupName].filter(
-                    (c) => c.flags.control_type === "BOOLEAN"
+                    (c) => c.flags.control_type === "BOOLEAN",
                   );
                   const others = groupedControls[groupName].filter(
-                    (c) => c.flags.control_type !== "BOOLEAN"
+                    (c) => c.flags.control_type !== "BOOLEAN",
                   );
                   return (
                     <Accordion type="multiple" key={groupName}>

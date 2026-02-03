@@ -1,13 +1,5 @@
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   CameraIcon,
@@ -34,51 +26,166 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
+import { StreamSelector } from "./stream-selector";
+import { RangeControl } from "@/components/ui/range-control";
+import { Toggle } from "@/components/ui/toggle";
 
-type DeviceModel = components["schemas"]["DeviceModel"];
+type ControlModel = components["schemas"]["ControlModel"];
 
-// Options for StreamSelector should provide label and value for each choice
-type StreamOption = { label: string; value: string };
-const StreamSelector = ({
-  options,
-  placeholder,
-  label,
-  value,
-  onChange,
-  disabled = false,
-}: {
-  options: StreamOption[];
-  placeholder: string;
-  label: string;
-  value?: string;
-  onChange: (value: string) => void;
-  disabled?: boolean;
-}) => {
+export const SensorControls = () => {
+  const device = useContext(DeviceContext)!;
+
+  const deviceSnapshot = useSnapshot(device);
+
+  const [matchExposure, setMatchExposure] = useState(false);
+
+  // Registers
+
+  const controlMap = useMemo(() => {
+    return new Map(deviceSnapshot.controls.map((c) => [c.name, c]));
+  }, [deviceSnapshot.controls]);
+
+  const exposureControl = controlMap.get("Auto Exposure (ASIC)");
+  const isoControl = controlMap.get("ISO");
+  const shutterControl = controlMap.get("Shutter Speed");
+  const strobeWidthControl = controlMap.get("Strobe Width");
+  const strobeEnabledControl = controlMap.get("Strobe Enabled");
+
+  const [exposureTime, setExposureTime] = useState(shutterControl?.value || 0); // 0x3501
+  const [autoExposure, setAutoExposure] = useState<boolean>(
+    exposureControl?.value === 1,
+  );
+  const [gain, setGain] = useState(isoControl?.value || 0); // 0x3508
+  const [strobeWidth, setStrobeWidth] = useState(10);
+  const [strobeEnabled, setStrobeEnabled] = useState(
+    strobeEnabledControl?.value === 1 || false,
+  );
+
+  const strobeMax = exposureTime!;
+
+  useEffect(() => {
+    if (strobeWidth > strobeMax) setStrobeWidth(strobeMax);
+  }, [strobeMax, strobeWidth]);
+
+  // TODO: Streamline this more effectively (We should have a global API class)
+  const setUVCControl = (control: ControlModel, value: number) => {
+    API_CLIENT.POST("/devices/set_uvc_control", {
+      body: {
+        bus_info: deviceSnapshot.bus_info,
+        control_id: control.control_id,
+        value,
+      },
+    });
+  };
+
+  useEffect(
+    // 3: Auto, 1: Manual
+    () => setUVCControl(exposureControl as ControlModel, autoExposure ? 1 : 0),
+    [autoExposure],
+  );
+
+  useEffect(
+    () => setUVCControl(shutterControl as ControlModel, exposureTime!),
+    [exposureTime],
+  );
+
+  useEffect(() => setUVCControl(isoControl as ControlModel, gain!), [gain]);
+
+  useEffect(
+    () => setUVCControl(strobeWidthControl as ControlModel, strobeWidth),
+    [strobeWidth],
+  );
+
+  useEffect(
+    () =>
+      setUVCControl(
+        strobeEnabledControl as ControlModel,
+        strobeEnabled ? 1 : 0,
+      ),
+    [strobeEnabled],
+  );
+
+  // TODO: replace with is_pro?
+  if (!exposureControl || !isoControl || !shutterControl) return <></>;
+
   return (
-    <div className="space-y-1">
-      <label className="text-xs font-medium text-muted-foreground">
-        {label}
-      </label>
-      <Select value={value} onValueChange={onChange} disabled={disabled}>
-        <SelectTrigger className="w-full text-sm text-foreground outline-none focus:ring-1 focus:ring-inset focus:ring-primary/50">
-          <SelectValue
-            placeholder={placeholder}
-            className="truncate"
-          ></SelectValue>
-        </SelectTrigger>
-        <SelectContent className="">
-          <SelectGroup>
-            {options.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-    </div>
+    <Accordion type="single" collapsible>
+      <AccordionItem value="sensor-controls">
+        <AccordionTrigger className="text-sm font-semibold">
+          Sensor Controls
+        </AccordionTrigger>
+        <AccordionContent className="px-1">
+          {/* Top Section: Mode & Options */}
+          <div className="grid grid-cols-3 gap-4 items-end pb-4">
+            <div className="flex items-center space-x-1">
+              <span className="text-sm font-medium"></span>
+              <Toggle
+                pressed={autoExposure}
+                className="shadow-md"
+                onPressedChange={() => setAutoExposure((prev) => !prev)}
+              >
+                <div>Auto Exposure</div>
+              </Toggle>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium"></span>
+              <Toggle
+                pressed={matchExposure}
+                className="shadow-md"
+                onPressedChange={() => setMatchExposure((prev) => !prev)}
+              >
+                <div>Match Exposure</div>
+              </Toggle>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <span className="text-sm font-medium"></span>
+              <Toggle
+                pressed={strobeEnabled}
+                className="shadow-md"
+                onPressedChange={() => setStrobeEnabled((prev) => !prev)}
+              >
+                <div>Strobe Enabled</div>
+              </Toggle>
+            </div>
+          </div>
+
+          {/* Manual Controls */}
+          {!autoExposure && (
+            <div className="space-y-5 animate-in slide-in-from-top-2 fade-in duration-300">
+              <div className="space-y-4 border rounded-md p-3 bg-muted/20">
+                <RangeControl
+                  label="Exposure Time"
+                  value={exposureTime}
+                  min={shutterControl.flags.min_value}
+                  max={shutterControl.flags.max_value}
+                  onChange={setExposureTime}
+                />
+                <RangeControl
+                  label="ISO (Gain)"
+                  value={gain}
+                  min={isoControl.flags.min_value}
+                  max={isoControl.flags.max_value}
+                  onChange={setGain}
+                />
+                <RangeControl
+                  label="Strobe Brightness"
+                  value={strobeWidth}
+                  min={0}
+                  max={strobeMax}
+                  onChange={setStrobeWidth}
+                />
+              </div>
+            </div>
+          )}
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
   );
 };
+
+type DeviceModel = components["schemas"]["DeviceModel"];
 
 const Endpoint = ({
   endpoint,
@@ -563,6 +670,7 @@ export const CameraStream = ({
 
   return (
     <div className="space-y-4">
+      <SensorControls></SensorControls>
       <Accordion
         type="single"
         collapsible

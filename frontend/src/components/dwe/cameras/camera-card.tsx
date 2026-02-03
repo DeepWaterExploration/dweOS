@@ -9,7 +9,7 @@ import {
 import { CameraNickname } from "./nickname";
 import { CameraStream } from "./stream";
 import { proxy, useSnapshot } from "valtio";
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import DeviceContext from "@/contexts/DeviceContext";
 
 const emptyState = proxy({});

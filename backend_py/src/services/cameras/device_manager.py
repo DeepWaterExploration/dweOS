@@ -206,7 +206,10 @@ class DeviceManager(events.EventEmitter):
         """
         Set a device UVC control
         """
-        device = self._find_device_with_bus_info(bus_info)
+        try:
+            device = self._find_device_with_bus_info(bus_info)
+        except DeviceNotFoundException:
+            return False
 
         device.set_pu(control_id, control_value)
 

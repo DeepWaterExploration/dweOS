@@ -62,7 +62,10 @@ class V4L2Camera:
         self._start_stream()
 
     def _ioctl(self, req, arg):
-        return fcntl.ioctl(self.fd, req, arg)
+        try:
+            return fcntl.ioctl(self.fd, req, arg)
+        except OSError:
+            return -1
 
     def _set_format(self):
         fmt = v4l2.v4l2_format()
@@ -162,10 +165,9 @@ class V4L2Camera:
         # Actual polling is possible but not needed
         start_time = time.time()
         while True:
-            try:
-                self._ioctl(v4l2.VIDIOC_DQBUF, buf)
+            if self._ioctl(v4l2.VIDIOC_DQBUF, buf) != -1:
                 break
-            except OSError as e:
+            else:
                 if not blocking:
                     return None
                 if timeout_s is not None and (time.time() - start_time) > timeout_s:

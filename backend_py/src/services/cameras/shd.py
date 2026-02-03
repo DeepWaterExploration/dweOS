@@ -2,7 +2,6 @@
 shd.py
 
 Adds additional features to stellarHD devices
-Uses options functionality to set defaults, ranges, and specifies registers for where these features store data
 """
 
 import logging
@@ -18,6 +17,10 @@ from .enumeration import DeviceInfo
 from .device import Device, BaseOption, ControlTypeEnum, StreamEncodeTypeEnum
 from . import xu_controls as xu
 from typing import Callable, Any
+
+from dataclasses import dataclass
+import queue
+import threading
 
 
 class StorageOption(BaseOption, EventEmitter):
@@ -39,13 +42,17 @@ class CustomOption(BaseOption):
     def __init__(self, name: str, setter: Callable[[Any], None], getter: Callable[[], Any]):
         BaseOption.__init__(self, name)
         self.setter = setter
+
+        # FIXME: I did this since the getter seems to be unreliable for asic controls, so we just trust the value stored
         self.getter = getter
+        self.value = getter()
 
     def set_value(self, value):
         self.setter(value)
+        self.value = value
 
     def get_value(self):
-        return self.getter()
+        return self.value
 
 
 class SHDDevice(Device):
@@ -53,9 +60,16 @@ class SHDDevice(Device):
     Class for stellarHD devices
     """
 
+    ASIC_COMMAND_DELAY=0.05
+
     def __init__(self, device_info: DeviceInfo) -> None:
         # Specifies if SHD device is Stellar Pro
         self.is_pro = True  # self.pid == 0x6369
+
+        self._asic_queue = queue.Queue()
+        self._asic_worker_running = True
+        self._asic_thread = threading.Thread(target=self._asic_command_worker, daemon=True)
+        self._asic_thread.start()
 
         super().__init__(device_info)
 
@@ -93,8 +107,44 @@ class SHDDevice(Device):
             self.add_control_from_option(
                 'strobe_width', 0, ControlTypeEnum.INTEGER, 4095, 0, 1)
 
-            self.add_control_from_option(
-                'strobe_enabled', False, ControlTypeEnum.BOOLEAN)
+            # self.add_control_from_option(
+            #     'strobe_enabled', False, ControlTypeEnum.BOOLEAN)
+
+    def _asic_command_worker(self):
+        '''
+        Background worker that processes ASIC/Sensor commands sequentionally
+        '''
+        while self._asic_worker_running:
+            try:
+                # Fetch command from queue
+                func, args, result_queue = self._asic_queue.get()
+                
+                try:
+                    # Execute the function
+                    res = func(*args)
+                    # Return result
+                    if result_queue:
+                        result_queue.put(res)
+                except Exception as e:
+                    self.logger.error(f"Error executing ASIC command: {e}")
+                    if result_queue:
+                        result_queue.put(None) # Or propagate exception logic
+                finally:
+                    self._asic_queue.task_done()
+                
+                # Enforce delay between commands
+                time.sleep(self.ASIC_COMMAND_DELAY)
+                
+            except Exception as e:
+                self.logger.error(f"ASIC worker loop error: {e}")
+
+    def _run_asic_command(self, func: Callable, *args) -> Any:
+        """
+        Helper to submit a command to the queue and wait for the result synchronously.
+        """
+        result_queue = queue.Queue()
+        self._asic_queue.put((func, args, result_queue))
+        return result_queue.get()
 
     def add_follower(self, device: 'SHDDevice'):
         if device.bus_info in self.followers:
@@ -268,47 +318,39 @@ class SHDDevice(Device):
     # When we designed that, it was preferred to not have any functions that could control asic values.
     # TODO: FIXME
     def set_shutter_speed(self, value: int):
-        self._sensor_write_high_low(
+        self._run_asic_command(self._sensor_write_high_low,
             xu.StellarSensorMap.SHUTTER_HIGH, xu.StellarSensorMap.SHUTTER_LOW, value)
 
     def get_shutter_speed(self) -> int | None:
-        return self._sensor_read_high_low(
+        return self._run_asic_command(self._sensor_read_high_low,
             xu.StellarSensorMap.SHUTTER_HIGH, xu.StellarSensorMap.SHUTTER_LOW)
 
     def set_iso(self, value: int):
-        self._sensor_write_high_low(
+        self._run_asic_command(self._sensor_write_high_low,
             xu.StellarSensorMap.ISO_HIGH, xu.StellarSensorMap.ISO_LOW, value)
 
     def get_iso(self) -> int | None:
-        return self._sensor_read_high_low(
+        return self._run_asic_command(self._sensor_read_high_low,
             xu.StellarSensorMap.ISO_HIGH, xu.StellarSensorMap.ISO_LOW)
 
     def set_asic_ae(self, enabled: bool):
-        self._asic_write(xu.StellarRegisterMap.REG_AE,
-                         0x01 if enabled else 0x00)
+        self._run_asic_command(self._asic_write, 
+                               xu.StellarRegisterMap.REG_AE, 0x01 if enabled else 0x00)
 
     def get_asic_ae(self) -> bool | None:
+        # We can run asic read commands without worrying, since they don't write to the camera..? I think
         ret, val = self._asic_read(xu.StellarRegisterMap.REG_AE)
         if ret != 0:
             return None
         return True if val == 0x01 else False
 
     def set_strobe_width(self, value: int):
-        self._sensor_write_high_low(
+        self._run_asic_command(self._sensor_write_high_low,
             xu.StellarSensorMap.STROBE_WIDTH_HIGH, xu.StellarSensorMap.STROBE_WIDTH_LOW, value)
 
     def get_strobe_width(self) -> int | None:
-        return self._sensor_read_high_low(xu.StellarSensorMap.STROBE_WIDTH_HIGH, xu.StellarSensorMap.STROBE_WIDTH_LOW)
-
-    def set_strobe_enabled(self, enabled: bool):
-        self._asic_write(
-            xu.StellarRegisterMap.REG_STROBE_ENABLED, 1 if enabled else 0)
-
-    def get_strobe_enabled(self) -> bool | None:
-        ret, val = self._asic_read(xu.StellarRegisterMap.REG_STROBE_ENABLED)
-        if ret != 0:
-            return None
-        return True if val == 0x01 else False
+        return self._run_asic_command(self._sensor_read_high_low, 
+                                      xu.StellarSensorMap.STROBE_WIDTH_HIGH, xu.StellarSensorMap.STROBE_WIDTH_LOW)
 
     def _get_options(self) -> Dict[str, BaseOption]:
         options = {}
@@ -341,8 +383,8 @@ class SHDDevice(Device):
             options['iso'] = CustomOption(
                 "ISO", self.set_iso, self.get_iso)
 
-            options['strobe_enabled'] = CustomOption(
-                "Strobe Enabled", self.set_strobe_enabled, self.get_strobe_enabled)
+            # options['strobe_enabled'] = CustomOption(
+            #     "Strobe Enabled", self.set_strobe_enabled, self.get_strobe_enabled)
 
             options['strobe_width'] = CustomOption(
                 "Strobe Width", self.set_strobe_width, self.get_strobe_width)

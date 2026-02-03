@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from collections import deque
 from typing import List, Optional
 import ctypes
+import logging
 
 from .. import v4l2
 
@@ -226,6 +227,9 @@ class V4L2Camera:
         # We don't use this, but is useful in the case of with v4l2_camera as...
         self.close()
 
+    def __del__(self):
+        self.close()
+
 
 class SynchronizedCamera:
     """
@@ -234,14 +238,17 @@ class SynchronizedCamera:
 
     def __init__(self,
                  cameras: List[V4L2Camera],
-                 sync_threshold_us: int = 16667,  # ~1 frame at 60 FPS
                  queue_cap: int = 8):
         self.cameras = cameras
+        sync_threshold_us = 1.0 / self.cameras[0].fps * 1000000
+
         self.sync_threshold_us = sync_threshold_us
         self.queue_cap = queue_cap
         self.queues: List[deque[CopiedFrame]] = [
             deque() for _ in cameras
         ]
+        self.logger = logging.getLogger(
+            f"dwe_os_2.cameras.SynchronizedCamera")
 
         # For those curious about the synchronization logic, it can be summarized as follows:
         # The synch threshold is **NOT** the precision. It is generally specified as 1/FPS.
@@ -300,6 +307,7 @@ class SynchronizedCamera:
             else:
                 # Drop the earliest frame (smallest timestamp) and try again
                 min_index = timestamps.index(min_ts)
+                self.logger.warning(f"Dropping frame of difference: {max_ts - min_ts}")
                 self.queues[min_index].popleft()
 
         # Not enough frames anymore to sync

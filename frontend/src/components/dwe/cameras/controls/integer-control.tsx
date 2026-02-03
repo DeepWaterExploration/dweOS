@@ -20,6 +20,9 @@ const IntegerControl = ({
   const controlId = `control-${control.control_id}-${control.name}`;
   const safeStep = step && step > 0 ? step : 1;
 
+  // FIXME
+  isDisabled = false;
+
   const precision =
     safeStep < 1 ? step.toString().split(".")[1]?.length || 0 : 0;
 

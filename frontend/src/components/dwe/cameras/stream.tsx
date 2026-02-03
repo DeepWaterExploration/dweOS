@@ -49,17 +49,13 @@ export const SensorControls = () => {
   const isoControl = controlMap.get("ISO");
   const shutterControl = controlMap.get("Shutter Speed");
   const strobeWidthControl = controlMap.get("Strobe Width");
-  const strobeEnabledControl = controlMap.get("Strobe Enabled");
 
   const [exposureTime, setExposureTime] = useState(shutterControl?.value || 0); // 0x3501
   const [autoExposure, setAutoExposure] = useState<boolean>(
     exposureControl?.value === 1,
   );
   const [gain, setGain] = useState(isoControl?.value || 0); // 0x3508
-  const [strobeWidth, setStrobeWidth] = useState(10);
-  const [strobeEnabled, setStrobeEnabled] = useState(
-    strobeEnabledControl?.value === 1 || false,
-  );
+  const [strobeWidth, setStrobeWidth] = useState(strobeWidthControl?.value || 0);
 
   const strobeMax = exposureTime!;
 
@@ -79,7 +75,6 @@ export const SensorControls = () => {
   };
 
   useEffect(
-    // 3: Auto, 1: Manual
     () => setUVCControl(exposureControl as ControlModel, autoExposure ? 1 : 0),
     [autoExposure],
   );
@@ -91,18 +86,10 @@ export const SensorControls = () => {
 
   useEffect(() => setUVCControl(isoControl as ControlModel, gain!), [gain]);
 
+  // Set both at the same time to fix fw bug
   useEffect(
     () => setUVCControl(strobeWidthControl as ControlModel, strobeWidth),
-    [strobeWidth],
-  );
-
-  useEffect(
-    () =>
-      setUVCControl(
-        strobeEnabledControl as ControlModel,
-        strobeEnabled ? 1 : 0,
-      ),
-    [strobeEnabled],
+    [strobeWidth, exposureTime],
   );
 
   // TODO: replace with is_pro?
@@ -116,7 +103,7 @@ export const SensorControls = () => {
         </AccordionTrigger>
         <AccordionContent className="px-1">
           {/* Top Section: Mode & Options */}
-          <div className="grid grid-cols-3 gap-4 items-end pb-4">
+          <div className="grid grid-cols-2 gap-4 items-end pb-4">
             <div className="flex items-center space-x-1">
               <span className="text-sm font-medium"></span>
               <Toggle
@@ -136,17 +123,6 @@ export const SensorControls = () => {
                 onPressedChange={() => setMatchExposure((prev) => !prev)}
               >
                 <div>Match Exposure</div>
-              </Toggle>
-            </div>
-
-            <div className="flex items-center space-x-3">
-              <span className="text-sm font-medium"></span>
-              <Toggle
-                pressed={strobeEnabled}
-                className="shadow-md"
-                onPressedChange={() => setStrobeEnabled((prev) => !prev)}
-              >
-                <div>Strobe Enabled</div>
               </Toggle>
             </div>
           </div>

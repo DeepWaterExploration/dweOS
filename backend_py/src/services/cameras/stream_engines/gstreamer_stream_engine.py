@@ -194,8 +194,8 @@ class GStreamerProcessEngine(BaseStreamEngine):
 
                     error_block.append(stderr_line)
                     self.logger.error(f"GStreamer Error: {line_stripped}")
-                    self.stop()
-                    break
+                    # self.stop()
+                    # break
                 else:
                     # Log as debug/info for non-error messages
                     if 'warning' in line_stripped.lower():
@@ -206,6 +206,6 @@ class GStreamerProcessEngine(BaseStreamEngine):
         except:
             pass
 
-        if len(error_block) > 0:
-            self.stop()
-            self.emit_error('\n'.join(error_block))
+        # if len(error_block) > 0:
+            # self.stop()
+            # self.emit_error('\n'.join(error_block))

@@ -78,7 +78,9 @@ export function LogViewer() {
     if (connected) {
       updateLogs();
 
-      socket?.on("log", () => updateLogs());
+      socket?.on("log", (log: components["schemas"]["LogSchema"]) => {
+        updateLogs();
+      });
 
       return () => {
         socket?.off("log");

@@ -26,25 +26,35 @@ export const RangeControl = ({
   disabled = false,
   className,
 }: RangeControlProps) => {
+  const [valueSlider, setValueSlider] = useState(value)
   // Local state for input to allow typing
   const [inputValue, setInputValue] = useState(value.toString());
 
   // Sync input when prop value changes (e.g. from slider drag)
   useEffect(() => {
-    setInputValue(value.toString());
-  }, [value]);
+    setInputValue(valueSlider.toString());
+  }, [valueSlider]);
 
   const handleInputChange = (val: string) => {
     setInputValue(val);
     const num = parseFloat(val);
     if (!isNaN(num)) {
       const clamped = Math.min(Math.max(num, min), max);
+      
+      setValueSlider(valueSlider);
       onChange(clamped);
     }
   };
 
+  useEffect(() => {
+    if (valueSlider > max) {
+      setValueSlider(max)
+    }
+  }, [max])
+
   const handleStep = (direction: 1 | -1) => {
     const newValue = Math.min(Math.max(value + direction * step, min), max);
+      setValueSlider(newValue);
     onChange(newValue);
   };
 
@@ -60,11 +70,14 @@ export const RangeControl = ({
         {/* Slider Section */}
         <div className="group relative flex-grow">
           <Slider
-            value={[value]}
+            value={[valueSlider]}
             min={min}
             max={max}
             step={step}
-            onValueChange={(vals) => onChange(vals[0])}
+            onValueCommit={(vals) => onChange(vals[0])}
+            onValueChange={(vals) => {
+              setValueSlider(vals[0])
+            }}
             disabled={disabled}
             className="[&>span]:group-hover:border-white cursor-pointer"
           >

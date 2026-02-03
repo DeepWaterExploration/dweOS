@@ -29,10 +29,16 @@ class SynchronizedStreamEngine(BaseStreamEngine):
         self.capture_thread: threading.Thread | None = None
         self._running = False
 
+        self.synchronized_camera = None
+
         # Always MJPEG
-        self.cameras: List[V4L2Camera] = [V4L2Camera(
-            stream.device_path, stream.width, stream.height, stream.interval.denominator) for stream in streams]
-        self.synchronized_camera = SynchronizedCamera(self.cameras)
+        try:
+            self.cameras: List[V4L2Camera] = [V4L2Camera(
+                stream.device_path, stream.width, stream.height, stream.interval.denominator) for stream in streams]
+            self.synchronized_camera = SynchronizedCamera(self.cameras)
+        except OSError as e:
+            self.logger.error("Unable to open synchronized camera: '%s'", e)
+        
 
     def _send_frame(self, frames: List[CopiedFrame], endpoint: StreamEndpointModel):
         # TODO: change protocol to handle more than two cameras
@@ -80,19 +86,30 @@ class SynchronizedStreamEngine(BaseStreamEngine):
         self.logger.info(
             f"Starting synchronized stream with: {(', '.join([stream.device_path for stream in self.streams]))}")
         # self.logger.warning("SynchronizedStreamEngine is not yet implemented")
+        if len(self.streams) != 2:
+            self.logger.error("SynchronizedStreamEngine cannot support more than 2 streams yet!")
+            return
+        
+        if not self.synchronized_camera:
+            self.logger.error("Synchronized camera does not exist. An error occurred previously in construction!")
+            return
 
         self.capture_thread = threading.Thread(target=self.capture_loop_)
         self._running = True
         self.capture_thread.start()
 
+        # We cannot handle more than 2 synchronized streams yet in the protocol
         self.stream_thread = threading.Thread(target=self.stream_loop_)
         self.stream_thread.start()
 
     def stop(self):
         try:
             self._running = False
-            self.capture_thread.join(timeout=1000)
-            self.stream_thread.join(timeout=1000)
+
+            if self.capture_thread:
+                self.capture_thread.join(timeout=1000)
+            if self.stream_thread:
+                self.stream_thread.join(timeout=1000)
         except TimeoutError as e:
             self.logger.error(
                 f"Timeout exceeded while joining capture thread: {e}")

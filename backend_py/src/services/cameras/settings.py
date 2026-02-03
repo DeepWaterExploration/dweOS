@@ -1,3 +1,10 @@
+"""
+settings.py
+
+Manages persisting camera settings and configs
+Handles loading and saving device configs to JSON, keeping setting across reboots, and manages background sync of settings
+"""
+
 from typing import List, Dict, cast
 import threading
 import time
@@ -59,7 +66,7 @@ class SettingsManager:
                 device.load_settings(saved_device)
 
                 # We plugged in a new leader
-                if device.device_type == DeviceType.STELLARHD_LEADER:
+                if isinstance(device, SHDDevice):
                     for follower_bus_info in saved_device.followers:
                         follower = find_device_with_bus_info(
                             devices, follower_bus_info)
@@ -67,7 +74,6 @@ class SettingsManager:
                             self.logger.warning(
                                 f"Follower device with bus_info {follower_bus_info} not currently connected"
                             )
-                            saved_device.followers.remove(follower_bus_info)
                             continue
 
                         if follower.device_type != DeviceType.STELLARHD_FOLLOWER:
@@ -86,20 +92,27 @@ class SettingsManager:
                             saved_device.followers.remove(follower_bus_info)
                             continue
                         device.add_follower(follower)
+
                 # We plugged in a new follower
-                elif device.device_type == DeviceType.STELLARHD_FOLLOWER:
-                    for leader in devices:
-                        if leader.device_type != DeviceType.STELLARHD_LEADER:
+                if device.device_type == DeviceType.STELLARHD_FOLLOWER:
+                    for potential_leader in devices:
+                       # Skip if the potential leader is not an SHDDevice (cannot lead)
+                        if not isinstance(potential_leader, SHDDevice):
+                            continue
+
+                        # Don't try to follow yourself
+                        # Though this should also be checked elsewhere, why not :shrug:
+                        if potential_leader.bus_info == device.bus_info:
                             continue
 
                         saved_leader = self.saved_by_bus_info.get(
-                            leader.bus_info)
+                            potential_leader.bus_info)
                         if not saved_leader:
                             continue
 
                         if device.bus_info in saved_leader.followers:
                             follower = cast(SHDDevice, device)
-                            leader = cast(SHDDevice, leader)
+                            leader = cast(SHDDevice, potential_leader)
                             leader.add_follower(follower)
                             break  # Only follow one leader
 
@@ -110,7 +123,8 @@ class SettingsManager:
         Run this when we need to check for new devices
         '''
         for leader in devices:
-            if leader.device_type != DeviceType.STELLARHD_LEADER:
+            # Changed: We now allow followers to be leaders (of other followers)
+            if not isinstance(leader, SHDDevice):
                 continue
 
             leader = cast(SHDDevice, leader)
@@ -130,7 +144,7 @@ class SettingsManager:
                     devices, follower_bus_info)
 
                 # If this follower does not exist, that is ok
-                # There is no truth to the existance of the followers list
+                # There is no inherent truth to the existance of the followers list
                 if not follower:
                     continue
 

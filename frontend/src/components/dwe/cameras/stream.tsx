@@ -1,14 +1,5 @@
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useContext, useEffect, useState } from "react";
-import { Separator } from "@/components/ui/separator";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   CameraIcon,
@@ -34,49 +25,143 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { TOUR_STEP_IDS } from "@/lib/tour-constants";
+import { StreamSelector } from "./stream-selector";
+import { RangeControl } from "@/components/ui/range-control";
+import { Toggle } from "@/components/ui/toggle";
 
-// Options for StreamSelector should provide label and value for each choice
-type StreamOption = { label: string; value: string };
-const StreamSelector = ({
-  options,
-  placeholder,
-  label,
-  value,
-  onChange,
-  disabled = false,
-}: {
-  options: StreamOption[];
-  placeholder: string;
-  label: string;
-  value?: string;
-  onChange: (value: string) => void;
-  disabled?: boolean;
-}) => {
+type ControlModel = components["schemas"]["ControlModel"];
+
+export const SensorControls = () => {
+  const device = useContext(DeviceContext)!;
+
+  const deviceSnapshot = useSnapshot(device);
+
+  const [matchExposure, setMatchExposure] = useState(false);
+
+  // Registers
+
+  const controlMap = useMemo(() => {
+    return new Map(deviceSnapshot.controls.map((c) => [c.name, c]));
+  }, [deviceSnapshot.controls]);
+
+  const exposureControl = controlMap.get("Auto Exposure (ASIC)");
+  const isoControl = controlMap.get("ISO");
+  const shutterControl = controlMap.get("Shutter Speed");
+  const strobeWidthControl = controlMap.get("Strobe Width");
+
+  const [exposureTime, setExposureTime] = useState(shutterControl?.value || 0); // 0x3501
+  const [autoExposure, setAutoExposure] = useState<boolean>(
+    exposureControl?.value === 1,
+  );
+  const [gain, setGain] = useState(isoControl?.value || 0); // 0x3508
+  const [strobeWidth, setStrobeWidth] = useState(strobeWidthControl?.value || 0);
+
+  const strobeMax = exposureTime!;
+
+  useEffect(() => {
+    if (strobeWidth > strobeMax) setStrobeWidth(strobeMax);
+  }, [strobeMax, strobeWidth]);
+
+  // TODO: Streamline this more effectively (We should have a global API class)
+  const setUVCControl = (control: ControlModel, value: number) => {
+    API_CLIENT.POST("/devices/set_uvc_control", {
+      body: {
+        bus_info: deviceSnapshot.bus_info,
+        control_id: control.control_id,
+        value,
+      },
+    });
+  };
+
+  useEffect(
+    () => setUVCControl(exposureControl as ControlModel, autoExposure ? 1 : 0),
+    [autoExposure],
+  );
+
+  useEffect(
+    () => setUVCControl(shutterControl as ControlModel, exposureTime!),
+    [exposureTime],
+  );
+
+  useEffect(() => setUVCControl(isoControl as ControlModel, gain!), [gain]);
+
+  // Set both at the same time to fix fw bug
+  useEffect(
+    () => setUVCControl(strobeWidthControl as ControlModel, strobeWidth),
+    [strobeWidth, exposureTime],
+  );
+
+  // TODO: replace with is_pro?
+  if (!exposureControl || !isoControl || !shutterControl) return <></>;
+
   return (
-    <div className="space-y-1">
-      <label className="text-xs font-medium text-muted-foreground">
-        {label}
-      </label>
-      <Select value={value} onValueChange={onChange} disabled={disabled}>
-        <SelectTrigger className="w-full text-sm outline-none focus:ring-1 focus:ring-inset focus:ring-primary/50">
-          <SelectValue
-            placeholder={placeholder}
-            className="truncate"
-          ></SelectValue>
-        </SelectTrigger>
-        <SelectContent className="">
-          <SelectGroup>
-            {options.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-    </div>
+    <Accordion type="single" collapsible>
+      <AccordionItem value="sensor-controls">
+        <AccordionTrigger className="text-sm font-semibold">
+          Sensor Controls
+        </AccordionTrigger>
+        <AccordionContent className="px-1">
+          {/* Top Section: Mode & Options */}
+          <div className="grid grid-cols-2 gap-4 items-end pb-4">
+            <div className="flex items-center space-x-1">
+              <span className="text-sm font-medium"></span>
+              <Toggle
+                pressed={autoExposure}
+                className="shadow-md"
+                onPressedChange={() => setAutoExposure((prev) => !prev)}
+              >
+                <div>Auto Exposure</div>
+              </Toggle>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium"></span>
+              <Toggle
+                pressed={matchExposure}
+                className="shadow-md"
+                onPressedChange={() => setMatchExposure((prev) => !prev)}
+              >
+                <div>Match Exposure</div>
+              </Toggle>
+            </div>
+          </div>
+
+          {/* Manual Controls */}
+          {!autoExposure && (
+            <div className="space-y-5 animate-in slide-in-from-top-2 fade-in duration-300">
+              <div className="space-y-4 border rounded-md p-3 bg-muted/20">
+                <RangeControl
+                  label="Exposure Time"
+                  value={exposureTime}
+                  min={shutterControl.flags.min_value}
+                  max={shutterControl.flags.max_value}
+                  onChange={setExposureTime}
+                />
+                <RangeControl
+                  label="ISO (Gain)"
+                  value={gain}
+                  min={isoControl.flags.min_value}
+                  max={isoControl.flags.max_value}
+                  onChange={setGain}
+                />
+                <RangeControl
+                  label="Strobe Brightness"
+                  value={strobeWidth}
+                  min={0}
+                  max={strobeMax}
+                  onChange={setStrobeWidth}
+                />
+              </div>
+            </div>
+          )}
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
   );
 };
+
+type DeviceModel = components["schemas"]["DeviceModel"];
 
 const Endpoint = ({
   endpoint,
@@ -182,10 +267,10 @@ const EndpointList = ({
 
   return (
     <>
-      <div className="relative">
-        <Card>
-          <CardHeader>
-            <span className="text-base -m-2 font-xs leading-none">
+      <div className="relative" id={TOUR_STEP_IDS.DEVICE_ENDPOINTS}>
+        <Card className="overflow-hidden">
+          <CardHeader className="bg-background mb-2">
+            <span className="text-base -mt-2 font-xs leading-none mx-auto">
               Endpoints
             </span>
           </CardHeader>
@@ -223,7 +308,8 @@ const EndpointList = ({
           {/* Add Button */}
           <Button
             variant="outline"
-            className="h-8 w-8 p-0 rounded-full shadow-md bg-card dark:bg-card flex items-center justify-center hover:bg-accent hover:text-accent-foreground"
+            id={TOUR_STEP_IDS.ADD_ENDPOINTS}
+            className="h-8 w-8 p-0 rounded-full shadow-md bg-card flex items-center justify-center hover:bg-accent hover:text-background"
             onClick={() =>
               device!.stream.endpoints.push({
                 host: defaultHost,
@@ -240,13 +326,11 @@ const EndpointList = ({
   );
 };
 
-
 const FollowerList = () => {
   const device = useContext(DeviceContext)!;
 
   const deviceState = useSnapshot(device);
   const [followers, setFollowers] = useState(device.followers);
-
 
   const { devices } = useContext(DevicesContext)!;
 
@@ -258,15 +342,18 @@ const FollowerList = () => {
     return unsubscribe;
   }, [device]);
 
-  const [potentialFollowers, setPotentialFollowers] = useState<string[]>([]);
+  const [potentialFollowers, setPotentialFollowers] = useState<DeviceModel[]>(
+    [],
+  );
 
   const updatePotentialFollowers = () => {
     setPotentialFollowers([
-      "Select a device...",
-      ...devices
-        .filter((d) => d.device_type == 2)
-        .map((f) => f.bus_info)
-        .filter((value) => !followers.includes(value)),
+      ...devices.filter(
+        (d) =>
+          d.device_type == 2 &&
+          d.bus_info !== device.bus_info &&
+          !followers.find((f) => f == d.bus_info),
+      ),
     ]);
   };
 
@@ -314,7 +401,7 @@ const FollowerList = () => {
 
   const handleAddFollower = () => {
     const selected = devices.find(
-      (f) => f.bus_info === selectedBusInfo
+      (f) => f.bus_info === selectedBusInfo,
     )?.bus_info;
     if (!selected) return;
 
@@ -337,10 +424,16 @@ const FollowerList = () => {
             <div className="grid grid-cols-12 gap-3 w-full items-end">
               <div className="col-span-9">
                 <StreamSelector
-                  options={potentialFollowers.map((f) => ({
-                    label: `${f}`,
-                    value: f,
-                  }))}
+                  options={[
+                    {
+                      label: "Select a device...",
+                      value: "Select a device...",
+                    },
+                    ...potentialFollowers.map((f) => ({
+                      label: `${f.nickname == "" ? f.bus_info : f.nickname}`,
+                      value: f.bus_info,
+                    })),
+                  ]}
                   placeholder="Select a device..."
                   label="Add Follower"
                   value={selectedBusInfo}
@@ -357,14 +450,14 @@ const FollowerList = () => {
 
             {/* Follower Table */}
             {followers.length === 0 ? (
-              <div className="text-sm text-muted-foreground p-4 border rounded-md bg-muted/50">
+              <div className="text-sm text-muted-foreground p-4 rounded-md bg-muted/50">
                 No followers connected. Devices that mirror this stream will
                 appear here.
               </div>
             ) : (
-              <div className="rounded-md border w-full overflow-hidden">
+              <div className="rounded-md border border-background/30 w-full overflow-hidden">
                 <table className="w-full table-fixed text-sm text-left">
-                  <thead className="bg-muted/30 border-b">
+                  <thead className="bg-background/30">
                     <tr>
                       <th className="px-4 py-2 w-1/2 truncate font-medium">
                         Port
@@ -376,7 +469,10 @@ const FollowerList = () => {
                   </thead>
                   <tbody>
                     {followers.map((follower, index) => (
-                      <tr key={index} className="border-b hover:bg-muted/10">
+                      <tr
+                        key={index}
+                        className="border-b-2 border-background/30 bg-input last:border-0"
+                      >
                         <td className="px-4 py-2 truncate">{follower}</td>
                         <td className="px-4 py-2">
                           <div className="grid grid-cols-[1fr_auto] items-center gap-2">
@@ -416,7 +512,7 @@ const getResolution = (resolution: string) => {
  */
 const getResolutions = (
   device: Readonly<components["schemas"]["DeviceModel"]>,
-  encodeFormat: components["schemas"]["StreamEncodeTypeEnum"]
+  encodeFormat: components["schemas"]["StreamEncodeTypeEnum"],
 ) => {
   const newResolutions: string[] = [];
 
@@ -448,19 +544,19 @@ export const CameraStream = ({
   const deviceState = useSnapshot(device);
 
   const [streamEnabled, setStreamEnabled] = useState(
-    deviceState.stream.enabled
+    deviceState.stream.enabled,
   );
   const [resolution, setResolution] = useState(
-    `${deviceState.stream.width}x${deviceState.stream.height}`
+    `${deviceState.stream.width}x${deviceState.stream.height}`,
   );
   const [fps, setFps] = useState("" + deviceState.stream.interval.denominator);
   const [format, setFormat] = useState(device.stream.encode_type);
   const [resolutions, setResolutions] = useState(
-    getResolutions(device, deviceState.stream.encode_type)
+    getResolutions(device, deviceState.stream.encode_type),
   );
   const [intervals, setIntervals] = useState([] as string[]);
   const [encoders, setEncoders] = useState(
-    [] as components["schemas"]["StreamEncodeTypeEnum"][]
+    [] as components["schemas"]["StreamEncodeTypeEnum"][],
   );
 
   const [shouldPostFlag, setShouldPostFlag] = useState(false);
@@ -550,94 +646,131 @@ export const CameraStream = ({
 
   return (
     <div className="space-y-4">
-      <h3 className="text-base font-medium leading-none">
-        Stream Configuration
-      </h3>
+      <SensorControls></SensorControls>
+      <Accordion
+        type="single"
+        collapsible
+        defaultValue="stream configuration"
+        id={TOUR_STEP_IDS.DEVICE_STREAM_CONFIG}
+      >
+        <AccordionItem value="stream configuration">
+          <AccordionTrigger className="text-sm font-semibold">
+            Stream Configuration
+          </AccordionTrigger>
+          <AccordionContent className="w-full space-y-4">
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-12">
+              <div className="sm:col-span-5">
+                <StreamSelector
+                  options={resolutions.map((r) => ({ label: r, value: r }))}
+                  placeholder="Resolution"
+                  label="Resolution"
+                  value={resolution}
+                  // disabled={deviceState.is_managed}
+                  onChange={(newResolution) => {
+                    setResolution(newResolution);
+                    setShouldPostFlag(true);
+                  }}
+                />
+              </div>
 
-      <div className="grid grid-cols-3 gap-3 grid grid-cols-1 sm:grid-cols-12 gap-3">
-        <div className="sm:col-span-5">
-          <StreamSelector
-            options={resolutions.map((r) => ({ label: r, value: r }))}
-            placeholder="Resolution"
-            label="Resolution"
-            value={resolution}
-            // disabled={deviceState.is_managed}
-            onChange={(newResolution) => {
-              setResolution(newResolution);
-              setShouldPostFlag(true);
-            }}
-          />
-        </div>
+              <div className="sm:col-span-3">
+                <StreamSelector
+                  options={intervals.map((i) => ({ label: i, value: i }))}
+                  placeholder="FPS"
+                  label="Frame Rate"
+                  value={fps}
+                  // disabled={deviceState.is_managed}
+                  onChange={(newFps) => {
+                    setFps(newFps);
+                    setShouldPostFlag(true);
+                  }}
+                />
+              </div>
 
-        <div className="sm:col-span-3">
-          <StreamSelector
-            options={intervals.map((i) => ({ label: i, value: i }))}
-            placeholder="FPS"
-            label="Frame Rate"
-            value={fps}
-            // disabled={deviceState.is_managed}
-            onChange={(newFps) => {
-              setFps(newFps);
-              setShouldPostFlag(true);
-            }}
-          />
-        </div>
+              <div className="sm:col-span-4">
+                <StreamSelector
+                  options={encoders.map((e) => ({ label: e, value: e }))}
+                  placeholder="Format"
+                  label="Format"
+                  value={format}
+                  // disabled={deviceState.is_managed}
+                  onChange={(fmt) => {
+                    setFormat(
+                      fmt as components["schemas"]["StreamEncodeTypeEnum"],
+                    );
+                    setShouldPostFlag(true);
+                  }}
+                />
+              </div>
+            </div>
+            {!deviceState.is_managed && device.stream.stream_type === "UDP" && (
+              <EndpointList
+                defaultHost={defaultHost}
+                nextPort={nextPort}
+                setShouldPostFlag={setShouldPostFlag}
+              />
+            )}
 
-        <div className="sm:col-span-4">
-          <StreamSelector
-            options={encoders.map((e) => ({ label: e, value: e }))}
-            placeholder="Format"
-            label="Format"
-            value={format}
-            // disabled={deviceState.is_managed}
-            onChange={(fmt) => {
-              setFormat(fmt as components["schemas"]["StreamEncodeTypeEnum"]);
-              setShouldPostFlag(true);
-            }}
-          />
-        </div>
-      </div>
-      {device.stream.stream_type === "UDP" && <EndpointList
-        defaultHost={defaultHost}
-        nextPort={nextPort}
-        setShouldPostFlag={setShouldPostFlag}
-      />}
+            {/* TODO: Manage this logic in backend too */}
+            {!deviceState.is_managed && (
+              <Button
+                className="w-full"
+                onClick={() => {
+                  device.stream.stream_type =
+                    device.stream.stream_type === "RECORDING"
+                      ? "UDP"
+                      : "RECORDING";
+                  setShouldPostFlag(true);
+                }}
+                id={TOUR_STEP_IDS.DEVICE_MODE}
+              >
+                Switch to{" "}
+                {device.stream.stream_type === "RECORDING"
+                  ? "Stream"
+                  : "Recording"}{" "}
+                mode
+              </Button>
+            )}
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
-      <Button className="w-full" onClick={() => { device.stream.stream_type = device.stream.stream_type === "RECORDING" ? "UDP" : "RECORDING"; setShouldPostFlag(true); }}>
-        Switch to {device.stream.stream_type === "RECORDING" ? "Stream" : "Recording"} mode
-      </Button>
-
-
-      <Separator className="my-2" />
-
-      {deviceState.device_type == 1 && <FollowerList />}
-
-      <div className="flex justify-between items-center">
-        <div>
-          <span className="text-sm font-medium">
-            {device.stream.stream_type === "RECORDING" ? "Recording" : "Stream"}{" "}
-            {deviceState.is_managed
-              ? "managed"
-              : streamEnabled
-                ? "enabled"
-                : "disabled"}
-          </span>
-        </div>
-        <Button
-          variant={"ghost"}
-          className="w-4 h-8"
-          disabled={deviceState.is_managed}
-          onClick={() => {
-            const newEnabledState = !streamEnabled;
-            setStreamEnabled(newEnabledState);
-            setShouldPostFlag(true);
-          }}
+      {(deviceState.device_type == 1 ||
+        (deviceState.device_type === 2 && !deviceState.is_managed)) && (
+        <FollowerList />
+      )}
+      <div className="flex flex-1 justify-between items-center">
+        <CameraControls />
+        <div
+          className="flex items-center gap-2 pl-2"
+          id={TOUR_STEP_IDS.DEVICE_STREAM}
         >
-          {streamEnabled ? <PauseIcon /> : <PlayIcon />}
-        </Button>
+          <div>
+            <span className="text-sm font-medium">
+              {deviceState.is_managed
+                ? "Managed"
+                : streamEnabled
+                  ? "Stop"
+                  : "Start"}{" "}
+              {device.stream.stream_type === "RECORDING"
+                ? "Recording"
+                : "Stream"}
+            </span>
+          </div>
+          <Button
+            variant={"default"}
+            className="w-12 h-12 rounded-full"
+            disabled={deviceState.is_managed}
+            onClick={() => {
+              const newEnabledState = !streamEnabled;
+              setStreamEnabled(newEnabledState);
+              setShouldPostFlag(true);
+            }}
+          >
+            {streamEnabled ? <PauseIcon /> : <PlayIcon />}
+          </Button>
+        </div>
       </div>
-
-      <CameraControls />
     </div>
   );
 };

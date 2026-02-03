@@ -3,24 +3,26 @@ FROM python:3.10-slim-bullseye
 
 # Install dependencies
 RUN apt-get update -y && apt-get upgrade -y &&\
-    apt-get install -y curl dbus wget sudo &&\
-    apt-get clean
+  apt-get install -y curl dbus wget sudo &&\
+  apt-get clean
 
 RUN apt-get install -y \
-    build-essential \
-    gcc \
-    libdbus-1-dev \
-    libglib2.0-dev \
-    python3-dev \
-    pkg-config \
-    dbus \
-    dbus-x11
+  build-essential \
+  gcc \
+  libdbus-1-dev \
+  libglib2.0-dev \
+  python3-dev \
+  pkg-config \
+  dbus \
+  dbus-x11
 
 # Copy requirements.txt with cache
 COPY release/backend_py/requirements.txt .
 
 # Copy apt requirements with cache
 COPY release/install_requirements.sh .
+
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
 RUN pip install --no-build-isolation gevent==22.10.2
 
@@ -29,49 +31,49 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN sh install_requirements.sh
 
 LABEL authors='[\
-    {\
-    "name": "Brandon Stevens",\
-    "email": "support@dwe.ai"\
-    }\
-    ]'
+  {\
+  "name": "Brandon Stevens",\
+  "email": "support@dwe.ai"\
+  }\
+  ]'
 
 LABEL company='{\
-    "about": "",\
-    "name": "DeepWater Exploration",\
-    "email": "support@dwe.ai"\
-    }'
+  "about": "",\
+  "name": "DeepWater Exploration",\
+  "email": "support@dwe.ai"\
+  }'
 
 LABEL permissions='{ \
-    "ExposedPorts": { \
-    "8000/tcp": {} \
-    }, \
-    "HostConfig": { \
-    "Privileged": true, \
-    "Binds": ["/sys/class/video4linux:/sys/class/video4linux", "/usr/blueos/userdata/dwe_os_2:/settings", "/dev:/dev"], \
-    "PortBindings": { \
-    "8000/tcp": [ \
-    { \
-    "HostPort": "" \
-    } \
-    ] \
-    } \
-    } \
-    } \
-    '
+  "ExposedPorts": { \
+  "8000/tcp": {} \
+  }, \
+  "HostConfig": { \
+  "Privileged": true, \
+  "Binds": ["/sys/class/video4linux:/sys/class/video4linux", "/usr/blueos/userdata/dwe_os_2:/settings", "/dev:/dev"], \
+  "PortBindings": { \
+  "8000/tcp": [ \
+  { \
+  "HostPort": "" \
+  } \
+  ] \
+  } \
+  } \
+  } \
+  '
 
 LABEL type="device-integration"
 
 LABEL tags='[\
-    "cameras",\
-    "dwe-ai",\
-    "exporehd",\
-    "stellarhd",\
-    "deepwater-exploration"\
-    ]'
+  "cameras",\
+  "dwe-ai",\
+  "exporehd",\
+  "stellarhd",\
+  "deepwater-exploration"\
+  ]'
 
 LABEL links='{\
-    "support": "https://dwe.ai/pages/contact"\
-    }'
+  "support": "https://dwe.ai/pages/contact"\
+  }'
 
 LABEL readme="https://raw.githubusercontent.com/DeepwaterExploration/DWE_OS_2/main/DESCRIPTION.md"
 

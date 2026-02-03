@@ -7,7 +7,7 @@
     "Binds": [
       "/sys/class/video4linux:/sys/class/video4linux",
       "/dev:/dev",
-      "dweos-settings:/settings"
+      "/usr/blueos/userdata/dwe_os_2:/settings"
     ],
     "PortBindings": {
       "8000/tcp": [

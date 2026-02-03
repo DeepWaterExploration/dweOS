@@ -1,3 +1,10 @@
+"""
+device.py
+
+Base class for camera device management
+Handles v4l2 device finding, uvc controls, stream configuration, and device settings management
+"""
+
 from ctypes import *
 import struct
 from dataclasses import dataclass
@@ -10,12 +17,12 @@ from linuxpy.video import device
 from enum import Enum
 
 from . import v4l2
-from . import ehd_controls as xu
+from . import xu_controls as xu
 
 from .stream_utils import fourcc2s
 from .enumeration import *
 from .camera_helper.camera_helper_loader import *
-from .stream import *
+from .stream_runner import Stream, StreamRunner
 from .stream_utils import string_to_stream_encode_type
 from .pydantic_schemas import *
 from .saved_pydantic_schemas import *
@@ -33,6 +40,16 @@ PID_VIDS = {
         "VID": 0xC45,
         "PID": 0x6368,
         "device_type": DeviceType.STELLARHD_FOLLOWER,
+    },
+    "stellarHDPro: Leader": {
+        "VID": 0xC45,
+        "PID": 0x6369,
+        "device_type": DeviceType.STELLARHD_LEADER_PRO,
+    },
+    "stellarHDPro: Follower": {
+        "VID": 0xC45,
+        "PID": 0x6370,
+        "device_type": DeviceType.STELLARHD_FOLLOWER_PRO,
     },
 }
 
@@ -58,13 +75,13 @@ class Camera:
 
     # uvc_set_ctrl function defined in uvc_functions.c
     def uvc_set_ctrl(
-        self, unit: xu.Unit, ctrl: xu.Selector, data: bytes, size: int
+        self, unit: int, ctrl: int, data: bytes, size: int
     ) -> int:
         return camera_helper.uvc_set_ctrl(self._fd, unit, ctrl, data, size)
 
     # uvc_get_ctrl function defined in uvc_functions.c
     def uvc_get_ctrl(
-        self, unit: xu.Unit, ctrl: xu.Selector, data: bytes, size: int
+        self, unit: int, ctrl: int, data: bytes, size: int
     ) -> int:
         return camera_helper.uvc_get_ctrl(self._fd, unit, ctrl, data, size)
 
@@ -133,6 +150,9 @@ class BaseOption(ABC):
         pass
 
 
+# Note: SHD version is asymmetric from this, despite being functionally similar.
+# One will need to be moved to match the other for maintainability
+# I prefer SHD version, because logic in the option class is not ideal - Brandon
 class Option(BaseOption):
     """
     EHD Option Class
@@ -201,7 +221,7 @@ class Option(BaseOption):
 
     def _set_ctrl(self):
         data = bytearray(self._size)
-        data[0] = xu.EHD_DEVICE_TAG
+        data[0] = xu.DWE_DEVICE_TAG
         data[1] = self._command.value
 
         # Switch command
@@ -215,7 +235,7 @@ class Option(BaseOption):
 
     def _get_ctrl(self):
         data = bytearray(self._size)
-        data[0] = xu.EHD_DEVICE_TAG
+        data[0] = xu.DWE_DEVICE_TAG
         data[1] = self._command.value
         self._data = bytes(self._size)
         # Switch command
@@ -256,7 +276,8 @@ class Device(events.EventEmitter):
         self.stream = Stream()
 
         # each device has a streamrunner, but not all of them are used if they are a follower (shd)
-        self.stream_runner = StreamRunner(self.stream)
+        self.stream_runner = StreamRunner(
+            self.stream)
 
         for camera in self.cameras:
             for encoding in camera.formats:
@@ -288,6 +309,10 @@ class Device(events.EventEmitter):
         self._id_counter = 1
 
         self._get_controls()
+
+    def _on_gst_error(self, err: str):
+        self.logger.error(err)
+        # TODO
 
     def _get_options(self) -> Dict[str, BaseOption]:
         return {}
@@ -391,7 +416,7 @@ class Device(events.EventEmitter):
         control_type: ControlTypeEnum,
         max_value: float = 0,
         min_value: float = 0,
-        step: float = 0,
+        step: float = 0
     ):
         try:
             option = self._options[option_name]
@@ -407,12 +432,14 @@ class Device(events.EventEmitter):
                         max_value=max_value,
                         min_value=min_value,
                         step=step,
-                        control_type=control_type,
+                        control_type=control_type
                     ),
                 ),
             )
             self._id_counter += 1
         except AttributeError:
+            import traceback
+            traceback.print_exc()
             self.logger.error(
                 f"Unknown attribute: {self.__class__.__name__}._options[{option_name}]"
             )
@@ -457,6 +484,7 @@ class Device(events.EventEmitter):
         return control.value
 
     def set_pu(self, control_id: int, value: int):
+
         if control_id < 0:
             # DWE control
             for control in self.controls:
@@ -464,14 +492,16 @@ class Device(events.EventEmitter):
                     control.value = value
                     for option_name in self._options:
                         if self._options[option_name].name == control.name:
+                            self.logger.debug(
+                                self._fmt_log(
+                                    f"Setting UVC control - {control.name} to {value}")
+                            )
                             self.set_option(option_name, value)
                             return
             return  # in case the id does not exist in controls
 
         control = self.v4l2_device.controls[control_id]
-        self.logger.debug(
-            self._fmt_log(f"Setting UVC control - {control.name} to {value}")
-        )
+
         try:
             control.value = value
         except (AttributeError, PermissionError) as e:
@@ -492,7 +522,7 @@ class Device(events.EventEmitter):
 
     # set an option
     def set_option(self, opt: str, value: Any):
-        self.logger.debug(self._fmt_log(f"Setting option - {opt} to {value}"))
+        # self.logger.debug(self._fmt_log(f"Setting option - {opt} to {value}"))
         if opt in self._options:
             return self._options[opt].set_value(value)
         return None

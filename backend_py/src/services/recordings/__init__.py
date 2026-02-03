@@ -1,10 +1,19 @@
+"""
+recordings
+
+Handles locating recordings and extracting metadata from the files
+Allows for the renaming, deletion, and compression of the found recordings
+"""
+
 from functools import lru_cache
 import json
 import os
 import subprocess
 import threading
 import zipfile
+import logging
 from pydantic import BaseModel
+
 
 class RecordingInfo(BaseModel):
     path: str
@@ -14,13 +23,16 @@ class RecordingInfo(BaseModel):
     size: str
     created: str
 
+
 class RecordingsService:
     def __init__(self):
 
         self.recordings_path = os.path.join(os.getcwd(), "videos")
         self.recordings: list[RecordingInfo] = []
+        self.logger = logging.getLogger("dwe_os_2.RecordingsService")
 
         threading.Thread(target=self.get_recordings, daemon=True).start()
+
     def get_recordings(self):
         if not os.path.exists(self.recordings_path):
             os.makedirs(self.recordings_path)
@@ -41,9 +53,11 @@ class RecordingsService:
                 self.recordings.append(recording_info)
 
         return self.recordings
+
     def _epoch_to_readable(self, epoch: float) -> str:
         from datetime import datetime
         return datetime.fromtimestamp(epoch).strftime('%Y-%m-%d %H:%M:%S')
+
     @lru_cache(maxsize=10000)
     def _get_duration(self, file_path: str) -> str:
         try:
@@ -71,7 +85,7 @@ class RecordingsService:
                     return f"{hours:02}:{minutes:02}:{seconds:02d}"
             return "00:00:00"
         except Exception as e:
-            print(f"Error getting duration: {e}")
+            self.logger.error(f"Error getting duration: {e}")
         return "Unknown"
 
     def get_recording(self, filename: str) -> RecordingInfo | None:
@@ -81,19 +95,20 @@ class RecordingsService:
             if recording.path == recording_path:
                 return recording
         return None
-    
+
     def delete_recording(self, filename: str):
         recording_path = os.path.join(self.recordings_path, filename)
         if os.path.exists(recording_path):
             os.remove(recording_path)
-            self.recordings = [rec for rec in self.recordings if rec.path != recording_path]
+            self.recordings = [
+                rec for rec in self.recordings if rec.path != recording_path]
             return self.recordings
         return False
-    
+
     def rename_recording(self, old_name: str, new_name: str):
         old_path = os.path.join(self.recordings_path, old_name)
         new_path = os.path.join(self.recordings_path, new_name)
-        
+
         if os.path.exists(old_path):
             os.rename(old_path, new_path)
             for recording in self.recordings:
@@ -103,16 +118,16 @@ class RecordingsService:
                     recording.format = new_name.split('.')[-1]
             return self.recordings
         return False
-    
 
     def zip_recordings(self):
         self.get_recordings()  # Refresh the recordings list
         if not self.recordings:
             return None
-            
+
         zip_filename = os.path.join(self.recordings_path, "recordings.zip")
-        
+
         with zipfile.ZipFile(zip_filename, 'w') as zipf:
             for recording in self.recordings:
-                zipf.write(recording.path, arcname=recording.name + '.' + recording.format)
+                zipf.write(recording.path, arcname=recording.name +
+                           '.' + recording.format)
         return zip_filename

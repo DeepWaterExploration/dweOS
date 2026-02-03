@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -34,9 +34,24 @@ import { API_CLIENT } from "@/api";
 import { components } from "@/schemas/dwe_os_2";
 import { LogDetailView } from "./log-detail-view";
 import { getLevelColor } from "@/lib/utils";
+import { TOUR_STEP_IDS } from "@/lib/tour-constants";
+import { useTour } from "@/components/tour/tour";
+
+const DEMO_LOG: components["schemas"]["LogSchema"][] = [
+  {
+    timestamp: "2024-03-10 10:15:23,456",
+    level: "INFO",
+    name: "system.core",
+    message: "System initialized successfully",
+    filename: "main.py",
+    lineno: 42,
+    function: "init",
+  },
+];
 
 export function LogViewer() {
   const { connected, socket } = useContext(WebsocketContext)!;
+  const { isActive } = useTour();
 
   const [logs, setLogs] = useState<components["schemas"]["LogSchema"][]>([]);
   const [filteredLogs, setFilteredLogs] = useState<
@@ -63,7 +78,9 @@ export function LogViewer() {
     if (connected) {
       updateLogs();
 
-      socket?.on("log", () => updateLogs());
+      socket?.on("log", (log: components["schemas"]["LogSchema"]) => {
+        updateLogs();
+      });
 
       return () => {
         socket?.off("log");
@@ -153,8 +170,13 @@ export function LogViewer() {
     updateLogs().then(() => setTimeout(() => setIsLoading(false), 500));
   };
 
+  const displayedLogs = isActive ? DEMO_LOG : currentItems;
+
   return (
-    <div className="space-y-4">
+    <div
+      className="flex flex-col h-[calc(100vh-5.5rem)] gap-4"
+      id={TOUR_STEP_IDS.LOGS_PAGE}
+    >
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
         <div className="flex flex-1 items-center space-x-2">
           <Search className="h-5 w-5 text-gray-400" />
@@ -193,74 +215,77 @@ export function LogViewer() {
         </div>
       </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[180px]">Timestamp</TableHead>
-              <TableHead className="w-[100px]">Level</TableHead>
-              <TableHead className="w-[150px]">Logger</TableHead>
-              <TableHead className="w-[150px]">Source</TableHead>
-              <TableHead>Message</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {currentItems.length > 0 ? (
-              currentItems.map((log, index) => (
-                <TableRow
-                  key={index}
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => {
-                    setSelectedLog(log);
-                    setIsDetailOpen(true);
-                  }}
-                >
-                  <TableCell className="font-mono text-xs">
-                    {formatTimestamp(log.timestamp)}
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getLevelColor(log.level)}>
-                      {log.level}
-                    </Badge>
-                  </TableCell>
-                  <TableCell
-                    className="whitespace-normal break-words max-w-[150px]"
-                    title={log.name}
+      <div className="grid grid-cols-1 flex-1 min-h-0">
+        <div className="rounded-md border overflow-auto h-full">
+          <Table className="table-fixed min-w-[900px]" noWrapper>
+            <TableHeader className="bg-background sticky top-0 z-10">
+              <TableRow>
+                <TableHead className="w-[100px]">Timestamp</TableHead>
+                <TableHead className="w-[90px]">Level</TableHead>
+                <TableHead className="w-[120px]">Logger</TableHead>
+                <TableHead className="w-[120px]">Source</TableHead>
+                <TableHead className="w-[250px]">Message</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {displayedLogs.length > 0 ? (
+                displayedLogs.map((log, index) => (
+                  <TableRow
+                    key={index}
+                    id={TOUR_STEP_IDS.DEMO_LOGS}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => {
+                      setSelectedLog(log);
+                      setIsDetailOpen(true);
+                    }}
                   >
-                    {log.name}
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-xs">
-                      <div
-                        className="break-words max-w-[150px]"
-                        title={log.filename}
-                      >
-                        {log.filename}:{log.lineno}
+                    <TableCell className="font-mono text-xs">
+                      {formatTimestamp(log.timestamp)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={getLevelColor(log.level)}>
+                        {log.level}
+                      </Badge>
+                    </TableCell>
+                    <TableCell
+                      className="whitespace-normal break-words max-w-[150px]"
+                      title={log.name}
+                    >
+                      {log.name}
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-xs">
+                        <div
+                          className="break-words max-w-[150px]"
+                          title={log.filename}
+                        >
+                          {log.filename}:{log.lineno}
+                        </div>
+                        <div
+                          className="text-gray-500 break-words max-w-[150px]"
+                          title={log.function}
+                        >
+                          {log.function}()
+                        </div>
                       </div>
-                      <div
-                        className="text-gray-500 break-words max-w-[150px]"
-                        title={log.function}
-                      >
-                        {log.function}()
+                    </TableCell>
+                    <TableCell title={log.message}>
+                      <div className="font-mono text-xs whitespace-normal break-words line-clamp-2 pr-2">
+                        {log.message}
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell title={log.message}>
-                    <div className="font-mono text-xs whitespace-normal break-words line-clamp-2 pr-2">
-                      {log.message}
-                    </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center">
+                    No logs found matching your filters.
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
-                  No logs found matching your filters.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
       <div className="flex items-center justify-between border-t pt-4">
         <div className="flex items-center space-x-2 text-sm text-muted-foreground">

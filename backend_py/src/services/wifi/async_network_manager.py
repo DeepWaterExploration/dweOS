@@ -1,3 +1,9 @@
+"""
+async_network_manager.py
+
+Acts as an asyncronous wrapper for network_manager.py, preventing blocking in the FastAPI server
+Asycronizes the slow DBus calls (scanning / connecting) to separate threads, prevents freezing
+"""
 import asyncio
 import time
 from typing import Callable, List
@@ -44,8 +50,9 @@ class AsyncNetworkManager(EventEmitter):
         super().__init__()
         try:
             self.nm = NetworkManager()
-        except Exception:
-            raise WiFiException("NetworkManager is not supported")
+        except Exception as e:
+            print(e)
+            raise WiFiException("NetworkManager is not supported") from e
 
         self._nm_lock = asyncio.Lock()
 
@@ -69,8 +76,12 @@ class AsyncNetworkManager(EventEmitter):
         # self.nm.set_static_ip("192.168.2.101", 24, prioritize_wireless=True)
         # self.nm.set_dynamic_ip(prioritize_wireless=True)
 
-        self._initialize_access_points()
-        self._initialize_ip_configuration()
+        try:
+            self._initialize_access_points()
+            self._initialize_ip_configuration()
+        except Exception as e:
+            print(e)
+            raise WiFiException("No ethernet device")
 
     async def _reinitialize_nm(self):
         self.logger.info("Reinitializing NetworkManager")
@@ -141,8 +152,6 @@ class AsyncNetworkManager(EventEmitter):
         try:
             self.access_points = self.nm.get_access_points()
         except Exception as e:
-            import traceback
-            traceback.print_exc()
             raise WiFiException(
                 f"Error occurred while initializing access points {e}"
             ) from e
@@ -168,7 +177,7 @@ class AsyncNetworkManager(EventEmitter):
 
     def get_access_points(self) -> List[AccessPoint]:
         return self.access_points
-    
+
     def _requires_password(self, access_points: AccessPoint) -> bool:
         return self.nm._ap_requires_password(access_points.flags, access_points.wpa_flags, access_points.rsn_flags)
 
@@ -440,7 +449,7 @@ class AsyncNetworkManager(EventEmitter):
             # An error regarding path will occur sometimes when the connection has not re-activated
             self.logger.error(
                 f"Error occurred while fetching active connection: {e}")
-            
+
     async def turn_off_wifi(self):
         """
         Turn off WiFi
@@ -452,7 +461,7 @@ class AsyncNetworkManager(EventEmitter):
         except Exception as e:
             self.logger.error(f"Error occurred while turning off WiFi: {e}")
             return False
-        
+
     async def turn_on_wifi(self):
         """
         Turn on WiFi

@@ -1,4 +1,4 @@
-import { Switch } from "@/components/ui/switch";
+import { Toggle } from "@/components/ui/toggle";
 import { components } from "@/schemas/dwe_os_2";
 import { useState } from "react";
 import { subscribe } from "valtio";
@@ -13,7 +13,7 @@ const BooleanControl = ({
   let VALUE_TRUE = 1,
     VALUE_FALSE = 0;
 
-  if (control.name.includes("Auto Exposure")) {
+  if (control.name == "Auto Exposure") {
     VALUE_TRUE = 3;
     VALUE_FALSE = 1;
   }
@@ -32,8 +32,10 @@ const BooleanControl = ({
 
   return (
     <div className="flex items-center justify-between">
-      <span className="text-sm font-medium">{control.name}</span>
-      <Switch checked={value} onCheckedChange={toggle} />
+      <span className="text-sm font-medium"></span>
+      <Toggle pressed={value} onPressedChange={toggle}>
+        <div>{control.name}</div>
+      </Toggle>
     </div>
   );
 };

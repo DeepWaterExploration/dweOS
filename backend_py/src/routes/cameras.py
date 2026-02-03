@@ -1,3 +1,10 @@
+"""
+camera.py
+
+API endpoints for camera device management and streaming config
+Handles listing connected devices, updating stream settings (resolution / fps), setting UVC controls, and dealing with Leader/Follower for stereo cameras
+"""
+
 from fastapi import APIRouter, Depends, Request
 from ..services import DeviceManager, StreamInfoModel, DeviceNicknameModel, UVCControlModel, DeviceDescriptorModel, DeviceLeaderModel
 import logging
@@ -23,7 +30,7 @@ async def configure_stream(request: Request, stream_info: StreamInfoModel):
     device_manager: DeviceManager = request.app.state.device_manager
 
     device_manager.configure_device_stream(stream_info)
-    
+
     for device in device_manager.devices:
         if device.bus_info == stream_info.bus_info:
             if device.device_type != DeviceType.STELLARHD_FOLLOWER:
@@ -89,4 +96,4 @@ def restart_stream(request: Request, device_descriptor: DeviceDescriptorModel):
     except DeviceNotFoundException:
         return SimpleRequestStatusModel(success=False)
     dev.start_stream()
-    return {}
+    return SimpleRequestStatusModel(success=True)

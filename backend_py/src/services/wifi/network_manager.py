@@ -1,3 +1,10 @@
+"""
+network_manager.py
+
+Manages system network connections by communicating with system NetworkManager through DBus
+Handles Wifi scanning and connection management (connect / disconnect / forget) and IP Configuration (static / dynamic) for wired/wireless interfaces
+"""
+
 import ipaddress
 from typing import List, Dict, Any
 # from .wifi_types import Connection, AccessPoint, IPConfiguration, IPType
@@ -5,10 +12,12 @@ import logging
 import time
 import sdbus
 import sdbus
-from sdbus_block.networkmanager import NetworkManagerSettings, NetworkManager as NetworkManagerDBUS, ActiveConnection, NetworkDeviceGeneric, DeviceType, NetworkDeviceWired, NetworkConnectionSettings, NetworkDeviceWireless, IPv4Config, AccessPoint, ConnectionType, NetworkManagerConnectionProperties 
+from sdbus_block.networkmanager import NetworkManagerSettings, NetworkManager as NetworkManagerDBUS, ActiveConnection, NetworkDeviceGeneric, DeviceType, NetworkDeviceWired, NetworkConnectionSettings, NetworkDeviceWireless, IPv4Config, AccessPoint, ConnectionType, NetworkManagerConnectionProperties
 from sdbus_block.networkmanager.exceptions import NmConnectionInvalidPropertyError
 import uuid
 import subprocess
+
+
 class NetworkManager:
     """
     Class for interfacing with NetworkManager over dbus
@@ -18,11 +27,11 @@ class NetworkManager:
         self._last_scan_timestamp: int | None = None
 
         # Get the system bus
-        self.bus =  sdbus.sd_bus_open_system()
+        self.bus = sdbus.sd_bus_open_system()
         sdbus.set_default_bus(self.bus)
         self.networkmanager = NetworkManagerDBUS()
         # Get a local proxy to the NetworkManager object
-        
+
         self.logger = logging.getLogger("dwe_os_2.wifi.NetworkManager")
 
     def reinit(self):
@@ -38,9 +47,6 @@ class NetworkManager:
         sdbus.set_default_bus(self.bus)
         self.networkmanager = NetworkManagerDBUS()
 
- 
-
-    
     def get_ip_info(self, interface_name: str | None = None) -> Dict[str, Any] | None:
         """
         Get the IP address
@@ -52,20 +58,17 @@ class NetworkManager:
 
         try:
             ethernet_device, connection = self._get_eth_device_and_connection()
-            
 
             ethernet_device = self._get_ethernet_device(
                 interface_name)
             if ethernet_device is None:
                 raise Exception("No ethernet device found")
 
-
             ipv4_config = IPv4Config(
                 ethernet_device.ip4_config, self.bus
             )
 
             addresses = ipv4_config.address_data
-
 
             # method = self.get_connection_method(connection.id)
             dns_arr = [i['address'] for i in ipv4_config.nameserver_data or []]
@@ -84,18 +87,13 @@ class NetworkManager:
         except Exception:
             return None
 
-
-    
     def get_ipv4_settings(self, connection: ActiveConnection) -> Dict:
         return NetworkConnectionSettings(connection.connection, self.bus).get_settings().get("ipv4")
 
-
-    
     def get_ip_gateway(self, connection: ActiveConnection):
         ipv4_settings = IPv4Config(connection.ip4_config, self.bus)
         return ipv4_settings.gateway
 
-    
     def get_connection_method(self, connection: ActiveConnection) -> str:
         """
         Get the method of a connection
@@ -123,15 +121,14 @@ class NetworkManager:
     ):
         if connection is None:
             _, connection = self._get_eth_device_and_connection()
-        network_settings = NetworkConnectionSettings(connection.connection, self.bus)
-        
+        network_settings = NetworkConnectionSettings(
+            connection.connection, self.bus)
+
         all_connection_settings = network_settings.get_settings()
         all_connection_settings["ipv4"] = settings
         network_settings.update(all_connection_settings)
         network_settings.save()
 
-
-    
     def set_static_ip(
         self,
         ip_address: str,
@@ -153,33 +150,31 @@ class NetworkManager:
         :return: The interface name of the ethernet device
         """
 
-
-        print(f"Setting static IP {ip_address}/{prefix} with gateway {gateway} and DNS servers {dns_servers}")
+        print(
+            f"Setting static IP {ip_address}/{prefix} with gateway {gateway} and DNS servers {dns_servers}")
         # Update the IPv4 configuration, leaving everything else the same
         ipv4_settings = {
             "method": ("s", "manual"),
-            "address-data": 
+            "address-data":
                 ("aa{sv}", [{
                     "address":  ("s", ip_address),
                     "prefix":  ("u", int(prefix)),
                 }]),
             "dns": ("au", [int(ipaddress.IPv4Address(dns).packed.hex(), 16) for dns in dns_servers]),
-
         }
 
         # If we prioritize wireless, there is no reason to have a default gateway, since we will always use the wireless one
         if prioritize_wireless:
-            ipv4_settings["route-metric"] = ("u",200)
+            ipv4_settings["route-metric"] = ("u", 200)
             # ipv4_settings["never-default"] = True
         else:
-            ipv4_settings["route-metric"] = ("u",0)
+            ipv4_settings["route-metric"] = ("u", 0)
             if gateway is not None:
-                ipv4_settings["gateway"] = ("s",gateway)
+                ipv4_settings["gateway"] = ("s", gateway)
 
         # Update the connection and return the result
         return self._update_ipv4_settings(ipv4_settings, connection=connection)
 
-    
     def set_dynamic_ip(
         self,
         interface_name: str | None = None,
@@ -194,7 +189,7 @@ class NetworkManager:
         :return: The interface name of the ethernet device
         """
         ipv4_settings = {
-            "method": ("s","auto"),
+            "method": ("s", "auto"),
             "never-default": ("b", True),
         }
 
@@ -247,8 +242,7 @@ class NetworkManager:
                     return device
         return devs[0]
 
-    
-    def connect(self, ssid: str, password="")->bool:
+    def connect(self, ssid: str, password="") -> bool:
         """
         Connects to a Wi-Fi network using the provided SSID and password.
 
@@ -264,14 +258,14 @@ class NetworkManager:
         if not wifi_device:
             return False
 
-
         # Try to find an existing connection for this SSID
         existing_connection = None
         for connection in self.networkmanager.active_connections:
             try:
-                settings = NetworkConnectionSettings(connection, self.bus).get_settings()
+                settings = NetworkConnectionSettings(
+                    connection, self.bus).get_settings()
                 if 'ssid' in settings.get('802-11-wireless', {}) and \
-                settings['802-11-wireless']['ssid'].decode('utf-8') == ssid:
+                        settings['802-11-wireless']['ssid'].decode('utf-8') == ssid:
                     existing_connection = connection
                     break
             except:
@@ -280,18 +274,18 @@ class NetworkManager:
 
         if existing_connection:
             try:
-                self.networkmanager.activate_connection(existing_connection, wifi_device, '/')
-                
+                self.networkmanager.activate_connection(
+                    existing_connection, wifi_device, '/')
+
                 return True
             except Exception as e:
                 return False
         else:
-            
 
             uuid_id = str(uuid.uuid4())
 
             connection_id = ssid
-    
+
             properties: NetworkManagerConnectionProperties = {
                 "connection": {
                     "id": ("s", ssid),
@@ -315,16 +309,14 @@ class NetworkManager:
             try:
                 nm_settings.add_connection(properties)
             except NmConnectionInvalidPropertyError as e:
-                raise Exception("Can't Connect to wifi. Make sure password is correct")
+                raise Exception(
+                    "Can't Connect to wifi. Make sure password is correct")
             password_bytes = str(password + '\n')
-            activate_cmd = ["nmcli", "--ask", "connection", "up", connection_id]
-            subprocess.run(activate_cmd, input=password_bytes, capture_output=True, text=True, check=True)
-            
+            activate_cmd = ["nmcli", "--ask",
+                            "connection", "up", connection_id]
+            subprocess.run(activate_cmd, input=password_bytes,
+                           capture_output=True, text=True, check=True)
 
-            
-            
-
-    
     def disconnect(self):
         """
         Disconnect from any connected network
@@ -334,17 +326,16 @@ class NetworkManager:
         if not wifi_dev:
             raise Exception("No WiFi device found")
 
-        active_connection = ActiveConnection(wifi_dev.active_connection, self.bus)
+        active_connection = ActiveConnection(
+            wifi_dev.active_connection, self.bus)
         self.networkmanager.deactivate_connection(active_connection)
 
-    
     def list_wireless_connections(self) -> List[ActiveConnection]:
         """
         Get a list of the active wireless connections
         """
         return self.list_connections()
 
-    
     def get_active_wireless_connection(self) -> ActiveConnection | None:
         """
         Get the first active wireless connection
@@ -356,7 +347,6 @@ class NetworkManager:
             else active_wireless_conections[0]
         )
 
-    
     def list_connections(self, only_wireless=True) -> List[ActiveConnection]:
         """
         Get a list of all the connections saved
@@ -371,7 +361,6 @@ class NetworkManager:
                 connections.append(connection)
         return connections
 
-    
     def get_active_connections(self, wireless_only=True) -> List[ActiveConnection]:
         """
         Get a list of active connections, including wired
@@ -381,7 +370,6 @@ class NetworkManager:
         for connection_path in active_connections:
             connection = ActiveConnection(connection_path, self.bus)
 
-
             if not wireless_only or connection.connection_type == ConnectionType.WIFI:
                 connections.append(
                     connection
@@ -389,18 +377,16 @@ class NetworkManager:
 
         return connections
 
-    
     def get_access_points(self) -> List[AccessPoint]:
         """
         Get wifi networks without a scan
         """
         wifi_dev = self._get_wifi_device()
-        
+
         if not wifi_dev:
             raise Exception("No WiFi device found")
         return self._get_access_points(wifi_dev)
 
-    
     def request_wifi_scan(self) -> None:
         """
         Scan wifi networks
@@ -410,14 +396,12 @@ class NetworkManager:
         if not wifi_dev:
             raise Exception("No WiFi device found")
 
-
         # get the timestamp of the last scan
         self._last_scan_timestamp = wifi_dev.last_scan
 
         # request a scan
         wifi_dev.request_scan({})
 
-    
     def has_finished_scan(self):
         wifi_dev = self._get_wifi_device()
 
@@ -430,7 +414,6 @@ class NetworkManager:
 
         return False
 
-    
     def forget(self, ssid: str):
         """
         Forget a network
@@ -464,7 +447,7 @@ class NetworkManager:
             flags & NM_802_11_AP_FLAGS_PRIVACY == 1 or wpa_flags != 0 or rsn_flags != 0
         )
 
-    def _get_wifi_device(self) -> NetworkDeviceWireless| None:
+    def _get_wifi_device(self) -> NetworkDeviceWireless | None:
         devices = self.networkmanager.get_devices()
         if devices is None:
             self.logger.warning("Failed to retrieve device list")
@@ -493,7 +476,6 @@ class NetworkManager:
 
         return sorted(access_points, key=lambda ap: ap.strength, reverse=True)
 
-    
     def _list_connections(self) -> List[ActiveConnection]:
         connections = []
 
@@ -510,7 +492,6 @@ class NetworkManager:
             connection = ActiveConnection(device.active_connection, self.bus)
             connections.append(connection)
 
-
         return connections
 
     def turn_off_wifi(self):
@@ -522,10 +503,10 @@ class NetworkManager:
         if not wifi_dev:
             raise Exception("No WiFi device found")
 
-        
         # Alternative approach using nmcli command for more reliable wifi disabling
         try:
-            subprocess.run(["nmcli", "radio", "wifi", "off"], check=True, capture_output=True)
+            subprocess.run(["nmcli", "radio", "wifi", "off"],
+                           check=True, capture_output=True)
         except subprocess.CalledProcessError as e:
             self.logger.error(f"Failed to turn off WiFi using nmcli: {e}")
             raise Exception("Failed to turn off WiFi")
@@ -535,18 +516,19 @@ class NetworkManager:
         Turn on the WiFi device
         """
         try:
-            subprocess.run(["nmcli", "radio", "wifi", "on"], check=True, capture_output=True)
+            subprocess.run(["nmcli", "radio", "wifi", "on"],
+                           check=True, capture_output=True)
         except subprocess.CalledProcessError as e:
             self.logger.error(f"Failed to turn on WiFi using nmcli: {e}")
             raise Exception("Failed to turn on WiFi")
-
 
     def is_wifi_enabled(self) -> bool:
         """
         Check if WiFi is currently enabled
         """
         try:
-            result = subprocess.run(["nmcli", "radio", "wifi"], check=True, capture_output=True, text=True)
+            result = subprocess.run(
+                ["nmcli", "radio", "wifi"], check=True, capture_output=True, text=True)
             return result.stdout.strip() == "enabled"
         except subprocess.CalledProcessError:
             return False

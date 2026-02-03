@@ -1,3 +1,10 @@
+"""
+wifi.py
+
+API endpoints for wifi network management
+Handles listing available networks, connecting / disconnecting from networks, managing saved networks, and toggling wifi
+"""
+
 from fastapi import APIRouter, Depends, Request
 from typing import List
 from ..services import (

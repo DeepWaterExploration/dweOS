@@ -1,7 +1,18 @@
+"""
+device_manager.py
+
+Handles functionality of device and montiors for devices
+When it finds a new device, it creates a new device object and updates the device list and that devices settings
+When it sees a missing device, it removes that device ojbect from the device list
+Manages a devices streaming state as well as changes to device name
+Manages the leader follower connections
+"""
+
 from typing import *
 import logging
 import event_emitter as events
 import asyncio
+import traceback
 
 from .pydantic_schemas import *
 from .device import Device, lookup_pid_vid, DeviceInfo, DeviceType
@@ -195,7 +206,10 @@ class DeviceManager(events.EventEmitter):
         """
         Set a device UVC control
         """
-        device = self._find_device_with_bus_info(bus_info)
+        try:
+            device = self._find_device_with_bus_info(bus_info)
+        except DeviceNotFoundException:
+            return False
 
         device.set_pu(control_id, control_value)
 
@@ -208,11 +222,6 @@ class DeviceManager(events.EventEmitter):
         '''
         leader_device = self._find_device_with_bus_info(leader_bus_info)
         follower_device = self._find_device_with_bus_info(follower_bus_info)
-
-        if leader_device.device_type != DeviceType.STELLARHD_LEADER:
-            self.logger.warning(
-                'Attempted to add follower to device of non-leader type.')
-            return False
 
         if follower_device.device_type != DeviceType.STELLARHD_FOLLOWER:
             self.logger.warning(
@@ -243,10 +252,11 @@ class DeviceManager(events.EventEmitter):
             leader_device.remove_manual(follower_bus_info)
             return
 
-        if leader_device.device_type != DeviceType.STELLARHD_LEADER:
-            self.logger.warning(
-                'Attempted to remove follower from device of non-leader type.')
-            return False
+        # This is allowed
+        # if leader_device.device_type != DeviceType.STELLARHD_LEADER:
+        #     self.logger.warning(
+        #         'Attempted to remove follower from device of non-leader type.')
+        #     return False
 
         if follower_device.device_type != DeviceType.STELLARHD_FOLLOWER:
             self.logger.warning(
@@ -288,6 +298,7 @@ class DeviceManager(events.EventEmitter):
                 if not device:
                     continue
             except Exception as e:
+                traceback.print_exc()
                 self.logger.warning(e)
                 continue
             # append the device to the device list

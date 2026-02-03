@@ -8,9 +8,11 @@ import {
 
 import { CameraNickname } from "./nickname";
 import { CameraStream } from "./stream";
-import { useSnapshot } from "valtio";
-import { useContext } from "react";
+import { proxy, useSnapshot } from "valtio";
+import { useContext, useEffect, useState } from "react";
 import DeviceContext from "@/contexts/DeviceContext";
+
+const emptyState = proxy({});
 
 export function CameraCard({
   defaultHost,
@@ -21,10 +23,15 @@ export function CameraCard({
 }) {
   const device = useContext(DeviceContext)!;
 
+  console.log(device);
+
   // readonly device state
-  const deviceState = useSnapshot(device);
+  const deviceState = useSnapshot(device || emptyState);
 
-
+  if (!device) {
+    console.log("Device is null.");
+    return <></>;
+  }
 
   return (
     <Card className="w-full max-w-sm mx-auto">
@@ -35,9 +42,9 @@ export function CameraCard({
           <br />
           USB Port ID: {deviceState.bus_info}
         </CardDescription>
+        <CameraNickname />
       </CardHeader>
       <CardContent>
-        <CameraNickname />
         <CameraStream defaultHost={defaultHost} nextPort={nextPort} />
       </CardContent>
     </Card>

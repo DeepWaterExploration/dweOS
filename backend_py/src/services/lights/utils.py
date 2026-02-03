@@ -1,3 +1,9 @@
+"""
+utils.py
+
+Determines what kind of system/hardware the application is on, and then tries to enable PWM controllers on them
+"""
+
 import logging
 
 # from .fake_pwm import FakePWMController

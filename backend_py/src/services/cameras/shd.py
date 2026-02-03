@@ -1,12 +1,29 @@
+"""
+shd.py
+
+Adds additional features to stellarHD devices
+"""
+
+import logging
+import subprocess
+import struct
+import time
+from event_emitter import EventEmitter
+from typing import Dict, List
+from enum import Enum
+
 from .saved_pydantic_schemas import SavedDeviceModel
 from .enumeration import DeviceInfo
 from .device import Device, BaseOption, ControlTypeEnum, StreamEncodeTypeEnum
-from typing import Dict, List
+from . import xu_controls as xu
+from typing import Callable, Any
 
-from event_emitter import EventEmitter
+from dataclasses import dataclass
+import queue
+import threading
 
 
-class StellarOption(BaseOption, EventEmitter):
+class StorageOption(BaseOption, EventEmitter):
     def __init__(self, name: str, value):
         BaseOption.__init__(self, name)
         EventEmitter.__init__(self)
@@ -20,12 +37,40 @@ class StellarOption(BaseOption, EventEmitter):
         return self.value
 
 
+class CustomOption(BaseOption):
+
+    def __init__(self, name: str, setter: Callable[[Any], None], getter: Callable[[], Any]):
+        BaseOption.__init__(self, name)
+        self.setter = setter
+
+        # FIXME: I did this since the getter seems to be unreliable for asic controls, so we just trust the value stored
+        self.getter = getter
+        self.value = getter()
+
+    def set_value(self, value):
+        self.setter(value)
+        self.value = value
+
+    def get_value(self):
+        return self.value
+
+
 class SHDDevice(Device):
     """
     Class for stellarHD devices
     """
 
+    ASIC_COMMAND_DELAY=0.05
+
     def __init__(self, device_info: DeviceInfo) -> None:
+        # Specifies if SHD device is Stellar Pro
+        self.is_pro = True  # self.pid == 0x6369
+
+        self._asic_queue = queue.Queue()
+        self._asic_worker_running = True
+        self._asic_thread = threading.Thread(target=self._asic_command_worker, daemon=True)
+        self._asic_thread.start()
+
         super().__init__(device_info)
 
         # Copy MJPEG over to Software H264, since they are the same thing
@@ -46,11 +91,72 @@ class SHDDevice(Device):
             "bitrate", 5, ControlTypeEnum.INTEGER, 10, 0.1, 0.1
         )
 
+        if self.is_pro:
+            self.add_control_from_option(
+                'shutter', 100, ControlTypeEnum.INTEGER, 2800, 0, 1
+            )
+
+            self.add_control_from_option(
+                'ae', False, ControlTypeEnum.BOOLEAN
+            )
+
+            self.add_control_from_option(
+                'iso', 400, ControlTypeEnum.INTEGER, 4095, 0, 1
+            )
+
+            self.add_control_from_option(
+                'strobe_width', 0, ControlTypeEnum.INTEGER, 4095, 0, 1)
+
+            # self.add_control_from_option(
+            #     'strobe_enabled', False, ControlTypeEnum.BOOLEAN)
+
+    def _asic_command_worker(self):
+        '''
+        Background worker that processes ASIC/Sensor commands sequentionally
+        '''
+        while self._asic_worker_running:
+            try:
+                # Fetch command from queue
+                func, args, result_queue = self._asic_queue.get()
+                
+                try:
+                    # Execute the function
+                    res = func(*args)
+                    # Return result
+                    if result_queue:
+                        result_queue.put(res)
+                except Exception as e:
+                    self.logger.error(f"Error executing ASIC command: {e}")
+                    if result_queue:
+                        result_queue.put(None) # Or propagate exception logic
+                finally:
+                    self._asic_queue.task_done()
+                
+                # Enforce delay between commands
+                time.sleep(self.ASIC_COMMAND_DELAY)
+                
+            except Exception as e:
+                self.logger.error(f"ASIC worker loop error: {e}")
+
+    def _run_asic_command(self, func: Callable, *args) -> Any:
+        """
+        Helper to submit a command to the queue and wait for the result synchronously.
+        """
+        result_queue = queue.Queue()
+        self._asic_queue.put((func, args, result_queue))
+        return result_queue.get()
+
     def add_follower(self, device: 'SHDDevice'):
         if device.bus_info in self.followers:
             self.logger.info(
                 'Trying to add follower to device that already has this device as a follower. Ignoring request.')
             return
+
+        if device.bus_info == self.bus_info:
+            self.logger.info(
+                'Trying to add follower of same bus id as self. This is not allowed.')
+            return
+
         self.logger.info('Adding follower')
 
         # For saving purposes
@@ -61,8 +167,6 @@ class SHDDevice(Device):
 
         # Make the follower managed
         device.set_is_managed(True)
-        # Append the new device stream
-        self.stream_runner.streams.append(device.stream)
 
         if self.stream.enabled:
             self.start_stream()
@@ -87,6 +191,115 @@ class SHDDevice(Device):
         if self.stream.enabled:
             self.start_stream()
 
+    # ASIC stuff
+    # Sensor writes are not supported by all firmwares
+    # Only recent stellarHD firmware, no exploreHD firmware - but explore does support asic writes as well
+
+    def _sensor_write_high_low(self, reg_high: int, reg_low: int, value: int):
+        '''
+        Write high byte from value to high register, low byte to low
+        '''
+        self._sensor_write(reg_high,
+                           (value >> 8) & 0xFF)
+        # This is extremely scuffed: switch to waiting for trigger register before release (See below)
+        time.sleep(0.1)
+        self._sensor_write(reg_low, value & 0xFF)
+
+        # TODO: add check for success (0xAA in REG_TRIG)
+
+    def _sensor_read_high_low(self, reg_high, reg_low) -> int | None:
+        '''
+        Read high byte from high register to value, low byte to low
+        '''
+        ret, high = self._sensor_read(reg_high)
+        if ret != 0:
+            return None
+        ret, low = self._sensor_read(reg_low)
+        if ret != 0:
+            return None
+
+        return (high << 8) | (low & 0xFF)
+
+    def _sensor_write(self, reg: int, val: int):
+        high = (reg >> 8) & 0xFF
+        low = reg & 0xFF
+
+        ret = 0
+
+        # # Disable auto exposure
+        # ret |= self._asic_write(xu.StellarRegisterMap.REG_AE, 0x00)
+        # Set address high
+        ret |= self._asic_write(xu.StellarRegisterMap.REG_ADDR_H, high)
+        # Set address low
+        ret |= self._asic_write(xu.StellarRegisterMap.REG_ADDR_L, low)
+        # Set data
+        ret |= self._asic_write(xu.StellarRegisterMap.REG_DATA, val)
+        # Set mode to write ('W' = 0x57)
+        ret |= self._asic_write(xu.StellarRegisterMap.REG_MODE, 0x57)
+        # Trigger the command (0x55)
+        ret |= self._asic_write(xu.StellarRegisterMap.REG_TRIG, 0x55)
+
+        return ret
+
+    def _sensor_read(self, reg: int):
+        high = (reg >> 8) & 0xFF
+        low = reg & 0xFF
+
+        ret = 0
+
+        # # Disable auto exposure
+        # ret |= self._asic_write(xu.StellarRegisterMap.REG_AE, 0x00)
+        # Set address high
+        ret |= self._asic_write(xu.StellarRegisterMap.REG_ADDR_H, high)
+        # Set address low
+        ret |= self._asic_write(xu.StellarRegisterMap.REG_ADDR_L, low)
+        # Set mode to write ('R' = 0x52)
+        ret |= self._asic_write(xu.StellarRegisterMap.REG_MODE, 0x52)
+        # Trigger the command (0x55)
+        ret |= self._asic_write(xu.StellarRegisterMap.REG_TRIG, 0x55)
+
+        if ret != 0:
+            return ret
+
+        ret, val = self._asic_read(xu.StellarRegisterMap.REG_DATA)
+
+        return ret, val
+
+    def _asic_write(self, addr: int | xu.StellarRegisterMap, data: int, dummy: bool = False) -> int:
+        unit = xu.Unit.SYS_ID
+        selector = xu.Selector.SYS_ASIC_RW
+        # Accept enum
+        addr_val = addr.value if hasattr(addr, 'value') else addr
+        size = 4
+
+        # Dummy writes are used for asic reading
+        write_mode = 0xFF if dummy else 0
+        # Little endian unsigned short (asic address), byte (data), byte (write mode: 0 = normal, 0xFF = dummy)
+        ctrl_data = struct.pack("<HBB", addr_val, data, write_mode)
+
+        return self.cameras[0].uvc_set_ctrl(unit.value, selector.value, ctrl_data, size)
+
+    def _asic_read(self, addr: int | xu.StellarRegisterMap) -> tuple[int, int]:
+        addr_val = addr.value if hasattr(addr, 'value') else addr
+
+        # perform a dummy write to select the correct address
+        ret = self._asic_write(addr_val, 0, True)
+        if ret != 0:
+            return ret
+
+        unit = xu.Unit.SYS_ID
+        selector = xu.Selector.SYS_ASIC_RW
+        size = 4
+
+        # address, data, dummy read
+        ctrl_data = struct.pack("<HBB", addr_val, 0, 0)
+
+        ret = self.cameras[0].uvc_get_ctrl(
+            unit.value, selector.value, ctrl_data, size)
+
+        val = ctrl_data[2]
+        return (ret, val)
+
     def remove_manual(self, follower_bus_info: str):
         '''
         This should be called in the case the follower no longer exists
@@ -101,10 +314,48 @@ class SHDDevice(Device):
             if self.stream.enabled:
                 self.start_stream()
 
-    def _get_options(self) -> Dict[str, StellarOption]:
+    # This goes against the architecture created in the exploreHD
+    # When we designed that, it was preferred to not have any functions that could control asic values.
+    # TODO: FIXME
+    def set_shutter_speed(self, value: int):
+        self._run_asic_command(self._sensor_write_high_low,
+            xu.StellarSensorMap.SHUTTER_HIGH, xu.StellarSensorMap.SHUTTER_LOW, value)
+
+    def get_shutter_speed(self) -> int | None:
+        return self._run_asic_command(self._sensor_read_high_low,
+            xu.StellarSensorMap.SHUTTER_HIGH, xu.StellarSensorMap.SHUTTER_LOW)
+
+    def set_iso(self, value: int):
+        self._run_asic_command(self._sensor_write_high_low,
+            xu.StellarSensorMap.ISO_HIGH, xu.StellarSensorMap.ISO_LOW, value)
+
+    def get_iso(self) -> int | None:
+        return self._run_asic_command(self._sensor_read_high_low,
+            xu.StellarSensorMap.ISO_HIGH, xu.StellarSensorMap.ISO_LOW)
+
+    def set_asic_ae(self, enabled: bool):
+        self._run_asic_command(self._asic_write, 
+                               xu.StellarRegisterMap.REG_AE, 0x01 if enabled else 0x00)
+
+    def get_asic_ae(self) -> bool | None:
+        # We can run asic read commands without worrying, since they don't write to the camera..? I think
+        ret, val = self._asic_read(xu.StellarRegisterMap.REG_AE)
+        if ret != 0:
+            return None
+        return True if val == 0x01 else False
+
+    def set_strobe_width(self, value: int):
+        self._run_asic_command(self._sensor_write_high_low,
+            xu.StellarSensorMap.STROBE_WIDTH_HIGH, xu.StellarSensorMap.STROBE_WIDTH_LOW, value)
+
+    def get_strobe_width(self) -> int | None:
+        return self._run_asic_command(self._sensor_read_high_low, 
+                                      xu.StellarSensorMap.STROBE_WIDTH_HIGH, xu.StellarSensorMap.STROBE_WIDTH_LOW)
+
+    def _get_options(self) -> Dict[str, BaseOption]:
         options = {}
 
-        self.bitrate_option = StellarOption(
+        self.bitrate_option = StorageOption(
             "Software H.264 Bitrate", 5)  # 5 mpbs
 
         def update_bitrate():
@@ -119,6 +370,25 @@ class SHDDevice(Device):
 
         options["bitrate"] = self.bitrate_option
 
+        if self.is_pro:
+            options['ae'] = CustomOption(
+                "Auto Exposure (ASIC)", self.set_asic_ae, self.get_asic_ae
+            )
+
+            # UVC shutter speed control
+            options['shutter'] = CustomOption(
+                "Shutter Speed", self.set_shutter_speed, self.get_shutter_speed)
+
+            # UVC ISO control
+            options['iso'] = CustomOption(
+                "ISO", self.set_iso, self.get_iso)
+
+            # options['strobe_enabled'] = CustomOption(
+            #     "Strobe Enabled", self.set_strobe_enabled, self.get_strobe_enabled)
+
+            options['strobe_width'] = CustomOption(
+                "Strobe Width", self.set_strobe_width, self.get_strobe_width)
+
         return options
 
     def load_settings(self, saved_device: SavedDeviceModel):
@@ -129,6 +399,16 @@ class SHDDevice(Device):
             self.logger.warning(
                 f"{self.bus_info if not self.nickname else self.nickname}: Cannot start stream that is managed.")
             return
+
+        self.stream_runner.streams = [self.stream]
+
+        for follower_device in self.follower_devices:
+            # A not so hacky fix (very clever :]) to ensure the stream's device_path is set
+            follower_device.configure_stream(self.stream.encode_type, self.stream.width,
+                                             self.stream.height, self.stream.interval, self.stream.stream_type, [])
+
+            # Append the new device stream
+            self.stream_runner.streams.append(follower_device.stream)
 
         # mbps to kbit/sec
         self.stream.software_h264_bitrate = int(

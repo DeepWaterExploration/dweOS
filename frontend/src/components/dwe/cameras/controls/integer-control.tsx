@@ -1,150 +1,239 @@
-// src/components/integer-control.tsx (Updated)
+// src/components/integer-control.tsx
 
 import { Slider } from "@/components/ui/slider";
-import { Input } from "@/components/ui/input"; // Import Input
+import { Input } from "@/components/ui/input";
 import { components } from "@/schemas/dwe_os_2";
-import { useState, useEffect, useCallback } from "react"; // Import useEffect, useCallback
+import { useState, useEffect, useCallback, useRef } from "react";
 import { subscribe } from "valtio";
-import { Label } from "@/components/ui/label"; // Import Label for better accessibility
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { CirclePlus, CircleMinus } from "lucide-react";
 
 const IntegerControl = ({
   control,
+  isDisabled = false,
 }: {
   control: components["schemas"]["ControlModel"];
+  isDisabled?: boolean;
 }) => {
-  // Local state for both slider and input interaction
-  const [currentValue, setCurrentValue] = useState(control.value);
-  // State to hold the potentially invalid input string
-  const [inputValue, setInputValue] = useState(control.value.toString());
-
   const { min_value, max_value, step } = control.flags;
-  const controlId = `control-${control.control_id}-${control.name}`; // Unique ID for label association
+  const controlId = `control-${control.control_id}-${control.name}`;
+  const safeStep = step && step > 0 ? step : 1;
 
-  // Update local state when the global control value changes
+  // FIXME
+  isDisabled = false;
+
+  const precision =
+    safeStep < 1 ? step.toString().split(".")[1]?.length || 0 : 0;
+
+  const [currentValue, setCurrentValue] = useState(control.value);
+  const [inputValue, setInputValue] = useState(
+    control.value.toFixed(precision).toString(),
+  );
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const dragState = useRef<{
+    startX: number;
+    startValue: number;
+    containerWidth: number;
+  } | null>(null);
+
   useEffect(() => {
     const unsubscribe = subscribe(control, () => {
-      // Only update if the external value differs from the current committed value
       if (control.value !== currentValue) {
         setCurrentValue(control.value);
-        setInputValue(control.value.toString());
+        setInputValue(control.value.toFixed(precision).toString());
       }
     });
-    return () => unsubscribe(); // Cleanup subscription
-  }, [control, currentValue]); // Re-subscribe if control or currentValue changes
+    return () => unsubscribe();
+  }, [control, currentValue]);
 
-  // Clamp value within min/max bounds
   const clamp = (val: number): number => {
     return Math.min(max_value, Math.max(min_value, val));
   };
 
-  // Snap value to the nearest valid step
-  const snapToStep = (val: number): number => {
-    if (step <= 0) return val; // Avoid division by zero or infinite loops
-    return Math.round((val - min_value) / step) * step + min_value;
-  };
+  // Logic to snap to the specific step defined in flags
+  const snapToStep = useCallback(
+    (val: number): number => {
+      if (!step || step <= 0) return val;
+      return Math.round((val - min_value) / safeStep) * safeStep + min_value;
+    },
+    [min_value, step],
+  );
 
-  // Validate and commit the value from input or slider end
   const commitValue = useCallback(
     (newValue: number) => {
       let validatedValue = clamp(newValue);
+
       validatedValue = snapToStep(validatedValue);
 
-      // Update local state immediately for responsiveness
       setCurrentValue(validatedValue);
-      setInputValue(validatedValue.toString());
+      setInputValue(validatedValue.toFixed(precision).toString());
 
-      // Update the global state only if the value actually changed
       if (control.value !== validatedValue) {
-        control.value = validatedValue; // This triggers the API call via subscription in CameraControls
+        control.value = validatedValue;
       }
     },
-    [control, min_value, max_value, step, clamp, snapToStep] // Dependencies for useCallback
+    [control, min_value, max_value, clamp, snapToStep],
   );
 
-  // Handle changes from the text input
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = event.target.value;
-    setInputValue(rawValue); // Update input display immediately
+  const handlePointerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
 
-    // Attempt to parse and validate on change for quick feedback (optional)
-    // Or wait for blur/enter for final validation
+    if (!containerRef.current) return;
+
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+
+    dragState.current = {
+      startX: e.clientX,
+      startValue: currentValue,
+      containerWidth: containerRef.current.offsetWidth,
+    };
   };
 
-  // Handle blur event for the text input (commit value)
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!dragState.current) return;
+
+    const { startX, startValue, containerWidth } = dragState.current;
+
+    const deltaX = e.clientX - startX;
+
+    const range = max_value - min_value;
+    const valueDelta = (deltaX / containerWidth) * range;
+
+    const newValue = clamp(startValue + valueDelta);
+
+    setCurrentValue(newValue);
+    setInputValue(newValue.toFixed(precision).toString());
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!dragState.current) return;
+
+    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+    dragState.current = null;
+
+    commitValue(currentValue);
+  };
+
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(event.target.value);
+  };
+
   const handleInputBlur = () => {
-    const parsedValue = parseInt(inputValue, 10);
+    const parsedValue = parseFloat(inputValue);
     if (!isNaN(parsedValue)) {
       commitValue(parsedValue);
     } else {
-      // Reset input to the last valid committed value if input is invalid
       setInputValue(currentValue.toString());
     }
   };
 
-  // Handle Enter key press in the text input (commit value)
   const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
-      const parsedValue = parseInt(inputValue, 10);
+      const parsedValue = parseFloat(inputValue);
       if (!isNaN(parsedValue)) {
         commitValue(parsedValue);
-        // Optionally blur the input after commit
         event.currentTarget.blur();
       } else {
         setInputValue(currentValue.toString());
       }
     } else if (event.key === "Escape") {
-      // Reset input to current committed value on Escape
       setInputValue(currentValue.toString());
       event.currentTarget.blur();
     }
   };
 
-  // Handle slider value changes (live update)
-  const handleSliderChange = (value: number[]) => {
-    const val = value[0];
-    // Update visually immediately
-    setCurrentValue(val);
-    setInputValue(val.toString());
-  };
+  const handleInputStep = (step: string) => {
+    if (isDisabled || !inputRef.current) return;
 
-  // Handle slider commit (end of drag)
-  const handleSliderCommit = (value: number[]) => {
-    commitValue(value[0]);
+    try {
+      if (step === "up") {
+        inputRef.current.stepUp();
+      } else {
+        inputRef.current.stepDown();
+      }
+    } catch (e) {
+      return;
+    }
+
+    const newValue = inputRef.current.value;
+    setInputValue(newValue);
+    setCurrentValue(parseFloat(newValue));
+
+    inputRef.current.focus();
   };
 
   return (
-    <div className="space-y-2">
-      <div className="flex justify-between items-center">
-        <Label htmlFor={controlId} className="text-sm font-medium truncate">
-          {control.name}
-        </Label>
-        {/* Display current committed value */}
-        {/* <span className="text-sm text-muted-foreground">{currentValue}</span> */}
-      </div>
+    <div
+      className={cn(
+        "space-y-2",
+        isDisabled && "opacity-50 pointer-events-none",
+      )}
+    >
       <div className="flex items-center gap-3">
-        <Slider
-          id={controlId} // Link slider to label
-          min={min_value}
-          max={max_value}
-          step={step}
-          value={[currentValue]} // Slider reflects the committed state
-          onValueChange={handleSliderChange} // Update local state live
-          onValueCommit={handleSliderCommit} // Commit on drag end
-          className="flex-grow"
-        />
-        <Input
-          type="number" // Use number type for basic browser validation/keyboard
-          value={inputValue} // Input reflects the potentially temporary state
-          onChange={handleInputChange}
-          onBlur={handleInputBlur} // Commit on blur
-          onKeyDown={handleInputKeyDown} // Commit on Enter, reset on Escape
-          min={min_value} // Set min/max for browser hints
-          max={max_value}
-          step={step}
-          className="w-20 h-8 text-sm" // Adjust width and height as needed
-          // Prevent mouse wheel scrolling from changing the number input value
-          onWheel={(e) => (e.target as HTMLInputElement).blur()}
-        />
+        <div className="group relative flex-grow" ref={containerRef}>
+          <Slider
+            id={controlId}
+            min={min_value}
+            max={max_value}
+            step={1}
+            value={[currentValue]}
+            className="[&>span]:group-hover:border-white pointer-events-none"
+            disabled={isDisabled}
+          >
+            <span className="text-xs font-bold text-foreground mix-blend-overlay absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+              {control.name}
+            </span>
+          </Slider>
+          <div
+            className="peer absolute inset-0 z-10 cursor-ew-resize touch-none"
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerLeave={handlePointerUp}
+          />
+        </div>
+        <div className="flex gap-1">
+          <Input
+            type="number"
+            value={inputValue}
+            onChange={handleInputChange}
+            onBlur={handleInputBlur}
+            onKeyDown={handleInputKeyDown}
+            min={min_value}
+            max={max_value}
+            step={step}
+            className="w-20 h-8 text-sm border-border hover:border-foreground"
+            onWheel={(e) => (e.target as HTMLInputElement).blur()}
+            disabled={isDisabled}
+            ref={inputRef}
+          />
+          <div className="flex flex-col gap-[1px]">
+            <Button
+              variant="svg"
+              size="icon"
+              className="h-4 w-4 text-border hover:text-foreground"
+              onClick={() => handleInputStep("up")}
+              disabled={isDisabled || currentValue >= max_value}
+              onMouseDown={(e) => e.preventDefault()}
+            >
+              <CirclePlus className="h-3 w-3 fill-primary/20" />
+            </Button>
+            <Button
+              variant="svg"
+              size="icon"
+              className="h-4 w-4 text-border hover:text-foreground"
+              onClick={() => handleInputStep("down")}
+              disabled={isDisabled || currentValue <= min_value}
+              onMouseDown={(e) => e.preventDefault()}
+            >
+              <CircleMinus className="h-3 w-3 fill-primary/20" />
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );

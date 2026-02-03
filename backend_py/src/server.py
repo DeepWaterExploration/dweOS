@@ -1,3 +1,10 @@
+"""
+server.py
+
+Handles server logic and initializes all the managers (settings, devices, lights, etc)
+Starts device monitoring, wifi scan, and starts ttyd (teletypewriter daemon) to run in the background
+"""
+
 from ctypes import *
 import logging.handlers
 
@@ -87,18 +94,21 @@ class Server:
                 )
                 self.wifi_manager.on(
                     "connections_changed",
-                    lambda: asyncio.create_task(self.sio.emit("connections_changed")),
+                    lambda: asyncio.create_task(
+                        self.sio.emit("connections_changed")),
                 )
                 self.wifi_manager.on(
                     "connection_changed",
-                    lambda: asyncio.create_task(self.sio.emit("connection_changed")),
+                    lambda: asyncio.create_task(
+                        self.sio.emit("connection_changed")),
                 )
                 self.wifi_manager.on(
                     "disconnected",
-                    lambda: asyncio.create_task(self.sio.emit("wifi_disconnected")),
+                    lambda: asyncio.create_task(
+                        self.sio.emit("wifi_disconnected")),
                 )
 
-            except WiFiException as e:
+            except Exception as e:
                 self.server_logger.warning(
                     f"Error occurred while initializing WiFi: {e} so WiFi will not be supported"
                 )

@@ -1,3 +1,10 @@
+"""
+saved_pydantic_schemas.py
+
+Defines Pydantic models and Enums for persisting device settings and configs
+Includes schemas for serializing device states (streams, controls, nicknames) to JSON, keeping setting across reboots
+"""
+
 from pydantic import BaseModel
 from typing import List, Optional
 

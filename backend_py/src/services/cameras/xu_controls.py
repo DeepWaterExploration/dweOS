@@ -1,11 +1,17 @@
+"""
+xu_controls.py
+
+Specifies the constants of where each extension unit feature's register address is stored
+"""
+
 from enum import Enum
 
 
-EHD_DEVICE_TAG = 0x9A
+DWE_DEVICE_TAG = 0x9A
 
 
 class Unit(Enum):
-    SYS_ID = 0x02
+    SYS_ID = 0x03  # In past was 0x02, but was unused. Was a mistake
     USR_ID = 0x04
 
 
@@ -33,3 +39,22 @@ class Command(Enum):
     H264_BITRATE_CTRL = 0x02
     GOP_CTRL = 0x03
     H264_MODE_CTRL = 0x06
+
+
+class StellarRegisterMap(Enum):
+    REG_AE = 0x1673
+    REG_ADDR_H = 0x1674
+    REG_ADDR_L = 0x1675
+    REG_DATA = 0x1676
+    REG_MODE = 0x1677
+    REG_TRIG = 0x1678
+    REG_STROBE_ENABLED = 0x8100
+
+
+class StellarSensorMap:
+    SHUTTER_HIGH = 0x3501
+    SHUTTER_LOW = 0x3502
+    ISO_HIGH = 0x3508
+    ISO_LOW = 0x3509
+    STROBE_WIDTH_HIGH = 0x3927
+    STROBE_WIDTH_LOW = 0x3928

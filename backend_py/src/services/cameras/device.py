@@ -401,6 +401,9 @@ class Device(events.EventEmitter):
             )
             return
 
+        # Update the pwm frequency with the new fps
+        self.emit("pwm_frequency", self.stream.interval.denominator)
+
         self.stream.device_path = camera.path
         self.stream.width = width
         self.stream.height = height

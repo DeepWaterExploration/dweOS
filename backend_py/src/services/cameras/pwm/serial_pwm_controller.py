@@ -51,8 +51,6 @@ class SerialPWMController:
                 else:
                     break
             except serial.serialutil.SerialException as e:
-                if self.has_printed_error:
-                    return
                 self.has_printed_error = True
                 self.logger.error(f"No serial port found: {e}")
 

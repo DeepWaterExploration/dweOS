@@ -109,6 +109,7 @@ class DeviceManager(events.EventEmitter):
         # we need to broadcast that there was a gst error so that the frontend knows there may be a kernel issue
         device.stream_runner.on(
             "stream_error", lambda _: self._append_stream_error(device))
+        device.on("pwm_frequency", lambda fps: self.serial.apply_from_fps(fps))
 
         return device
 

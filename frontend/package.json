@@ -1,7 +1,7 @@
 {
     "name": "frontend",
     "private": true,
-    "version": "v0.5.1-asic-control",
+    "version": "v1.0.0-JetsonTesting",
     "type": "module",
     "scripts": {
         "dev": "vite --host",

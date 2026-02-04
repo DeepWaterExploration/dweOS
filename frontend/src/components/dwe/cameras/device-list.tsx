@@ -195,8 +195,8 @@ const DeviceListLayout = () => {
       removeDevice(id);
     };
 
-    const handleGstError = (data: { errors: string[]; bus_info: string }) => {
-      console.log("GStreamer Error:", data.errors, data.bus_info);
+    const handleStreamError = (data: { errors: string[]; bus_info: string }) => {
+      console.log("Stream Error:", data.errors, data.bus_info);
       setDevices((currentDevices) => {
         const device = getDeviceByBusInfo(currentDevices, data.bus_info);
         console.log(currentDevices.map((d) => d.bus_info));
@@ -207,7 +207,7 @@ const DeviceListLayout = () => {
         return [...currentDevices]; // Return a new array to trigger re-render
       });
       toast({
-        title: "GStreamer Error",
+        title: "Stream Error",
         description: `An error occurred with the device ${data.bus_info}. Please check the logs for more details.`,
         variant: "destructive",
       });
@@ -216,7 +216,7 @@ const DeviceListLayout = () => {
     const getSavedPreferences = async () => {};
 
     if (connected) {
-      socket?.on("gst_error", handleGstError);
+      socket?.on("stream_error", handleStreamError);
       socket?.on("device_added", handleDeviceAdded);
       socket?.on("device_removed", handleDeviceRemoved);
 
@@ -229,7 +229,7 @@ const DeviceListLayout = () => {
     return () => {
       socket?.off("device_added", handleDeviceAdded);
       socket?.off("device_removed", handleDeviceRemoved);
-      socket?.off("gst_error", handleGstError);
+      socket?.off("stream_error", handleStreamError);
     };
   }, [socket, connected]);
 

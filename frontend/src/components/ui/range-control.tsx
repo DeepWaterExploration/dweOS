@@ -74,9 +74,9 @@ export const RangeControl = ({
             min={min}
             max={max}
             step={step}
-            onValueCommit={(vals) => onChange(vals[0])}
             onValueChange={(vals) => {
               setValueSlider(vals[0])
+              onChange(vals[0])
             }}
             disabled={disabled}
             className="[&>span]:group-hover:border-white cursor-pointer"

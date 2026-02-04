@@ -310,7 +310,7 @@ class Device(events.EventEmitter):
 
         self._get_controls()
 
-    def _on_gst_error(self, err: str):
+    def _on_stream_error(self, err: str):
         self.logger.error(err)
         # TODO
 

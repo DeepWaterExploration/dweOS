@@ -25,7 +25,7 @@ import socketio
 
 from .ehd import EHDDevice
 from .shd import SHDDevice
-
+from .pwm.serial_pwm_controller import SerialPWMController
 
 def todict(obj, classkey=None):
     if isinstance(obj, dict):
@@ -65,7 +65,10 @@ class DeviceManager(events.EventEmitter):
         self.settings_manager = settings_manager
         self._is_monitoring = False
         # List of devices with gstreamer errors
-        self.gst_errors: List[str] = []
+        self.stream_errors: List[str] = []
+
+        self.serial = SerialPWMController()
+        self.serial.start()
 
         self.logger = logging.getLogger("dwe_os_2.cameras.DeviceManager")
 
@@ -105,20 +108,16 @@ class DeviceManager(events.EventEmitter):
 
         # we need to broadcast that there was a gst error so that the frontend knows there may be a kernel issue
         device.stream_runner.on(
-            "gst_error", lambda _: self._append_gst_error(device))
+            "stream_error", lambda _: self._append_stream_error(device))
 
         return device
 
-    def _append_gst_error(self, device: DeviceModel):
+    def _append_stream_error(self, device: DeviceModel):
         """
         Helper function to append a gst error
         """
-        self.sio.emit("gst_error", {
-            "errors": self.gst_errors,
-            "bus_info": device.bus_info
-        })
         device.stream.enabled = False
-        self.gst_errors.append(device.bus_info)
+        self.stream_errors.append(device.bus_info)
 
     def get_devices(self):
         """
@@ -155,6 +154,8 @@ class DeviceManager(events.EventEmitter):
         stream_type: StreamTypeEnum = stream_info.stream_type
         endpoints = stream_info.endpoints
 
+        self.serial.apply_from_fps(interval.denominator)
+
         device.configure_stream(
             encode_type, width, height, interval, stream_type, endpoints
         )
@@ -166,26 +167,6 @@ class DeviceManager(events.EventEmitter):
 
         self.settings_manager.save_device(device)
         return True
-
-    # def unconfigure_device_stream(self, bus_info: str) -> bool:
-    #     """
-    #     Remove a device stream (unconfigure)
-    #     """
-    #     device = self._find_device_with_bus_info(bus_info)
-    #     if not device:
-    #         return False
-
-    #     device.unconfigure_stream()
-
-    #     self.settings_manager.save_device(device)
-
-    #     # Remove leader if leader stops stream
-    #     if (
-    #         device.device_type == DeviceType.STELLARHD_LEADER
-    #         and cast(SHDDevice, device).follower
-    #     ):
-    #         self.remove_leader(cast(SHDDevice, device).follower)
-    #     return True
 
     def set_device_nickname(self, bus_info: str, nickname: str) -> bool:
         """
@@ -313,9 +294,9 @@ class DeviceManager(events.EventEmitter):
                 "device_added", DeviceModel.model_validate(device).model_dump()
             )
 
-        while len(self.gst_errors) > 0:
-            bus_info = self.gst_errors.pop()
-            await self._emit_gst_error(bus_info, "GST Error")
+        while len(self.stream_errors) > 0:
+            bus_info = self.stream_errors.pop()
+            await self._emit_stream_error(bus_info, "GST Error")
 
         if len(removed_devices) > 0 or len(new_devices) > 0:
             # make sure to load the leader followers in case there are new ones to check
@@ -376,15 +357,15 @@ class DeviceManager(events.EventEmitter):
             # get the list of devices and update the internal array
             devices_info = await self._get_devices(devices_info)
 
-    async def _emit_gst_error(self, device: str, errors: list):
+    async def _emit_stream_error(self, device: str, errors: list):
         """
-        Emit a gst_error and make sure it is not due to the device being unplugged
+        Emit a stream_error and make sure it is not due to the device being unplugged
         """
         devices_info = list_devices()
 
         for dev_info in devices_info:
             if device == dev_info.bus_info:
-                await self.sio.emit("gst_error", {"errors": errors, "bus_info": device})
+                await self.sio.emit("stream_error", {"errors": errors, "bus_info": device})
                 return
 
-        self.logger.debug("gst_error ignored due to device unplugged")
+        self.logger.debug("stream_error ignored due to device unplugged")

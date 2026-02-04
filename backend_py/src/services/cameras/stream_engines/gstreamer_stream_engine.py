@@ -175,37 +175,28 @@ class GStreamerProcessEngine(BaseStreamEngine):
                 line_stripped = stderr_line.strip()
 
                 # Log all stderr output but only stop on actual errors
-                if any(error_keyword in line_stripped.lower() for error_keyword in ['error', 'failed', 'critical']):
-                    # Ignore known non-critical DMA warnings that don't affect functionality
-                    if "_dma_fmt_to_dma_drm_fmts: assertion 'fmt != GST_VIDEO_FORMAT_UNKNOWN' failed" in line_stripped:
-                        self.logger.warning(
-                            f"GStreamer DMA Warning (non-critical): {line_stripped}")
-                        continue
-
-                    if "Failed to allocate required memory" in line_stripped and any(
-                        stream.stream_type == StreamTypeEnum.RECORDING for stream in self.streams
-                    ):
-                        for stream in self.streams:
-                            if stream.stream_type == StreamTypeEnum.RECORDING and stream.file_path:
-                                print(str(stream.file_path))
-                                # If we never get to write the file, remove it
-                                os.remove(stream.file_path)
-                                stream.file_path = None
-
-                    error_block.append(stderr_line)
-                    self.logger.error(f"GStreamer Error: {line_stripped}")
-                    # self.stop()
-                    # break
-                else:
-                    # Log as debug/info for non-error messages
-                    if 'warning' in line_stripped.lower():
-                        self.logger.warning(
-                            f"GStreamer Warning: {line_stripped}")
-                    else:
-                        self.logger.debug(f"GStreamer Info: {line_stripped}")
+                if any(error_keyword in line_stripped.lower() for error_keyword in ['error', 'failed', 'warning', 'critical']):
+                    error_block.append(line_stripped)
         except:
             pass
 
-        # if len(error_block) > 0:
-            # self.stop()
-            # self.emit_error('\n'.join(error_block))
+        if self._process:
+            self._process.wait()
+            return_code = self._process.returncode
+
+            if self.started and return_code != 0:
+                self.logger.error(
+                    f"GStreamer process crashed with return code: {return_code}")
+                
+                for error in error_block:
+                    self.logger.error(error)
+
+                # Construct error message
+                error_msg = f"Process exited with code {return_code}."
+
+                self.emit_error(error_msg)
+
+                # Reset state
+                with self._lock:
+                    self.started = False
+                    self._process = None

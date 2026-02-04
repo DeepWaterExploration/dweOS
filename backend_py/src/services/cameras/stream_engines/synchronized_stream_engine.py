@@ -38,6 +38,7 @@ class SynchronizedStreamEngine(BaseStreamEngine):
             self.synchronized_camera = SynchronizedCamera(self.cameras)
         except OSError as e:
             self.logger.error("Unable to open synchronized camera: '%s'", e)
+            self.emit_error(e.strerror)
         
 
     def _send_frame(self, frames: List[CopiedFrame], endpoint: StreamEndpointModel):

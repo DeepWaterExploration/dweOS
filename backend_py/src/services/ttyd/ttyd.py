@@ -8,12 +8,13 @@ import subprocess
 
 class TTYDManager:
     
-    # TTYD_CMD = ['ttyd', '-p', '7681', 'login']
-    # For dev mode comment out above, comment in below:
-    TTYD_CMD = ['ttyd', '-W', '-a', '-p', '7681', 'bash']   
+    TTYD_CMD = ['ttyd', '-p', '7681', 'login']
 
-    def __init__(self) -> None:
+    def __init__(self, is_dev_mode=False) -> None:
         self._process: subprocess.Popen | None = None
+
+        if is_dev_mode:
+            self.TTYD_CMD = ['ttyd', '-W', '-a', '-p', '7681', 'bash']
 
     def start(self) -> None:
         if self._process:

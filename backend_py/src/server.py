@@ -34,6 +34,7 @@ class Server:
         app: FastAPI,
         settings_path: str = "/",
         log_level=logging.INFO,
+        is_dev_mode = False
     ) -> None:
         # initialize the app
         self.app = app
@@ -120,7 +121,7 @@ class Server:
 
         # TTYD
         if self.feature_support.ttyd:
-            self.ttyd_manager = TTYDManager()
+            self.ttyd_manager = TTYDManager(is_dev_mode)
 
         # FAST API
         self.app.state.device_manager = self.device_manager

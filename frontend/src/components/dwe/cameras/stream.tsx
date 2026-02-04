@@ -15,7 +15,7 @@ import DeviceContext from "@/contexts/DeviceContext";
 import { subscribe, useSnapshot } from "valtio";
 import { components } from "@/schemas/dwe_os_2";
 import DevicesContext from "@/contexts/DevicesContext";
-import { getDeviceByBusInfo } from "@/lib/utils";
+import { getDeviceByBusInfo, useDidMountEffect } from "@/lib/utils";
 import { API_CLIENT } from "@/api";
 import { CameraControls } from "./camera-controls";
 
@@ -31,6 +31,14 @@ import { RangeControl } from "@/components/ui/range-control";
 import { Toggle } from "@/components/ui/toggle";
 
 type ControlModel = components["schemas"]["ControlModel"];
+
+const registerValueMap: Record<number, number> = {
+  60: 1462,
+  50: 1756,
+  40: 2119,
+  30: 2436,
+  15: 5884
+} as const;
 
 export const SensorControls = () => {
   const device = useContext(DeviceContext)!;
@@ -74,20 +82,20 @@ export const SensorControls = () => {
     });
   };
 
-  useEffect(
+  useDidMountEffect(
     () => setUVCControl(exposureControl as ControlModel, autoExposure ? 1 : 0),
     [autoExposure],
   );
 
-  useEffect(
+  useDidMountEffect(
     () => setUVCControl(shutterControl as ControlModel, exposureTime!),
     [exposureTime],
   );
 
-  useEffect(() => setUVCControl(isoControl as ControlModel, gain!), [gain]);
+  useDidMountEffect(() => setUVCControl(isoControl as ControlModel, gain!), [gain]);
 
   // Set both at the same time to fix fw bug
-  useEffect(
+  useDidMountEffect(
     () => setUVCControl(strobeWidthControl as ControlModel, strobeWidth),
     [strobeWidth, exposureTime],
   );
@@ -135,7 +143,7 @@ export const SensorControls = () => {
                   label="Exposure Time"
                   value={exposureTime}
                   min={shutterControl.flags.min_value}
-                  max={shutterControl.flags.max_value}
+                  max={registerValueMap[deviceSnapshot.stream.interval.denominator] || 0}
                   onChange={setExposureTime}
                 />
                 <RangeControl

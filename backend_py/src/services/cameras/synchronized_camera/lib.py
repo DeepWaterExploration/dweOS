@@ -52,7 +52,11 @@ class V4L2Camera:
         self.pixel_format = pixel_format
         self.buffer_count = buffer_count
 
-        self.fd = os.open(device, os.O_RDWR | os.O_NONBLOCK)
+        self.critical_error = False
+        try:
+            self.fd = os.open(device, os.O_RDWR | os.O_NONBLOCK)
+        except:
+            self.critical_error = True
         self._buffers = []  # list[mmap.mmap]
         self._running = False
 
@@ -195,6 +199,8 @@ class V4L2Camera:
         )
 
     def close(self):
+        if self.critical_error:
+            return
         self._stop_stream()
 
         # Unmap buffers
@@ -307,7 +313,8 @@ class SynchronizedCamera:
             else:
                 # Drop the earliest frame (smallest timestamp) and try again
                 min_index = timestamps.index(min_ts)
-                self.logger.warning(f"Dropping frame of difference: {max_ts - min_ts}")
+                self.logger.warning(
+                    f"Dropping frame of difference: {max_ts - min_ts}")
                 self.queues[min_index].popleft()
 
         # Not enough frames anymore to sync

@@ -34,7 +34,7 @@ class Server:
         app: FastAPI,
         settings_path: str = "/",
         log_level=logging.INFO,
-        is_dev_mode = False
+        is_dev_mode=False
     ) -> None:
         # initialize the app
         self.app = app
@@ -71,7 +71,7 @@ class Server:
 
         # Device Manager
         self.device_manager = DeviceManager(
-            settings_manager=self.settings_manager, sio=self.sio
+            settings_manager=self.settings_manager, sio=self.sio, use_serial=self.feature_support.serial
         )
 
         # Lights

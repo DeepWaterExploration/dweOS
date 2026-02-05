@@ -1,5 +1,5 @@
 # run.py runs the backend, creating a async socketio server and a FastAPI web framework, then
-# both are passed into a Server instance to handle logic, and a combination of the two is hosted 
+# both are passed into a Server instance to handle logic, and a combination of the two is hosted
 # as a uvicorn server, which handles traffic
 
 from src import Server, FeatureSupport
@@ -43,7 +43,7 @@ app.add_middleware(
 # Server instance
 # server = Server(FeatureSupport.none(), sio, app, settings_path='.')
 server = Server(
-    FeatureSupport.all(), sio, app, settings_path=".", log_level=logging.DEBUG, is_dev_mode=True
+    FeatureSupport(ttyd=True, wifi=True, serial=False), sio, app, settings_path=".", log_level=logging.DEBUG, is_dev_mode=True
 )
 
 # Combine FastAPI and Socket.IO ASGI apps
@@ -54,7 +54,8 @@ if __name__ == "__main__":
     import uvicorn
 
     async def main():
-        config = uvicorn.Config(app, host="0.0.0.0", port=5000, log_level="warning")
+        config = uvicorn.Config(app, host="0.0.0.0",
+                                port=5000, log_level="warning")
         server = uvicorn.Server(config)
         await server.serve()
 

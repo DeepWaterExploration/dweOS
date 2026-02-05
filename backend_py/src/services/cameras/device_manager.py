@@ -27,6 +27,7 @@ from .ehd import EHDDevice
 from .shd import SHDDevice
 from .pwm.serial_pwm_controller import SerialPWMController
 
+
 def todict(obj, classkey=None):
     if isinstance(obj, dict):
         data = {}
@@ -58,17 +59,19 @@ class DeviceManager(events.EventEmitter):
     """
 
     def __init__(
-        self, sio: socketio.Server, settings_manager=SettingsManager()
+        self, sio: socketio.Server, use_serial=False, settings_manager=SettingsManager()
     ) -> None:
         self.devices: List[Device] = []
         self.sio = sio
         self.settings_manager = settings_manager
         self._is_monitoring = False
-        # List of devices with gstreamer errors
+        # List of devices with stream errors
         self.stream_errors: List[str] = []
 
-        self.serial = SerialPWMController()
-        self.serial.start()
+        self.serial = None
+        if use_serial:
+            self.serial = SerialPWMController()
+            self.serial.start()
 
         self.logger = logging.getLogger("dwe_os_2.cameras.DeviceManager")
 
@@ -109,7 +112,10 @@ class DeviceManager(events.EventEmitter):
         # we need to broadcast that there was a gst error so that the frontend knows there may be a kernel issue
         device.stream_runner.on(
             "stream_error", lambda _: self._append_stream_error(device))
-        device.on("pwm_frequency", lambda fps: self.serial.apply_from_fps(fps))
+
+        if self.serial:
+            device.on("pwm_frequency",
+                      lambda fps: self.serial.apply_from_fps(fps))
 
         return device
 
@@ -154,8 +160,6 @@ class DeviceManager(events.EventEmitter):
         encode_type: StreamEncodeTypeEnum = stream_info.encode_type
         stream_type: StreamTypeEnum = stream_info.stream_type
         endpoints = stream_info.endpoints
-
-        self.serial.apply_from_fps(interval.denominator)
 
         device.configure_stream(
             encode_type, width, height, interval, stream_type, endpoints
@@ -316,7 +320,7 @@ class DeviceManager(events.EventEmitter):
                     #   Leader gets unplugged and follower gets new leader
                     #   Follower gets unplugged and now there is no inherent truth to the
                     #       existance of a given follower
-                    if device.device_type == DeviceType.STELLARHD_LEADER:
+                    if device.device_type == DeviceType.STELLARHD_LEADER or device.device_type == DeviceType.STELLARHD_FOLLOWER:
                         leader_casted = cast(SHDDevice, device)
                         for follower_bus_info in leader_casted.followers:
                             # This can be optimized, but it truly does not matter
@@ -331,7 +335,7 @@ class DeviceManager(events.EventEmitter):
                         if follower_casted.is_managed:
                             # TODO: Fix this
                             for device in self.devices:
-                                if device.device_type == DeviceType.STELLARHD_LEADER:
+                                if device.device_type == DeviceType.STELLARHD_LEADER or device.device_type == DeviceType.STELLARHD_FOLLOWER:
                                     leader_casted = cast(SHDDevice, device)
                                     if follower_casted.bus_info in leader_casted.followers:
                                         leader_casted.stream_runner.streams.remove(

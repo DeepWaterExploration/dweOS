@@ -11,3 +11,4 @@ uvicorn
 sdbus==0.14.0
 sdbus-networkmanager==2.0.0
 rtp==0.0.4
+pyserial

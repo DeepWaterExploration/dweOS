@@ -6,3 +6,4 @@ from .wifi import *
 from .system import *
 from .wired import *
 from .recordings import *
+from .pwm import *

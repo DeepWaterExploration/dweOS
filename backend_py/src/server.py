@@ -145,6 +145,9 @@ class Server:
         self.app.include_router(logs_router)
         self.app.include_router(recordings_router)
 
+        if feature_support.serial:
+            self.app.include_router(pwm_router)
+
         self.app.add_api_route(
             "/features",
             lambda: self.feature_support.model_dump(),

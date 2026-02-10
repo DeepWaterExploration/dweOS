@@ -58,7 +58,7 @@ class SHDDevice(Device):
     Class for stellarHD devices
     """
 
-    ASIC_COMMAND_DELAY=0.001
+    ASIC_COMMAND_DELAY = 0.001
 
     def __init__(self, device_info: DeviceInfo) -> None:
         # Specifies if SHD device is Stellar Pro
@@ -69,7 +69,8 @@ class SHDDevice(Device):
         self._queue_cond = threading.Condition(self._queue_lock)
 
         self._asic_worker_running = True
-        self._asic_thread = threading.Thread(target=self._asic_command_worker, daemon=True)
+        self._asic_thread = threading.Thread(
+            target=self._asic_command_worker, daemon=True)
         self._asic_thread.start()
 
         super().__init__(device_info)
@@ -117,18 +118,18 @@ class SHDDevice(Device):
         '''
         while self._asic_worker_running:
             task = None
-            
+
             with self._queue_cond:
                 # Wait for work
                 while not self._command_queue and self._asic_worker_running:
                     self._queue_cond.wait()
-                
+
                 if not self._asic_worker_running:
                     break
-                
+
                 # Get the next task
                 task = self._command_queue.popleft()
-            
+
             if task:
                 key, func, args, result_queue = task
                 try:
@@ -136,10 +137,11 @@ class SHDDevice(Device):
                     if result_queue:
                         result_queue.put(res)
                 except Exception as e:
-                    self.logger.error(f"Error executing ASIC command ({key}): {e}")
+                    self.logger.error(
+                        f"Error executing ASIC command ({key}): {e}")
                     if result_queue:
                         result_queue.put(None)
-                
+
                 # Enforce hardware delay
                 time.sleep(self.ASIC_COMMAND_DELAY)
 
@@ -151,33 +153,33 @@ class SHDDevice(Device):
             return None
 
         result_queue = queue.Queue() if wait else None
-        
+
         with self._queue_cond:
             if key is not None:
                 # Filter out previous pending commands of the same type
                 # This implements the "ignore previous requests" logic
                 # We rebuild the deque without the matching keys
-                
+
                 # Check if we even need to filter to avoid list overhead
                 if any(item[0] == key for item in self._command_queue):
-                    # Filter existing items. 
-                    # Note: We only drop items that don't have a result_queue waiting 
+                    # Filter existing items.
+                    # Note: We only drop items that don't have a result_queue waiting
                     # (though in this design, keyed items are usually fire-and-forget writes)
                     new_queue = collections.deque()
                     while self._command_queue:
                         item = self._command_queue.popleft()
                         existing_key, _, _, existing_result_q = item
-                        
+
                         # If keys match, we drop the OLD one.
                         # Ideally, we only drop if no one is waiting on it (wait=False).
                         # If wait=True, we probably shouldn't drop it, or we should send None to the queue.
                         if existing_key == key:
                             if existing_result_q:
                                 # If something was waiting on the old command, release it
-                                existing_result_q.put(None) 
+                                existing_result_q.put(None)
                             # Item is dropped
                             continue
-                        
+
                         new_queue.append(item)
                     self._command_queue = new_queue
 
@@ -361,22 +363,22 @@ class SHDDevice(Device):
     # TODO: FIXME
     def set_shutter_speed(self, value: int):
         self._run_asic_command('shutter', self._sensor_write_high_low,
-            (xu.StellarSensorMap.SHUTTER_HIGH, xu.StellarSensorMap.SHUTTER_LOW, value), wait=False)
+                               (xu.StellarSensorMap.SHUTTER_HIGH, xu.StellarSensorMap.SHUTTER_LOW, int(value)), wait=False)
 
     def get_shutter_speed(self) -> int | None:
         return self._run_asic_command(None, self._sensor_read_high_low,
-            (xu.StellarSensorMap.SHUTTER_HIGH, xu.StellarSensorMap.SHUTTER_LOW), wait=True)
+                                      (xu.StellarSensorMap.SHUTTER_HIGH, xu.StellarSensorMap.SHUTTER_LOW), wait=True)
 
     def set_iso(self, value: int):
         self._run_asic_command('iso', self._sensor_write_high_low,
-            (xu.StellarSensorMap.ISO_HIGH, xu.StellarSensorMap.ISO_LOW, value), wait=False)
+                               (xu.StellarSensorMap.ISO_HIGH, xu.StellarSensorMap.ISO_LOW, int(value)), wait=False)
 
     def get_iso(self) -> int | None:
         return self._run_asic_command(None, self._sensor_read_high_low,
-            (xu.StellarSensorMap.ISO_HIGH, xu.StellarSensorMap.ISO_LOW), wait=True)
+                                      (xu.StellarSensorMap.ISO_HIGH, xu.StellarSensorMap.ISO_LOW), wait=True)
 
     def set_asic_ae(self, enabled: bool):
-        self._run_asic_command('ae', self._asic_write, 
+        self._run_asic_command('ae', self._asic_write,
                                (xu.StellarRegisterMap.REG_AE, 0x01 if enabled else 0x00), wait=False)
 
     def get_asic_ae(self) -> bool | None:
@@ -388,10 +390,10 @@ class SHDDevice(Device):
 
     def set_strobe_width(self, value: int):
         self._run_asic_command('strobe', self._sensor_write_high_low,
-            (xu.StellarSensorMap.STROBE_WIDTH_HIGH, xu.StellarSensorMap.STROBE_WIDTH_LOW, value), wait=False)
+                               (xu.StellarSensorMap.STROBE_WIDTH_HIGH, xu.StellarSensorMap.STROBE_WIDTH_LOW, int(value)), wait=False)
 
     def get_strobe_width(self) -> int | None:
-        return self._run_asic_command(None, self._sensor_read_high_low, 
+        return self._run_asic_command(None, self._sensor_read_high_low,
                                       (xu.StellarSensorMap.STROBE_WIDTH_HIGH, xu.StellarSensorMap.STROBE_WIDTH_LOW), wait=True)
 
     def _get_options(self) -> Dict[str, BaseOption]:

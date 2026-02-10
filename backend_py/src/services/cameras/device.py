@@ -14,7 +14,6 @@ from abc import ABC, abstractmethod
 import event_emitter as events
 
 from linuxpy.video import device
-from enum import Enum
 
 from . import v4l2
 from . import xu_controls as xu
@@ -495,10 +494,6 @@ class Device(events.EventEmitter):
                     control.value = value
                     for option_name in self._options:
                         if self._options[option_name].name == control.name:
-                            self.logger.debug(
-                                self._fmt_log(
-                                    f"Setting UVC control - {control.name} to {value}")
-                            )
                             self.set_option(option_name, value)
                             return
             return  # in case the id does not exist in controls

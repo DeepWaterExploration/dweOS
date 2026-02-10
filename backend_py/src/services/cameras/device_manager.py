@@ -276,6 +276,8 @@ class DeviceManager(events.EventEmitter):
         # find the removed devices
         removed_devices = list_diff(old_devices, devices_info)
 
+        device_added = False
+
         # add the new devices
         for device_info in new_devices:
             device = None
@@ -295,13 +297,11 @@ class DeviceManager(events.EventEmitter):
             # Output device to log (after loading settings)
             self.logger.info(f"Device Added: {device_info.bus_info}")
 
-            await self.sio.emit(
-                "device_added", DeviceModel.model_validate(device).model_dump()
-            )
+            device_added = True
 
         while len(self.stream_errors) > 0:
             bus_info = self.stream_errors.pop()
-            await self._emit_stream_error(bus_info, "GST Error")
+            await self._emit_stream_error(bus_info, "Stream Error")
 
         if len(removed_devices) > 0 or len(new_devices) > 0:
             # make sure to load the leader followers in case there are new ones to check
@@ -314,12 +314,7 @@ class DeviceManager(events.EventEmitter):
                     device.stream_runner.stop()
 
                     # What to do when a device is unplugged
-                    # If it is a leader, just have the followers detatch temporarily
-                    # If it is a follower, remove self from the leaders streams
-                    # This means we need to handle situations like the following
-                    #   Leader gets unplugged and follower gets new leader
-                    #   Follower gets unplugged and now there is no inherent truth to the
-                    #       existance of a given follower
+                    # Remove unplugged followers from leaders, and unplugged leaders as leaders
                     if device.device_type == DeviceType.STELLARHD_LEADER or device.device_type == DeviceType.STELLARHD_FOLLOWER:
                         leader_casted = cast(SHDDevice, device)
                         for follower_bus_info in leader_casted.followers:
@@ -330,7 +325,9 @@ class DeviceManager(events.EventEmitter):
                             if follower:
                                 follower_casted = cast(SHDDevice, follower)
                                 leader_casted.remove_follower(follower_casted)
-                    elif device.device_type == DeviceType.STELLARHD_FOLLOWER:
+                                self.settings_manager.save_device(
+                                    leader_casted)
+                    if device.device_type == DeviceType.STELLARHD_FOLLOWER:
                         follower_casted = cast(SHDDevice, device)
                         if follower_casted.is_managed:
                             # TODO: Fix this
@@ -338,14 +335,19 @@ class DeviceManager(events.EventEmitter):
                                 if device.device_type == DeviceType.STELLARHD_LEADER or device.device_type == DeviceType.STELLARHD_FOLLOWER:
                                     leader_casted = cast(SHDDevice, device)
                                     if follower_casted.bus_info in leader_casted.followers:
-                                        leader_casted.stream_runner.streams.remove(
-                                            follower_casted.stream)
-                                        leader_casted.stream_runner.start()
+                                        leader_casted.remove_follower(
+                                            follower_casted)
+                                        self.settings_manager.save_device(
+                                            leader_casted)
 
                     self.devices.remove(device)
                     self.logger.info(f"Device Removed: {device_info.bus_info}")
 
                     await self.sio.emit("device_removed", device_info.bus_info)
+
+        if device_added:
+            # FIXME: Issue where sometimes frontend updates too quickly before the changes have been made
+            await self.sio.emit("device_added")
 
         return devices_info
 

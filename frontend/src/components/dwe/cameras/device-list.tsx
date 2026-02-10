@@ -1,6 +1,6 @@
 import { API_CLIENT } from "@/api";
 import { CameraCard } from "./camera-card";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { components } from "@/schemas/dwe_os_2";
 import WebsocketContext from "@/contexts/WebsocketContext";
 import { proxy, subscribe } from "valtio";
@@ -114,6 +114,18 @@ const DeviceListLayout = () => {
   const [nextPort, setNextPort] = useState(5600);
   const [demoDeviceProxy] = useState(() => proxy(DEMO_DEVICE));
 
+  const deviceMap = useMemo(() => {
+    const map: { [key: string]: DeviceModel } = {};
+    devices.forEach((d) => (map[d.bus_info] = d));
+    return map;
+  }, [devices]);
+
+  const deviceMapRef = useRef(deviceMap);
+
+  useEffect(() => {
+    deviceMapRef.current = deviceMap;
+  }, [deviceMap]);
+
   const getNextPort = (devs: DeviceModel[]) => {
     const allPorts = devs.flatMap((device) =>
       device.stream.endpoints.map((endpoint) => endpoint.port),
@@ -157,14 +169,19 @@ const DeviceListLayout = () => {
     });
   };
 
-  const removeDevice = (bus_info: string) => {
-    setDevices((prevDevices) => {
-      const filteredDevices = prevDevices.filter(
-        (d) => d.bus_info !== bus_info,
-      );
-      setNextPort(getNextPort(filteredDevices));
-      return filteredDevices;
-    });
+  const refreshDevices = async () => {
+    try {
+      const { data } = await API_CLIENT.GET("/devices");
+      if (data) {
+        // Wrap all raw devices in new proxies
+        const newProxies = data.map(createDeviceProxy);
+
+        setDevices(newProxies);
+        setNextPort(getNextPort(newProxies));
+      }
+    } catch (e) {
+      console.error("Failed to refresh devices:", e);
+    }
   };
 
   useEffect(() => {
@@ -187,15 +204,10 @@ const DeviceListLayout = () => {
       });
     };
 
-    const handleDeviceAdded = (device: DeviceModel) => {
-      addDevice(device);
-    };
-
-    const handleDeviceRemoved = (id: string) => {
-      removeDevice(id);
-    };
-
-    const handleStreamError = (data: { errors: string[]; bus_info: string }) => {
+    const handleStreamError = (data: {
+      errors: string[];
+      bus_info: string;
+    }) => {
       console.log("Stream Error:", data.errors, data.bus_info);
       setDevices((currentDevices) => {
         const device = getDeviceByBusInfo(currentDevices, data.bus_info);
@@ -217,8 +229,8 @@ const DeviceListLayout = () => {
 
     if (connected) {
       socket?.on("stream_error", handleStreamError);
-      socket?.on("device_added", handleDeviceAdded);
-      socket?.on("device_removed", handleDeviceRemoved);
+      socket?.on("device_added", refreshDevices);
+      socket?.on("device_removed", refreshDevices);
 
       getDevices();
       getSavedPreferences();
@@ -227,16 +239,11 @@ const DeviceListLayout = () => {
     }
 
     return () => {
-      socket?.off("device_added", handleDeviceAdded);
-      socket?.off("device_removed", handleDeviceRemoved);
+      socket?.off("device_added", refreshDevices);
+      socket?.off("device_removed", refreshDevices);
       socket?.off("stream_error", handleStreamError);
     };
   }, [socket, connected]);
-
-  const enableStream = (bus_info: string) => {
-    const device = { ...getDeviceByBusInfo(devices, bus_info) };
-    device.stream.enabled = true;
-  };
 
   const displayDevices =
     isActive && devices.length === 0 ? [demoDeviceProxy] : devices;
@@ -248,7 +255,6 @@ const DeviceListLayout = () => {
           value={{
             devices,
             followerModels: devices.filter((d) => d.device_type == 2),
-            enableStream,
           }}
         >
           {displayDevices.map((device, index) => (

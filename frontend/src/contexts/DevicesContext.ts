@@ -8,7 +8,6 @@ const DevicesContext = React.createContext<
   | {
       devices: DeviceModel[];
       followerModels: DeviceModel[];
-      enableStream: (bus_info: string) => void;
     }
   | undefined
 >(undefined);

@@ -20,7 +20,7 @@ class SynchronizedStreamEngine(BaseStreamEngine):
 
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.frame_queue: collections.deque[tuple[CopiedFrame]] = \
-            collections.deque()
+            collections.deque(maxlen=2)
 
         self.MTU = 1400
         self.SSRC = 0x445745  # "DWE"
@@ -39,8 +39,8 @@ class SynchronizedStreamEngine(BaseStreamEngine):
         except OSError as e:
             self.logger.error("Unable to open synchronized camera: '%s'", e)
             self.emit_error(e.strerror)
-        
 
+    # FIXME: Performance is very bad in this function
     def _send_frame(self, frames: List[CopiedFrame], endpoint: StreamEndpointModel):
         # TODO: change protocol to handle more than two cameras
         assert len(frames) == 2
@@ -88,11 +88,13 @@ class SynchronizedStreamEngine(BaseStreamEngine):
             f"Starting synchronized stream with: {(', '.join([stream.device_path for stream in self.streams]))}")
         # self.logger.warning("SynchronizedStreamEngine is not yet implemented")
         if len(self.streams) != 2:
-            self.logger.error("SynchronizedStreamEngine cannot support more than 2 streams yet!")
+            self.logger.error(
+                "SynchronizedStreamEngine cannot support more than 2 streams yet!")
             return
-        
+
         if not self.synchronized_camera:
-            self.logger.error("Synchronized camera does not exist. An error occurred previously in construction!")
+            self.logger.error(
+                "Synchronized camera does not exist. An error occurred previously in construction!")
             return
 
         self.capture_thread = threading.Thread(target=self.capture_loop_)

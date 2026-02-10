@@ -9,7 +9,7 @@ import {
 import { CameraNickname } from "./nickname";
 import { CameraStream } from "./stream";
 import { proxy, useSnapshot } from "valtio";
-import { useContext, useEffect, useState } from "react";
+import { useContext } from "react";
 import DeviceContext from "@/contexts/DeviceContext";
 
 const emptyState = proxy({});
@@ -22,8 +22,6 @@ export function CameraCard({
   nextPort: number;
 }) {
   const device = useContext(DeviceContext)!;
-
-  console.log(device);
 
   // readonly device state
   const deviceState = useSnapshot(device || emptyState);

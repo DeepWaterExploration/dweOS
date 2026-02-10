@@ -37,7 +37,7 @@ const registerValueMap: Record<number, number> = {
   50: 1756,
   40: 2119,
   30: 2436,
-  15: 5884
+  15: 5884,
 } as const;
 
 export const SensorControls = () => {
@@ -63,7 +63,9 @@ export const SensorControls = () => {
     exposureControl?.value === 1,
   );
   const [gain, setGain] = useState(isoControl?.value || 0); // 0x3508
-  const [strobeWidth, setStrobeWidth] = useState(strobeWidthControl?.value || 0);
+  const [strobeWidth, setStrobeWidth] = useState(
+    strobeWidthControl?.value || 0,
+  );
 
   const strobeMax = exposureTime!;
 
@@ -92,7 +94,10 @@ export const SensorControls = () => {
     [exposureTime],
   );
 
-  useDidMountEffect(() => setUVCControl(isoControl as ControlModel, gain!), [gain]);
+  useDidMountEffect(
+    () => setUVCControl(isoControl as ControlModel, gain!),
+    [gain],
+  );
 
   // Set both at the same time to fix fw bug
   useDidMountEffect(
@@ -143,7 +148,11 @@ export const SensorControls = () => {
                   label="Exposure Time"
                   value={exposureTime}
                   min={shutterControl.flags.min_value}
-                  max={registerValueMap[deviceSnapshot.stream.interval.denominator] || 0}
+                  max={
+                    registerValueMap[
+                      deviceSnapshot.stream.interval.denominator
+                    ] || 0
+                  }
                   onChange={setExposureTime}
                 />
                 <RangeControl
@@ -174,8 +183,10 @@ type DeviceModel = components["schemas"]["DeviceModel"];
 const Endpoint = ({
   endpoint,
   deleteEndpoint,
+  onEdit,
 }: {
   endpoint: components["schemas"]["StreamEndpointModel"];
+  onEdit: () => void;
   deleteEndpoint: () => void;
 }) => {
   const endpointState = useSnapshot(endpoint);
@@ -218,6 +229,7 @@ const Endpoint = ({
                 setIsEditing(false);
                 endpoint.host = tempHost;
                 endpoint.port = tempPort;
+                onEdit();
               }}
             >
               <Check className="h-4 w-4" />
@@ -301,6 +313,7 @@ const EndpointList = ({
                   <Endpoint
                     key={index}
                     endpoint={device!.stream.endpoints[index]}
+                    onEdit={() => setShouldPostFlag(true)}
                     deleteEndpoint={() => {
                       device!.stream.endpoints =
                         device!.stream.endpoints.filter((_, i) => i !== index);
@@ -318,12 +331,14 @@ const EndpointList = ({
             variant="outline"
             id={TOUR_STEP_IDS.ADD_ENDPOINTS}
             className="h-8 w-8 p-0 rounded-full shadow-md bg-card flex items-center justify-center hover:bg-accent hover:text-background"
-            onClick={() =>
+            onClick={() => {
               device!.stream.endpoints.push({
                 host: defaultHost,
                 port: nextPort,
-              })
-            }
+              });
+
+              setShouldPostFlag(true);
+            }}
           >
             <PlusIcon />
           </Button>

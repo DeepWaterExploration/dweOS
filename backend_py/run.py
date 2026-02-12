@@ -10,6 +10,7 @@ import asyncio
 from contextlib import asynccontextmanager
 import logging
 
+# TODO: narrow
 ORIGINS = ["*"]
 
 # Use AsyncServer
@@ -34,8 +35,8 @@ app = FastAPI(
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],            # you can narrow this to your frontend URL
-    allow_credentials=False,        # must be False if you keep ["*"]
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

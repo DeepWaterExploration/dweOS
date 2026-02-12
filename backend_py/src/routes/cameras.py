@@ -18,7 +18,7 @@ from ..services.cameras.shd import SHDDevice
 camera_router = APIRouter(tags=['cameras'])
 
 
-@camera_router.get('/', summary='Get all devices')
+@camera_router.get('', summary='Get all devices')
 def get_devices(request: Request) -> List[DeviceModel]:
     device_manager: DeviceManager = request.app.state.device_manager
 

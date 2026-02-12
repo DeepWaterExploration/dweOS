@@ -149,7 +149,7 @@ class Server:
             self.app.include_router(pwm_router, prefix="/api/pwm")
 
         self.app.add_api_route(
-            "/features",
+            "/api/features",
             lambda: self.feature_support.model_dump(),
             methods=["GET"],
             summary="Get supported features",

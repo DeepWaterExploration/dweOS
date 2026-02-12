@@ -13,7 +13,7 @@ from ..services import RecordingsService, RecordingInfo
 recordings_router = APIRouter(tags=['recordings'])
 
 
-@recordings_router.get('/', summary='Get all recordings')
+@recordings_router.get('', summary='Get all recordings')
 def get_recordings(request: Request) -> List[RecordingInfo]:
     recordings_service: RecordingsService = request.app.state.recordings_service
 

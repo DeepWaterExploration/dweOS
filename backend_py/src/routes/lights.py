@@ -12,7 +12,7 @@ from ..services import LightManager, Light, DisableLightInfo, SetLightInfo
 lights_router = APIRouter(tags=["lights"])
 
 
-@lights_router.get("/")
+@lights_router.get("")
 def get_lights(request: Request) -> List[Light]:
     light_manager: LightManager = request.app.state.light_manager
 

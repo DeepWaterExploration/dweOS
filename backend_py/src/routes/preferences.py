@@ -12,7 +12,7 @@ from ..services import PreferencesManager, SavedPreferencesModel
 preferences_router = APIRouter(tags=['preferences'])
 
 
-@preferences_router.get('/')
+@preferences_router.get('')
 def get_preferences(request: Request) -> SavedPreferencesModel:
     preferences_manager: PreferencesManager = request.app.state.preferences_manager
 

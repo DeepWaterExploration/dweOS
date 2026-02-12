@@ -4,7 +4,8 @@ from ..logging import LogSchema, LogHandler
 
 logs_router = APIRouter(tags=['logs'])
 
-@logs_router.get('/logs')
+
+@logs_router.get('/')
 def get_logs(request: Request) -> List[LogSchema]:
     log_handler: LogHandler = request.app.state.log_handler
 

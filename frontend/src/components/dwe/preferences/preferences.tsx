@@ -44,11 +44,11 @@ const PreferencesLayout = () => {
 
   useEffect(() => {
     const getSavedPreferences = async () => {
-      const newPreferences = (await API_CLIENT.GET("/preferences")).data!;
+      const newPreferences = (await API_CLIENT.GET("/api/preferences")).data!;
 
       if (newPreferences.suggest_host) {
         newPreferences.default_stream!.host = (
-          await API_CLIENT.GET("/preferences/get_recommended_host")
+          await API_CLIENT.GET("/api/preferences/get_recommended_host")
         ).data!["host"] as string;
       }
 
@@ -63,18 +63,18 @@ const PreferencesLayout = () => {
   }, [connected]);
 
   const savePreferences = async (
-    preferences: components["schemas"]["SavedPreferencesModel"]
+    preferences: components["schemas"]["SavedPreferencesModel"],
   ) => {
-    return await API_CLIENT.POST("/preferences/save_preferences", {
+    return await API_CLIENT.POST("/api/preferences/save_preferences", {
       body: preferences,
     });
   };
 
   const updateHost = async () => {
     setHost(
-      (await API_CLIENT.GET("/preferences/get_recommended_host")).data![
+      (await API_CLIENT.GET("/api/preferences/get_recommended_host")).data![
         "host"
-      ] as string
+      ] as string,
     );
   };
 
@@ -121,7 +121,7 @@ const PreferencesLayout = () => {
                   placeholder="Enter host IP"
                   className={cn(
                     !IP_REGEX.test(host) && "border-red-500",
-                    "bg-background"
+                    "bg-background",
                   )}
                 />
               </div>
@@ -137,7 +137,7 @@ const PreferencesLayout = () => {
                   max={65535}
                   className={cn(
                     (port < 1024 || port > 65535) && "border-red-500",
-                    "bg-background"
+                    "bg-background",
                   )}
                 />
               </div>

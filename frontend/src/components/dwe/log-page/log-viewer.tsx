@@ -71,7 +71,7 @@ export function LogViewer() {
   const logLevels = ["ALL", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"];
 
   const updateLogs = async () => {
-    setLogs((await API_CLIENT.GET("/logs")).data!);
+    setLogs((await API_CLIENT.GET("/api/logs")).data!);
   };
 
   useEffect(() => {
@@ -124,7 +124,7 @@ export function LogViewer() {
           log.message.toLowerCase().includes(query) ||
           log.name.toLowerCase().includes(query) ||
           log.function.toLowerCase().includes(query) ||
-          log.filename.toLowerCase().includes(query)
+          log.filename.toLowerCase().includes(query),
       );
     }
 

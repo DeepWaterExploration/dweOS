@@ -18,14 +18,14 @@ from ..services.cameras.shd import SHDDevice
 camera_router = APIRouter(tags=['cameras'])
 
 
-@camera_router.get('/devices', summary='Get all devices')
+@camera_router.get('/', summary='Get all devices')
 def get_devices(request: Request) -> List[DeviceModel]:
     device_manager: DeviceManager = request.app.state.device_manager
 
     return device_manager.get_devices()
 
 
-@camera_router.post('/devices/configure_stream', summary='Configure a stream')
+@camera_router.post('/configure_stream', summary='Configure a stream')
 async def configure_stream(request: Request, stream_info: StreamInfoModel):
     device_manager: DeviceManager = request.app.state.device_manager
 
@@ -45,7 +45,7 @@ async def configure_stream(request: Request, stream_info: StreamInfoModel):
     return {}
 
 
-@camera_router.post('/devices/set_nickname', summary='Set a device nickname')
+@camera_router.post('/set_nickname', summary='Set a device nickname')
 def set_nickname(request: Request, device_nickname: DeviceNicknameModel):
     device_manager: DeviceManager = request.app.state.device_manager
 
@@ -55,7 +55,7 @@ def set_nickname(request: Request, device_nickname: DeviceNicknameModel):
     return {}
 
 
-@camera_router.post('/devices/set_uvc_control', summary='Set a UVC control')
+@camera_router.post('/set_uvc_control', summary='Set a UVC control')
 def set_uvc_control(request: Request, uvc_control: UVCControlModel):
     device_manager: DeviceManager = request.app.state.device_manager
 
@@ -65,7 +65,7 @@ def set_uvc_control(request: Request, uvc_control: UVCControlModel):
     return {}
 
 
-@camera_router.post('/devices/add_follower', summary='Add a device as a follower to another device')
+@camera_router.post('/add_follower', summary='Add a device as a follower to another device')
 def add_follower(request: Request, payload: AddFollowerPayload) -> SimpleRequestStatusModel:
     device_manager: DeviceManager = request.app.state.device_manager
 
@@ -75,7 +75,7 @@ def add_follower(request: Request, payload: AddFollowerPayload) -> SimpleRequest
     return SimpleRequestStatusModel(success=success)
 
 
-@camera_router.post('/devices/remove_follower', summary='Add a device as a follower to another device')
+@camera_router.post('/remove_follower', summary='Add a device as a follower to another device')
 def remove_follower(request: Request, payload: AddFollowerPayload) -> SimpleRequestStatusModel:
     device_manager: DeviceManager = request.app.state.device_manager
 
@@ -85,7 +85,7 @@ def remove_follower(request: Request, payload: AddFollowerPayload) -> SimpleRequ
     return SimpleRequestStatusModel(success=success)
 
 
-@camera_router.post('/devices/restart_stream', summary='Restart a stream')
+@camera_router.post('/restart_stream', summary='Restart a stream')
 def restart_stream(request: Request, device_descriptor: DeviceDescriptorModel):
     device_manager: DeviceManager = request.app.state.device_manager
 

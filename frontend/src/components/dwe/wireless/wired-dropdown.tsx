@@ -49,7 +49,7 @@ export function WiredDropdown() {
       const response: {
         data?: IPConfiguration | null;
         error?: any;
-      } = await API_CLIENT.GET("/wired/get_ip_configuration");
+      } = await API_CLIENT.GET("/api/wired/get_ip_configuration");
 
       if (response.error) {
         console.error("Error fetching IP configuration:", response.error);
@@ -106,7 +106,7 @@ export function WiredDropdown() {
     const payload: IPConfiguration = {
       ip_type: formIpType,
       static_ip: formIpType === "STATIC" ? formStaticIp || null : null, // Only include if STATIC
-      prefix: formIpType === "STATIC" ? formPrefix ?? null : null, // Only include if STATIC
+      prefix: formIpType === "STATIC" ? (formPrefix ?? null) : null, // Only include if STATIC
       gateway: formIpType === "STATIC" ? formGateway || null : null, // Only include if STATIC
       dns: formDns
         ? formDns
@@ -136,7 +136,7 @@ export function WiredDropdown() {
       const response: {
         data?: any; // Adjust type based on actual success response body
         error?: any;
-      } = await API_CLIENT.POST("/wired/set_ip_configuration", {
+      } = await API_CLIENT.POST("/api/wired/set_ip_configuration", {
         body: payload,
       });
 

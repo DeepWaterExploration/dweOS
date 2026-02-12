@@ -24,6 +24,7 @@ class SynchronizedStreamEngine(BaseStreamEngine):
 
         self.MTU = 1400
         self.SSRC = 0x445745  # "DWE"
+        self.sequence_number = 1
 
         self.stream_thread: threading.Thread | None = None
         self.capture_thread: threading.Thread | None = None
@@ -40,48 +41,63 @@ class SynchronizedStreamEngine(BaseStreamEngine):
             self.logger.error("Unable to open synchronized camera: '%s'", e)
             self.emit_error(e.strerror)
 
-    # FIXME: Performance is very bad in this function
+    # <AI> Assisted with this code. Custom RTP improves performance compared to RTP class
     def _send_frame(self, frames: List[CopiedFrame], endpoint: StreamEndpointModel):
         # TODO: change protocol to handle more than two cameras
         assert len(frames) == 2
-
         left_frame = frames[0]
         right_frame = frames[1]
 
-        header = struct.pack("<QQ", len(left_frame.data),
-                             len(right_frame.data))
+        # payload headers
+        frame_header = struct.pack("<QQ", len(
+            left_frame.data), len(right_frame.data))
 
-        # Complete Payload: [Header][Left JPEG][Right JPEG]
-        full_payload = header + left_frame.data + right_frame.data
-        payload_size = len(full_payload)
+        # Copy everything into a payload
+        full_payload = frame_header + left_frame.data + right_frame.data
+        payload_view = memoryview(full_payload)
+        payload_size = len(payload_view)
 
-        # Shared by all fragments
         timestamp = int(time.time() * 1000) & 0xFFFFFFFF
-        bytes_sent = 0
         sequence_number = 1
 
-        while bytes_sent < payload_size:
-            # Determine chunk size
-            chunk_end = min(bytes_sent + self.MTU, payload_size)
-            chunk = full_payload[bytes_sent:chunk_end]
+        # Pre-pack the RTP header structure (Version 2, Payload 96 (dynamic), etc)
+        # ! = network (big-endian), B = byte, H = short, I = int
+        # V=2, P=0, X=0, CC=0 -> 0x80
+        rtp_ver = 0x80
+        rtp_type = 96
 
-            # Determine if this is the LAST fragment (Marker Bit)
-            is_last = (chunk_end == payload_size)
+        offset = 0
+        target_address = (endpoint.host, endpoint.port)
 
-            # Create RTP Packet
-            rtp_pkt = RTP(
-                payload=bytearray(chunk),
-                version=2,
-                ssrc=self.SSRC,
-                timestamp=timestamp,
-                marker=is_last
-            )
+        while offset < payload_size:
+            # Calculate chunk size
+            remaining = payload_size - offset
+            chunk_size = min(remaining, self.MTU)
 
-            self.socket.sendto(bytes(
-                rtp_pkt), (endpoint.host, endpoint.port))
+            # Check if this is the last packet (Marker bit)
+            marker_bit = 0
+            if offset + chunk_size >= payload_size:
+                marker_bit = 1
 
-            bytes_sent = chunk_end
-            sequence_number += 1
+            # RTP Header packing
+            m_pt = (marker_bit << 7) | rtp_type
+
+            # Pack header: [Ver][Marker+PT][SeqNum][Timestamp][SSRC]
+            rtp_header = struct.pack("!BBHII",
+                                     rtp_ver,
+                                     m_pt,
+                                     sequence_number,
+                                     timestamp,
+                                     self.SSRC)
+
+            # Zero-copy slice using memoryview
+            chunk_view = payload_view[offset: offset + chunk_size]
+
+            # Send directly (Python concatenates bytes + memoryview efficiently in sendto)
+            self.socket.sendto(rtp_header + chunk_view, target_address)
+
+            offset += chunk_size
+            sequence_number = (sequence_number + 1) & 0xFFFF
 
     def start(self):
         self.logger.info(
@@ -97,12 +113,14 @@ class SynchronizedStreamEngine(BaseStreamEngine):
                 "Synchronized camera does not exist. An error occurred previously in construction!")
             return
 
-        self.capture_thread = threading.Thread(target=self.capture_loop_)
+        self.capture_thread = threading.Thread(
+            target=self.capture_loop_)
         self._running = True
         self.capture_thread.start()
 
         # We cannot handle more than 2 synchronized streams yet in the protocol
-        self.stream_thread = threading.Thread(target=self.stream_loop_)
+        self.stream_thread = threading.Thread(
+            target=self.stream_loop_)
         self.stream_thread.start()
 
     def stop(self):

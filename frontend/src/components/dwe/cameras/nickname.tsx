@@ -37,7 +37,7 @@ export const CameraNickname = () => {
     setIsEditing(false);
     inputRef.current?.blur();
 
-    API_CLIENT.POST("/devices/set_nickname", {
+    API_CLIENT.POST("/api/devices/set_nickname", {
       body: { bus_info: device.bus_info, nickname: trimmedNickname },
     });
   };

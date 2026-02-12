@@ -171,7 +171,7 @@ const DeviceListLayout = () => {
 
   const refreshDevices = async () => {
     try {
-      const { data } = await API_CLIENT.GET("/devices");
+      const { data } = await API_CLIENT.GET("/api/devices");
       if (data) {
         // Wrap all raw devices in new proxies
         const newProxies = data.map(createDeviceProxy);
@@ -186,13 +186,13 @@ const DeviceListLayout = () => {
 
   useEffect(() => {
     const getDevices = async () => {
-      const initialDevices = (await API_CLIENT.GET("/devices")).data!;
+      const initialDevices = (await API_CLIENT.GET("/api/devices")).data!;
 
-      const newPreferences = (await API_CLIENT.GET("/preferences")).data!;
+      const newPreferences = (await API_CLIENT.GET("/api/preferences")).data!;
 
       if (newPreferences.suggest_host) {
         newPreferences.default_stream!.host = (
-          await API_CLIENT.GET("/preferences/get_recommended_host")
+          await API_CLIENT.GET("/api/preferences/get_recommended_host")
         ).data!["host"] as string;
       }
 

@@ -59,7 +59,7 @@ const ControlWrapper = ({
     value: number,
     control_id: number,
   ) => {
-    API_CLIENT.POST("/devices/set_uvc_control", {
+    API_CLIENT.POST("/api/devices/set_uvc_control", {
       body: {
         bus_info,
         control_id,

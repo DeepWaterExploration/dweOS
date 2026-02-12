@@ -83,8 +83,8 @@ class Server:
         if self.feature_support.wifi:
             try:
                 self.wifi_manager = AsyncNetworkManager()
-                self.app.include_router(wifi_router)
-                self.app.include_router(wired_router)
+                self.app.include_router(wifi_router, prefix="/api/wifi")
+                self.app.include_router(wired_router, prefix="/api/wired")
                 self.wifi_manager.on(
                     "ip_changed",
                     lambda: asyncio.create_task(self.sio.emit("ip_changed")),
@@ -138,15 +138,15 @@ class Server:
         )
         self.app.state.recordings_service = self.recordings_service
 
-        self.app.include_router(camera_router)
-        self.app.include_router(preferences_router)
-        self.app.include_router(system_router)
-        self.app.include_router(lights_router)
-        self.app.include_router(logs_router)
-        self.app.include_router(recordings_router)
+        self.app.include_router(camera_router, prefix="/api/devices")
+        self.app.include_router(preferences_router, prefix="/api/preferences")
+        self.app.include_router(system_router, prefix="/api/system")
+        self.app.include_router(lights_router, prefix="/api/lights")
+        self.app.include_router(logs_router, prefix="/api/logs")
+        self.app.include_router(recordings_router, prefix="/api/recordings")
 
         if feature_support.serial:
-            self.app.include_router(pwm_router)
+            self.app.include_router(pwm_router, prefix="/api/pwm")
 
         self.app.add_api_route(
             "/features",

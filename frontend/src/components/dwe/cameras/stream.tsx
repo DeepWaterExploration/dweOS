@@ -75,7 +75,7 @@ export const SensorControls = () => {
 
   // TODO: Streamline this more effectively (We should have a global API class)
   const setUVCControl = (control: ControlModel, value: number) => {
-    API_CLIENT.POST("/devices/set_uvc_control", {
+    API_CLIENT.POST("/api/devices/set_uvc_control", {
       body: {
         bus_info: deviceSnapshot.bus_info,
         control_id: control.control_id,
@@ -389,7 +389,7 @@ const FollowerList = () => {
       .filter((value) => !deviceState.followers.includes(value))
       .forEach((newFollower) => {
         device.followers = followers;
-        API_CLIENT.POST("/devices/add_follower", {
+        API_CLIENT.POST("/api/devices/add_follower", {
           body: {
             leader_bus_info: deviceState.bus_info,
             follower_bus_info: newFollower,
@@ -406,7 +406,7 @@ const FollowerList = () => {
       .filter((value) => !followers.includes(value))
       .forEach((removedFollower) => {
         device.followers = followers;
-        API_CLIENT.POST("/devices/remove_follower", {
+        API_CLIENT.POST("/api/devices/remove_follower", {
           body: {
             leader_bus_info: deviceState.bus_info,
             follower_bus_info: removedFollower,
@@ -595,7 +595,7 @@ export const CameraStream = ({
     device.stream.encode_type = format;
     device.stream.enabled = streamEnabled;
 
-    API_CLIENT.POST("/devices/configure_stream", {
+    API_CLIENT.POST("/api/devices/configure_stream", {
       body: {
         bus_info: device.bus_info,
         encode_type: format,

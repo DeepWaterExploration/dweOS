@@ -32,7 +32,7 @@ export function WifiDropdown() {
   const { connected, socket } = useContext(WebsocketContext)!;
 
   const [networks, setNetworks] = useState(
-    [] as components["schemas"]["AccessPoint"][]
+    [] as components["schemas"]["AccessPoint"][],
   );
   const [isWifiEnabled, setIsWifiEnabled] = useState(true);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -47,12 +47,13 @@ export function WifiDropdown() {
   >(undefined);
 
   const updateWifiNetworks = async () => {
-    const wifiNetworks = (await API_CLIENT.GET("/wifi/access_points")).data!;
+    const wifiNetworks = (await API_CLIENT.GET("/api/wifi/access_points"))
+      .data!;
     setNetworks(wifiNetworks);
   };
 
   const updateConnectedNetwork = async () => {
-    setWifiStatus((await API_CLIENT.GET("/wifi/status")).data!);
+    setWifiStatus((await API_CLIENT.GET("/api/wifi/status")).data!);
   };
 
   useEffect(() => {
@@ -84,13 +85,13 @@ export function WifiDropdown() {
       // Disconnect from all networks when turning WiFi off
 
       setNetworks(
-        networks.map((network) => ({ ...network, connected: false }))
+        networks.map((network) => ({ ...network, connected: false })),
       );
     }
   };
 
   const handleNetworkConnect = (
-    network: components["schemas"]["AccessPoint"]
+    network: components["schemas"]["AccessPoint"],
   ) => {
     if (network.requires_password) {
       setSelectedNetwork(network);
@@ -103,7 +104,7 @@ export function WifiDropdown() {
 
   const connectToNetwork = async (ssid: string, password?: string) => {
     let result = (
-      await API_CLIENT.POST("/wifi/connect", {
+      await API_CLIENT.POST("/api/wifi/connect", {
         body: { ssid: ssid, password: password },
       })
     ).data!.result;
@@ -173,8 +174,8 @@ export function WifiDropdown() {
                 .filter(
                   (network, index) =>
                     networks.findIndex(
-                      (findNetwork) => network.ssid === findNetwork.ssid
-                    ) === index
+                      (findNetwork) => network.ssid === findNetwork.ssid,
+                    ) === index,
                 )
                 .map((network) => (
                   <DropdownMenuItem
@@ -271,7 +272,7 @@ function SignalStrength({ strength }: SignalStrengthProps) {
           className={cn(
             "w-1 rounded-sm",
             strength >= threshold ? "bg-foreground" : "bg-muted-foreground/30",
-            `h-${index + 2}`
+            `h-${index + 2}`,
           )}
         />
       ))}

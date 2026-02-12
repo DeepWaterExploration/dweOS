@@ -31,10 +31,10 @@ export function SystemDropdown() {
 
     try {
       if (action === "restart") {
-        await API_CLIENT.POST("/system/restart");
+        await API_CLIENT.POST("/api/system/restart");
         toast({ title: "System is restarting..." });
       } else if (action === "shutdown") {
-        await API_CLIENT.POST("/system/shutdown");
+        await API_CLIENT.POST("/api/system/shutdown");
         toast({ title: "System is shutting down..." });
       }
     } catch (error) {

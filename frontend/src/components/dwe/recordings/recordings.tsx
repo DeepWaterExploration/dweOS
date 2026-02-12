@@ -59,10 +59,10 @@ const Recordings = () => {
     useState<RecordingInfo | null>(null);
 
   const [sortColumn, setSortColumn] = useState<keyof RecordingInfo | null>(
-    null
+    null,
   );
   const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(
-    null
+    null,
   );
 
   const { isActive } = useTour();
@@ -161,7 +161,7 @@ const Recordings = () => {
 
   const handleContextMenu = (
     selected: RecordingInfo,
-    event: React.MouseEvent<HTMLTableRowElement>
+    event: React.MouseEvent<HTMLTableRowElement>,
   ) => {
     event.preventDefault();
 
@@ -174,7 +174,7 @@ const Recordings = () => {
 
   useEffect(() => {
     // Fetch recordings data from the backend
-    API_CLIENT.GET("/recordings")
+    API_CLIENT.GET("/api/recordings")
       .then((data) => setRecordings(data.data!))
       .then(() => {
         sortRecordings();
@@ -224,23 +224,23 @@ const Recordings = () => {
               onClick={() => {
                 const newName = prompt(
                   `Enter new name for "${rightClickedRecording?.name}":`,
-                  rightClickedRecording?.name
+                  rightClickedRecording?.name,
                 );
                 if (newName && newName.trim() && rightClickedRecording) {
                   // @ts-ignore-next-line
                   API_CLIENT.PATCH(
                     // @ts-ignore-next-line
-                    `/recordings/${rightClickedRecording.name}.${
+                    `/api/recordings/${rightClickedRecording.name}.${
                       rightClickedRecording.format
                     }/${newName.trim()}.${rightClickedRecording.format}`,
-                    {}
+                    {},
                   )
                     .then((newRecs) => {
                       setRecordings(newRecs.data! as RecordingInfo[]);
                       setShowMenu(false);
                     })
                     .catch((error) =>
-                      console.error("Error renaming recording:", error)
+                      console.error("Error renaming recording:", error),
                     );
                 } else {
                   setShowMenu(false);
@@ -257,15 +257,15 @@ const Recordings = () => {
                   // @ts-ignore-next-line
                   API_CLIENT.DELETE(
                     // @ts-ignore-next-line
-                    `/recordings/${rightClickedRecording.name}.${rightClickedRecording.format}`,
-                    {}
+                    `/api/recordings/${rightClickedRecording.name}.${rightClickedRecording.format}`,
+                    {},
                   )
                     .then((newRecs) => {
                       setRecordings(newRecs.data! as RecordingInfo[]);
                       setShowMenu(false);
                     })
                     .catch((error) =>
-                      console.error("Error deleting recording:", error)
+                      console.error("Error deleting recording:", error),
                     );
                 }
               }}
@@ -372,7 +372,7 @@ const Recordings = () => {
                     </TableCell>
                     <TableCell className="text-left w-24">
                       {formatFileSize(
-                        recording.size ? parseFloat(recording.size) : 0
+                        recording.size ? parseFloat(recording.size) : 0,
                       )}
                     </TableCell>
                   </TableRow>
@@ -455,7 +455,7 @@ const Recordings = () => {
                   {formatFileSize(
                     selectedRecording?.size
                       ? parseFloat(selectedRecording.size)
-                      : 0
+                      : 0,
                   )}
                 </p>
               </div>
@@ -482,7 +482,7 @@ const Recordings = () => {
                     await API_CLIENT.DELETE(
                       // @ts-ignore-next-line
                       `/recordings/${selectedRecording.name}.${selectedRecording.format}`,
-                      {}
+                      {},
                     )
                   ).data! as RecordingInfo[];
                   setRecordings(new_recordings);
@@ -516,8 +516,8 @@ const Recordings = () => {
               {formatFileSize(
                 recordings.reduce(
                   (acc, rec) => acc + (rec.size ? parseFloat(rec.size) : 0),
-                  0
-                )
+                  0,
+                ),
               )}
             </span>
           </div>

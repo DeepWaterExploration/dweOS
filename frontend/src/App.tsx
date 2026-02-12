@@ -75,7 +75,7 @@ function AppContent() {
   const pageTitle = getPageTitle(location.pathname);
 
   useEffect(() => {
-    API_CLIENT.GET("/features").then((data) => {
+    API_CLIENT.GET("/api/features").then((data) => {
       if (data.data) setFeatures(data.data);
     });
   }, []);

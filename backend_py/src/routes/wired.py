@@ -18,7 +18,7 @@ wired_router = APIRouter(tags=["wired"])
 
 # Ethernet
 @wired_router.get(
-    "/wired/get_ip_configuration", summary="Get the ethernet IP configuration"
+    "/get_ip_configuration", summary="Get the ethernet IP configuration"
 )
 def get_ip_configuration(request: Request) -> IPConfiguration | None:
     wifi_manager: AsyncNetworkManager = request.app.state.wifi_manager
@@ -27,14 +27,14 @@ def get_ip_configuration(request: Request) -> IPConfiguration | None:
 
 
 @wired_router.post(
-    "/wired/set_ip_configuration", summary="Update the ethernet IP configuration"
+    "/set_ip_configuration", summary="Update the ethernet IP configuration"
 )
 async def set_static_ip(request: Request, ip_configuration: IPConfiguration):
     wifi_manager: AsyncNetworkManager = request.app.state.wifi_manager
     return {"status": await wifi_manager.set_ip_configuration(ip_configuration)}
 
 
-@wired_router.post("/wired/set_network_priority", summary="Set the network priority")
+@wired_router.post("/set_network_priority", summary="Set the network priority")
 async def set_network_priority(
     request: Request, network_priority: NetworkPriorityInformation
 ):
@@ -43,7 +43,7 @@ async def set_network_priority(
     return {}
 
 
-@wired_router.get("/wired/get_network_priority", summary="Get the network priority")
+@wired_router.get("/get_network_priority", summary="Get the network priority")
 async def get_network_priority(request: Request) -> NetworkPriorityInformation:
     wifi_manager: AsyncNetworkManager = request.app.state.wifi_manager
     network_priority = NetworkPriorityInformation(

@@ -26,6 +26,7 @@ import socketio
 from .ehd import EHDDevice
 from .shd import SHDDevice
 from .pwm.serial_pwm_controller import SerialPWMController
+from ..preferences import SavedPreferencesModel
 
 
 def todict(obj, classkey=None):
@@ -59,7 +60,7 @@ class DeviceManager(events.EventEmitter):
     """
 
     def __init__(
-        self, sio: socketio.AsyncServer, use_serial=False, settings_manager=SettingsManager()
+        self, sio: socketio.Server, preferences: SavedPreferencesModel, use_serial=False, settings_manager=SettingsManager()
     ) -> None:
         self.devices: List[Device] = []
         self.sio = sio
@@ -70,7 +71,8 @@ class DeviceManager(events.EventEmitter):
 
         self.serial = None
         if use_serial:
-            self.serial = SerialPWMController()
+            self.serial = SerialPWMController(
+                frequency_offset=preferences.frequency_offset)
             self.serial.start()
 
         self.logger = logging.getLogger("dwe_os_2.cameras.DeviceManager")

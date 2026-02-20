@@ -38,6 +38,7 @@ const PreferencesLayout = () => {
 
   const [host, setHost] = useState("");
   const [port, setPort] = useState(5600);
+  const [frequencyOffset, setFrequencyOffset] = useState(0);
 
   const [recommendHost, setRecommendHost] = useState(false);
   const tour = useTour();
@@ -55,6 +56,7 @@ const PreferencesLayout = () => {
       setRecommendHost(newPreferences.suggest_host);
       setPort(newPreferences.default_stream!.port);
       setHost(newPreferences.default_stream!.host);
+      setFrequencyOffset(newPreferences.frequency_offset);
     };
 
     if (connected) {
@@ -95,9 +97,10 @@ const PreferencesLayout = () => {
       savePreferences({
         suggest_host: recommendHost,
         default_stream: { host, port },
+        frequency_offset: frequencyOffset,
       });
     }
-  }, [recommendHost, host, port, connected]);
+  }, [recommendHost, host, port, frequencyOffset, connected]);
 
   return (
     <div
@@ -141,7 +144,31 @@ const PreferencesLayout = () => {
                   )}
                 />
               </div>
+
+              {/* Frequency Offset Input */}
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="freq-offset">Frequency Offset (Hz)</Label>
+                <Input
+                  id="freq-offset"
+                  type="number"
+                  step="0.01"
+                  value={frequencyOffset}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    setFrequencyOffset(isNaN(val) ? 0 : val);
+                  }}
+                  placeholder="0.000"
+                  className="bg-background"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Adjust the fine-tuning offset for camera clock frequency. Use
+                  if you are experience flickering or synchronization related
+                  issues.
+                </p>
+              </div>
+
               <Separator />
+
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="recommend-host"

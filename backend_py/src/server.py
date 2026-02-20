@@ -70,7 +70,7 @@ class Server:
 
         # Device Manager
         self.device_manager = DeviceManager(
-            settings_manager=self.settings_manager, sio=self.sio, use_serial=self.feature_support.serial
+            settings_manager=self.settings_manager, sio=self.sio, use_serial=self.feature_support.serial, preferences=self.preferences_manager.get_preferences()
         )
 
         # Lights
@@ -155,6 +155,8 @@ class Server:
             tags=["features"],
             response_model=FeatureSupport,
         )
+
+        self.preferences_manager.on("preferences_updated", lambda preferences: self.device_manager.serial.set_frequency_offset(preferences.frequency_offset))
 
         # Error handling
         # TODO

@@ -40,16 +40,23 @@ PID_VIDS = {
         "PID": 0x6368,
         "device_type": DeviceType.STELLARHD_FOLLOWER,
     },
-    "stellarHDPro: Leader": {
-        "VID": 0xC45,
-        "PID": 0x6369,
-        "device_type": DeviceType.STELLARHD_LEADER_PRO,
+    "exploreHD": {
+        "VID": 0x3961,
+        "PID": 0x2100,
+        "device_type": DeviceType.EXPLOREHD
     },
-    "stellarHDPro: Follower": {
-        "VID": 0xC45,
-        "PID": 0x6370,
-        "device_type": DeviceType.STELLARHD_FOLLOWER_PRO,
-    },
+    "exploreHD Heavy": {"VID": 0x3961, "PID": 0x2200, "device_type": DeviceType.EXPLOREHD},
+    "exploreHD Heavy (AQ)": {"VID": 0x3961, "PID": 0x2210, "device_type": DeviceType.EXPLOREHD},
+    "stellarHD Elite (AQ-L)": {"VID": 0x3961, "PID": 0x1211, "device_type": DeviceType.STELLARHD_LEADER},
+    "stellarHD Elite (AQ-F)": {"VID": 0x3961, "PID": 0x1212, "device_type": DeviceType.STELLARHD_FOLLOWER},
+    "stellarHD Elite (L)": {"VID": 0x3961, "PID": 0x1201, "device_type": DeviceType.STELLARHD_LEADER},
+    "stellarHD Elite (F)": {"VID": 0x3961, "PID": 0x1202, "device_type": DeviceType.STELLARHD_FOLLOWER},
+    "stellarHD (AQ-L)": {"VID": 0x3961, "PID": 0x1111, "device_type": DeviceType.STELLARHD_LEADER},
+    "stellarHD (AQ-F)": {"VID": 0x3961, "PID": 0x1112, "device_type": DeviceType.STELLARHD_FOLLOWER},
+    "stellarHD (L)": {"VID": 0x3961, "PID": 0x1101, "device_type": DeviceType.STELLARHD_LEADER},
+    "stellarHD (F)": {"VID": 0x3961, "PID": 0x1102, "device_type": DeviceType.STELLARHD_FOLLOWER},
+    "explore3D (Left)": {"VID": 0x3961, "PID": 0x3112, "device_type": DeviceType.STELLARHD_FOLLOWER},
+    "explore3D (Right)": {"VID": 0x3961, "PID": 0x3111, "device_type": DeviceType.STELLARHD_LEADER},
 }
 
 

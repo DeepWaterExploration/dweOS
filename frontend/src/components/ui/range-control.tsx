@@ -41,7 +41,7 @@ export const RangeControl = ({
     if (!isNaN(num)) {
       const clamped = Math.min(Math.max(num, min), max);
       
-      setValueSlider(valueSlider);
+      setValueSlider(clamped);
       onChange(clamped);
     }
   };
@@ -51,6 +51,10 @@ export const RangeControl = ({
       setValueSlider(max)
     }
   }, [max])
+
+  useEffect(() => {
+    setValueSlider(value);
+  }, [value]);
 
   const handleStep = (direction: 1 | -1) => {
     const newValue = Math.min(Math.max(value + direction * step, min), max);

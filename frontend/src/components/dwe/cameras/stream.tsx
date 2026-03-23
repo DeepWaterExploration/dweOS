@@ -42,6 +42,8 @@ const registerValueMap: Record<number, number> = {
 
 export const SensorControls = () => {
   const device = useContext(DeviceContext)!;
+  const { matchedExposure, setMatchedExposure } = useContext(DevicesContext)!;
+  const { matchedISO, setMatchedISO } = useContext(DevicesContext)!;
 
   const deviceSnapshot = useSnapshot(device);
 
@@ -84,15 +86,35 @@ export const SensorControls = () => {
     });
   };
 
+  useEffect(() => {
+    if (
+      matchExposure &&
+      exposureTime !== matchedExposure &&
+      matchedExposure != null
+    ) {
+      setExposureTime(matchedExposure);
+    }
+
+    if (matchExposure && gain !== matchedISO && matchedISO != null) {
+      setGain(matchedISO);
+    }
+  }, [matchedExposure, matchExposure, matchedISO]);
+
+  useDidMountEffect(() => {
+    localStorage.setItem(
+      device.bus_info,
+      matchExposure ? "matched" : "unmatched",
+    );
+  }, [matchExposure]);
+
   useDidMountEffect(
     () => setUVCControl(exposureControl as ControlModel, autoExposure ? 1 : 0),
     [autoExposure],
   );
 
-  useDidMountEffect(
-    () => setUVCControl(shutterControl as ControlModel, exposureTime!),
-    [exposureTime],
-  );
+  useDidMountEffect(() => {
+    setUVCControl(shutterControl as ControlModel, exposureTime!);
+  }, [exposureTime]);
 
   useDidMountEffect(
     () => setUVCControl(isoControl as ControlModel, gain!),
@@ -104,6 +126,10 @@ export const SensorControls = () => {
     () => setUVCControl(strobeWidthControl as ControlModel, strobeWidth),
     [strobeWidth, exposureTime],
   );
+
+  useEffect(() => {
+    setMatchExposure(localStorage.getItem(device.bus_info) === "matched");
+  }, []);
 
   // TODO: replace with is_pro?
   if (!exposureControl || !isoControl || !shutterControl) return <></>;
@@ -153,14 +179,24 @@ export const SensorControls = () => {
                       deviceSnapshot.stream.interval.denominator
                     ] || 0
                   }
-                  onChange={setExposureTime}
+                  onChange={(newValue) => {
+                    if (matchExposure) {
+                      setMatchedExposure(newValue);
+                    }
+                    setExposureTime(newValue);
+                  }}
                 />
                 <RangeControl
                   label="ISO (Gain)"
                   value={gain}
                   min={isoControl.flags.min_value}
                   max={isoControl.flags.max_value}
-                  onChange={setGain}
+                  onChange={(newValue) => {
+                    if (matchExposure) {
+                      setMatchedISO(newValue);
+                    }
+                    setGain(newValue);
+                  }}
                 />
                 <RangeControl
                   label="Strobe Brightness"

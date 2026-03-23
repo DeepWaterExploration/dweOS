@@ -404,7 +404,7 @@ const Recordings = () => {
                 className="w-fit h-fit border rounded-xl"
               >
                 <source
-                  src={`${baseUrl}/recordings/${selectedRecording.name}.${selectedRecording.format}`}
+                  src={`${baseUrl}/api/recordings/${selectedRecording.name}.${selectedRecording.format}`}
                   type="video/mp4"
                 />
                 Your browser does not support the video tag.
@@ -467,7 +467,7 @@ const Recordings = () => {
                 asChild
               >
                 <a
-                  href={`${baseUrl}/recordings/${selectedRecording?.name}.${selectedRecording?.format}?download=true`}
+                  href={`${baseUrl}/api/recordings/${selectedRecording?.name}.${selectedRecording?.format}?download=true`}
                   download
                 >
                   <Download /> Download
@@ -481,7 +481,7 @@ const Recordings = () => {
                   const new_recordings = (
                     await API_CLIENT.DELETE(
                       // @ts-ignore-next-line
-                      `/recordings/${selectedRecording.name}.${selectedRecording.format}`,
+                      `/api/recordings/${selectedRecording.name}.${selectedRecording.format}`,
                       {},
                     )
                   ).data! as RecordingInfo[];

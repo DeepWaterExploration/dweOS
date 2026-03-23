@@ -54,13 +54,11 @@ export function WiredDropdown() {
       if (response.error) {
         console.error("Error fetching IP configuration:", response.error);
         setIpConfiguration(undefined);
-        // Don't toast here if it's just 'no ethernet', toast on initial connection
       } else if (response.data) {
         setIpConfiguration(response.data);
-        // Initialize form states when configuration is fetched
         setFormIpType(response.data.ip_type);
         setFormStaticIp(response.data.static_ip || "");
-        setFormPrefix(response.data.prefix ?? 24); // Use ?? to default if null/undefined
+        setFormPrefix(response.data.prefix ?? 24);
         setFormGateway(response.data.gateway || "");
         setFormDns(response.data.dns ? response.data.dns.join(", ") : "");
       } else {
@@ -116,7 +114,6 @@ export function WiredDropdown() {
         : null, // Send null if empty string
     };
 
-    // Optional: Basic validation before sending
     if (payload.ip_type === "STATIC") {
       if (!payload.static_ip || !payload.prefix || !payload.gateway) {
         toast({
@@ -128,13 +125,11 @@ export function WiredDropdown() {
         setIsSaving(false);
         return;
       }
-      // Add more robust IP address/prefix validation here if needed
     }
 
     try {
-      // Correctly type the response for the POST
       const response: {
-        data?: any; // Adjust type based on actual success response body
+        data?: any;
         error?: any;
       } = await API_CLIENT.POST("/api/wired/set_ip_configuration", {
         body: payload,
@@ -149,7 +144,7 @@ export function WiredDropdown() {
           }.`,
           variant: "destructive",
         });
-        // Re-fetch the configuration to show the current state if saving failed
+        
         updateIPConfiguration();
       } else {
         toast({
@@ -189,7 +184,6 @@ export function WiredDropdown() {
     }
   }, [connected]);
 
-  // Sync form state when ipConfiguration changes (e.g., after fetching or saving)
   useEffect(() => {
     if (ipConfiguration) {
       setFormIpType(ipConfiguration.ip_type);
@@ -224,7 +218,7 @@ export function WiredDropdown() {
         </DropdownMenuTrigger>
         <DropdownMenuContent
           align="end"
-          className="w-60 max-h-[400px] overflow-y-auto p-4" // Added p-4 for inner padding, increased max-height
+          className="w-60 max-h-[400px] overflow-y-auto p-4"
         >
           <DropdownMenuLabel>Wired Network</DropdownMenuLabel>
           <DropdownMenuSeparator />
@@ -239,18 +233,16 @@ export function WiredDropdown() {
               No wired network detected.
             </div>
           ) : (
-            // Show the configuration form
             <div className="grid gap-4">
               <div className="space-y-2">
                 <Label htmlFor="ip-type">IP Configuration Type</Label>
-                {/* Use RadioGroup for IP type selection */}
                 <RadioGroup
                   id="ip-type"
-                  value={formIpType || undefined} // RadioGroup expects string or undefined
+                  value={formIpType || undefined}
                   onValueChange={(value: string) =>
                     setFormIpType(value as IPType)
                   }
-                  className="flex space-x-4" // Layout radio buttons horizontally
+                  className="flex space-x-4"
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="DYNAMIC" id="dynamic" />
@@ -263,7 +255,6 @@ export function WiredDropdown() {
                 </RadioGroup>
               </div>
 
-              {/* Static IP fields - only visible if STATIC is selected */}
               {formIpType === "STATIC" && (
                 <>
                   <div className="space-y-2">
@@ -273,17 +264,17 @@ export function WiredDropdown() {
                       value={formStaticIp}
                       onChange={(e) => setFormStaticIp(e.target.value)}
                       placeholder="e.g., 192.168.1.100"
-                      type="text" // Use text for now, consider specific IP input mask later
+                      type="text"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="prefix">Prefix (Netmask)</Label>
                     <Input
                       id="prefix"
-                      value={formPrefix ?? ""} // Handle null/undefined for input
+                      value={formPrefix ?? ""}
                       onChange={(e) => {
                         const val = parseInt(e.target.value, 10);
-                        setFormPrefix(isNaN(val) ? null : val); // Store as number or null
+                        setFormPrefix(isNaN(val) ? null : val);
                       }}
                       placeholder="e.g., 24"
                       type="number"
@@ -317,22 +308,13 @@ export function WiredDropdown() {
               {/* Save button */}
               <Button
                 onClick={handleSaveConfiguration}
-                disabled={isLoading || isSaving || !formIpType} // Disable if loading, saving, or no type selected
+                disabled={isLoading || isSaving || !formIpType}
               >
                 {isSaving && (
                   <span className="mr-2 h-4 w-4 animate-spin rounded-full border border-white border-t-blue-600" />
                 )}
                 Save Changes
               </Button>
-
-              {/* Display Current IP Configuration (Optional, for comparison) */}
-              {/* You could show the currently applied config below the form */}
-              {/* <DropdownMenuSeparator />
-                <DropdownMenuLabel>Current Applied Config</DropdownMenuLabel>
-                 <div className="text-xs px-4 py-2 text-muted-foreground">
-                     ... display ipConfiguration here ...
-                 </div>
-                 */}
             </div>
           )}
         </DropdownMenuContent>

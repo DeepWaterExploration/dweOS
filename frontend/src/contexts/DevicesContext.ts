@@ -8,6 +8,10 @@ const DevicesContext = React.createContext<
   | {
       devices: DeviceModel[];
       followerModels: DeviceModel[];
+      matchedExposure: number | null;
+      matchedISO: number | null;
+      setMatchedExposure: (exposure: number | null) => void;
+      setMatchedISO: (exposure: number | null) => void;
     }
   | undefined
 >(undefined);

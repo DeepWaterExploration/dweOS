@@ -107,6 +107,9 @@ const DeviceListLayout = () => {
 
   const [devices, setDevices] = useState([] as DeviceModel[]);
 
+  const [matchedExposure, setMatchedExposure] = useState<null | number>(null);
+  const [matchedISO, setMatchedISO] = useState<null | number>(null);
+
   const [savedPreferences, setSavedPreferences] = useState({
     default_stream: { port: 5600, host: "192.168.2.1" },
   } as components["schemas"]["SavedPreferencesModel"]);
@@ -255,6 +258,10 @@ const DeviceListLayout = () => {
           value={{
             devices,
             followerModels: devices.filter((d) => d.device_type == 2),
+            matchedExposure,
+            setMatchedExposure,
+            matchedISO,
+            setMatchedISO,
           }}
         >
           {displayDevices.map((device, index) => (

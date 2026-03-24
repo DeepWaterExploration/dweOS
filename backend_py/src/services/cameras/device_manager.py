@@ -71,7 +71,6 @@ class DeviceManager(events.EventEmitter):
         self.serial = None
         if use_serial:
             self.serial = SerialPWMController()
-            self.serial.start()
 
         self.logger = logging.getLogger("dwe_os_2.cameras.DeviceManager")
 
@@ -90,6 +89,9 @@ class DeviceManager(events.EventEmitter):
 
         for device in self.devices:
             device.stream.stop()
+
+        if self.serial:
+            self.serial.close()
 
     def create_device(self, device_info: DeviceInfo) -> Device | None:
         """

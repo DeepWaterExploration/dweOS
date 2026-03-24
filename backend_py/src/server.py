@@ -171,6 +171,9 @@ class Server:
         # loop over and emit the logs to the client
         asyncio.create_task(self.emit_logs())
 
+        if self.feature_support.serial:
+            self.device_manager.serial.start()
+
         self.device_manager.start_monitoring()
         if self.feature_support.wifi:
             self.wifi_manager.start_scanning()

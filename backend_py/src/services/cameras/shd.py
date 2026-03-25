@@ -109,6 +109,10 @@ class SHDDevice(Device):
             self.add_control_from_option(
                 'strobe_width', 0, ControlTypeEnum.INTEGER, 4095, 0, 1)
 
+            self.add_control_from_option(
+                'hw_bitrate', 5000, ControlTypeEnum.INTEGER, 65535, 0, 1
+            )
+
             # self.add_control_from_option(
             #     'strobe_enabled', False, ControlTypeEnum.BOOLEAN)
 
@@ -344,6 +348,22 @@ class SHDDevice(Device):
         val = ctrl_data[2]
         return (ret, val)
 
+    def _asic_write_high_low(self, addr_high: int | xu.StellarRegisterMap, addr_low: int | xu.StellarRegisterMap, value: int):
+        val_low = value & 0xFF
+        # TODO: return after first fails... (we dont even use the status anyway)
+        ret = self._asic_write(addr_low, val_low)
+
+        val_high = value >> 8 & 0xFF
+        ret = self._asic_write(addr_high, val_high)
+        return ret
+
+    def _asic_read_high_low(self, addr_high: int | xu.StellarRegisterMap, addr_low: int | xu.StellarRegisterMap):
+        ret, val_high = self._asic_read(addr_high)
+        ret, val_low = self._asic_read(addr_low)
+        if ret != 0:
+            return None
+        return val_high << 8 | val_low
+
     def remove_manual(self, follower_bus_info: str):
         '''
         This should be called in the case the follower no longer exists
@@ -396,6 +416,15 @@ class SHDDevice(Device):
         return self._run_asic_command(None, self._sensor_read_high_low,
                                       (xu.StellarSensorMap.STROBE_WIDTH_HIGH, xu.StellarSensorMap.STROBE_WIDTH_LOW), wait=True)
 
+    def set_hw_bitrate(self, value: int):
+        self._run_asic_command('hw_bitrate', self._asic_write_high_low, (
+            xu.StellarRegisterMap.REG_HW_BITRATE_HIGH, xu.StellarRegisterMap.REG_HW_BITRATE_LOW, value))
+        self._run_asic_command('hw_bitrate', self._asic_write, (xu.StellarRegisterMap.REG_HW_BITRATE_TRIG, 1))
+
+    def get_hw_bitrate(self) -> int | None:
+        return self._run_asic_command('hw_bitrate', self._asic_read_high_low, (
+            xu.StellarRegisterMap.REG_HW_BITRATE_HIGH, xu.StellarRegisterMap.REG_HW_BITRATE_LOW), wait=True)
+
     def _get_options(self) -> Dict[str, BaseOption]:
         options = {}
 
@@ -432,6 +461,10 @@ class SHDDevice(Device):
 
             options['strobe_width'] = CustomOption(
                 "Strobe Width", self.set_strobe_width, self.get_strobe_width)
+
+            options['hw_bitrate'] = CustomOption(
+                "HW Bitrate", self.set_hw_bitrate, self.get_hw_bitrate
+            )
 
         return options
 

@@ -109,6 +109,8 @@ class WiredDevice(EventEmitter):
         self._settings_listener_task = None
         self.tasks = []
 
+        self.manual_autoconnect = False
+
     async def initialize(self):
         # Initialized here
         self.interface = await self.nm_device.interface
@@ -266,7 +268,7 @@ class WiredDevice(EventEmitter):
         else:
             self.active_ip_configuration = None
 
-        if self.state == DeviceState.DISCONNECTED and old_state == DeviceState.UNAVAILABLE:
+        if self.manual_autoconnect and self.state == DeviceState.DISCONNECTED and old_state == DeviceState.UNAVAILABLE:
             self.emit("request_activation", self)
 
         self.emit("state_changed", old_state, self.state)
@@ -297,60 +299,64 @@ class AsyncNetworkManager:
 
         self.ethernet_devices: List[WiredDevice] = []
 
-    async def _get_best_connection(self):
-        active_connections = await self.nm_settings.connections
+    async def _get_compatible_profiles(self, wired_device: WiredDevice) -> List[str]:
+        all_paths = await self.nm_settings.connections
 
-        max_ts = -1
-        best_connection = None
-        best_connection_filepath = ""
-        # TODO: add more checks
-        for i, connection_path in enumerate(active_connections):
-            conn_settings = NetworkConnectionSettings(connection_path)
+        # TODO: change others to this naming (profiles is a better term)
+        compatible_profiles = []
+
+        for profile_path in all_paths:
+            conn_settings = NetworkConnectionSettings(profile_path)
             settings = await conn_settings.get_settings()
-
             connection_settings = settings.get("connection", {})
 
             conn_type = _unpack_dbus_value(connection_settings.get("type"))
             if conn_type != "802-3-ethernet":
                 continue
 
+            # Ensure it's not a locked connection
+            interface_name = _unpack_dbus_value(
+                connection_settings.get("interface-name"))
+            if interface_name != None and interface_name != wired_device.interface:
+                continue
+
+            # TODO: mac filtering
+
             timestamp = _unpack_dbus_value(
-                connection_settings.get("timestamp"))
+                connection_settings.get("timestamp", ("u", 0)))
 
-            if timestamp > max_ts:
-                best_connection = connection_path
-                best_connection_filepath = await conn_settings.filename
+            compatible_profiles.append({
+                "path": profile_path,
+                "timestamp": timestamp
+            })
 
-        print(
-            f"Found best connection profile \"{Path(best_connection_filepath).name}\"")
+        compatible_profiles.sort(key=lambda x: x["timestamp"], reverse=True)
 
-        return best_connection
+        return [p["path"] for p in compatible_profiles]
 
-    async def select_active_ethernet_device(self, index: int):
+    async def _get_best_connection(self, wired_device: WiredDevice) -> str | None:
+        profiles = await self._get_compatible_profiles(wired_device)
+        return profiles[0] if len(profiles) > 0 else None
+
+    async def activate_ethernet_device(self, index: int):
         if index >= len(self.ethernet_devices):
             raise IndexError("Device index out of range")
 
         target_device = self.ethernet_devices[index]
-
-        if target_device.state == DeviceState.UNAVAILABLE:
-            print(f"Warning: {await target_device.nm_device.interface} is unplugged")
-
-        # Might not need to disconnect, since it seems to happen automatically
-        for i, device in enumerate(self.ethernet_devices):
-            if i == index:
-                continue
-
-            print(f"Deactivating: {await device.nm_device.interface}...")
-            active_path = await device.nm_device.active_connection
-            if active_path != "/":
-                await self.nm.deactivate_connection(active_path)
-
-        best_connection = await self._get_best_connection()
-        await self.nm.activate_connection(best_connection, target_device.nm_device._dbus.object_path)
+        await self._activate_ethernet_device(target_device)
 
     async def _activate_ethernet_device(self, target_device: WiredDevice):
+        # Check device state before anything else
+        if target_device.state not in [DeviceState.DISCONNECTED, DeviceState.ACTIVATED]:
+            print(f"Device {target_device.interface} cannot be activated")
+            return
+
+        best_connection = await self._get_best_connection(target_device)
+        if not best_connection:
+            print(
+                f"Device {target_device.interface} has no available connections")
+            return
         print(f"Activating device: {target_device.interface}")
-        best_connection = await self._get_best_connection()
         await self.nm.activate_connection(best_connection, target_device.nm_device._dbus.object_path)
 
     async def get_first_active_device(self) -> WiredDevice | None:
@@ -390,11 +396,10 @@ async def main():
 
     await asyncio.sleep(0)
 
-    await nm.select_active_ethernet_device(1)
+    await nm.activate_ethernet_device(0)
     await asyncio.sleep(1)
 
     device = await nm.get_first_active_device()
-    await device.set_autoreconnect(False)
 
     while True:
         await asyncio.sleep(1)

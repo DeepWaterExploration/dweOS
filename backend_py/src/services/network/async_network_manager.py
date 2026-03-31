@@ -20,6 +20,10 @@ from pathlib import Path
 
 from dataclasses import dataclass
 from typing import Optional, List, Any
+from pydantic import BaseModel, Field
+
+import socket
+import struct
 
 
 class IPV4Method(Enum):
@@ -28,18 +32,26 @@ class IPV4Method(Enum):
     unknown = "unknown"
 
 
-@dataclass
-class IPV4Address:
+class IPV4Address(BaseModel):
     address: str
     prefix: int
 
 
-@dataclass
-class IPV4Configuration:
+class IPV4Configuration(BaseModel):
     ip_addresses: Optional[List[IPV4Address]] = None
-    gateway: str = ""
+    gateway: Optional[str] = None
     method: IPV4Method = IPV4Method.unknown
     dns: Optional[List[str]] = None
+
+
+# ip to integer and reverse: https://stackoverflow.com/a/13294427
+
+def _ip_to_integer(addr: str):
+    return struct.unpack("!I", socket.inet_aton(addr))[0]
+
+
+def _integer_to_ip(addr: int):
+    return socket.inet_ntoa(struct.pack("!I", addr))
 
 
 def _unpack_dbus_value(setting: NetworkManagerSetting | Any, expected_type="") -> Any:
@@ -62,25 +74,116 @@ def _unpack_dbus_value(setting: NetworkManagerSetting | Any, expected_type="") -
     return value
 
 
+def _deserialize_ipv4_config(ipv4_settings: dict) -> IPV4Configuration:
+    '''
+    Get the serialized settings from the active nmconnection profile.
+
+    If no profile is active, `None` is returned
+    '''
+    method = ipv4_settings.get("method", "unknown")
+    raw_addresses = _unpack_dbus_value(
+        ipv4_settings.get("address-data", ("aa{sv}", [])), "aa{sv}")
+    dns_servers = _unpack_dbus_value(ipv4_settings.get(
+        "dns", ("au", [])), "au")
+    gateway = _unpack_dbus_value(
+        ipv4_settings.get("gateway", ("s", "")), "s")
+
+    ip_addresses = [
+        IPV4Address(address=addr['address'], prefix=addr['prefix'])
+        for addr in raw_addresses
+    ]
+
+    ip_v4_config = IPV4Configuration(
+        ip_addresses=ip_addresses, gateway=gateway, method=IPV4Method(method), dns=[_integer_to_ip(dns) for dns in dns_servers])
+
+    return ip_v4_config
+
+
+def _serialize_ipv4_config(ipv4_configuration: IPV4Configuration) -> NetworkConnectionSettings:
+    serialized_ip_config = {
+        "method": ("s", "auto" if ipv4_configuration.method == IPV4Method.auto else "manual")
+    }
+
+    if ipv4_configuration.method == IPV4Method.manual and ipv4_configuration.ip_addresses:
+        addr_data = []
+        for addr in ipv4_configuration.ip_addresses:
+            addr_data.append({
+                "address": ("s", addr.address),
+                "prefix": ("u", addr.prefix)
+            })
+
+        serialized_ip_config["address-data"] = ("aa{sv}", addr_data)
+
+        if ipv4_configuration.gateway:
+            serialized_ip_config["gateway"] = ("s", ipv4_configuration.gateway)
+
+    if ipv4_configuration.dns:
+        serialized_ip_config["dns"] = (
+            "au", [_ip_to_integer(dns) for dns in ipv4_configuration.dns])
+
+    return serialized_ip_config
+
+
+class ConnectionProfile(EventEmitter):
+
+    def __init__(self, dbus_path: str):
+        super().__init__()
+
+        self.settings: NetworkConnectionSettings | None = NetworkConnectionSettings(
+            dbus_path)
+        self.dbus_path = dbus_path
+
+        # https://networkmanager.dev/docs/api/latest/nm-settings-nmcli.html
+        self.settings_dict = {}
+
+        # deserialized params
+        self.id: str | None = None
+
+        self.ipv4_settings: IPV4Configuration | None = None
+
+        self._on_update_task: asyncio.Task = asyncio.create_task(
+            self._on_update_listener())
+
+    def delete(self):
+        if self._on_update_task:
+            self._on_update_task.cancel()
+
+    async def _update_configuration(self, new_configuration: NetworkManagerConnectionProperties):
+        await self.settings.update(new_configuration)
+
+    async def update_ipv4_configuration(self, new_configuration: IPV4Configuration):
+        old_settings: dict = await self.settings.get_settings()
+        old_settings["ipv4"] = _serialize_ipv4_config(new_configuration)
+        await self.settings.update(old_settings)
+
+    async def initialize(self):
+        await self._update_settings()
+
+    async def _on_update_listener(self):
+        async for _ in self.settings.updated.catch():
+            if self.settings:
+                print(f"Updating connection settings for {await self.settings.filename}")
+                await self._update_settings()
+
+    async def _update_settings(self):
+        self.emit("settings_updated")
+
+        if not self.settings:
+            print(
+                f"{self.interface}: Cannot update connection settings when there is no active connection")
+            return
+
+        self.settings_dict = _unpack_dbus_value(await self.settings.get_settings())
+
+        self.ipv4_settings = _deserialize_ipv4_config(
+            self.settings_dict.get("ipv4", {}))
+
+        self.id = self.settings_dict["connection"]["id"]
+
+
 class WiredDevice(EventEmitter):
     '''
     Represents a NetworkManager wired device
-
-    Architecture:
-    This device can be either active or inactive depending on whether or not `self.connection_settings` is set to None or not.
-    If it's active, it is able to control it's own active connection. Instead of this connection being represented by its own object,
-    it's controlled by its owning device. That way we can control it in a way that feels familiar in a UI. A user does not care
-    what connection a device is controlling, only what parameters it has, and whether or not it selects correctly. Currently, the assumption
-    remains that there is only one good nmconnection, so there can only be a single ethernet device that is active at once. This is a
-    relatively naive assumption, but holds true for nearly all systems.
-
-    Tentative:
-    We share this connection between all the ethernet devices and set `auto-reconnect` to False for this connection. Then we request activation
-    when the state dictates it's ready for it. In testing, it appears this holds true when old_state was UNAVAILABLE and new_state is DISCONNECTED.
-
-    Concerns:
-    If this app crashes, we may permanently lose connection, since we'd now rely on it for connection. We can look into `ExecStopPost` or let NetworkManager
-    handle autoconnection.
     '''
 
     def __init__(self, device_path: str):
@@ -96,15 +199,10 @@ class WiredDevice(EventEmitter):
         self.active_ip_configuration: IPV4Configuration | None = None
 
         # Settings
-        # Behavior:
-        # When the device has an active connection associated, it will listen for settings changes
-        # These settings changes as an object are stored in self.connection_settings
-        # These are then also propagated as a dict stored in config, where the data is guaranteed to be live, and can be
-        # synchronously accessed.
-        self.connection_settings: NetworkConnectionSettings | None = None
+        self.active_profile_path = "/"
+        self.active_connection: ActiveConnection | None = None
+        self.connection_id = ""
         self.has_active_connection = False
-        # The dbus config that will be updated whenever the signal is received
-        self.ip_settings: IPV4Configuration | None = None
 
         self._settings_listener_task = None
         self.tasks = []
@@ -121,62 +219,13 @@ class WiredDevice(EventEmitter):
         # Add the ip configuration listener task
         self.tasks.append(asyncio.create_task(self._listen()))
 
-    async def set_autoreconnect(self, autoreconnect: bool):
-        if not self.connection_settings:
-            print("This device has no active connection!")
-            return
-
-        settings = await self.connection_settings.get_settings()
-
-        # Not sure when this code block would be run, probably never
-        if "connection" not in settings:
-            settings["connection"] = {}
-
-        # D-Bus variant
-        settings["connection"]["autoconnect"] = ("b", autoreconnect)
-
-        print(f"{'Disabling' if not autoreconnect else 'Enabling'} autoconnect for profile: {Path(await self.connection_settings.filename).name}")
-        await self.connection_settings.update(settings)
-
-    async def _listen_connection_settings(self):
-        print(f"{self.interface}: Listening for changes in connection settings")
-        async for _ in self.connection_settings.updated.catch():
-            if self.connection_settings:
-                print(f"Updating connection settings for {await self.connection_settings.filename}")
-                await self._update_connection_settings()
-
     def get_active_settings(self) -> IPV4Configuration | None:
         if self.state != DeviceState.ACTIVATED or not self.active_ip_configuration:
             return None
         return self.active_ip_configuration
 
-    def _deserialize_ipv4_config(self, ipv4_settings: NetworkManagerConnectionProperties) -> IPV4Configuration:
-        '''
-        Get the serialized settings from the active nmconnection profile.
-
-        If no profile is active, `None` is returned
-        '''
-        method = _unpack_dbus_value(
-            ipv4_settings.get("method", ("s", "unknown")), "s")
-        raw_addresses = _unpack_dbus_value(
-            ipv4_settings.get("address-data", ("aa{sv}", [])), "aa{sv}")
-        dns = _unpack_dbus_value(ipv4_settings.get(
-            "dns-search", ("as", [])), "as")
-        gateway = _unpack_dbus_value(
-            ipv4_settings.get("gateway", ("s", "")), "s")
-
-        ip_addresses = [
-            IPV4Address(address=addr['address'], prefix=addr['prefix'])
-            for addr in raw_addresses
-        ]
-
-        ip_v4_config = IPV4Configuration(
-            ip_addresses, gateway, IPV4Method(method), dns)
-
-        return ip_v4_config
-
-    async def set_ip_v4_configuration(self, configuration: IPV4Configuration):
-        pass
+    def is_available(self) -> bool:
+        return self.state in [DeviceState.DISCONNECTED, DeviceState.ACTIVATED]
 
     async def _update_ipv4_connection_profile(self):
         '''
@@ -188,37 +237,20 @@ class WiredDevice(EventEmitter):
         active_connection_path = await self.nm_device.active_connection
 
         if active_connection_path == "/":
-            if self.connection_settings:
+            if self.has_active_connection:
                 print(f"{self.interface}: Lost Active Connection Profile")
-            self.connection_settings = None
             self.has_active_connection = False
-            if self._settings_listener_task:
-                self._settings_listener_task.cancel()
-            return None
-
-        active_connection = ActiveConnection(active_connection_path)
-        self.connection_settings = NetworkConnectionSettings(await active_connection.connection)
+            return
 
         # We didn't have settings before
         if not self.has_active_connection:
             print(f"{self.interface}: Gained Active Connection Profile")
             self.has_active_connection = True
 
-            # Update the settings immediately
-            await self._update_connection_settings()
+        self.active_profile_path = active_connection_path
+        self.active_connection = ActiveConnection(active_connection_path)
 
-            self._settings_listener_task = asyncio.create_task(
-                self._listen_connection_settings())
-
-    async def _update_connection_settings(self):
-        if not self.connection_settings:
-            print(
-                f"{self.interface}: Cannot update connection settings when there is no active connection")
-            return
-
-        settings_dict = await self.connection_settings.get_settings()
-        self.ip_settings = self._deserialize_ipv4_config(
-            settings_dict.get("ipv4"))
+        self.connection_id = await self.active_connection.id
 
     async def _update_active_connection_settings(self):
         if self.state != DeviceState.ACTIVATED:
@@ -247,8 +279,7 @@ class WiredDevice(EventEmitter):
         # Maybe we can do a single unpack
         self.active_ip_configuration.dns = [data["address"] for data in _unpack_dbus_value(await config.nameserver_data)]
 
-        print(self.ip_settings.ip_addresses)
-        print(self.active_ip_configuration.ip_addresses)
+        self.emit("ip_config_changed")
 
     async def _set_state(self, old_state: DeviceState | None, new_state: DeviceState):
         '''
@@ -288,9 +319,11 @@ class WiredDevice(EventEmitter):
             await self._set_state(DeviceState(old_state), DeviceState(new_state))
 
 
-class AsyncNetworkManager:
+class AsyncNetworkManager(EventEmitter):
 
     def __init__(self):
+        super().__init__()
+
         # Get the system bus
         self.bus = sdbus.sd_bus_open_system()
         sdbus.set_default_bus(self.bus)
@@ -298,66 +331,95 @@ class AsyncNetworkManager:
         self.nm_settings = NetworkManagerSettings()
 
         self.ethernet_devices: List[WiredDevice] = []
+        self.profiles: List[ConnectionProfile] = []
 
-    async def _get_compatible_profiles(self, wired_device: WiredDevice) -> List[str]:
+        self._profiles_updated_task: asyncio.Task | None = None
+
+    async def _update_profiles(self):
         all_paths = await self.nm_settings.connections
+        self.profiles = []
+        for path in all_paths:
+            profile = ConnectionProfile(path)
+            await profile.initialize()
+            self.profiles.append(profile)
 
-        # TODO: change others to this naming (profiles is a better term)
+    def get_device_by_iface(self, iface_name: str) -> WiredDevice | None:
+        '''
+        Get a device by an interface name (e.g. eth0)
+        '''
+        for device in self.ethernet_devices:
+            if device.interface == iface_name:
+                return device
+        return None
+
+    def get_compatible_profiles(self, wired_device: WiredDevice) -> List[ConnectionProfile]:
+        '''
+        Get a list of compatible profiles for a given wired device
+        '''
         compatible_profiles = []
 
-        for profile_path in all_paths:
-            conn_settings = NetworkConnectionSettings(profile_path)
-            settings = await conn_settings.get_settings()
-            connection_settings = settings.get("connection", {})
+        for profile in self.profiles:
+            settings = profile.settings_dict
 
-            conn_type = _unpack_dbus_value(connection_settings.get("type"))
+            connection_settings = settings.get("connection", {})
+            conn_type = connection_settings.get("type", "")
             if conn_type != "802-3-ethernet":
                 continue
 
-            # Ensure it's not a locked connection
-            interface_name = _unpack_dbus_value(
-                connection_settings.get("interface-name"))
+            # Ensure it's not a locked down connection
+            interface_name = connection_settings.get("interface-name", None)
             if interface_name != None and interface_name != wired_device.interface:
                 continue
 
             # TODO: mac filtering
 
-            timestamp = _unpack_dbus_value(
-                connection_settings.get("timestamp", ("u", 0)))
+            timestamp = connection_settings.get("timestamp", 0)
 
             compatible_profiles.append({
-                "path": profile_path,
+                "profile": profile,
                 "timestamp": timestamp
             })
 
         compatible_profiles.sort(key=lambda x: x["timestamp"], reverse=True)
 
-        return [p["path"] for p in compatible_profiles]
+        return [p["profile"] for p in compatible_profiles]
 
-    async def _get_best_connection(self, wired_device: WiredDevice) -> str | None:
-        profiles = await self._get_compatible_profiles(wired_device)
+    def get_profile_by_id(self, id: str) -> ConnectionProfile | None:
+        '''
+        Get a connection profile by id (e.g. Wired connection 1)
+        '''
+        for profile in self.profiles:
+            if profile.id == id:
+                return profile
+        return None
+
+    async def _get_best_connection(self, wired_device: WiredDevice) -> ConnectionProfile | None:
+        profiles = self.get_compatible_profiles(wired_device)
         return profiles[0] if len(profiles) > 0 else None
 
-    async def activate_ethernet_device(self, index: int):
+    async def activate_ethernet_device_by_index(self, index: int, profile: ConnectionProfile | None = None):
         if index >= len(self.ethernet_devices):
             raise IndexError("Device index out of range")
 
         target_device = self.ethernet_devices[index]
-        await self._activate_ethernet_device(target_device)
+        await self.activate_ethernet_device(target_device, profile)
 
-    async def _activate_ethernet_device(self, target_device: WiredDevice):
+    async def activate_ethernet_device(self, target_device: WiredDevice, profile: ConnectionProfile | None = None):
         # Check device state before anything else
-        if target_device.state not in [DeviceState.DISCONNECTED, DeviceState.ACTIVATED]:
+        if not target_device.is_available():
             print(f"Device {target_device.interface} cannot be activated")
             return
 
-        best_connection = await self._get_best_connection(target_device)
-        if not best_connection:
-            print(
-                f"Device {target_device.interface} has no available connections")
-            return
-        print(f"Activating device: {target_device.interface}")
-        await self.nm.activate_connection(best_connection, target_device.nm_device._dbus.object_path)
+        if profile == None:
+            profile = await self._get_best_connection(target_device)
+            if not profile:
+                print(
+                    f"Device {target_device.interface} has no available profile")
+                return
+
+        print(
+            f"Activating device: '{target_device.interface}' with profile '{profile.id}'")
+        await self.nm.activate_connection(profile.dbus_path, target_device.nm_device._dbus.object_path)
 
     async def get_first_active_device(self) -> WiredDevice | None:
         for device in self.ethernet_devices:
@@ -365,8 +427,41 @@ class AsyncNetworkManager:
                 return device
         return None
 
+    async def _listen_connection_profiles(self):
+        new_conn_iter = self.nm_settings.new_connection.catch()
+        rem_conn_iter = self.nm_settings.connection_removed.catch()
+
+        async def handle_new():
+            async for path in new_conn_iter:
+                print(f"System: New connection profile detected at {path}")
+
+                # Check if the path is there
+                if not any(p.dbus_path == path for p in self.profiles):
+                    new_profile = ConnectionProfile(path)
+                    await new_profile._update_settings()
+                    self.profiles.append(new_profile)
+                    self.emit("profiles_changed", self.profiles)
+
+        async def handle_removed():
+            async for path in rem_conn_iter:
+                for p in self.profiles:
+                    if p.dbus_path == path:
+                        print(f"Profile removed: '{p.id}'")
+                        p.delete()
+                self.profiles = [
+                    p for p in self.profiles if p.dbus_path != path]
+                self.emit("profiles_changed", self.profiles)
+
+        await asyncio.gather(handle_new(), handle_removed())
+
     async def initialize(self):
         self.all_devices = await self.nm.devices
+
+        await self._update_profiles()
+        self._profiles_updated_task = asyncio.create_task(
+            self._listen_connection_profiles())
+
+        self.nm_settings.new_connection
 
         for device_path in self.all_devices:
             generic = NetworkDeviceGeneric(device_path)
@@ -394,12 +489,26 @@ async def main():
     nm = AsyncNetworkManager()
     await nm.initialize()
 
-    await asyncio.sleep(0)
+    wired_conn_1 = nm.get_profile_by_id("Wired connection 1")
+    print(wired_conn_1.ipv4_config)
 
-    await nm.activate_ethernet_device(0)
-    await asyncio.sleep(1)
+    dev = None
+    for device in nm.ethernet_devices:
+        if device.is_available():
+            dev = device
 
-    device = await nm.get_first_active_device()
+    if not dev:
+        print("No available devices")
+        return
+
+    await nm.activate_ethernet_device(dev, wired_conn_1)
+
+    await asyncio.sleep(2)
+
+    # await wired_conn_1.update_ipv4_configuration(IPV4Configuration(ip_addresses=[IPV4Address(
+    #     "192.168.2.1", 24)], gateway="192.168.2.1", method=IPV4Method.manual, dns=["0.0.0.0", "1.1.1.1"]))
+
+    await wired_conn_1.update_ipv4_configuration(IPV4Configuration(method=IPV4Method.auto))
 
     while True:
         await asyncio.sleep(1)

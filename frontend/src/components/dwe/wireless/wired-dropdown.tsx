@@ -20,8 +20,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 
 // Import types from the generated schema
-type IPConfiguration = components["schemas"]["IPConfiguration"];
-type IPType = components["schemas"]["IPType"];
+type IPConfiguration = components["schemas"]["IPV4Configuration"];
+type IPType = components["schemas"]["IPV4Method"];
+type IPAddress = components["schemas"]["IPV4Address"];
 
 export function WiredDropdown() {
   const { connected, socket } = useContext(WebsocketContext)!;
@@ -33,7 +34,7 @@ export function WiredDropdown() {
 
   // State for the form inputs - initially null or empty
   const [formIpType, setFormIpType] = useState<IPType | null>(null);
-  const [formStaticIp, setFormStaticIp] = useState<string>("");
+  const [formStaticIp, setFormStaticIp] = useState<string>();
   const [formPrefix, setFormPrefix] = useState<number | null>(null);
   const [formGateway, setFormGateway] = useState<string>("");
   const [formDns, setFormDns] = useState<string>(""); // Stored as comma-separated string
@@ -49,16 +50,19 @@ export function WiredDropdown() {
       const response: {
         data?: IPConfiguration | null;
         error?: any;
-      } = await API_CLIENT.GET("/api/wired/get_ip_configuration");
+      } = await API_CLIENT.GET("/api/network/get_ip_configuration");
 
       if (response.error) {
         console.error("Error fetching IP configuration:", response.error);
         setIpConfiguration(undefined);
       } else if (response.data) {
         setIpConfiguration(response.data);
-        setFormIpType(response.data.ip_type);
-        setFormStaticIp(response.data.static_ip || "");
-        setFormPrefix(response.data.prefix ?? 24);
+        setFormIpType(response.data.method);
+
+        const ip_addresses = response.data.ip_addresses!;
+
+        setFormStaticIp(ip_addresses[0].address);
+        setFormPrefix(ip_addresses[0].prefix);
         setFormGateway(response.data.gateway || "");
         setFormDns(response.data.dns ? response.data.dns.join(", ") : "");
       } else {
@@ -101,72 +105,72 @@ export function WiredDropdown() {
     }
 
     setIsSaving(true);
-    const payload: IPConfiguration = {
-      ip_type: formIpType,
-      static_ip: formIpType === "STATIC" ? formStaticIp || null : null, // Only include if STATIC
-      prefix: formIpType === "STATIC" ? (formPrefix ?? null) : null, // Only include if STATIC
-      gateway: formIpType === "STATIC" ? formGateway || null : null, // Only include if STATIC
-      dns: formDns
-        ? formDns
-            .split(",")
-            .map((d) => d.trim())
-            .filter((d) => d !== "") // Split, trim, remove empty
-        : null, // Send null if empty string
-    };
+    // const payload: IPConfiguration = {
+    //   ip_type: formIpType,
+    //   static_ip: formIpType === "manual" ? formStaticIp || null : null, // Only include if manual
+    //   prefix: formIpType === "manual" ? (formPrefix ?? null) : null, // Only include if manual
+    //   gateway: formIpType === "manual" ? formGateway || null : null, // Only include if manual
+    //   dns: formDns
+    //     ? formDns
+    //         .split(",")
+    //         .map((d) => d.trim())
+    //         .filter((d) => d !== "") // Split, trim, remove empty
+    //     : null, // Send null if empty string
+    // };
 
-    if (payload.ip_type === "STATIC") {
-      if (!payload.static_ip || !payload.prefix || !payload.gateway) {
-        toast({
-          title: "Validation Error",
-          description:
-            "IP Address, Prefix, and Gateway are required for Static IP.",
-          variant: "destructive",
-        });
-        setIsSaving(false);
-        return;
-      }
-    }
+    // if (payload.method === "manual") {
+    //   if (!payload.static_ip || !payload.prefix || !payload.gateway) {
+    //     toast({
+    //       title: "Validation Error",
+    //       description:
+    //         "IP Address, Prefix, and Gateway are required for Static IP.",
+    //       variant: "destructive",
+    //     });
+    //     setIsSaving(false);
+    //     return;
+    //   }
+    // }
 
-    try {
-      const response: {
-        data?: any;
-        error?: any;
-      } = await API_CLIENT.POST("/api/wired/set_ip_configuration", {
-        body: payload,
-      });
+    // try {
+    //   const response: {
+    //     data?: any;
+    //     error?: any;
+    //   } = await API_CLIENT.POST("/api/wired/set_ip_configuration", {
+    //     body: payload,
+    //   });
 
-      if (response.error) {
-        console.error("Error saving IP configuration:", response.error);
-        toast({
-          title: "Error",
-          description: `Failed to save wired IP configuration: ${
-            response.error.message || "Unknown error"
-          }.`,
-          variant: "destructive",
-        });
-        
-        updateIPConfiguration();
-      } else {
-        toast({
-          title: "Success",
-          description: "Wired IP configuration saved.",
-          variant: "default",
-        });
-        // Re-fetch the configuration to show the new state after saving
-        updateIPConfiguration();
-      }
-    } catch (e) {
-      console.error("API call error:", e);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred while saving IP config.",
-        variant: "destructive",
-      });
-      // Re-fetch on unexpected error as well
-      updateIPConfiguration();
-    } finally {
-      setIsSaving(false);
-    }
+    //   if (response.error) {
+    //     console.error("Error saving IP configuration:", response.error);
+    //     toast({
+    //       title: "Error",
+    //       description: `Failed to save wired IP configuration: ${
+    //         response.error.message || "Unknown error"
+    //       }.`,
+    //       variant: "destructive",
+    //     });
+
+    //     updateIPConfiguration();
+    //   } else {
+    //     toast({
+    //       title: "Success",
+    //       description: "Wired IP configuration saved.",
+    //       variant: "default",
+    //     });
+    //     // Re-fetch the configuration to show the new state after saving
+    //     updateIPConfiguration();
+    //   }
+    // } catch (e) {
+    //   console.error("API call error:", e);
+    //   toast({
+    //     title: "Error",
+    //     description: "An unexpected error occurred while saving IP config.",
+    //     variant: "destructive",
+    //   });
+    //   // Re-fetch on unexpected error as well
+    //   updateIPConfiguration();
+    // } finally {
+    //   setIsSaving(false);
+    // }
   };
 
   useEffect(() => {
@@ -184,22 +188,22 @@ export function WiredDropdown() {
     }
   }, [connected]);
 
-  useEffect(() => {
-    if (ipConfiguration) {
-      setFormIpType(ipConfiguration.ip_type);
-      setFormStaticIp(ipConfiguration.static_ip || "");
-      setFormPrefix(ipConfiguration.prefix ?? 24);
-      setFormGateway(ipConfiguration.gateway || "");
-      setFormDns(ipConfiguration.dns ? ipConfiguration.dns.join(", ") : "");
-    } else {
-      // If ipConfiguration becomes undefined, reset form states
-      setFormIpType(null);
-      setFormStaticIp("");
-      setFormPrefix(null);
-      setFormGateway("");
-      setFormDns("");
-    }
-  }, [ipConfiguration]);
+  // useEffect(() => {
+  //   if (ipConfiguration) {
+  //     setFormIpType(ipConfiguration.ip_type);
+  //     setFormStaticIp(ipConfiguration.static_ip || "");
+  //     setFormPrefix(ipConfiguration.prefix ?? 24);
+  //     setFormGateway(ipConfiguration.gateway || "");
+  //     setFormDns(ipConfiguration.dns ? ipConfiguration.dns.join(", ") : "");
+  //   } else {
+  //     // If ipConfiguration becomes undefined, reset form states
+  //     setFormIpType(null);
+  //     setFormStaticIp("");
+  //     setFormPrefix(null);
+  //     setFormGateway("");
+  //     setFormDns("");
+  //   }
+  // }, [ipConfiguration]);
 
   return (
     <div id={TOUR_STEP_IDS.ETHERNET_SWITCH}>
@@ -249,13 +253,13 @@ export function WiredDropdown() {
                     <Label htmlFor="dynamic">DHCP (Dynamic)</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="STATIC" id="static" />
+                    <RadioGroupItem value="manual" id="static" />
                     <Label htmlFor="static">Static</Label>
                   </div>
                 </RadioGroup>
               </div>
 
-              {formIpType === "STATIC" && (
+              {formIpType === "manual" && (
                 <>
                   <div className="space-y-2">
                     <Label htmlFor="static-ip">IP Address</Label>

@@ -4,1220 +4,1438 @@
  */
 
 export interface paths {
-  "/api/devices/": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get all devices */
+        get: operations["get_devices_api_devices_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Get all devices */
-    get: operations["get_devices_api_devices__get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/devices/configure_stream": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/devices/configure_stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Configure a stream */
+        post: operations["configure_stream_api_devices_configure_stream_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Configure a stream */
-    post: operations["configure_stream_api_devices_configure_stream_post"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/devices/set_nickname": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/devices/set_nickname": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Set a device nickname */
+        post: operations["set_nickname_api_devices_set_nickname_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Set a device nickname */
-    post: operations["set_nickname_api_devices_set_nickname_post"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/devices/set_uvc_control": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/devices/set_uvc_control": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Set a UVC control */
+        post: operations["set_uvc_control_api_devices_set_uvc_control_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Set a UVC control */
-    post: operations["set_uvc_control_api_devices_set_uvc_control_post"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/devices/add_follower": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/devices/add_follower": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a device as a follower to another device */
+        post: operations["add_follower_api_devices_add_follower_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Add a device as a follower to another device */
-    post: operations["add_follower_api_devices_add_follower_post"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/devices/remove_follower": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/devices/remove_follower": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a device as a follower to another device */
+        post: operations["remove_follower_api_devices_remove_follower_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Add a device as a follower to another device */
-    post: operations["remove_follower_api_devices_remove_follower_post"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/devices/restart_stream": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/devices/restart_stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restart a stream */
+        post: operations["restart_stream_api_devices_restart_stream_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Restart a stream */
-    post: operations["restart_stream_api_devices_restart_stream_post"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/preferences/": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Preferences */
+        get: operations["get_preferences_api_preferences_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Get Preferences */
-    get: operations["get_preferences_api_preferences__get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/preferences/save_preferences": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/preferences/save_preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Set Preferences */
+        post: operations["set_preferences_api_preferences_save_preferences_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Set Preferences */
-    post: operations["set_preferences_api_preferences_save_preferences_post"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/preferences/get_recommended_host": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/preferences/get_recommended_host": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Recommended Host */
+        get: operations["get_recommended_host_api_preferences_get_recommended_host_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Get Recommended Host */
-    get: operations["get_recommended_host_api_preferences_get_recommended_host_get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/system/restart": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/system/restart": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restart the system */
+        post: operations["restart_api_system_restart_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Restart the system */
-    post: operations["restart_api_system_restart_post"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/system/shutdown": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/system/shutdown": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Shutdown the system */
+        post: operations["shutdown_api_system_shutdown_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Shutdown the system */
-    post: operations["shutdown_api_system_shutdown_post"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/lights/": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/lights": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Lights */
+        get: operations["get_lights_api_lights_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Get Lights */
-    get: operations["get_lights_api_lights__get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/lights/set_intensity": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/lights/set_intensity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Set Intensity */
+        post: operations["set_intensity_api_lights_set_intensity_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Set Intensity */
-    post: operations["set_intensity_api_lights_set_intensity_post"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/logs/": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Logs */
+        get: operations["get_logs_api_logs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Get Logs */
-    get: operations["get_logs_api_logs__get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/recordings/": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/recordings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get all recordings */
+        get: operations["get_recordings_api_recordings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Get all recordings */
-    get: operations["get_recordings_api_recordings__get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/recordings/{recording_path}": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/recordings/{recording_path}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a specific recording */
+        get: operations["get_recording_api_recordings__recording_path__get"];
+        put?: never;
+        post?: never;
+        /** Delete a recording */
+        delete: operations["delete_recording_api_recordings__recording_path__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Get a specific recording */
-    get: operations["get_recording_api_recordings__recording_path__get"];
-    put?: never;
-    post?: never;
-    /** Delete a recording */
-    delete: operations["delete_recording_api_recordings__recording_path__delete"];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/recordings/{old_name}/{new_name}": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/recordings/{old_name}/{new_name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Rename a recording */
+        patch: operations["rename_recording_api_recordings__old_name___new_name__patch"];
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    /** Rename a recording */
-    patch: operations["rename_recording_api_recordings__old_name___new_name__patch"];
-    trace?: never;
-  };
-  "/api/recordings/zip": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/recordings/zip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download all recordings as a zip file */
+        get: operations["zip_recordings_api_recordings_zip_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Download all recordings as a zip file */
-    get: operations["zip_recordings_api_recordings_zip_get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/features": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/network/get_ip_configuration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the ethernet IP configuration */
+        get: operations["get_ip_configuration_api_network_get_ip_configuration_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Get supported features */
-    get: operations["_lambda__features_get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
+    "/api/network/set_ip_configuration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Update the ethernet IP configuration */
+        post: operations["set_static_ip_api_network_set_ip_configuration_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/pwm/frequency": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Frequency */
+        get: operations["get_frequency_api_pwm_frequency_get"];
+        put?: never;
+        /** Set Frequency */
+        post: operations["set_frequency_api_pwm_frequency_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/pwm/apply_from_fps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Apply From Fps */
+        post: operations["apply_from_fps_api_pwm_apply_from_fps_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/features": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get supported features */
+        get: operations["_lambda__api_features_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-  schemas: {
-    /** AddFollowerPayload */
-    AddFollowerPayload: {
-      /** Leader Bus Info */
-      leader_bus_info: string;
-      /** Follower Bus Info */
-      follower_bus_info: string;
+    schemas: {
+        /** AddFollowerPayload */
+        AddFollowerPayload: {
+            /** Leader Bus Info */
+            leader_bus_info: string;
+            /** Follower Bus Info */
+            follower_bus_info: string;
+        };
+        /** CameraModel */
+        CameraModel: {
+            /** Path */
+            path: string;
+            /** Formats */
+            formats: {
+                [key: string]: components["schemas"]["FormatSizeModel"][];
+            };
+        };
+        /** ControlFlagsModel */
+        ControlFlagsModel: {
+            /** Default Value */
+            default_value: number;
+            /** Max Value */
+            max_value: number;
+            /** Min Value */
+            min_value: number;
+            /** Step */
+            step: number;
+            control_type: components["schemas"]["ControlTypeEnum"];
+            /** Menu */
+            menu?: components["schemas"]["MenuItemModel"][];
+        };
+        /** ControlModel */
+        ControlModel: {
+            flags: components["schemas"]["ControlFlagsModel"];
+            /** Control Id */
+            control_id: number;
+            /** Name */
+            name: string;
+            /** Value */
+            value: number;
+        };
+        /**
+         * ControlTypeEnum
+         * @enum {string}
+         */
+        ControlTypeEnum: "INTEGER" | "BOOLEAN" | "MENU" | "BUTTON" | "INTEGER64" | "CTRL_CLASS" | "STRING" | "BITMASK" | "INTEGER_MENU";
+        /** DeviceDescriptorModel */
+        DeviceDescriptorModel: {
+            /** Bus Info */
+            bus_info: string;
+        };
+        /** DeviceInfoModel */
+        DeviceInfoModel: {
+            /** Device Name */
+            device_name: string;
+            /** Bus Info */
+            bus_info: string;
+            /** Device Paths */
+            device_paths: string[];
+            /** Vid */
+            vid: number;
+            /** Pid */
+            pid: number;
+        };
+        /** DeviceModel */
+        DeviceModel: {
+            /** Cameras */
+            cameras?: components["schemas"]["CameraModel"][] | null;
+            /** Controls */
+            controls: components["schemas"]["ControlModel"][];
+            stream: components["schemas"]["StreamModel"];
+            /** Name */
+            name?: string | null;
+            /** Vid */
+            vid: number;
+            /** Pid */
+            pid: number;
+            /** Bus Info */
+            bus_info: string;
+            /** Manufacturer */
+            manufacturer?: string | null;
+            /** Nickname */
+            nickname: string;
+            device_info?: components["schemas"]["DeviceInfoModel"] | null;
+            device_type: components["schemas"]["DeviceType"];
+            /**
+             * Followers
+             * @default []
+             */
+            followers: string[];
+            /**
+             * Is Managed
+             * @default false
+             */
+            is_managed: boolean;
+        };
+        /** DeviceNicknameModel */
+        DeviceNicknameModel: {
+            /** Bus Info */
+            bus_info: string;
+            /** Nickname */
+            nickname: string;
+        };
+        /**
+         * DeviceType
+         * @description Device type Enum
+         * @enum {integer}
+         */
+        DeviceType: 0 | 1 | 2 | 3 | 4;
+        /** FeatureSupport */
+        FeatureSupport: {
+            /** Ttyd */
+            ttyd: boolean;
+            /** Wifi */
+            wifi: boolean;
+            /** Serial */
+            serial: boolean;
+        };
+        /** FormatSizeModel */
+        FormatSizeModel: {
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            /** Intervals */
+            intervals: components["schemas"]["IntervalModel"][];
+        };
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
+        /** IPV4Address */
+        IPV4Address: {
+            /** Address */
+            address: string;
+            /** Prefix */
+            prefix: number;
+        };
+        /** IPV4Configuration */
+        IPV4Configuration: {
+            /** Ip Addresses */
+            ip_addresses?: components["schemas"]["IPV4Address"][] | null;
+            /** Gateway */
+            gateway?: string | null;
+            /** @default unknown */
+            method: components["schemas"]["IPV4Method"];
+            /** Dns */
+            dns?: string[] | null;
+        };
+        /**
+         * IPV4Method
+         * @enum {string}
+         */
+        IPV4Method: "manual" | "auto" | "unknown";
+        /** IntervalModel */
+        IntervalModel: {
+            /** Numerator */
+            numerator: number;
+            /** Denominator */
+            denominator: number;
+        };
+        /** Light */
+        Light: {
+            /** Intensity */
+            intensity: number;
+            /** Pin */
+            pin: number;
+            /** Nickname */
+            nickname: string;
+            /** Controller Index */
+            controller_index: number;
+            /** Controller Name */
+            controller_name: string;
+        };
+        /** LogSchema */
+        LogSchema: {
+            /** Timestamp */
+            timestamp: string;
+            /** Level */
+            level: string;
+            /** Name */
+            name: string;
+            /** Filename */
+            filename: string;
+            /** Lineno */
+            lineno: number;
+            /** Function */
+            function: string;
+            /** Message */
+            message: string;
+        };
+        /** MenuItemModel */
+        MenuItemModel: {
+            /** Index */
+            index: number;
+            /** Name */
+            name: string;
+        };
+        /** RecordingInfo */
+        RecordingInfo: {
+            /** Path */
+            path: string;
+            /** Name */
+            name: string;
+            /** Format */
+            format: string;
+            /** Duration */
+            duration: string;
+            /** Size */
+            size: string;
+            /** Created */
+            created: string;
+        };
+        /** SavedPreferencesModel */
+        SavedPreferencesModel: {
+            /** @default {
+             *       "host": "192.168.2.1",
+             *       "port": 5600
+             *     } */
+            default_stream: components["schemas"]["StreamEndpointModel"] | null;
+            /**
+             * Suggest Host
+             * @default true
+             */
+            suggest_host: boolean;
+        };
+        /** SetLightInfo */
+        SetLightInfo: {
+            /** Index */
+            index: number;
+            /** Intensity */
+            intensity: number;
+        };
+        /** SimpleRequestStatusModel */
+        SimpleRequestStatusModel: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+        };
+        /**
+         * StreamEncodeTypeEnum
+         * @enum {string}
+         */
+        StreamEncodeTypeEnum: "MJPG" | "H264" | "SOFTWARE_H264";
+        /** StreamEndpointModel */
+        StreamEndpointModel: {
+            /** Host */
+            host: string;
+            /** Port */
+            port: number;
+        };
+        /** StreamFormatModel */
+        StreamFormatModel: {
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            interval: components["schemas"]["IntervalModel"];
+        };
+        /** StreamInfoModel */
+        StreamInfoModel: {
+            /** Bus Info */
+            bus_info: string;
+            stream_type: components["schemas"]["StreamTypeEnum"];
+            stream_format: components["schemas"]["StreamFormatModel"];
+            encode_type: components["schemas"]["StreamEncodeTypeEnum"];
+            /** Enabled */
+            enabled: boolean;
+            /** Endpoints */
+            endpoints: components["schemas"]["StreamEndpointModel"][];
+        };
+        /** StreamModel */
+        StreamModel: {
+            /** Device Path */
+            device_path: string;
+            encode_type: components["schemas"]["StreamEncodeTypeEnum"];
+            stream_type: components["schemas"]["StreamTypeEnum"];
+            /** Endpoints */
+            endpoints: components["schemas"]["StreamEndpointModel"][];
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            interval: components["schemas"]["IntervalModel"];
+            /** Enabled */
+            enabled: boolean;
+        };
+        /**
+         * StreamTypeEnum
+         * @enum {string}
+         */
+        StreamTypeEnum: "UDP" | "RECORDING";
+        /** UVCControlModel */
+        UVCControlModel: {
+            /** Bus Info */
+            bus_info: string;
+            /** Control Id */
+            control_id: number;
+            /** Value */
+            value: number;
+        };
+        /** ValidationError */
+        ValidationError: {
+            /** Location */
+            loc: (string | number)[];
+            /** Message */
+            msg: string;
+            /** Error Type */
+            type: string;
+            /** Input */
+            input?: unknown;
+            /** Context */
+            ctx?: Record<string, never>;
+        };
     };
-    /** CameraModel */
-    CameraModel: {
-      /** Path */
-      path: string;
-      /** Formats */
-      formats: {
-        [key: string]: components["schemas"]["FormatSizeModel"][];
-      };
-    };
-    /** ControlFlagsModel */
-    ControlFlagsModel: {
-      /** Default Value */
-      default_value: number;
-      /** Max Value */
-      max_value: number;
-      /** Min Value */
-      min_value: number;
-      /** Step */
-      step: number;
-      control_type: components["schemas"]["ControlTypeEnum"];
-      /** Menu */
-      menu?: components["schemas"]["MenuItemModel"][];
-    };
-    /** ControlModel */
-    ControlModel: {
-      flags: components["schemas"]["ControlFlagsModel"];
-      /** Control Id */
-      control_id: number;
-      /** Name */
-      name: string;
-      /** Value */
-      value: number;
-    };
-    /**
-     * ControlTypeEnum
-     * @enum {string}
-     */
-    ControlTypeEnum:
-      | "INTEGER"
-      | "BOOLEAN"
-      | "MENU"
-      | "BUTTON"
-      | "INTEGER64"
-      | "CTRL_CLASS"
-      | "STRING"
-      | "BITMASK"
-      | "INTEGER_MENU";
-    /** DeviceDescriptorModel */
-    DeviceDescriptorModel: {
-      /** Bus Info */
-      bus_info: string;
-    };
-    /** DeviceInfoModel */
-    DeviceInfoModel: {
-      /** Device Name */
-      device_name: string;
-      /** Bus Info */
-      bus_info: string;
-      /** Device Paths */
-      device_paths: string[];
-      /** Vid */
-      vid: number;
-      /** Pid */
-      pid: number;
-    };
-    /** DeviceModel */
-    DeviceModel: {
-      /** Cameras */
-      cameras?: components["schemas"]["CameraModel"][] | null;
-      /** Controls */
-      controls: components["schemas"]["ControlModel"][];
-      stream: components["schemas"]["StreamModel"];
-      /** Name */
-      name?: string | null;
-      /** Vid */
-      vid: number;
-      /** Pid */
-      pid: number;
-      /** Bus Info */
-      bus_info: string;
-      /** Manufacturer */
-      manufacturer?: string | null;
-      /** Nickname */
-      nickname: string;
-      device_info?: components["schemas"]["DeviceInfoModel"] | null;
-      device_type: components["schemas"]["DeviceType"];
-      /**
-       * Followers
-       * @default []
-       */
-      followers: string[];
-      /**
-       * Is Managed
-       * @default false
-       */
-      is_managed: boolean;
-    };
-    /** DeviceNicknameModel */
-    DeviceNicknameModel: {
-      /** Bus Info */
-      bus_info: string;
-      /** Nickname */
-      nickname: string;
-    };
-    /**
-     * DeviceType
-     * @description Device type Enum
-     * @enum {integer}
-     */
-    DeviceType: 0 | 1 | 2 | 3 | 4;
-    /** FeatureSupport */
-    FeatureSupport: {
-      /** Ttyd */
-      ttyd: boolean;
-      /** Wifi */
-      wifi: boolean;
-      /** Serial */
-      serial: boolean;
-    };
-    /** FormatSizeModel */
-    FormatSizeModel: {
-      /** Width */
-      width: number;
-      /** Height */
-      height: number;
-      /** Intervals */
-      intervals: components["schemas"]["IntervalModel"][];
-    };
-    /** HTTPValidationError */
-    HTTPValidationError: {
-      /** Detail */
-      detail?: components["schemas"]["ValidationError"][];
-    };
-    /** IntervalModel */
-    IntervalModel: {
-      /** Numerator */
-      numerator: number;
-      /** Denominator */
-      denominator: number;
-    };
-    /** Light */
-    Light: {
-      /** Intensity */
-      intensity: number;
-      /** Pin */
-      pin: number;
-      /** Nickname */
-      nickname: string;
-      /** Controller Index */
-      controller_index: number;
-      /** Controller Name */
-      controller_name: string;
-    };
-    /** LogSchema */
-    LogSchema: {
-      /** Timestamp */
-      timestamp: string;
-      /** Level */
-      level: string;
-      /** Name */
-      name: string;
-      /** Filename */
-      filename: string;
-      /** Lineno */
-      lineno: number;
-      /** Function */
-      function: string;
-      /** Message */
-      message: string;
-    };
-    /** MenuItemModel */
-    MenuItemModel: {
-      /** Index */
-      index: number;
-      /** Name */
-      name: string;
-    };
-    /** RecordingInfo */
-    RecordingInfo: {
-      /** Path */
-      path: string;
-      /** Name */
-      name: string;
-      /** Format */
-      format: string;
-      /** Duration */
-      duration: string;
-      /** Size */
-      size: string;
-      /** Created */
-      created: string;
-    };
-    /** SavedPreferencesModel */
-    SavedPreferencesModel: {
-      /** @default {
-       *       "host": "192.168.2.1",
-       *       "port": 5600
-       *     } */
-      default_stream: components["schemas"]["StreamEndpointModel"] | null;
-      /**
-       * Suggest Host
-       * @default true
-       */
-      suggest_host: boolean;
-    };
-    /** SetLightInfo */
-    SetLightInfo: {
-      /** Index */
-      index: number;
-      /** Intensity */
-      intensity: number;
-    };
-    /** SimpleRequestStatusModel */
-    SimpleRequestStatusModel: {
-      /**
-       * Success
-       * @default true
-       */
-      success: boolean;
-    };
-    /**
-     * StreamEncodeTypeEnum
-     * @enum {string}
-     */
-    StreamEncodeTypeEnum: "MJPG" | "H264" | "SOFTWARE_H264";
-    /** StreamEndpointModel */
-    StreamEndpointModel: {
-      /** Host */
-      host: string;
-      /** Port */
-      port: number;
-    };
-    /** StreamFormatModel */
-    StreamFormatModel: {
-      /** Width */
-      width: number;
-      /** Height */
-      height: number;
-      interval: components["schemas"]["IntervalModel"];
-    };
-    /** StreamInfoModel */
-    StreamInfoModel: {
-      /** Bus Info */
-      bus_info: string;
-      stream_type: components["schemas"]["StreamTypeEnum"];
-      stream_format: components["schemas"]["StreamFormatModel"];
-      encode_type: components["schemas"]["StreamEncodeTypeEnum"];
-      /** Enabled */
-      enabled: boolean;
-      /** Endpoints */
-      endpoints: components["schemas"]["StreamEndpointModel"][];
-    };
-    /** StreamModel */
-    StreamModel: {
-      /** Device Path */
-      device_path: string;
-      encode_type: components["schemas"]["StreamEncodeTypeEnum"];
-      stream_type: components["schemas"]["StreamTypeEnum"];
-      /** Endpoints */
-      endpoints: components["schemas"]["StreamEndpointModel"][];
-      /** Width */
-      width: number;
-      /** Height */
-      height: number;
-      interval: components["schemas"]["IntervalModel"];
-      /** Enabled */
-      enabled: boolean;
-    };
-    /**
-     * StreamTypeEnum
-     * @enum {string}
-     */
-    StreamTypeEnum: "UDP" | "RECORDING";
-    /** UVCControlModel */
-    UVCControlModel: {
-      /** Bus Info */
-      bus_info: string;
-      /** Control Id */
-      control_id: number;
-      /** Value */
-      value: number;
-    };
-    /** ValidationError */
-    ValidationError: {
-      /** Location */
-      loc: (string | number)[];
-      /** Message */
-      msg: string;
-      /** Error Type */
-      type: string;
-      /** Input */
-      input?: unknown;
-      /** Context */
-      ctx?: Record<string, never>;
-    };
-  };
-  responses: never;
-  parameters: never;
-  requestBodies: never;
-  headers: never;
-  pathItems: never;
+    responses: never;
+    parameters: never;
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-  get_devices_api_devices__get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    get_devices_api_devices_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceModel"][];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    configure_stream_api_devices_configure_stream_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": components["schemas"]["DeviceModel"][];
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StreamInfoModel"];
+            };
         };
-      };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-  };
-  configure_stream_api_devices_configure_stream_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    set_nickname_api_devices_set_nickname_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeviceNicknameModel"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["StreamInfoModel"];
-      };
+    set_uvc_control_api_devices_set_uvc_control_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UVCControlModel"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    add_follower_api_devices_add_follower_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": unknown;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddFollowerPayload"];
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimpleRequestStatusModel"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
     };
-  };
-  set_nickname_api_devices_set_nickname_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    remove_follower_api_devices_remove_follower_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddFollowerPayload"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimpleRequestStatusModel"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["DeviceNicknameModel"];
-      };
+    restart_stream_api_devices_restart_stream_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeviceDescriptorModel"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    get_preferences_api_preferences_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": unknown;
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedPreferencesModel"];
+                };
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
     };
-  };
-  set_uvc_control_api_devices_set_uvc_control_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    set_preferences_api_preferences_save_preferences_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavedPreferencesModel"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["UVCControlModel"];
-      };
+    get_recommended_host_api_preferences_get_recommended_host_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+        };
     };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    restart_api_system_restart_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": unknown;
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
     };
-  };
-  add_follower_api_devices_add_follower_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    shutdown_api_system_shutdown_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["AddFollowerPayload"];
-      };
+    get_lights_api_lights_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Light"][];
+                };
+            };
+        };
     };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    set_intensity_api_lights_set_intensity_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": components["schemas"]["SimpleRequestStatusModel"];
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetLightInfo"];
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
     };
-  };
-  remove_follower_api_devices_remove_follower_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    get_logs_api_logs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LogSchema"][];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["AddFollowerPayload"];
-      };
+    get_recordings_api_recordings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordingInfo"][];
+                };
+            };
+        };
     };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    get_recording_api_recordings__recording_path__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recording_path: string;
+            };
+            cookie?: never;
         };
-        content: {
-          "application/json": components["schemas"]["SimpleRequestStatusModel"];
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
     };
-  };
-  restart_stream_api_devices_restart_stream_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    delete_recording_api_recordings__recording_path__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recording_path: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["DeviceDescriptorModel"];
-      };
+    rename_recording_api_recordings__old_name___new_name__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                old_name: string;
+                new_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    zip_recordings_api_recordings_zip_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": unknown;
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
     };
-  };
-  get_preferences_api_preferences__get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    get_ip_configuration_api_network_get_ip_configuration_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IPV4Configuration"] | null;
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    set_static_ip_api_network_set_ip_configuration_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": components["schemas"]["SavedPreferencesModel"];
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IPV4Configuration"];
+            };
         };
-      };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-  };
-  set_preferences_api_preferences_save_preferences_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    get_frequency_api_pwm_frequency_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": number;
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["SavedPreferencesModel"];
-      };
+    set_frequency_api_pwm_frequency_post: {
+        parameters: {
+            query: {
+                frequency: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    apply_from_fps_api_pwm_apply_from_fps_post: {
+        parameters: {
+            query: {
+                fps: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": unknown;
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
     };
-  };
-  get_recommended_host_api_preferences_get_recommended_host_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    _lambda__api_features_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeatureSupport"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": {
-            [key: string]: string;
-          };
-        };
-      };
-    };
-  };
-  restart_api_system_restart_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": unknown;
-        };
-      };
-    };
-  };
-  shutdown_api_system_shutdown_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": unknown;
-        };
-      };
-    };
-  };
-  get_lights_api_lights__get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Light"][];
-        };
-      };
-    };
-  };
-  set_intensity_api_lights_set_intensity_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["SetLightInfo"];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": unknown;
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  get_logs_api_logs__get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["LogSchema"][];
-        };
-      };
-    };
-  };
-  get_recordings_api_recordings__get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["RecordingInfo"][];
-        };
-      };
-    };
-  };
-  get_recording_api_recordings__recording_path__get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        recording_path: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": unknown;
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  delete_recording_api_recordings__recording_path__delete: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        recording_path: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": unknown;
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  rename_recording_api_recordings__old_name___new_name__patch: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        old_name: string;
-        new_name: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": unknown;
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  zip_recordings_api_recordings_zip_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": unknown;
-        };
-      };
-    };
-  };
-  _lambda__features_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["FeatureSupport"];
-        };
-      };
-    };
-  };
 }

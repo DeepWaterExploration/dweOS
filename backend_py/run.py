@@ -22,7 +22,7 @@ sio = socketio.AsyncServer(
 # Define events
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    server.serve()
+    await server.serve()
     yield
     print("Shutting down server...")
 

@@ -17,7 +17,7 @@ sio = socketio.AsyncServer(async_mode="asgi", transports=["websocket"])
 # Define events
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    server.serve()
+    await server.serve()
     yield
     print("Shutting down server...")
 
@@ -51,8 +51,10 @@ blueos_extension = {
 if __name__ == "__main__":
     import uvicorn
 
-    parser = argparse.ArgumentParser(description="Run the server with parameters")
-    parser.add_argument("--no-ttyd", action="store_true", help="Disable ttyd server")
+    parser = argparse.ArgumentParser(
+        description="Run the server with parameters")
+    parser.add_argument("--no-ttyd", action="store_true",
+                        help="Disable ttyd server")
     parser.add_argument("--no-wifi", action="store_true", help="Disable WiFi")
     parser.add_argument("--serial", action="store_true", help="Disable WiFi")
     parser.add_argument(
@@ -69,7 +71,8 @@ if __name__ == "__main__":
 
     # Server instance
     server = Server(
-        FeatureSupport(ttyd=not args.no_ttyd, wifi=not args.no_wifi, serial=args.serial),
+        FeatureSupport(ttyd=not args.no_ttyd,
+                       wifi=not args.no_wifi, serial=args.serial),
         sio,
         app,
         settings_path=args.settings_path,

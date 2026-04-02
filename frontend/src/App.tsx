@@ -102,9 +102,6 @@ function AppContent() {
             <ModeToggle />
             <div className="ml-auto flex items-center">
               <CommandPalette />
-              {features?.wifi ? <WiredDropdown /> : <></>}
-              {/* FIXME: Removed for Jetson, to have ethernet without wifi control */}
-              {/* {features?.wifi ? <WifiDropdown /> : <></>} */}
               <SystemDropdown />
             </div>
           </div>

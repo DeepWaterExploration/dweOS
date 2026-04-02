@@ -328,15 +328,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/network/get_ip_configuration": {
+    "/api/network/wired/devices": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get the ethernet IP configuration */
-        get: operations["get_ip_configuration_api_network_get_ip_configuration_get"];
+        /** Get the wired devices */
+        get: operations["get_wired_devices_api_network_wired_devices_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/network/connection_profiles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the connection profiles */
+        get: operations["get_connection_profiles_api_network_connection_profiles_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -434,6 +451,14 @@ export interface components {
                 [key: string]: components["schemas"]["FormatSizeModel"][];
             };
         };
+        /** ConnectionProfileModel */
+        ConnectionProfileModel: {
+            /** Id */
+            id: string;
+            /** Path */
+            path: string;
+            ipv4_settings: components["schemas"]["IPV4Configuration"];
+        };
         /** ControlFlagsModel */
         ControlFlagsModel: {
             /** Default Value */
@@ -520,6 +545,26 @@ export interface components {
             /** Nickname */
             nickname: string;
         };
+        /**
+         * DeviceState
+         * @description Device State
+         *
+         *     * UNKNOWN
+         *     * UNMANAGED
+         *     * UNAVAILABLE
+         *     * DISCONNECTED
+         *     * PREPARE
+         *     * CONFIG
+         *     * NEED_AUTH
+         *     * IP_CONFIG
+         *     * IP_CHECK
+         *     * SECONDARIES
+         *     * ACTIVATED
+         *     * DEACTIVATING
+         *     * FAILED
+         * @enum {integer}
+         */
+        DeviceState: 0 | 10 | 20 | 30 | 40 | 50 | 60 | 70 | 80 | 90 | 100 | 110 | 120;
         /**
          * DeviceType
          * @description Device type Enum
@@ -733,6 +778,19 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** WiredDeviceModel */
+        WiredDeviceModel: {
+            /** Interface */
+            interface: string;
+            state: components["schemas"]["DeviceState"];
+            /** Is Active */
+            is_active: boolean;
+            /** Active Profile Id */
+            active_profile_id?: string | null;
+            active_ip_configuration?: components["schemas"]["IPV4Configuration"] | null;
+            /** Available Profiles */
+            available_profiles: string[];
         };
     };
     responses: never;
@@ -1283,7 +1341,7 @@ export interface operations {
             };
         };
     };
-    get_ip_configuration_api_network_get_ip_configuration_get: {
+    get_wired_devices_api_network_wired_devices_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1298,7 +1356,27 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["IPV4Configuration"] | null;
+                    "application/json": components["schemas"]["WiredDeviceModel"][];
+                };
+            };
+        };
+    };
+    get_connection_profiles_api_network_connection_profiles_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionProfileModel"][];
                 };
             };
         };

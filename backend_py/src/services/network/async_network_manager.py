@@ -19,7 +19,7 @@ from event_emitter import EventEmitter
 from pathlib import Path
 
 from dataclasses import dataclass
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Dict
 from pydantic import BaseModel, Field
 
 import socket
@@ -154,7 +154,10 @@ class ConnectionProfile(EventEmitter):
     async def update_ipv4_configuration(self, new_configuration: IPV4Configuration):
         old_settings: dict = await self.settings.get_settings()
         old_settings["ipv4"] = _serialize_ipv4_config(new_configuration)
-        await self.settings.update(old_settings)
+        await self.settings.update_unsaved(old_settings)
+
+    async def save(self):
+        await self.settings.save()
 
     async def initialize(self):
         await self._update_settings()
@@ -200,6 +203,7 @@ class WiredDevice(EventEmitter):
 
         # Settings
         self.active_profile_path = "/"
+        self.connection_profile_path = "/"
         self.active_connection: ActiveConnection | None = None
         self.connection_id = ""
         self.has_active_connection = False
@@ -248,9 +252,8 @@ class WiredDevice(EventEmitter):
             self.has_active_connection = True
 
         self.active_profile_path = active_connection_path
-        self.active_connection = ActiveConnection(active_connection_path)
 
-        self.connection_id = await self.active_connection.id
+        self.connection_profile_path = await ActiveConnection(active_connection_path).connection
 
     async def _update_active_connection_settings(self):
         if self.state != DeviceState.ACTIVATED:
@@ -331,17 +334,19 @@ class AsyncNetworkManager(EventEmitter):
         self.nm_settings = NetworkManagerSettings()
 
         self.ethernet_devices: List[WiredDevice] = []
-        self.profiles: List[ConnectionProfile] = []
+
+        # dbus path: ConnectionProfile
+        self.profiles: Dict[str, ConnectionProfile] = {}
 
         self._profiles_updated_task: asyncio.Task | None = None
 
     async def _update_profiles(self):
         all_paths = await self.nm_settings.connections
-        self.profiles = []
+        self.profiles = {}
         for path in all_paths:
             profile = ConnectionProfile(path)
             await profile.initialize()
-            self.profiles.append(profile)
+            self.profiles[path] = profile
 
     def get_device_by_iface(self, iface_name: str) -> WiredDevice | None:
         '''
@@ -358,7 +363,7 @@ class AsyncNetworkManager(EventEmitter):
         '''
         compatible_profiles = []
 
-        for profile in self.profiles:
+        for profile in self.profiles.values():
             settings = profile.settings_dict
 
             connection_settings = settings.get("connection", {})
@@ -384,11 +389,17 @@ class AsyncNetworkManager(EventEmitter):
 
         return [p["profile"] for p in compatible_profiles]
 
+    def get_profile(self, path: str):
+        '''
+        Get a connection profile by its dbus path. This is a nondeterministic value and is only used for indexing live profiles
+        '''
+        return self.profiles.get(path, None)
+
     def get_profile_by_id(self, id: str) -> ConnectionProfile | None:
         '''
         Get a connection profile by id (e.g. Wired connection 1)
         '''
-        for profile in self.profiles:
+        for profile in self.profiles.values():
             if profile.id == id:
                 return profile
         return None
@@ -435,22 +446,18 @@ class AsyncNetworkManager(EventEmitter):
             async for path in new_conn_iter:
                 print(f"System: New connection profile detected at {path}")
 
-                # Check if the path is there
-                if not any(p.dbus_path == path for p in self.profiles):
-                    new_profile = ConnectionProfile(path)
-                    await new_profile._update_settings()
-                    self.profiles.append(new_profile)
-                    self.emit("profiles_changed", self.profiles)
+                new_profile = ConnectionProfile(path)
+                await new_profile._update_settings()
+                self.profiles[path] = new_profile
+
+                self.emit("profiles_changed")
 
         async def handle_removed():
             async for path in rem_conn_iter:
-                for p in self.profiles:
-                    if p.dbus_path == path:
-                        print(f"Profile removed: '{p.id}'")
-                        p.delete()
-                self.profiles = [
-                    p for p in self.profiles if p.dbus_path != path]
-                self.emit("profiles_changed", self.profiles)
+                self.profiles[path].delete()
+                del self.profiles[path]
+
+                self.emit("profiles_changed")
 
         await asyncio.gather(handle_new(), handle_removed())
 

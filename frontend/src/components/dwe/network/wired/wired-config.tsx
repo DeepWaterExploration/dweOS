@@ -1,7 +1,7 @@
 import { API_CLIENT } from "@/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { components } from "@/schemas/dwe_os_2";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -46,6 +46,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
+import WebsocketContext from "@/contexts/WebsocketContext";
 
 type WiredDeviceModel = components["schemas"]["WiredDeviceModel"];
 
@@ -239,7 +240,7 @@ function ConnectionProfile({
         "flex items-center space-x-3 pt-3 pb-3 relative rounded-md border transition-all cursor-pointer",
         isActive
           ? "bg-accent/50 border-primary/50 shadow-sm" // Active styling
-          : "bg-background border-transparent hover:bg-muted/50", // Inactive hover styling
+          : "bg-background border-transparent hover:bg-accent/30", // Inactive hover styling
       )}
       onClick={onSelect}
     >
@@ -319,7 +320,10 @@ function WiredDevice({
   console.log(profiles);
 
   return (
-    <Accordion type="multiple">
+    <Accordion
+      type="single"
+      defaultValue={wired_device.is_active ? "followers" : ""}
+    >
       <AccordionItem value="followers">
         <AccordionTrigger className="text-sm font-semibold">
           {wired_device.interface}
@@ -352,26 +356,40 @@ function WiredDevice({
 export default function WiredConfig() {
   const [devices, setDevices] = useState([] as WiredDeviceModel[]);
 
+  const { connected, socket } = useContext(WebsocketContext)!;
+
+  const refresh_interface = () => {
+    API_CLIENT.GET("/api/network/wired/devices").then((result) => {
+      const devicesData = result.data!;
+      API_CLIENT.GET("/api/network/connection_profiles").then(({ data }) => {
+        const profileMap = data?.reduce(
+          (acc, profile) => {
+            acc[profile.path] = profile;
+            return acc;
+          },
+          {} as Record<string, ConnectionProfileModel>,
+        );
+
+        console.log(profileMap);
+
+        if (profileMap) setProfiles(profileMap);
+        setDevices(devicesData);
+      });
+    });
+  };
+
+  useEffect(() => {
+    if (connected) {
+      socket?.on("refresh_wired_config", refresh_interface);
+    }
+  }, [connected, socket]);
+
   const [profiles, setProfiles] = useState<{
     [key: string]: ConnectionProfileModel;
   }>({});
 
   useEffect(() => {
-    API_CLIENT.GET("/api/network/wired/devices").then(({ data }) =>
-      setDevices(data!),
-    );
-
-    API_CLIENT.GET("/api/network/connection_profiles").then(({ data }) => {
-      const profileMap = data?.reduce(
-        (acc, profile) => {
-          acc[profile.path] = profile;
-          return acc;
-        },
-        {} as Record<string, ConnectionProfileModel>,
-      );
-
-      if (profileMap) setProfiles(profileMap);
-    });
+    refresh_interface();
   }, []);
 
   return (

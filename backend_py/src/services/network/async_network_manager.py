@@ -244,6 +244,8 @@ class WiredDevice(EventEmitter):
             if self.has_active_connection:
                 print(f"{self.interface}: Lost Active Connection Profile")
             self.has_active_connection = False
+            self.connection_profile_path = "/"
+            self.active_profile_path = "/"
             return
 
         # We didn't have settings before
@@ -345,6 +347,8 @@ class AsyncNetworkManager(EventEmitter):
         self.profiles = {}
         for path in all_paths:
             profile = ConnectionProfile(path)
+            profile.on("settings_changed", lambda: self.emit(
+                "profile_updated", profile))
             await profile.initialize()
             self.profiles[path] = profile
 
@@ -487,6 +491,10 @@ class AsyncNetworkManager(EventEmitter):
                 await eth_device.initialize()
                 eth_device.on("request_activation",
                               lambda dev: asyncio.create_task(self._activate_ethernet_device(dev)))
+                eth_device.on("ip_config_changed", lambda: self.emit(
+                    "ip_config_changed", eth_device))
+                eth_device.on("state_changed", lambda old_state, new_state: self.emit(
+                    "state_changed", eth_device))
                 self.ethernet_devices.append(eth_device)
 
             # TODO: Wireless
@@ -497,7 +505,6 @@ async def main():
     await nm.initialize()
 
     wired_conn_1 = nm.get_profile_by_id("Wired connection 1")
-    print(wired_conn_1.ipv4_config)
 
     dev = None
     for device in nm.ethernet_devices:

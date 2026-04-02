@@ -26,6 +26,14 @@ class NetworkWrapper(EventEmitter):
 
         self.nm = AsyncNetworkManager()
 
+        self.nm.on("profile_updated", lambda profile: self._refresh_ui())
+        self.nm.on("profiles_changed", lambda: self._refresh_ui())
+        self.nm.on("ip_config_changed", lambda device: self._refresh_ui())
+        self.nm.on("state_changed", lambda device: self._refresh_ui())
+
+    def _refresh_ui(self):
+        self.emit("refresh_ui")
+
     async def initialize(self):
         await self.nm.initialize()
 

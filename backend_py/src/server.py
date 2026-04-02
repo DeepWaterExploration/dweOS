@@ -82,7 +82,7 @@ class Server:
         self.network_wrapper = NetworkWrapper()
 
         self.network_wrapper.on(
-            "ip_changed", lambda: asyncio.create_task(self.sio.emit("ip_changed")))
+            "refresh_ui", lambda: asyncio.create_task(self.sio.emit("refresh_wired_config")))
 
         self.system_manager = SystemManager()
 

@@ -42,6 +42,7 @@ class IPV4Configuration(BaseModel):
     gateway: Optional[str] = None
     method: IPV4Method = IPV4Method.unknown
     dns: Optional[List[str]] = None
+    never_default: Optional[bool] = None
 
 
 # ip to integer and reverse: https://stackoverflow.com/a/13294427
@@ -87,6 +88,8 @@ def _deserialize_ipv4_config(ipv4_settings: dict) -> IPV4Configuration:
         "dns", ("au", [])), "au")
     gateway = _unpack_dbus_value(
         ipv4_settings.get("gateway", ("s", "")), "s")
+    never_default = _unpack_dbus_value(
+        ipv4_settings.get("never-default", ("b", None)), "b")
 
     ip_addresses = [
         IPV4Address(address=addr['address'], prefix=addr['prefix'])
@@ -94,7 +97,7 @@ def _deserialize_ipv4_config(ipv4_settings: dict) -> IPV4Configuration:
     ]
 
     ip_v4_config = IPV4Configuration(
-        ip_addresses=ip_addresses, gateway=gateway, method=IPV4Method(method), dns=[_integer_to_ip(dns) for dns in dns_servers])
+        ip_addresses=ip_addresses, gateway=gateway, method=IPV4Method(method), dns=[_integer_to_ip(dns) for dns in dns_servers], never_default=never_default)
 
     return ip_v4_config
 
@@ -107,6 +110,7 @@ def _serialize_ipv4_config(ipv4_configuration: IPV4Configuration) -> NetworkConn
     if ipv4_configuration.method == IPV4Method.manual and ipv4_configuration.ip_addresses:
         addr_data = []
         for addr in ipv4_configuration.ip_addresses:
+            print(addr)
             addr_data.append({
                 "address": ("s", addr.address),
                 "prefix": ("u", addr.prefix)
@@ -116,6 +120,10 @@ def _serialize_ipv4_config(ipv4_configuration: IPV4Configuration) -> NetworkConn
 
         if ipv4_configuration.gateway:
             serialized_ip_config["gateway"] = ("s", ipv4_configuration.gateway)
+
+        if ipv4_configuration != None:
+            serialized_ip_config["never-default"] = (
+                "b", ipv4_configuration.never_default)
 
     if ipv4_configuration.dns:
         serialized_ip_config["dns"] = (

@@ -25,8 +25,16 @@ def get_connection_profiles(request: Request) -> List[ConnectionProfileModel]:
 
 
 @network_router.post(
-    "/set_ip_configuration", summary="Update the ethernet IP configuration"
+    "/update_connection_profile", summary="Update the profile of a given nmconnection"
 )
-async def set_static_ip(request: Request, ip_configuration: IPV4Configuration):
-    network_manager: NetworkWrapper = request.app.state.wifi_manager
-    return {"status": await network_manager.set_ip_configuration(ip_configuration)}
+async def update_connection_profile(request: Request, path: str, ip_configuration: IPV4Configuration):
+    network_manager: NetworkWrapper = request.app.state.network_manager
+    return {"status": await network_manager.update_connection_profile(path, ip_configuration)}
+
+
+@network_router.post(
+    "/wired/activate_profile", summary="Activate a given profile for a device"
+)
+async def activate_profile(request: Request, interface: str, profile_path: str):
+    network_manager: NetworkWrapper = request.app.state.network_manager
+    return {"status": await network_manager.activate_interface(interface, profile_path)}

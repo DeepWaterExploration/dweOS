@@ -54,8 +54,19 @@ class NetworkWrapper(EventEmitter):
             connection_profiles.append(profile_model)
         return connection_profiles
 
-    def update_connection_profile(self, path: str, ip_configuration: IPV4Configuration):
+    async def update_connection_profile(self, path: str, ip_configuration: IPV4Configuration):
         profile = self.nm.get_profile(path)
         if profile:
-            profile.update_ipv4_configuration(ip_configuration)
-            profile.save()
+            await profile.update_ipv4_configuration(ip_configuration)
+            await profile.save()
+            return True
+
+        return False
+
+    async def activate_interface(self, interface: str, profile_path: str):
+        profile = self.nm.get_profile(profile_path)
+        device = self.nm.get_device_by_iface(interface)
+        if profile and device:
+            await self.nm.activate_ethernet_device(device, profile)
+            return True
+        return False

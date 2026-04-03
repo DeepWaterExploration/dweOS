@@ -362,7 +362,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/network/set_ip_configuration": {
+    "/api/network/update_connection_profile": {
         parameters: {
             query?: never;
             header?: never;
@@ -371,8 +371,25 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Update the ethernet IP configuration */
-        post: operations["set_static_ip_api_network_set_ip_configuration_post"];
+        /** Update the profile of a given nmconnection */
+        post: operations["update_connection_profile_api_network_update_connection_profile_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/network/wired/activate_profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Activate a given profile for a device */
+        post: operations["activate_profile_api_network_wired_activate_profile_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -611,6 +628,8 @@ export interface components {
             method: components["schemas"]["IPV4Method"];
             /** Dns */
             dns?: string[] | null;
+            /** Never Default */
+            never_default?: boolean | null;
         };
         /**
          * IPV4Method
@@ -1381,9 +1400,11 @@ export interface operations {
             };
         };
     };
-    set_static_ip_api_network_set_ip_configuration_post: {
+    update_connection_profile_api_network_update_connection_profile_post: {
         parameters: {
-            query?: never;
+            query: {
+                path: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -1393,6 +1414,38 @@ export interface operations {
                 "application/json": components["schemas"]["IPV4Configuration"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    activate_profile_api_network_wired_activate_profile_post: {
+        parameters: {
+            query: {
+                interface: string;
+                profile_path: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {

@@ -61,10 +61,13 @@ def _unpack_dbus_value(setting: NetworkManagerSetting | Any, expected_type="") -
     '''
     value = setting
     if isinstance(value, tuple):
-        (actual_type, value) = setting
+        if len(value) == 2 and isinstance(value[0], str):
+            (actual_type, value) = setting
 
-        if expected_type != "" and actual_type != expected_type:
-            raise AssertionError("Setting type does not match!")
+            if expected_type != "" and actual_type != expected_type:
+                raise AssertionError("Setting type does not match!")
+        else:
+            return tuple(_unpack_dbus_value(item) for item in value)
 
     if isinstance(value, list):
         return [_unpack_dbus_value(item) for item in value]

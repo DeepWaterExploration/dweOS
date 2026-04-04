@@ -79,7 +79,7 @@ class Server:
 
         self.server_logger = logging.getLogger("dwe_os_2.Server")
 
-        self.network_wrapper = NetworkWrapper()
+        self.network_wrapper = NetworkWrapper(sio)
 
         self.network_wrapper.on(
             "refresh_ui", lambda: asyncio.create_task(self.sio.emit("refresh_wired_config")))

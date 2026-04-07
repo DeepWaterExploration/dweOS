@@ -6,6 +6,9 @@ import { ITerminalOptions } from "@xterm/xterm";
 import WebsocketContext from "@/contexts/WebsocketContext";
 import { TTYD_TOKEN_URL, TTYD_WS } from "@/api";
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
+import FeaturesContext from "@/contexts/FeaturesContext";
+import FeatureNotSupported from "../app/not-supported";
+import { Markdown } from "../markdown";
 
 const darkTermColors = {
   background: "#1d1e23",
@@ -51,6 +54,13 @@ const lightTermColors = {
   brightWhite: "#2b2b41",
 };
 
+const TTYD_NOT_SUPPORTED_MSG = `
+TTYD is not currently enabled in the backend.
+
+- If you installed dweOS yourself, please enable the ttyd option by removing \`--no-ttyd\`.
+- If you have installed dweOS as an extension on BlueOS, please use the builtin terminal in BlueOS
+`.trim();
+
 export const Terminal = () => {
   const container = useRef<HTMLDivElement>(null);
   const originalTitle = useRef(document.title);
@@ -58,6 +68,8 @@ export const Terminal = () => {
   const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
     ? "dark"
     : "light";
+
+  const features = useContext(FeaturesContext);
 
   const { theme } = useTheme();
   const themeColor = theme === "system" ? systemTheme : theme;
@@ -84,8 +96,8 @@ export const Terminal = () => {
           allowProposedApi: true,
         } as ITerminalOptions,
       },
-      () => {}
-    )
+      () => {},
+    ),
   );
 
   // Reconnect / dispose when websocket connection toggles
@@ -128,6 +140,15 @@ export const Terminal = () => {
       document.title = originalTitle.current;
     };
   }, []);
+
+  if (!features?.ttyd || !connected)
+    return (
+      <FeatureNotSupported>
+        <div className="mt-3">
+          <Markdown>{TTYD_NOT_SUPPORTED_MSG}</Markdown>
+        </div>
+      </FeatureNotSupported>
+    );
 
   return (
     <div className="h-[calc(100vh-5.5rem)] pl-2 pr-2 pb-4">

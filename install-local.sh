@@ -29,7 +29,7 @@ cd ${INSTALL_DIR}
 sh install_requirements.sh &&
 sh create_venv.sh &&
 
-# cp -r $SCRIPT_RUN_DIR/.env $INSTALL_DIR
+# cp -r $SCRIPT_RUN_DIR/.venv $INSTALL_DIR
 
 # check if the service is already running, and stop it if necessary
 if systemctl is-active --quiet dwe_os_2; then

@@ -92,6 +92,8 @@ class NetworkWrapper(EventEmitter):
         await self.nm.activate_ethernet_device(device, profile)
 
         if enable_rollback:
+            if self._rollback_timer_task:
+                self._rollback_timer_task.cancel()
             self._rollback_timer_task = asyncio.create_task(
                 self._rollback_timer(interface, profile_path, time_of_change, 30))
 

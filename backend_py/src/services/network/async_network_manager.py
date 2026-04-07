@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import sdbus
 from sdbus_async.networkmanager import (
     NetworkManager,
@@ -113,7 +114,6 @@ def _serialize_ipv4_config(ipv4_configuration: IPV4Configuration) -> NetworkConn
     if ipv4_configuration.method == IPV4Method.manual and ipv4_configuration.ip_addresses:
         addr_data = []
         for addr in ipv4_configuration.ip_addresses:
-            print(addr)
             addr_data.append({
                 "address": ("s", addr.address),
                 "prefix": ("u", addr.prefix)
@@ -139,6 +139,8 @@ class ConnectionProfile(EventEmitter):
 
     def __init__(self, dbus_path: str):
         super().__init__()
+
+        self.logger = logging.getLogger("dwe_os_2.network.ConnectionProfile")
 
         self.settings: NetworkConnectionSettings | None = NetworkConnectionSettings(
             dbus_path)
@@ -176,15 +178,15 @@ class ConnectionProfile(EventEmitter):
     async def _on_update_listener(self):
         async for _ in self.settings.updated.catch():
             if self.settings:
-                print(f"Updating connection settings for {await self.settings.filename}")
+                self.logger.debug(f"Updating connection settings for {await self.settings.filename}")
                 await self._update_settings()
 
     async def _update_settings(self):
         self.emit("settings_updated")
 
         if not self.settings:
-            print(
-                f"{self.interface}: Cannot update connection settings when there is no active connection")
+            self.logger.warning(
+                "Cannot update connection settings when there is no active connection")
             return
 
         self.settings_dict = _unpack_dbus_value(await self.settings.get_settings())
@@ -202,6 +204,8 @@ class WiredDevice(EventEmitter):
 
     def __init__(self, device_path: str):
         super().__init__()
+
+        self.logger = logging.getLogger("dwe_os_2.network.WiredDevice")
 
         self.nm_device = NetworkDeviceWired(device_path)
         self.interface: str | None = None
@@ -228,8 +232,8 @@ class WiredDevice(EventEmitter):
         # Initialized here
         self.interface = await self.nm_device.interface
 
-        # Set the initial state
-        await self._set_state(None, await self.nm_device.state)
+        # Set the initial state (dbus returns uint32; coerce to DeviceState like _listen does)
+        await self._set_state(None, DeviceState(await self.nm_device.state))
 
         # Add the ip configuration listener task
         self.tasks.append(asyncio.create_task(self._listen()))
@@ -253,15 +257,16 @@ class WiredDevice(EventEmitter):
 
         if active_connection_path == "/":
             if self.has_active_connection:
-                print(f"{self.interface}: Lost Active Connection Profile")
+                self.logger.info(
+                    f"{self.interface}: Lost active connection profile")
             self.has_active_connection = False
             self.connection_profile_path = "/"
             self.active_profile_path = "/"
             return
 
-        # We didn't have settings before
         if not self.has_active_connection:
-            print(f"{self.interface}: Gained Active Connection Profile")
+            self.logger.info(
+                f"{self.interface}: Gained active connection profile")
             self.has_active_connection = True
 
         self.active_profile_path = active_connection_path
@@ -270,15 +275,16 @@ class WiredDevice(EventEmitter):
 
     async def _update_active_connection_settings(self):
         if self.state != DeviceState.ACTIVATED:
-            print("Cannot update the device state of an inactive device!")
+            self.logger.warning(
+                f"{self.interface}: Cannot update IP config of an inactive device")
             self.active_ip_configuration = None
             return
 
-        # Get the active ip configuration path
         config_path = await self.nm_device.ip4_config
 
         if config_path == "/":
-            print("Error: Unable to retrive IP config despite being active.")
+            self.logger.error(
+                f"{self.interface}: Unable to retrieve IP config despite being active")
             return
 
         config = IPv4Config(config_path)
@@ -326,8 +332,7 @@ class WiredDevice(EventEmitter):
             old_state,
             reason,
         ) in self.nm_device.state_changed.catch():
-            # TODO: catch ValueError
-            print(
+            self.logger.info(
                 f"{self.interface}: "
                 f"Now {DeviceState(new_state).name}, "
                 f"was {DeviceState(old_state).name}"
@@ -339,6 +344,8 @@ class AsyncNetworkManager(EventEmitter):
 
     def __init__(self):
         super().__init__()
+
+        self.logger = logging.getLogger("dwe_os_2.network.AsyncNetworkManager")
 
         # Get the system bus
         self.bus = sdbus.sd_bus_open_system()
@@ -431,20 +438,20 @@ class AsyncNetworkManager(EventEmitter):
         await self.activate_ethernet_device(target_device, profile)
 
     async def activate_ethernet_device(self, target_device: WiredDevice, profile: ConnectionProfile | None = None):
-        # Check device state before anything else
         if not target_device.is_available():
-            print(f"Device {target_device.interface} cannot be activated")
+            self.logger.error(
+                f"Device {target_device.interface} cannot be activated (state: {target_device.state.name})")
             return
 
         if profile == None:
             profile = await self._get_best_connection(target_device)
             if not profile:
-                print(
+                self.logger.error(
                     f"Device {target_device.interface} has no available profile")
                 return
 
-        print(
-            f"Activating device: '{target_device.interface}' with profile '{profile.id}'")
+        self.logger.info(
+            f"Activating device '{target_device.interface}' with profile '{profile.id}'")
         await self.nm.activate_connection(profile.dbus_path, target_device.nm_device._dbus.object_path)
 
     async def get_first_active_device(self) -> WiredDevice | None:
@@ -459,7 +466,7 @@ class AsyncNetworkManager(EventEmitter):
 
         async def handle_new():
             async for path in new_conn_iter:
-                print(f"System: New connection profile detected at {path}")
+                self.logger.info(f"New connection profile detected at {path}")
 
                 new_profile = ConnectionProfile(path)
                 await new_profile._update_settings()
@@ -495,7 +502,7 @@ class AsyncNetworkManager(EventEmitter):
             device_type = DeviceType(await generic.device_type)
             state = DeviceState(await generic.state)
 
-            print(f"{interface}: {state.name}")
+            self.logger.debug(f"{interface}: {state.name}")
 
             if device_type == DeviceType.ETHERNET:
                 eth_device = WiredDevice(device_path)
@@ -523,7 +530,7 @@ async def main():
             dev = device
 
     if not dev:
-        print("No available devices")
+        logging.warning("No available devices")
         return
 
     await nm.activate_ethernet_device(dev, wired_conn_1)

@@ -1,5 +1,5 @@
 import { API_CLIENT } from "@/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,9 +14,10 @@ import { Button } from "@/components/ui/button";
 import { useTour } from "@/components/tour/tour";
 import { SettingsCard } from "./settings-card";
 import WiredConfig from "../network/wired/wired-config";
+import WirelessConfig from "../network/wireless/wireless-config";
 
 export const IP_REGEX =
-  /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$|^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)+([A-Za-z]|[A-Za-z][A-Za-z0-9\-]*[A-Za-z0-9])$/;
+  /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$|^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)+([A-Za-z]|[A-Za-z][A-Za-z0-9\-]*[A-Za-z0-9])$/;
 
 const PreferencesLayout = () => {
   const { connected } = useContext(WebsocketContext)!;
@@ -82,7 +83,7 @@ const PreferencesLayout = () => {
         default_stream: { host, port },
       });
     }
-  }, [recommendHost, host, port]);
+  }, [recommendHost, host, port, connected]);
 
   return (
     <div
@@ -157,7 +158,10 @@ const PreferencesLayout = () => {
         </CardHeader>
       </Card>
 
-      {connected && <WiredConfig />}
+      <div className="grid grid-cols-2 gap-4">
+        <div>{connected && <WiredConfig />}</div>
+        <div>{connected && <WirelessConfig />}</div>
+      </div>
     </div>
   );
 };

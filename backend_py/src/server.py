@@ -156,7 +156,8 @@ class Server:
             response_model=FeatureSupport,
         )
 
-        self.preferences_manager.on("preferences_updated", lambda preferences: self.device_manager.serial.set_frequency_offset(preferences.frequency_offset))
+        self.preferences_manager.on(
+            "preferences_updated", lambda preferences: self.device_manager.serial.set_frequency_offset(preferences.frequency_offset))
 
         # Error handling
         # TODO

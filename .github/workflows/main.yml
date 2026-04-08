@@ -2,7 +2,7 @@ name: Build Release
 
 on:
   push:
-    branches: ["pro"]
+    branches: ["main"]
     tags: ["v*"]
   workflow_dispatch:
 
@@ -14,7 +14,9 @@ jobs:
     runs-on: ubuntu-22.04-arm
 
     env:
-      DOCKER_TAG: ${{ github.ref_name == 'pro' && 'dev' || github.ref_name }}
+      DOCKER_TAG: ${{ github.ref_name == 'main' && 'dev' || github.ref_name }}
+
+      DOCKER_REPO: deepwaterexploration/dwe_os_2
 
     steps:
       - name: "Checkout code"
@@ -50,8 +52,8 @@ jobs:
           platforms: linux/arm64,linux/arm/v7
           push: true
           tags: |
-            deepwaterexploration/dweos-pro:${{ env.DOCKER_TAG }}
-            ${{ startsWith(github.ref, 'refs/tags/') && 'deepwaterexploration/dweos-pro:latest' || '' }}
+            ${{ env.DOCKER_REPO }}:${{ env.DOCKER_TAG }}
+            ${{ startsWith(github.ref, 'refs/tags/') && format('{0}:latest', env.DOCKER_REPO) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

@@ -147,7 +147,7 @@ class Server:
         if feature_support.serial:
             self.app.include_router(pwm_router, prefix="/api/pwm")
             self.preferences_manager.on(
-                "preferences_updated", lambda preferences: self.device_manager.serial.set_frequency_offset(preferences.frequency_offset))
+                "preferences_updated", lambda preferences: self.device_manager.serial.set_frequency_offset(preferences.frequency_offset))  # type: ignore
 
         self.app.add_api_route(
             "/api/features",
@@ -157,7 +157,6 @@ class Server:
             tags=["features"],
             response_model=FeatureSupport,
         )
-
 
         # Error handling
         # TODO
@@ -172,6 +171,9 @@ class Server:
     def serve(self):
         # loop over and emit the logs to the client
         asyncio.create_task(self.emit_logs())
+
+        if self.feature_support.serial and self.device_manager.serial:
+            self.device_manager.serial.start()
 
         self.device_manager.start_monitoring()
         if self.feature_support.wifi:

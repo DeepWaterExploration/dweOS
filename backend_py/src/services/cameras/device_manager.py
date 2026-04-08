@@ -60,7 +60,7 @@ class DeviceManager(events.EventEmitter):
     """
 
     def __init__(
-        self, sio: socketio.Server, preferences: SavedPreferencesModel, use_serial=False, settings_manager=SettingsManager()
+        self, sio: socketio.AsyncServer, preferences: SavedPreferencesModel, use_serial=False, settings_manager=SettingsManager()
     ) -> None:
         self.devices: List[Device] = []
         self.sio = sio

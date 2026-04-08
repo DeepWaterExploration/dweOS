@@ -44,7 +44,7 @@ app.add_middleware(
 # Server instance
 # server = Server(FeatureSupport.none(), sio, app, settings_path='.')
 server = Server(
-    FeatureSupport(ttyd=True, wifi=True, serial=False), sio, app, settings_path=".", log_level=logging.DEBUG, is_dev_mode=True
+    FeatureSupport(ttyd=True, wifi=True, serial=True), sio, app, settings_path=".", log_level=logging.DEBUG, is_dev_mode=True
 )
 
 # Combine FastAPI and Socket.IO ASGI apps

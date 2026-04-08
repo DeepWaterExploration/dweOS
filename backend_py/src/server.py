@@ -146,6 +146,8 @@ class Server:
 
         if feature_support.serial:
             self.app.include_router(pwm_router, prefix="/api/pwm")
+            self.preferences_manager.on(
+                "preferences_updated", lambda preferences: self.device_manager.serial.set_frequency_offset(preferences.frequency_offset))
 
         self.app.add_api_route(
             "/api/features",
@@ -156,8 +158,6 @@ class Server:
             response_model=FeatureSupport,
         )
 
-        self.preferences_manager.on(
-            "preferences_updated", lambda preferences: self.device_manager.serial.set_frequency_offset(preferences.frequency_offset))
 
         # Error handling
         # TODO

@@ -12,6 +12,8 @@ import NotConnected from "../not-connected";
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 import { Button } from "@/components/ui/button";
 import { useTour } from "@/components/tour/tour";
+import { RangeControl } from "@/components/ui/range-control";
+import FeaturesContext from "@/contexts/FeaturesContext";
 
 export const IP_REGEX =
   /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$|^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)+([A-Za-z]|[A-Za-z][A-Za-z0-9-]*[A-Za-z0-9])$/;
@@ -35,6 +37,7 @@ const SettingsCard = ({
 
 const PreferencesLayout = () => {
   const { connected } = useContext(WebsocketContext)!;
+  const features = useContext(FeaturesContext);
 
   const [host, setHost] = useState("");
   const [port, setPort] = useState(5600);
@@ -145,30 +148,6 @@ const PreferencesLayout = () => {
                 />
               </div>
 
-              {/* Frequency Offset Input */}
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="freq-offset">Frequency Offset (Hz)</Label>
-                <Input
-                  id="freq-offset"
-                  type="number"
-                  step="0.01"
-                  value={frequencyOffset}
-                  onChange={(e) => {
-                    const val = parseFloat(e.target.value);
-                    setFrequencyOffset(isNaN(val) ? 0 : val);
-                  }}
-                  placeholder="0.000"
-                  className="bg-background"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Adjust the fine-tuning offset for camera clock frequency. Use
-                  if you are experience flickering or synchronization related
-                  issues.
-                </p>
-              </div>
-
-              <Separator />
-
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="recommend-host"
@@ -177,6 +156,35 @@ const PreferencesLayout = () => {
                 />
                 <Label htmlFor="recommend-host">Recommend Default Host</Label>
               </div>
+
+              <Separator className="mt-5" />
+
+              {/* Frequency Offset Slider */}
+              {features?.serial && (
+                <div className="flex flex-col gap-4">
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="freq-offset">
+                      Camera Frequency Offset Configuration
+                    </Label>
+                  </div>
+
+                  <RangeControl
+                    label="Frequency Offset (Hz)"
+                    min={-1}
+                    max={1}
+                    step={0.001}
+                    value={frequencyOffset}
+                    onChange={(val) => setFrequencyOffset(val)}
+                    className="py-2"
+                  />
+
+                  <p className="text-xs text-muted-foreground italic">
+                    Adjust the fine-tuning offset for camera clock frequency.
+                    Use if you are experiencing flickering or synchronization
+                    issues.
+                  </p>
+                </div>
+              )}
             </div>
           </SettingsCard>
         ) : (

@@ -5,12 +5,11 @@ Handles server logic and initializes all the managers (settings, devices, lights
 Starts device monitoring, wifi scan, and starts ttyd (teletypewriter daemon) to run in the background
 """
 
-from ctypes import *
 import logging.handlers
 
 from fastapi.staticfiles import StaticFiles
 
-from .services import *
+from .services import *  # type: ignore
 from .routes import *
 from .logging import LogHandler
 from .schemas import FeatureSupport
@@ -30,7 +29,7 @@ class Server:
     def __init__(
         self,
         feature_support: FeatureSupport,
-        sio: socketio.Server,
+        sio: socketio.AsyncServer,
         app: FastAPI,
         settings_path: str = "/",
         log_level=logging.INFO,
@@ -188,5 +187,6 @@ class Server:
         if self.feature_support.ttyd:
             self.ttyd_manager.kill()
 
-        if self.feature_support.wifi:
-            self.wifi_manager.stop_scanning()
+        # FIXME
+        # if self.feature_support.wifi:
+        #     self.wifi_manager.stop_scanning()

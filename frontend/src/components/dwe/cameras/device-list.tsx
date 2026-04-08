@@ -228,15 +228,12 @@ const DeviceListLayout = () => {
       });
     };
 
-    const getSavedPreferences = async () => {};
-
     if (connected) {
       socket?.on("stream_error", handleStreamError);
       socket?.on("device_added", refreshDevices);
       socket?.on("device_removed", refreshDevices);
 
       getDevices();
-      getSavedPreferences();
     } else {
       setDevices([]);
     }

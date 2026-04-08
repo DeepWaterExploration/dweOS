@@ -4,1220 +4,1785 @@
  */
 
 export interface paths {
-  "/api/devices/": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/wifi/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the WiFi Status */
+        get: operations["wifi_status_api_wifi_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Get all devices */
-    get: operations["get_devices_api_devices__get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/devices/configure_stream": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/wifi/access_points": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the scanned access points */
+        get: operations["access_points_api_wifi_access_points_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Configure a stream */
-    post: operations["configure_stream_api_devices_configure_stream_post"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/devices/set_nickname": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/wifi/connections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the known WiFi connections list */
+        get: operations["list_wifi_connections_api_wifi_connections_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Set a device nickname */
-    post: operations["set_nickname_api_devices_set_nickname_post"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/devices/set_uvc_control": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/wifi/connect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Connect to a network */
+        post: operations["connect_api_wifi_connect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Set a UVC control */
-    post: operations["set_uvc_control_api_devices_set_uvc_control_post"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/devices/add_follower": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/wifi/disconnect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Disconnect from the connected network */
+        post: operations["disconnect_api_wifi_disconnect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Add a device as a follower to another device */
-    post: operations["add_follower_api_devices_add_follower_post"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/devices/remove_follower": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/wifi/forget": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Forget a network */
+        post: operations["forget_api_wifi_forget_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Add a device as a follower to another device */
-    post: operations["remove_follower_api_devices_remove_follower_post"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/devices/restart_stream": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/wifi/off": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Turn off WiFi */
+        post: operations["wifi_off_api_wifi_off_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Restart a stream */
-    post: operations["restart_stream_api_devices_restart_stream_post"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/preferences/": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/wifi/on": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Turn on WiFi */
+        post: operations["wifi_on_api_wifi_on_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Get Preferences */
-    get: operations["get_preferences_api_preferences__get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/preferences/save_preferences": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/wired/get_ip_configuration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the ethernet IP configuration */
+        get: operations["get_ip_configuration_api_wired_get_ip_configuration_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Set Preferences */
-    post: operations["set_preferences_api_preferences_save_preferences_post"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/preferences/get_recommended_host": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/wired/set_ip_configuration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Update the ethernet IP configuration */
+        post: operations["set_static_ip_api_wired_set_ip_configuration_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Get Recommended Host */
-    get: operations["get_recommended_host_api_preferences_get_recommended_host_get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/system/restart": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/wired/set_network_priority": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Set the network priority */
+        post: operations["set_network_priority_api_wired_set_network_priority_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Restart the system */
-    post: operations["restart_api_system_restart_post"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/system/shutdown": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/wired/get_network_priority": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the network priority */
+        get: operations["get_network_priority_api_wired_get_network_priority_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Shutdown the system */
-    post: operations["shutdown_api_system_shutdown_post"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/lights/": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get all devices */
+        get: operations["get_devices_api_devices_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Get Lights */
-    get: operations["get_lights_api_lights__get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/lights/set_intensity": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/devices/configure_stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Configure a stream */
+        post: operations["configure_stream_api_devices_configure_stream_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Set Intensity */
-    post: operations["set_intensity_api_lights_set_intensity_post"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/logs/": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/devices/set_nickname": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Set a device nickname */
+        post: operations["set_nickname_api_devices_set_nickname_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Get Logs */
-    get: operations["get_logs_api_logs__get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/recordings/": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/devices/set_uvc_control": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Set a UVC control */
+        post: operations["set_uvc_control_api_devices_set_uvc_control_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Get all recordings */
-    get: operations["get_recordings_api_recordings__get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/recordings/{recording_path}": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/devices/add_follower": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a device as a follower to another device */
+        post: operations["add_follower_api_devices_add_follower_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Get a specific recording */
-    get: operations["get_recording_api_recordings__recording_path__get"];
-    put?: never;
-    post?: never;
-    /** Delete a recording */
-    delete: operations["delete_recording_api_recordings__recording_path__delete"];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/recordings/{old_name}/{new_name}": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/devices/remove_follower": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a device as a follower to another device */
+        post: operations["remove_follower_api_devices_remove_follower_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    /** Rename a recording */
-    patch: operations["rename_recording_api_recordings__old_name___new_name__patch"];
-    trace?: never;
-  };
-  "/api/recordings/zip": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/devices/restart_stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restart a stream */
+        post: operations["restart_stream_api_devices_restart_stream_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Download all recordings as a zip file */
-    get: operations["zip_recordings_api_recordings_zip_get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/features": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Preferences */
+        get: operations["get_preferences_api_preferences_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Get supported features */
-    get: operations["_lambda__features_get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
+    "/api/preferences/save_preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Set Preferences */
+        post: operations["set_preferences_api_preferences_save_preferences_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/preferences/get_recommended_host": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Recommended Host */
+        get: operations["get_recommended_host_api_preferences_get_recommended_host_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/restart": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restart the system */
+        post: operations["restart_api_system_restart_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/shutdown": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Shutdown the system */
+        post: operations["shutdown_api_system_shutdown_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lights": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Lights */
+        get: operations["get_lights_api_lights_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lights/set_intensity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Set Intensity */
+        post: operations["set_intensity_api_lights_set_intensity_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Logs */
+        get: operations["get_logs_api_logs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recordings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get all recordings */
+        get: operations["get_recordings_api_recordings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recordings/{recording_path}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a specific recording */
+        get: operations["get_recording_api_recordings__recording_path__get"];
+        put?: never;
+        post?: never;
+        /** Delete a recording */
+        delete: operations["delete_recording_api_recordings__recording_path__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recordings/{old_name}/{new_name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Rename a recording */
+        patch: operations["rename_recording_api_recordings__old_name___new_name__patch"];
+        trace?: never;
+    };
+    "/api/recordings/zip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download all recordings as a zip file */
+        get: operations["zip_recordings_api_recordings_zip_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/features": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get supported features */
+        get: operations["_lambda__api_features_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-  schemas: {
-    /** AddFollowerPayload */
-    AddFollowerPayload: {
-      /** Leader Bus Info */
-      leader_bus_info: string;
-      /** Follower Bus Info */
-      follower_bus_info: string;
+    schemas: {
+        /** AccessPoint */
+        AccessPoint: {
+            /** Ssid */
+            ssid: string;
+            /** Strength */
+            strength: number;
+            /** Requires Password */
+            requires_password: boolean;
+        };
+        /** AddFollowerPayload */
+        AddFollowerPayload: {
+            /** Leader Bus Info */
+            leader_bus_info: string;
+            /** Follower Bus Info */
+            follower_bus_info: string;
+        };
+        /** CameraModel */
+        CameraModel: {
+            /** Path */
+            path: string;
+            /** Formats */
+            formats: {
+                [key: string]: components["schemas"]["FormatSizeModel"][];
+            };
+        };
+        /** Connection */
+        Connection: {
+            /** Id */
+            id?: string | null;
+            /** Type */
+            type?: string | null;
+        };
+        /** ConnectionResultModel */
+        ConnectionResultModel: {
+            /** Result */
+            result: boolean;
+        };
+        /** ControlFlagsModel */
+        ControlFlagsModel: {
+            /** Default Value */
+            default_value: number;
+            /** Max Value */
+            max_value: number;
+            /** Min Value */
+            min_value: number;
+            /** Step */
+            step: number;
+            control_type: components["schemas"]["ControlTypeEnum"];
+            /** Menu */
+            menu?: components["schemas"]["MenuItemModel"][];
+        };
+        /** ControlModel */
+        ControlModel: {
+            flags: components["schemas"]["ControlFlagsModel"];
+            /** Control Id */
+            control_id: number;
+            /** Name */
+            name: string;
+            /** Value */
+            value: number;
+        };
+        /**
+         * ControlTypeEnum
+         * @enum {string}
+         */
+        ControlTypeEnum: "INTEGER" | "BOOLEAN" | "MENU" | "BUTTON" | "INTEGER64" | "CTRL_CLASS" | "STRING" | "BITMASK" | "INTEGER_MENU";
+        /** DeviceDescriptorModel */
+        DeviceDescriptorModel: {
+            /** Bus Info */
+            bus_info: string;
+        };
+        /** DeviceInfoModel */
+        DeviceInfoModel: {
+            /** Device Name */
+            device_name: string;
+            /** Bus Info */
+            bus_info: string;
+            /** Device Paths */
+            device_paths: string[];
+            /** Vid */
+            vid: number;
+            /** Pid */
+            pid: number;
+        };
+        /** DeviceModel */
+        DeviceModel: {
+            /** Cameras */
+            cameras?: components["schemas"]["CameraModel"][] | null;
+            /** Controls */
+            controls: components["schemas"]["ControlModel"][];
+            stream: components["schemas"]["StreamModel"];
+            /** Name */
+            name?: string | null;
+            /** Vid */
+            vid: number;
+            /** Pid */
+            pid: number;
+            /** Bus Info */
+            bus_info: string;
+            /** Manufacturer */
+            manufacturer?: string | null;
+            /** Nickname */
+            nickname: string;
+            device_info?: components["schemas"]["DeviceInfoModel"] | null;
+            device_type: components["schemas"]["DeviceType"];
+            /**
+             * Followers
+             * @default []
+             */
+            followers: string[];
+            /**
+             * Is Managed
+             * @default false
+             */
+            is_managed: boolean;
+        };
+        /** DeviceNicknameModel */
+        DeviceNicknameModel: {
+            /** Bus Info */
+            bus_info: string;
+            /** Nickname */
+            nickname: string;
+        };
+        /**
+         * DeviceType
+         * @description Device type Enum
+         * @enum {integer}
+         */
+        DeviceType: 0 | 1 | 2 | 3 | 4;
+        /** FeatureSupport */
+        FeatureSupport: {
+            /** Ttyd */
+            ttyd: boolean;
+            /** Wifi */
+            wifi: boolean;
+            /** Serial */
+            serial: boolean;
+        };
+        /** FormatSizeModel */
+        FormatSizeModel: {
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            /** Intervals */
+            intervals: components["schemas"]["IntervalModel"][];
+        };
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
+        /** IPConfiguration */
+        IPConfiguration: {
+            /**
+             * Static Ip
+             * @default
+             */
+            static_ip: string | null;
+            /**
+             * Gateway
+             * @default
+             */
+            gateway: string | null;
+            /**
+             * Prefix
+             * @default 24
+             */
+            prefix: number | null;
+            /** @default STATIC */
+            ip_type: components["schemas"]["IPType"] | null;
+            /** Dns */
+            dns?: string[] | null;
+        };
+        /**
+         * IPType
+         * @enum {string}
+         */
+        IPType: "STATIC" | "DYNAMIC";
+        /** IntervalModel */
+        IntervalModel: {
+            /** Numerator */
+            numerator: number;
+            /** Denominator */
+            denominator: number;
+        };
+        /** Light */
+        Light: {
+            /** Intensity */
+            intensity: number;
+            /** Pin */
+            pin: number;
+            /** Nickname */
+            nickname: string;
+            /** Controller Index */
+            controller_index: number;
+            /** Controller Name */
+            controller_name: string;
+        };
+        /** LogSchema */
+        LogSchema: {
+            /** Timestamp */
+            timestamp: string;
+            /** Level */
+            level: string;
+            /** Name */
+            name: string;
+            /** Filename */
+            filename: string;
+            /** Lineno */
+            lineno: number;
+            /** Function */
+            function: string;
+            /** Message */
+            message: string;
+        };
+        /** MenuItemModel */
+        MenuItemModel: {
+            /** Index */
+            index: number;
+            /** Name */
+            name: string;
+        };
+        /** NetworkConfig */
+        NetworkConfig: {
+            /** Ssid */
+            ssid: string;
+            /** Password */
+            password?: string | null;
+        };
+        /**
+         * NetworkPriority
+         * @enum {string}
+         */
+        NetworkPriority: "ETHERNET" | "WIRELESS";
+        /** NetworkPriorityInformation */
+        NetworkPriorityInformation: {
+            network_priority: components["schemas"]["NetworkPriority"];
+        };
+        /** RecordingInfo */
+        RecordingInfo: {
+            /** Path */
+            path: string;
+            /** Name */
+            name: string;
+            /** Format */
+            format: string;
+            /** Duration */
+            duration: string;
+            /** Size */
+            size: string;
+            /** Created */
+            created: string;
+        };
+        /** SavedPreferencesModel */
+        SavedPreferencesModel: {
+            /** @default {
+             *       "host": "192.168.2.1",
+             *       "port": 5600
+             *     } */
+            default_stream: components["schemas"]["StreamEndpointModel"] | null;
+            /**
+             * Suggest Host
+             * @default true
+             */
+            suggest_host: boolean;
+        };
+        /** SetLightInfo */
+        SetLightInfo: {
+            /** Index */
+            index: number;
+            /** Intensity */
+            intensity: number;
+        };
+        /** SimpleRequestStatusModel */
+        SimpleRequestStatusModel: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+        };
+        /** Status */
+        Status: {
+            connection?: components["schemas"]["Connection"] | null;
+            /**
+             * Finished First Scan
+             * @default false
+             */
+            finished_first_scan: boolean;
+            /**
+             * Connected
+             * @default false
+             */
+            connected: boolean;
+        };
+        /**
+         * StreamEncodeTypeEnum
+         * @enum {string}
+         */
+        StreamEncodeTypeEnum: "MJPG" | "H264" | "SOFTWARE_H264" | "NONE";
+        /** StreamEndpointModel */
+        StreamEndpointModel: {
+            /** Host */
+            host: string;
+            /** Port */
+            port: number;
+        };
+        /** StreamFormatModel */
+        StreamFormatModel: {
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            interval: components["schemas"]["IntervalModel"];
+        };
+        /** StreamInfoModel */
+        StreamInfoModel: {
+            /** Bus Info */
+            bus_info: string;
+            stream_type: components["schemas"]["StreamTypeEnum"];
+            stream_format: components["schemas"]["StreamFormatModel"];
+            encode_type: components["schemas"]["StreamEncodeTypeEnum"];
+            /** Enabled */
+            enabled: boolean;
+            /** Endpoints */
+            endpoints: components["schemas"]["StreamEndpointModel"][];
+        };
+        /** StreamModel */
+        StreamModel: {
+            /** Device Path */
+            device_path: string;
+            encode_type: components["schemas"]["StreamEncodeTypeEnum"];
+            stream_type: components["schemas"]["StreamTypeEnum"];
+            /** Endpoints */
+            endpoints: components["schemas"]["StreamEndpointModel"][];
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            interval: components["schemas"]["IntervalModel"];
+            /** Enabled */
+            enabled: boolean;
+        };
+        /**
+         * StreamTypeEnum
+         * @enum {string}
+         */
+        StreamTypeEnum: "UDP" | "RECORDING";
+        /** UVCControlModel */
+        UVCControlModel: {
+            /** Bus Info */
+            bus_info: string;
+            /** Control Id */
+            control_id: number;
+            /** Value */
+            value: number;
+        };
+        /** ValidationError */
+        ValidationError: {
+            /** Location */
+            loc: (string | number)[];
+            /** Message */
+            msg: string;
+            /** Error Type */
+            type: string;
+            /** Input */
+            input?: unknown;
+            /** Context */
+            ctx?: Record<string, never>;
+        };
     };
-    /** CameraModel */
-    CameraModel: {
-      /** Path */
-      path: string;
-      /** Formats */
-      formats: {
-        [key: string]: components["schemas"]["FormatSizeModel"][];
-      };
-    };
-    /** ControlFlagsModel */
-    ControlFlagsModel: {
-      /** Default Value */
-      default_value: number;
-      /** Max Value */
-      max_value: number;
-      /** Min Value */
-      min_value: number;
-      /** Step */
-      step: number;
-      control_type: components["schemas"]["ControlTypeEnum"];
-      /** Menu */
-      menu?: components["schemas"]["MenuItemModel"][];
-    };
-    /** ControlModel */
-    ControlModel: {
-      flags: components["schemas"]["ControlFlagsModel"];
-      /** Control Id */
-      control_id: number;
-      /** Name */
-      name: string;
-      /** Value */
-      value: number;
-    };
-    /**
-     * ControlTypeEnum
-     * @enum {string}
-     */
-    ControlTypeEnum:
-      | "INTEGER"
-      | "BOOLEAN"
-      | "MENU"
-      | "BUTTON"
-      | "INTEGER64"
-      | "CTRL_CLASS"
-      | "STRING"
-      | "BITMASK"
-      | "INTEGER_MENU";
-    /** DeviceDescriptorModel */
-    DeviceDescriptorModel: {
-      /** Bus Info */
-      bus_info: string;
-    };
-    /** DeviceInfoModel */
-    DeviceInfoModel: {
-      /** Device Name */
-      device_name: string;
-      /** Bus Info */
-      bus_info: string;
-      /** Device Paths */
-      device_paths: string[];
-      /** Vid */
-      vid: number;
-      /** Pid */
-      pid: number;
-    };
-    /** DeviceModel */
-    DeviceModel: {
-      /** Cameras */
-      cameras?: components["schemas"]["CameraModel"][] | null;
-      /** Controls */
-      controls: components["schemas"]["ControlModel"][];
-      stream: components["schemas"]["StreamModel"];
-      /** Name */
-      name?: string | null;
-      /** Vid */
-      vid: number;
-      /** Pid */
-      pid: number;
-      /** Bus Info */
-      bus_info: string;
-      /** Manufacturer */
-      manufacturer?: string | null;
-      /** Nickname */
-      nickname: string;
-      device_info?: components["schemas"]["DeviceInfoModel"] | null;
-      device_type: components["schemas"]["DeviceType"];
-      /**
-       * Followers
-       * @default []
-       */
-      followers: string[];
-      /**
-       * Is Managed
-       * @default false
-       */
-      is_managed: boolean;
-    };
-    /** DeviceNicknameModel */
-    DeviceNicknameModel: {
-      /** Bus Info */
-      bus_info: string;
-      /** Nickname */
-      nickname: string;
-    };
-    /**
-     * DeviceType
-     * @description Device type Enum
-     * @enum {integer}
-     */
-    DeviceType: 0 | 1 | 2 | 3 | 4;
-    /** FeatureSupport */
-    FeatureSupport: {
-      /** Ttyd */
-      ttyd: boolean;
-      /** Wifi */
-      wifi: boolean;
-      /** Serial */
-      serial: boolean;
-    };
-    /** FormatSizeModel */
-    FormatSizeModel: {
-      /** Width */
-      width: number;
-      /** Height */
-      height: number;
-      /** Intervals */
-      intervals: components["schemas"]["IntervalModel"][];
-    };
-    /** HTTPValidationError */
-    HTTPValidationError: {
-      /** Detail */
-      detail?: components["schemas"]["ValidationError"][];
-    };
-    /** IntervalModel */
-    IntervalModel: {
-      /** Numerator */
-      numerator: number;
-      /** Denominator */
-      denominator: number;
-    };
-    /** Light */
-    Light: {
-      /** Intensity */
-      intensity: number;
-      /** Pin */
-      pin: number;
-      /** Nickname */
-      nickname: string;
-      /** Controller Index */
-      controller_index: number;
-      /** Controller Name */
-      controller_name: string;
-    };
-    /** LogSchema */
-    LogSchema: {
-      /** Timestamp */
-      timestamp: string;
-      /** Level */
-      level: string;
-      /** Name */
-      name: string;
-      /** Filename */
-      filename: string;
-      /** Lineno */
-      lineno: number;
-      /** Function */
-      function: string;
-      /** Message */
-      message: string;
-    };
-    /** MenuItemModel */
-    MenuItemModel: {
-      /** Index */
-      index: number;
-      /** Name */
-      name: string;
-    };
-    /** RecordingInfo */
-    RecordingInfo: {
-      /** Path */
-      path: string;
-      /** Name */
-      name: string;
-      /** Format */
-      format: string;
-      /** Duration */
-      duration: string;
-      /** Size */
-      size: string;
-      /** Created */
-      created: string;
-    };
-    /** SavedPreferencesModel */
-    SavedPreferencesModel: {
-      /** @default {
-       *       "host": "192.168.2.1",
-       *       "port": 5600
-       *     } */
-      default_stream: components["schemas"]["StreamEndpointModel"] | null;
-      /**
-       * Suggest Host
-       * @default true
-       */
-      suggest_host: boolean;
-    };
-    /** SetLightInfo */
-    SetLightInfo: {
-      /** Index */
-      index: number;
-      /** Intensity */
-      intensity: number;
-    };
-    /** SimpleRequestStatusModel */
-    SimpleRequestStatusModel: {
-      /**
-       * Success
-       * @default true
-       */
-      success: boolean;
-    };
-    /**
-     * StreamEncodeTypeEnum
-     * @enum {string}
-     */
-    StreamEncodeTypeEnum: "MJPG" | "H264" | "SOFTWARE_H264";
-    /** StreamEndpointModel */
-    StreamEndpointModel: {
-      /** Host */
-      host: string;
-      /** Port */
-      port: number;
-    };
-    /** StreamFormatModel */
-    StreamFormatModel: {
-      /** Width */
-      width: number;
-      /** Height */
-      height: number;
-      interval: components["schemas"]["IntervalModel"];
-    };
-    /** StreamInfoModel */
-    StreamInfoModel: {
-      /** Bus Info */
-      bus_info: string;
-      stream_type: components["schemas"]["StreamTypeEnum"];
-      stream_format: components["schemas"]["StreamFormatModel"];
-      encode_type: components["schemas"]["StreamEncodeTypeEnum"];
-      /** Enabled */
-      enabled: boolean;
-      /** Endpoints */
-      endpoints: components["schemas"]["StreamEndpointModel"][];
-    };
-    /** StreamModel */
-    StreamModel: {
-      /** Device Path */
-      device_path: string;
-      encode_type: components["schemas"]["StreamEncodeTypeEnum"];
-      stream_type: components["schemas"]["StreamTypeEnum"];
-      /** Endpoints */
-      endpoints: components["schemas"]["StreamEndpointModel"][];
-      /** Width */
-      width: number;
-      /** Height */
-      height: number;
-      interval: components["schemas"]["IntervalModel"];
-      /** Enabled */
-      enabled: boolean;
-    };
-    /**
-     * StreamTypeEnum
-     * @enum {string}
-     */
-    StreamTypeEnum: "UDP" | "RECORDING";
-    /** UVCControlModel */
-    UVCControlModel: {
-      /** Bus Info */
-      bus_info: string;
-      /** Control Id */
-      control_id: number;
-      /** Value */
-      value: number;
-    };
-    /** ValidationError */
-    ValidationError: {
-      /** Location */
-      loc: (string | number)[];
-      /** Message */
-      msg: string;
-      /** Error Type */
-      type: string;
-      /** Input */
-      input?: unknown;
-      /** Context */
-      ctx?: Record<string, never>;
-    };
-  };
-  responses: never;
-  parameters: never;
-  requestBodies: never;
-  headers: never;
-  pathItems: never;
+    responses: never;
+    parameters: never;
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-  get_devices_api_devices__get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    wifi_status_api_wifi_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Status"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    access_points_api_wifi_access_points_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": components["schemas"]["DeviceModel"][];
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessPoint"][];
+                };
+            };
         };
-      };
     };
-  };
-  configure_stream_api_devices_configure_stream_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    list_wifi_connections_api_wifi_connections_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Connection"][];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["StreamInfoModel"];
-      };
+    connect_api_wifi_connect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NetworkConfig"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionResultModel"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    disconnect_api_wifi_disconnect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": unknown;
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
     };
-  };
-  set_nickname_api_devices_set_nickname_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    forget_api_wifi_forget_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NetworkConfig"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["DeviceNicknameModel"];
-      };
+    wifi_off_api_wifi_off_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
     };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    wifi_on_api_wifi_on_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": unknown;
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
     };
-  };
-  set_uvc_control_api_devices_set_uvc_control_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    get_ip_configuration_api_wired_get_ip_configuration_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IPConfiguration"] | null;
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["UVCControlModel"];
-      };
+    set_static_ip_api_wired_set_ip_configuration_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IPConfiguration"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    set_network_priority_api_wired_set_network_priority_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": unknown;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NetworkPriorityInformation"];
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
     };
-  };
-  add_follower_api_devices_add_follower_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    get_network_priority_api_wired_get_network_priority_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkPriorityInformation"];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["AddFollowerPayload"];
-      };
+    get_devices_api_devices_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceModel"][];
+                };
+            };
+        };
     };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    configure_stream_api_devices_configure_stream_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": components["schemas"]["SimpleRequestStatusModel"];
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StreamInfoModel"];
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
     };
-  };
-  remove_follower_api_devices_remove_follower_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    set_nickname_api_devices_set_nickname_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeviceNicknameModel"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["AddFollowerPayload"];
-      };
+    set_uvc_control_api_devices_set_uvc_control_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UVCControlModel"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    add_follower_api_devices_add_follower_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": components["schemas"]["SimpleRequestStatusModel"];
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddFollowerPayload"];
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimpleRequestStatusModel"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
     };
-  };
-  restart_stream_api_devices_restart_stream_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    remove_follower_api_devices_remove_follower_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddFollowerPayload"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimpleRequestStatusModel"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["DeviceDescriptorModel"];
-      };
+    restart_stream_api_devices_restart_stream_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeviceDescriptorModel"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    get_preferences_api_preferences_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": unknown;
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedPreferencesModel"];
+                };
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
     };
-  };
-  get_preferences_api_preferences__get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    set_preferences_api_preferences_save_preferences_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavedPreferencesModel"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    get_recommended_host_api_preferences_get_recommended_host_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": components["schemas"]["SavedPreferencesModel"];
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
         };
-      };
     };
-  };
-  set_preferences_api_preferences_save_preferences_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    restart_api_system_restart_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["SavedPreferencesModel"];
-      };
+    shutdown_api_system_shutdown_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
     };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    get_lights_api_lights_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": unknown;
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Light"][];
+                };
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
     };
-  };
-  get_recommended_host_api_preferences_get_recommended_host_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    set_intensity_api_lights_set_intensity_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetLightInfo"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    get_logs_api_logs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": {
-            [key: string]: string;
-          };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LogSchema"][];
+                };
+            };
         };
-      };
     };
-  };
-  restart_api_system_restart_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    get_recordings_api_recordings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordingInfo"][];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    get_recording_api_recordings__recording_path__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recording_path: string;
+            };
+            cookie?: never;
         };
-        content: {
-          "application/json": unknown;
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
-      };
     };
-  };
-  shutdown_api_system_shutdown_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    delete_recording_api_recordings__recording_path__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recording_path: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    rename_recording_api_recordings__old_name___new_name__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                old_name: string;
+                new_name: string;
+            };
+            cookie?: never;
         };
-        content: {
-          "application/json": unknown;
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
-      };
     };
-  };
-  get_lights_api_lights__get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    zip_recordings_api_recordings_zip_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    _lambda__api_features_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": components["schemas"]["Light"][];
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeatureSupport"];
+                };
+            };
         };
-      };
     };
-  };
-  set_intensity_api_lights_set_intensity_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["SetLightInfo"];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": unknown;
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  get_logs_api_logs__get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["LogSchema"][];
-        };
-      };
-    };
-  };
-  get_recordings_api_recordings__get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["RecordingInfo"][];
-        };
-      };
-    };
-  };
-  get_recording_api_recordings__recording_path__get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        recording_path: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": unknown;
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  delete_recording_api_recordings__recording_path__delete: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        recording_path: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": unknown;
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  rename_recording_api_recordings__old_name___new_name__patch: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        old_name: string;
-        new_name: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": unknown;
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  zip_recordings_api_recordings_zip_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": unknown;
-        };
-      };
-    };
-  };
-  _lambda__features_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["FeatureSupport"];
-        };
-      };
-    };
-  };
 }

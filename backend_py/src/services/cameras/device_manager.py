@@ -8,7 +8,7 @@ Manages a devices streaming state as well as changes to device name
 Manages the leader follower connections
 """
 
-from typing import *
+from typing import List, cast
 import logging
 import event_emitter as events
 import asyncio
@@ -59,7 +59,7 @@ class DeviceManager(events.EventEmitter):
     """
 
     def __init__(
-        self, sio: socketio.Server, use_serial=False, settings_manager=SettingsManager()
+        self, sio: socketio.AsyncServer, use_serial=False, settings_manager=SettingsManager()
     ) -> None:
         self.devices: List[Device] = []
         self.sio = sio
@@ -89,7 +89,7 @@ class DeviceManager(events.EventEmitter):
         self._is_monitoring = False
 
         for device in self.devices:
-            device.stream.stop()
+            device.stream_runner.stop()
 
     def create_device(self, device_info: DeviceInfo) -> Device | None:
         """
@@ -111,11 +111,12 @@ class DeviceManager(events.EventEmitter):
 
         # we need to broadcast that there was a gst error so that the frontend knows there may be a kernel issue
         device.stream_runner.on(
-            "stream_error", lambda _: self._append_stream_error(device))
+            "stream_error", lambda _: self._append_stream_error(
+                DeviceModel.model_validate(device)))
 
         if self.serial:
             device.on("pwm_frequency",
-                      lambda fps: self.serial.apply_from_fps(fps))
+                      lambda fps: self.serial.apply_from_fps(fps))  # type: ignore
 
         return device
 
@@ -192,10 +193,7 @@ class DeviceManager(events.EventEmitter):
         """
         Set a device UVC control
         """
-        try:
-            device = self._find_device_with_bus_info(bus_info)
-        except DeviceNotFoundException:
-            return False
+        device = self._find_device_with_bus_info(bus_info)
 
         device.set_pu(control_id, control_value)
 
@@ -257,7 +255,7 @@ class DeviceManager(events.EventEmitter):
 
         return True
 
-    def _find_device_with_bus_info(self, bus_info: str) -> Device | None:
+    def _find_device_with_bus_info(self, bus_info: str) -> Device:
         """
         Utility to find a device with bus info
         """
@@ -364,7 +362,7 @@ class DeviceManager(events.EventEmitter):
             # get the list of devices and update the internal array
             devices_info = await self._get_devices(devices_info)
 
-    async def _emit_stream_error(self, device: str, errors: list):
+    async def _emit_stream_error(self, device: str, errors: list | str):
         """
         Emit a stream_error and make sure it is not due to the device being unplugged
         """

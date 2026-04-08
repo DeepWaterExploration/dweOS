@@ -11,7 +11,7 @@ import { API_CLIENT } from "@/api";
 import { components } from "@/schemas/dwe_os_2"; // Assuming your schema is at this path
 import WebsocketContext from "@/contexts/WebsocketContext";
 import { useToast } from "@/hooks/use-toast";
-import React, { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 
 // Import Shadcn UI components for form elements
 import { Label } from "@/components/ui/label";
@@ -144,7 +144,7 @@ export function WiredDropdown() {
           }.`,
           variant: "destructive",
         });
-        
+
         updateIPConfiguration();
       } else {
         toast({

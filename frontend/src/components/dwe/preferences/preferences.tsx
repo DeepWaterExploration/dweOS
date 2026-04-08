@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { useTour } from "@/components/tour/tour";
 
 export const IP_REGEX =
-  /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$|^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)+([A-Za-z]|[A-Za-z][A-Za-z0-9\-]*[A-Za-z0-9])$/;
+  /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$|^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)+([A-Za-z]|[A-Za-z][A-Za-z0-9-]*[A-Za-z0-9])$/;
 
 const SettingsCard = ({
   cardTitle,
@@ -97,7 +97,7 @@ const PreferencesLayout = () => {
         default_stream: { host, port },
       });
     }
-  }, [recommendHost, host, port]);
+  }, [recommendHost, host, port, connected]);
 
   return (
     <div

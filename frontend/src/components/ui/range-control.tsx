@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { CirclePlus, CircleMinus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface RangeControlProps {
   label: string;
@@ -26,7 +26,7 @@ export const RangeControl = ({
   disabled = false,
   className,
 }: RangeControlProps) => {
-  const [valueSlider, setValueSlider] = useState(value)
+  const [valueSlider, setValueSlider] = useState(value);
   // Local state for input to allow typing
   const [inputValue, setInputValue] = useState(value.toString());
 
@@ -35,22 +35,21 @@ export const RangeControl = ({
     setInputValue(valueSlider.toString());
   }, [valueSlider]);
 
-  const handleInputChange = (val: string) => {
-    setInputValue(val);
-    const num = parseFloat(val);
+  const handleInputChange = useCallback(() => {
+    const num = parseFloat(inputValue);
     if (!isNaN(num)) {
       const clamped = Math.min(Math.max(num, min), max);
-      
+
       setValueSlider(clamped);
       onChange(clamped);
     }
-  };
+  }, [inputValue, min, max, onChange]);
 
   useEffect(() => {
     if (valueSlider > max) {
-      setValueSlider(max)
+      setValueSlider(max);
     }
-  }, [max])
+  }, [max]);
 
   useEffect(() => {
     setValueSlider(value);
@@ -58,7 +57,7 @@ export const RangeControl = ({
 
   const handleStep = (direction: 1 | -1) => {
     const newValue = Math.min(Math.max(value + direction * step, min), max);
-      setValueSlider(newValue);
+    setValueSlider(newValue);
     onChange(newValue);
   };
 
@@ -79,8 +78,8 @@ export const RangeControl = ({
             max={max}
             step={step}
             onValueChange={(vals) => {
-              setValueSlider(vals[0])
-              onChange(vals[0])
+              setValueSlider(vals[0]);
+              onChange(vals[0]);
             }}
             disabled={disabled}
             className="[&>span]:group-hover:border-white cursor-pointer"
@@ -97,13 +96,15 @@ export const RangeControl = ({
           <Input
             type="number"
             value={inputValue}
-            onChange={(e) => handleInputChange(e.target.value)}
+            onChange={(e) => {
+              setInputValue(e.target.value);
+            }}
+            onBlur={() => handleInputChange()}
             min={min}
             max={max}
             step={step}
             className="w-20 h-8 text-sm border-border hover:border-foreground"
             disabled={disabled}
-            onWheel={(e) => (e.target as HTMLInputElement).blur()}
           />
           <div className="flex flex-col gap-[1px]">
             <Button

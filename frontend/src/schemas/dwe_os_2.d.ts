@@ -532,6 +532,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/pwm/frequency": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Frequency */
+        get: operations["get_frequency_api_pwm_frequency_get"];
+        put?: never;
+        /** Set Frequency */
+        post: operations["set_frequency_api_pwm_frequency_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/pwm/apply_from_fps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Apply From Fps */
+        post: operations["apply_from_fps_api_pwm_apply_from_fps_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/features": {
         parameters: {
             query?: never;
@@ -819,6 +854,11 @@ export interface components {
              * @default true
              */
             suggest_host: boolean;
+            /**
+             * Frequency Offset
+             * @default 0
+             */
+            frequency_offset: number;
         };
         /** SetLightInfo */
         SetLightInfo: {
@@ -1761,6 +1801,88 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    get_frequency_api_pwm_frequency_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": number;
+                };
+            };
+        };
+    };
+    set_frequency_api_pwm_frequency_post: {
+        parameters: {
+            query: {
+                frequency: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    apply_from_fps_api_pwm_apply_from_fps_post: {
+        parameters: {
+            query: {
+                fps: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

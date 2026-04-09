@@ -13,7 +13,9 @@ For more information, please refer to the [DWE OS documentation](https://docs.dw
 
 const NotConnected = () => {
   return (
-    <Markdown>{markdown}</Markdown>
+    <div className="p-6 w-full">
+      <Markdown>{markdown}</Markdown>
+    </div>
   );
 };
 

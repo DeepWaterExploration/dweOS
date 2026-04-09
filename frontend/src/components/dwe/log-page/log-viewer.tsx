@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useContext, useMemo } from "react";
+import { useState, useEffect, useContext } from "react";
 import {
   Table,
   TableBody,
@@ -78,23 +78,26 @@ export function LogViewer() {
     if (connected) {
       updateLogs();
 
-      socket?.on("log", (log: components["schemas"]["LogSchema"]) => {
+      const onLog = () => {
         updateLogs();
-      });
+      };
+
+      socket?.on("log", onLog);
 
       return () => {
-        socket?.off("log");
+        socket?.off("log", onLog);
       };
     } else {
       setLogs([]);
     }
-  }, [connected]);
+  }, [connected, socket]);
 
   // Format timestamp for better readability
   const formatTimestamp = (timestamp: string) => {
     try {
       const date = new Date(timestamp.replace(",", "."));
       return date.toLocaleString();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
       return timestamp; // Return original if parsing fails
     }

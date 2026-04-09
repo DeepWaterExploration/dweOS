@@ -55,10 +55,13 @@ class V4L2Camera:
         self.critical_error = False
         try:
             self.fd = os.open(device, os.O_RDWR | os.O_NONBLOCK)
-        except:
+        except OSError as e:
             self.critical_error = True
+            raise e
         self._buffers = []  # list[mmap.mmap]
         self._running = False
+
+        self.logger = logging.getLogger("dwe_os_2.cameras.V4L2Camera")
 
         self._set_format()
         self._set_fps()
@@ -67,9 +70,12 @@ class V4L2Camera:
         self._start_stream()
 
     def _ioctl(self, req, arg):
+        assert self.fd is not None
+
         try:
             return fcntl.ioctl(self.fd, req, arg)
-        except OSError:
+        except OSError as e:
+            self.logger.error(f"IOCTL error: {e.strerror}")
             return -1
 
     def _set_format(self):
@@ -100,6 +106,8 @@ class V4L2Camera:
         self._ioctl(v4l2.VIDIOC_S_PARM, parm)
 
     def _request_and_map_buffers(self):
+        assert self.fd is not None
+
         req = v4l2.v4l2_requestbuffers()
         req.count = self.buffer_count
         req.type = v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE
@@ -201,6 +209,7 @@ class V4L2Camera:
     def close(self):
         if self.critical_error:
             return
+
         self._stop_stream()
 
         # Unmap buffers
@@ -245,6 +254,11 @@ class SynchronizedCamera:
     def __init__(self,
                  cameras: List[V4L2Camera],
                  queue_cap: int = 8):
+        for camera in cameras:
+            if camera.critical_error:
+                raise AssertionError(
+                    "Cannot create a SynchronizedCamera with cameras containing errors! Please check your camera status.")
+
         self.cameras = cameras
         sync_threshold_us = 1.0 / self.cameras[0].fps * 1000000
 
@@ -281,7 +295,7 @@ class SynchronizedCamera:
         """
 
         # grab one frame from each camera
-        grabbed_frames: List[Optional[CopiedFrame]] = []
+        grabbed_frames: List[CopiedFrame] = []
         for cam in self.cameras:
             cf = cam.grab_copied_frame(blocking=True)
             if cf is None:
@@ -313,7 +327,7 @@ class SynchronizedCamera:
             else:
                 # Drop the earliest frame (smallest timestamp) and try again
                 min_index = timestamps.index(min_ts)
-                self.logger.warning(
+                self.logger.info(
                     f"Dropping frame of difference: {max_ts - min_ts}")
                 self.queues[min_index].popleft()
 

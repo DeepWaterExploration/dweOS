@@ -8,10 +8,13 @@ Handles loading saved prefs and updating the json when settings are modified
 import json
 from typing import Dict
 from .pydantic_schemas import SavedPreferencesModel
+from event_emitter import events
 
-class PreferencesManager:
+class PreferencesManager(events.EventEmitter):
 
     def __init__(self, settings_path: str = '.') -> None:
+        super().__init__()
+
         path = f'{settings_path}/server_preferences.json'
         try:
             self.file_object = open(path, 'r+')
@@ -27,6 +30,7 @@ class PreferencesManager:
 
     def save(self, preferences: SavedPreferencesModel):
         self.settings = preferences
+        self.emit("preferences_updated", preferences)
         self._save_settings()
 
     def get_preferences(self):
@@ -35,6 +39,7 @@ class PreferencesManager:
     def serialize_preferences(self):
         return self.settings
 
+    # TODO: make thread safe
     def _save_settings(self):
         self.file_object.seek(0)
         self.file_object.write(self.settings.model_dump_json())

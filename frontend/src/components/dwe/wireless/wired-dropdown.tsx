@@ -11,7 +11,7 @@ import { API_CLIENT } from "@/api";
 import { components } from "@/schemas/dwe_os_2"; // Assuming your schema is at this path
 import WebsocketContext from "@/contexts/WebsocketContext";
 import { useToast } from "@/hooks/use-toast";
-import React, { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 
 // Import Shadcn UI components for form elements
 import { Label } from "@/components/ui/label";
@@ -46,21 +46,20 @@ export function WiredDropdown() {
   const updateIPConfiguration = async () => {
     setIsLoading(true);
     try {
-      const response: {
-        data?: IPConfiguration | null;
-        error?: any;
-      } = await API_CLIENT.GET("/api/wired/get_ip_configuration");
+      const { error, data } = await API_CLIENT.GET(
+        "/api/wired/get_ip_configuration",
+      );
 
-      if (response.error) {
-        console.error("Error fetching IP configuration:", response.error);
+      if (error) {
+        console.error("Error fetching IP configuration:", error);
         setIpConfiguration(undefined);
-      } else if (response.data) {
-        setIpConfiguration(response.data);
-        setFormIpType(response.data.ip_type);
-        setFormStaticIp(response.data.static_ip || "");
-        setFormPrefix(response.data.prefix ?? 24);
-        setFormGateway(response.data.gateway || "");
-        setFormDns(response.data.dns ? response.data.dns.join(", ") : "");
+      } else if (data) {
+        setIpConfiguration(data);
+        setFormIpType(data.ip_type);
+        setFormStaticIp(data.static_ip || "");
+        setFormPrefix(data.prefix ?? 24);
+        setFormGateway(data.gateway || "");
+        setFormDns(data.dns ? data.dns.join(", ") : "");
       } else {
         setIpConfiguration(undefined);
         // Reset form states when no configuration is found
@@ -128,23 +127,23 @@ export function WiredDropdown() {
     }
 
     try {
-      const response: {
-        data?: any;
-        error?: any;
-      } = await API_CLIENT.POST("/api/wired/set_ip_configuration", {
-        body: payload,
-      });
+      const { error } = await API_CLIENT.POST(
+        "/api/wired/set_ip_configuration",
+        {
+          body: payload,
+        },
+      );
 
-      if (response.error) {
-        console.error("Error saving IP configuration:", response.error);
+      if (error) {
+        console.error("Error saving IP configuration:", error);
         toast({
           title: "Error",
           description: `Failed to save wired IP configuration: ${
-            response.error.message || "Unknown error"
+            error.detail || "Unknown error"
           }.`,
           variant: "destructive",
         });
-        
+
         updateIPConfiguration();
       } else {
         toast({

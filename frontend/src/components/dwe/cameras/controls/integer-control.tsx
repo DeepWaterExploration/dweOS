@@ -155,7 +155,7 @@ const IntegerControl = ({
       } else {
         inputRef.current.stepDown();
       }
-    } catch (e) {
+    } catch {
       return;
     }
 
@@ -184,7 +184,7 @@ const IntegerControl = ({
             className="[&>span]:group-hover:border-white pointer-events-none"
             disabled={isDisabled}
           >
-            <span className="text-xs font-bold text-foreground mix-blend-overlay absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+            <span className="text-xs font-bold text-white mix-blend-overlay absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
               {control.name}
             </span>
           </Slider>

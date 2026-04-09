@@ -6,7 +6,7 @@ import datetime
 
 
 class LogHandler(logging.Handler):
-    def __init__(self, sio: socketio.Server, level: int | str = 0) -> None:
+    def __init__(self, sio: socketio.AsyncServer, level: int | str = 0) -> None:
         super().__init__(level)
         self.sio = sio
         self.logs: List[LogSchema] = []

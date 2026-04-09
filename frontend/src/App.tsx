@@ -27,6 +27,7 @@ import { API_CLIENT } from "./api";
 import { TourAlertDialog, TourProvider, useTour } from "@/components/tour/tour";
 import { getSteps } from "./components/tour/tour-steps";
 import FeaturesContext from "./contexts/FeaturesContext";
+import { useLogSocketToasts } from "./hooks/use-log-socket-toasts";
 import { components } from "./schemas/dwe_os_2";
 
 type WelcomeTourProps = { features: components["schemas"]["FeatureSupport"] };
@@ -74,6 +75,8 @@ function AppContent() {
 
   const pageTitle = getPageTitle(location.pathname);
 
+  useLogSocketToasts();
+
   useEffect(() => {
     API_CLIENT.GET("/api/features").then((data) => {
       if (data.data) setFeatures(data.data);
@@ -103,8 +106,7 @@ function AppContent() {
             <div className="ml-auto flex items-center">
               <CommandPalette />
               {features?.wifi ? <WiredDropdown /> : <></>}
-              {/* FIXME: Removed for Jetson, to have ethernet without wifi control */}
-              {/* {features?.wifi ? <WifiDropdown /> : <></>} */}
+              {features?.wifi ? <WifiDropdown /> : <></>}
               <SystemDropdown />
             </div>
           </div>

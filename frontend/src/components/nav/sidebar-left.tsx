@@ -20,6 +20,8 @@ import { Badge } from "../ui/badge";
 import { useTheme } from "../themes/theme-provider";
 import WebsocketContext from "@/contexts/WebsocketContext";
 
+import { version } from "../../../package.json";
+
 const data = {
   main: {
     name: "DWE OS",
@@ -95,7 +97,7 @@ export function SidebarLeft({
               {data.main.name}
             </span> */}
             <Badge variant="secondary" className="flex-shrink-0">
-              v2.0.0
+              {version}
             </Badge>
 
             {connected ? (

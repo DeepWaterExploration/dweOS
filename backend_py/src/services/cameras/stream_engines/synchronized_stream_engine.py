@@ -147,7 +147,7 @@ class SynchronizedStreamEngine(BaseStreamEngine):
         while self._running:
             frames = self.synchronized_camera.grab()
             if frames is None:
-                time.sleep(0.01)
+                time.sleep(1/self.streams[0].interval.denominator)
                 continue
 
             self.frame_queue.append((frames[0], frames[1]))
@@ -165,5 +165,5 @@ class SynchronizedStreamEngine(BaseStreamEngine):
                 # TODO: make less scuffed
                 self._send_frame([left, right], endpoint)
             except IndexError:
-                time.sleep(0.01)
+                time.sleep(1/self.streams[0].interval.denominator)
                 continue

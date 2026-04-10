@@ -170,29 +170,24 @@ class V4L2Camera:
 
         If blocking=False, returns None immediately if no frame is ready.
         """
+        if blocking:
+            import select
+            # select() polling
+            readable, _, _ = select.select([self.fd], [], [], timeout_s)
+            if not readable:
+                self.logger.warning(
+                    f"Timeout waiting for frame on {self.device}")
+                return None
+
         buf = v4l2.v4l2_buffer()
         buf.type = v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE
         buf.memory = v4l2.V4L2_MEMORY_MMAP
 
-        # We emulate blocking behavior with a small poll loop
-        # Actual polling is possible but not needed
-        start_time = time.time()
-        while True:
-            if self._ioctl(v4l2.VIDIOC_DQBUF, buf) != -1:
-                break
-            else:
-                if not blocking:
-                    return None
-                if timeout_s is not None and (time.time() - start_time) > timeout_s:
-                    return None
-                # EAGAIN: no buffer ready yet, sleep a bit
-                # FIXME: I don't really like this, but it'll do for the time being
-                time.sleep(0.001)
+        if self._ioctl(v4l2.VIDIOC_DQBUF, buf) == -1:
+            return None
 
         mm = self._buffers[buf.index]
-        # Copy only the used bytes
         frame_bytes = mm[:buf.bytesused]
-        # Convert timeval (tv_sec, tv_usec) to microseconds
         ts_us = buf.timestamp.secs * 1_000_000 + buf.timestamp.usecs
 
         # Requeue the buffer immediately

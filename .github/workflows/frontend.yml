@@ -1,0 +1,41 @@
+name: Frontend CI
+
+on:
+  push:
+    branches:
+      - main
+      - "feature/**"
+      - "fix/**"
+      - "bugfix/**"
+      - "refactor/**"
+    paths:
+      - frontend/**
+      - ".github/workflows/frontend.yml"
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  Frontend:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v6
+
+      - name: "Set up Node.js"
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: "Install frontend dependencies"
+        run: npm ci
+
+      - name: "Run frontend linting"
+        run: npm run lint
+
+      - name: "Security audit"
+        run: npm audit --audit-level=high
+
+      - name: "Build frontend"
+        run: npm run build

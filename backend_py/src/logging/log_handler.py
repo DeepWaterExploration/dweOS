@@ -12,10 +12,6 @@ class LogHandler(logging.Handler):
         self.sio = sio
         self.logs: list[LogSchema] = []
         self.to_emit: list[LogSchema] = []
-        self.file_path = self._create_path()
-
-    def _create_path(self):
-        datetime.datetime.now().strftime("%Y-%m-%d--%H-%M-%S.log")
 
     def pop_logs(self):
         logs = self.to_emit

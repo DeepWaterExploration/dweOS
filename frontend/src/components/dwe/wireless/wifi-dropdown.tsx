@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import { Wifi, WifiOff, Dot, Lock } from "lucide-react";
+import { Wifi, WifiOff, Lock } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -79,7 +79,7 @@ export function WifiDropdown() {
   }, [connected]);
 
   const toggleWifi = async () => {
-    await API_CLIENT.POST(isWifiEnabled ? "/wifi/off" : "/wifi/on");
+    await API_CLIENT.POST(isWifiEnabled ? "/api/wifi/off" : "/api/wifi/on", {});
     setIsWifiEnabled(!isWifiEnabled);
     if (isWifiEnabled) {
       // Disconnect from all networks when turning WiFi off
@@ -103,7 +103,7 @@ export function WifiDropdown() {
   };
 
   const connectToNetwork = async (ssid: string, password?: string) => {
-    let result = (
+    const result = (
       await API_CLIENT.POST("/api/wifi/connect", {
         body: { ssid: ssid, password: password },
       })

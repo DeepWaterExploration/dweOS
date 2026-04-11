@@ -42,4 +42,6 @@ cp create_venv.sh release
 cp run_release.sh release
 cp -r service release
 
+rm -rf release/backend_py/videos
+
 tar -czvf release.tar.gz release

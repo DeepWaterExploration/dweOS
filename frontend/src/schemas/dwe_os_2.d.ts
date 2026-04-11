@@ -4,6 +4,210 @@
  */
 
 export interface paths {
+    "/api/wifi/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the WiFi Status */
+        get: operations["wifi_status_api_wifi_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/wifi/access_points": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the scanned access points */
+        get: operations["access_points_api_wifi_access_points_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/wifi/connections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the known WiFi connections list */
+        get: operations["list_wifi_connections_api_wifi_connections_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/wifi/connect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Connect to a network */
+        post: operations["connect_api_wifi_connect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/wifi/disconnect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Disconnect from the connected network */
+        post: operations["disconnect_api_wifi_disconnect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/wifi/forget": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Forget a network */
+        post: operations["forget_api_wifi_forget_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/wifi/off": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Turn off WiFi */
+        post: operations["wifi_off_api_wifi_off_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/wifi/on": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Turn on WiFi */
+        post: operations["wifi_on_api_wifi_on_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/wired/get_ip_configuration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the ethernet IP configuration */
+        get: operations["get_ip_configuration_api_wired_get_ip_configuration_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/wired/set_ip_configuration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Update the ethernet IP configuration */
+        post: operations["set_static_ip_api_wired_set_ip_configuration_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/wired/set_network_priority": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Set the network priority */
+        post: operations["set_network_priority_api_wired_set_network_priority_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/wired/get_network_priority": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the network priority */
+        get: operations["get_network_priority_api_wired_get_network_priority_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/devices": {
         parameters: {
             query?: never;
@@ -328,74 +532,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/network/wired/devices": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get the wired devices */
-        get: operations["get_wired_devices_api_network_wired_devices_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/network/connection_profiles": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get the connection profiles */
-        get: operations["get_connection_profiles_api_network_connection_profiles_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/network/update_connection_profile": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Update the profile of a given nmconnection */
-        post: operations["update_connection_profile_api_network_update_connection_profile_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/network/wired/activate_profile": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Activate a given profile for a device */
-        post: operations["activate_profile_api_network_wired_activate_profile_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/pwm/frequency": {
         parameters: {
             query?: never;
@@ -452,6 +588,15 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AccessPoint */
+        AccessPoint: {
+            /** Ssid */
+            ssid: string;
+            /** Strength */
+            strength: number;
+            /** Requires Password */
+            requires_password: boolean;
+        };
         /** AddFollowerPayload */
         AddFollowerPayload: {
             /** Leader Bus Info */
@@ -468,13 +613,17 @@ export interface components {
                 [key: string]: components["schemas"]["FormatSizeModel"][];
             };
         };
-        /** ConnectionProfileModel */
-        ConnectionProfileModel: {
+        /** Connection */
+        Connection: {
             /** Id */
-            id: string;
-            /** Path */
-            path: string;
-            ipv4_settings: components["schemas"]["IPV4Configuration"];
+            id?: string | null;
+            /** Type */
+            type?: string | null;
+        };
+        /** ConnectionResultModel */
+        ConnectionResultModel: {
+            /** Result */
+            result: boolean;
         };
         /** ControlFlagsModel */
         ControlFlagsModel: {
@@ -563,26 +712,6 @@ export interface components {
             nickname: string;
         };
         /**
-         * DeviceState
-         * @description Device State
-         *
-         *     * UNKNOWN
-         *     * UNMANAGED
-         *     * UNAVAILABLE
-         *     * DISCONNECTED
-         *     * PREPARE
-         *     * CONFIG
-         *     * NEED_AUTH
-         *     * IP_CONFIG
-         *     * IP_CHECK
-         *     * SECONDARIES
-         *     * ACTIVATED
-         *     * DEACTIVATING
-         *     * FAILED
-         * @enum {integer}
-         */
-        DeviceState: 0 | 10 | 20 | 30 | 40 | 50 | 60 | 70 | 80 | 90 | 100 | 110 | 120;
-        /**
          * DeviceType
          * @description Device type Enum
          * @enum {integer}
@@ -611,31 +740,33 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
-        /** IPV4Address */
-        IPV4Address: {
-            /** Address */
-            address: string;
-            /** Prefix */
-            prefix: number;
-        };
-        /** IPV4Configuration */
-        IPV4Configuration: {
-            /** Ip Addresses */
-            ip_addresses?: components["schemas"]["IPV4Address"][] | null;
-            /** Gateway */
-            gateway?: string | null;
-            /** @default unknown */
-            method: components["schemas"]["IPV4Method"];
+        /** IPConfiguration */
+        IPConfiguration: {
+            /**
+             * Static Ip
+             * @default
+             */
+            static_ip: string | null;
+            /**
+             * Gateway
+             * @default
+             */
+            gateway: string | null;
+            /**
+             * Prefix
+             * @default 24
+             */
+            prefix: number | null;
+            /** @default STATIC */
+            ip_type: components["schemas"]["IPType"] | null;
             /** Dns */
             dns?: string[] | null;
-            /** Never Default */
-            never_default?: boolean | null;
         };
         /**
-         * IPV4Method
+         * IPType
          * @enum {string}
          */
-        IPV4Method: "manual" | "auto" | "unknown";
+        IPType: "STATIC" | "DYNAMIC";
         /** IntervalModel */
         IntervalModel: {
             /** Numerator */
@@ -680,6 +811,22 @@ export interface components {
             /** Name */
             name: string;
         };
+        /** NetworkConfig */
+        NetworkConfig: {
+            /** Ssid */
+            ssid: string;
+            /** Password */
+            password?: string | null;
+        };
+        /**
+         * NetworkPriority
+         * @enum {string}
+         */
+        NetworkPriority: "ETHERNET" | "WIRELESS";
+        /** NetworkPriorityInformation */
+        NetworkPriorityInformation: {
+            network_priority: components["schemas"]["NetworkPriority"];
+        };
         /** RecordingInfo */
         RecordingInfo: {
             /** Path */
@@ -707,6 +854,11 @@ export interface components {
              * @default true
              */
             suggest_host: boolean;
+            /**
+             * Frequency Offset
+             * @default 0
+             */
+            frequency_offset: number;
         };
         /** SetLightInfo */
         SetLightInfo: {
@@ -723,11 +875,25 @@ export interface components {
              */
             success: boolean;
         };
+        /** Status */
+        Status: {
+            connection?: components["schemas"]["Connection"] | null;
+            /**
+             * Finished First Scan
+             * @default false
+             */
+            finished_first_scan: boolean;
+            /**
+             * Connected
+             * @default false
+             */
+            connected: boolean;
+        };
         /**
          * StreamEncodeTypeEnum
          * @enum {string}
          */
-        StreamEncodeTypeEnum: "MJPG" | "H264" | "SOFTWARE_H264";
+        StreamEncodeTypeEnum: "MJPG" | "H264" | "SOFTWARE_H264" | "NONE";
         /** StreamEndpointModel */
         StreamEndpointModel: {
             /** Host */
@@ -798,19 +964,6 @@ export interface components {
             /** Context */
             ctx?: Record<string, never>;
         };
-        /** WiredDeviceModel */
-        WiredDeviceModel: {
-            /** Interface */
-            interface: string;
-            state: components["schemas"]["DeviceState"];
-            /** Is Active */
-            is_active: boolean;
-            /** Active Profile Id */
-            active_profile_id?: string | null;
-            active_ip_configuration?: components["schemas"]["IPV4Configuration"] | null;
-            /** Available Profiles */
-            available_profiles: string[];
-        };
     };
     responses: never;
     parameters: never;
@@ -820,6 +973,298 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    wifi_status_api_wifi_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Status"];
+                };
+            };
+        };
+    };
+    access_points_api_wifi_access_points_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessPoint"][];
+                };
+            };
+        };
+    };
+    list_wifi_connections_api_wifi_connections_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Connection"][];
+                };
+            };
+        };
+    };
+    connect_api_wifi_connect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NetworkConfig"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionResultModel"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    disconnect_api_wifi_disconnect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    forget_api_wifi_forget_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NetworkConfig"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    wifi_off_api_wifi_off_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    wifi_on_api_wifi_on_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    get_ip_configuration_api_wired_get_ip_configuration_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IPConfiguration"] | null;
+                };
+            };
+        };
+    };
+    set_static_ip_api_wired_set_ip_configuration_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IPConfiguration"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_network_priority_api_wired_set_network_priority_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NetworkPriorityInformation"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_network_priority_api_wired_get_network_priority_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkPriorityInformation"];
+                };
+            };
+        };
+    };
     get_devices_api_devices_get: {
         parameters: {
             query?: never;
@@ -1356,113 +1801,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
-                };
-            };
-        };
-    };
-    get_wired_devices_api_network_wired_devices_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["WiredDeviceModel"][];
-                };
-            };
-        };
-    };
-    get_connection_profiles_api_network_connection_profiles_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ConnectionProfileModel"][];
-                };
-            };
-        };
-    };
-    update_connection_profile_api_network_update_connection_profile_post: {
-        parameters: {
-            query: {
-                path: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["IPV4Configuration"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    activate_profile_api_network_wired_activate_profile_post: {
-        parameters: {
-            query: {
-                interface: string;
-                profile_path: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

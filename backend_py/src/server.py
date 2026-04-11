@@ -5,12 +5,11 @@ Handles server logic and initializes all the managers (settings, devices, lights
 Starts device monitoring, wifi scan, and starts ttyd (teletypewriter daemon) to run in the background
 """
 
-from ctypes import *
 import logging.handlers
 
 from fastapi.staticfiles import StaticFiles
 
-from .services import *
+from .services import *  # type: ignore
 from .routes import *
 from .logging import LogHandler
 from .schemas import FeatureSupport
@@ -30,7 +29,7 @@ class Server:
     def __init__(
         self,
         feature_support: FeatureSupport,
-        sio: socketio.Server,
+        sio: socketio.AsyncServer,
         app: FastAPI,
         settings_path: str = "/",
         log_level=logging.INFO,
@@ -71,7 +70,7 @@ class Server:
 
         # Device Manager
         self.device_manager = DeviceManager(
-            settings_manager=self.settings_manager, sio=self.sio, use_serial=self.feature_support.serial
+            settings_manager=self.settings_manager, sio=self.sio, use_serial=self.feature_support.serial, preferences=self.preferences_manager.get_preferences()
         )
 
         # Lights
@@ -115,6 +114,8 @@ class Server:
 
         if feature_support.serial:
             self.app.include_router(pwm_router, prefix="/api/pwm")
+            self.preferences_manager.on(
+                "preferences_updated", lambda preferences: self.device_manager.serial.set_frequency_offset(preferences.frequency_offset))  # type: ignore
 
         self.app.add_api_route(
             "/api/features",
@@ -139,7 +140,7 @@ class Server:
         # loop over and emit the logs to the client
         asyncio.create_task(self.emit_logs())
 
-        if self.feature_support.serial:
+        if self.feature_support.serial and self.device_manager.serial:
             self.device_manager.serial.start()
 
         self.device_manager.start_monitoring()
@@ -160,5 +161,6 @@ class Server:
         if self.feature_support.ttyd:
             self.ttyd_manager.kill()
 
-        if self.feature_support.wifi:
-            self.wifi_manager.stop_scanning()
+        # FIXME
+        # if self.feature_support.wifi:
+        #     self.wifi_manager.stop_scanning()

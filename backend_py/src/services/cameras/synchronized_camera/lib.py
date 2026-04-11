@@ -55,10 +55,13 @@ class V4L2Camera:
         self.critical_error = False
         try:
             self.fd = os.open(device, os.O_RDWR | os.O_NONBLOCK)
-        except:
+        except OSError as e:
             self.critical_error = True
+            raise e
         self._buffers = []  # list[mmap.mmap]
         self._running = False
+
+        self.logger = logging.getLogger("dwe_os_2.cameras.V4L2Camera")
 
         self._set_format()
         self._set_fps()
@@ -67,9 +70,12 @@ class V4L2Camera:
         self._start_stream()
 
     def _ioctl(self, req, arg):
+        assert self.fd is not None
+
         try:
             return fcntl.ioctl(self.fd, req, arg)
-        except OSError:
+        except OSError as e:
+            self.logger.error(f"IOCTL error: {e.strerror}")
             return -1
 
     def _set_format(self):
@@ -100,6 +106,8 @@ class V4L2Camera:
         self._ioctl(v4l2.VIDIOC_S_PARM, parm)
 
     def _request_and_map_buffers(self):
+        assert self.fd is not None
+
         req = v4l2.v4l2_requestbuffers()
         req.count = self.buffer_count
         req.type = v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE
@@ -162,29 +170,24 @@ class V4L2Camera:
 
         If blocking=False, returns None immediately if no frame is ready.
         """
+        if blocking:
+            import select
+            # select() polling
+            readable, _, _ = select.select([self.fd], [], [], timeout_s)
+            if not readable:
+                self.logger.warning(
+                    f"Timeout waiting for frame on {self.device}")
+                return None
+
         buf = v4l2.v4l2_buffer()
         buf.type = v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE
         buf.memory = v4l2.V4L2_MEMORY_MMAP
 
-        # We emulate blocking behavior with a small poll loop
-        # Actual polling is possible but not needed
-        start_time = time.time()
-        while True:
-            if self._ioctl(v4l2.VIDIOC_DQBUF, buf) != -1:
-                break
-            else:
-                if not blocking:
-                    return None
-                if timeout_s is not None and (time.time() - start_time) > timeout_s:
-                    return None
-                # EAGAIN: no buffer ready yet, sleep a bit
-                # FIXME: I don't really like this, but it'll do for the time being
-                time.sleep(0.001)
+        if self._ioctl(v4l2.VIDIOC_DQBUF, buf) == -1:
+            return None
 
         mm = self._buffers[buf.index]
-        # Copy only the used bytes
         frame_bytes = mm[:buf.bytesused]
-        # Convert timeval (tv_sec, tv_usec) to microseconds
         ts_us = buf.timestamp.secs * 1_000_000 + buf.timestamp.usecs
 
         # Requeue the buffer immediately
@@ -201,6 +204,7 @@ class V4L2Camera:
     def close(self):
         if self.critical_error:
             return
+
         self._stop_stream()
 
         # Unmap buffers
@@ -245,6 +249,11 @@ class SynchronizedCamera:
     def __init__(self,
                  cameras: List[V4L2Camera],
                  queue_cap: int = 8):
+        for camera in cameras:
+            if camera.critical_error:
+                raise AssertionError(
+                    "Cannot create a SynchronizedCamera with cameras containing errors! Please check your camera status.")
+
         self.cameras = cameras
         sync_threshold_us = 1.0 / self.cameras[0].fps * 1000000
 
@@ -281,7 +290,7 @@ class SynchronizedCamera:
         """
 
         # grab one frame from each camera
-        grabbed_frames: List[Optional[CopiedFrame]] = []
+        grabbed_frames: List[CopiedFrame] = []
         for cam in self.cameras:
             cf = cam.grab_copied_frame(blocking=True)
             if cf is None:
@@ -313,7 +322,7 @@ class SynchronizedCamera:
             else:
                 # Drop the earliest frame (smallest timestamp) and try again
                 min_index = timestamps.index(min_ts)
-                self.logger.warning(
+                self.logger.info(
                     f"Dropping frame of difference: {max_ts - min_ts}")
                 self.queues[min_index].popleft()
 

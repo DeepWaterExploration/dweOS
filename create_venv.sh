@@ -1,11 +1,11 @@
 #!/bin/bash
 
-echo "Creating virtual python environment in .env directory"
+echo "Creating virtual python environment in .venv directory"
 
-python3 -m venv .env
+python3 -m venv .venv
 
 echo "Installing requirements..."
 
-. .env/bin/activate && pip install -r backend_py/requirements.txt
+. .venv/bin/activate && pip install -r backend_py/requirements.txt
 
 echo "Virtual environment created."

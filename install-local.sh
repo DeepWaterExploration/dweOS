@@ -14,7 +14,7 @@ SCRIPT_RUN_DIR=$PWD
 tar -xvzf release.tar.gz
 
 if [ -d "$INSTALL_DIR" ]; then
-    echo "$INSTALL_DIR does exist, deleting."
+    echo "$INSTALL_DIR exists, updating files."
     rm -rf $INSTALL_DIR
 fi
 
@@ -26,10 +26,12 @@ cd ${INSTALL_DIR}
 
 # Comment the next two lines and uncomment the one after if you are developing locally and already have an install
 
-sh install_requirements.sh &&
-sh create_venv.sh &&
-
-# cp -r $SCRIPT_RUN_DIR/.env $INSTALL_DIR
+if [ "$1" != "--local" ]; then
+    sh install_requirements.sh &&
+    sh create_venv.sh
+else
+    cp -r $SCRIPT_RUN_DIR/.venv $INSTALL_DIR
+fi
 
 # check if the service is already running, and stop it if necessary
 if systemctl is-active --quiet dwe_os_2; then

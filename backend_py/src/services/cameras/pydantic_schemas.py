@@ -38,6 +38,7 @@ class StreamEncodeTypeEnum(str, Enum):
     MJPG = "MJPG"
     H264 = "H264"
     SOFTWARE_H264 = "SOFTWARE_H264"
+    NONE = "NONE"
 
 
 class StreamTypeEnum(str, Enum):

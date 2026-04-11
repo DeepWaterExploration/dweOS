@@ -68,7 +68,8 @@ const Recordings = () => {
   const { isActive } = useTour();
 
   const sortRecordings = () => {
-    var modifier = (x: any) => x;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let modifier = (x: any) => x;
     if (sortColumn === "size") {
       modifier = (x: string) => parseFloat(x);
     }
@@ -184,11 +185,13 @@ const Recordings = () => {
   }, []);
 
   const displayRecordings = useMemo(() => {
-    let data = isActive ? [DEMO_RECORDING] : recordings;
+    const data = isActive ? [DEMO_RECORDING] : recordings;
     if (!sortColumn || !sortDirection) return data;
 
     return [...data].sort((a, b) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let valA: any = a[sortColumn];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let valB: any = b[sortColumn];
 
       if (sortColumn === "size") {
@@ -227,14 +230,14 @@ const Recordings = () => {
                   rightClickedRecording?.name,
                 );
                 if (newName && newName.trim() && rightClickedRecording) {
-                  // @ts-ignore-next-line
-                  API_CLIENT.PATCH(
-                    // @ts-ignore-next-line
-                    `/api/recordings/${rightClickedRecording.name}.${
-                      rightClickedRecording.format
-                    }/${newName.trim()}.${rightClickedRecording.format}`,
-                    {},
-                  )
+                  API_CLIENT.PATCH("/api/recordings/{old_name}/{new_name}", {
+                    params: {
+                      path: {
+                        old_name: `${rightClickedRecording.name}.${rightClickedRecording.format}`,
+                        new_name: `${newName.trim()}.${rightClickedRecording.format}`,
+                      },
+                    },
+                  })
                     .then((newRecs) => {
                       setRecordings(newRecs.data! as RecordingInfo[]);
                       setShowMenu(false);
@@ -254,12 +257,13 @@ const Recordings = () => {
               className="mx-2 my-1 px-2 py-1 hover:bg-red-500 hover:text-foreground cursor-pointer text-red-500 rounded-md"
               onClick={() => {
                 if (rightClickedRecording) {
-                  // @ts-ignore-next-line
-                  API_CLIENT.DELETE(
-                    // @ts-ignore-next-line
-                    `/api/recordings/${rightClickedRecording.name}.${rightClickedRecording.format}`,
-                    {},
-                  )
+                  API_CLIENT.DELETE("/api/recordings/{recording_path}", {
+                    params: {
+                      path: {
+                        recording_path: `${rightClickedRecording.name}.${rightClickedRecording.format}`,
+                      },
+                    },
+                  })
                     .then((newRecs) => {
                       setRecordings(newRecs.data! as RecordingInfo[]);
                       setShowMenu(false);
@@ -477,16 +481,22 @@ const Recordings = () => {
                 variant="outline"
                 className="flex-1 min-w-[140px] h-12 text-background bg-destructive hover:text-foreground hover:bg-red-500"
                 onClick={async () => {
-                  // @ts-ignore-next-line
-                  const new_recordings = (
-                    await API_CLIENT.DELETE(
-                      // @ts-ignore-next-line
-                      `/api/recordings/${selectedRecording.name}.${selectedRecording.format}`,
-                      {},
-                    )
-                  ).data! as RecordingInfo[];
-                  setRecordings(new_recordings);
-                  setSelectedRecording(null);
+                  if (selectedRecording) {
+                    const new_recordings = (
+                      await API_CLIENT.DELETE(
+                        `/api/recordings/{recording_path}`,
+                        {
+                          params: {
+                            path: {
+                              recording_path: `${selectedRecording.name}.${selectedRecording.format}`,
+                            },
+                          },
+                        },
+                      )
+                    ).data! as RecordingInfo[];
+                    setRecordings(new_recordings);
+                    setSelectedRecording(null);
+                  }
                 }}
               >
                 <Trash /> Delete

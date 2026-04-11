@@ -19,7 +19,7 @@ class SynchronizedStreamEngine(BaseStreamEngine):
         super().__init__(streams, error_callback)
 
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.frame_queue: collections.deque[tuple[CopiedFrame]] = \
+        self.frame_queue: collections.deque[tuple[CopiedFrame, CopiedFrame]] = \
             collections.deque(maxlen=2)
 
         self.MTU = 1400
@@ -36,10 +36,12 @@ class SynchronizedStreamEngine(BaseStreamEngine):
         try:
             self.cameras: List[V4L2Camera] = [V4L2Camera(
                 stream.device_path, stream.width, stream.height, stream.interval.denominator) for stream in streams]
+
             self.synchronized_camera = SynchronizedCamera(self.cameras)
         except OSError as e:
             self.logger.error("Unable to open synchronized camera: '%s'", e)
-            self.emit_error(e.strerror)
+            if e.strerror:
+                self.emit_error(e.strerror)
 
     # <AI> Assisted with this code. Custom RTP improves performance compared to RTP class
     def _send_frame(self, frames: List[CopiedFrame], endpoint: StreamEndpointModel):
@@ -136,14 +138,19 @@ class SynchronizedStreamEngine(BaseStreamEngine):
                 f"Timeout exceeded while joining capture thread: {e}")
 
     def capture_loop_(self):
+        if not self.synchronized_camera:
+            self.logger.error(
+                "Cannot run capture loop when synchronized camera is not defined!")
+            return
+
         # We need to be careful about the blocking aspect of grab
         while self._running:
             frames = self.synchronized_camera.grab()
             if frames is None:
-                time.sleep(0.01)
+                time.sleep(1/self.streams[0].interval.denominator)
                 continue
 
-            self.frame_queue.append([frames[0], frames[1]])
+            self.frame_queue.append((frames[0], frames[1]))
         self.synchronized_camera.stop()
 
     def stream_loop_(self):
@@ -158,5 +165,5 @@ class SynchronizedStreamEngine(BaseStreamEngine):
                 # TODO: make less scuffed
                 self._send_frame([left, right], endpoint)
             except IndexError:
-                time.sleep(0.01)
+                time.sleep(1/self.streams[0].interval.denominator)
                 continue

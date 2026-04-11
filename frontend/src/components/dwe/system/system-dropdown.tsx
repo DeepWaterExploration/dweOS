@@ -37,7 +37,7 @@ export function SystemDropdown() {
         await API_CLIENT.POST("/api/system/shutdown");
         toast({ title: "System is shutting down..." });
       }
-    } catch (error) {
+    } catch {
       toast({ title: `Failed to ${action}`, variant: "destructive" });
     } finally {
       setDialogOpen(false);

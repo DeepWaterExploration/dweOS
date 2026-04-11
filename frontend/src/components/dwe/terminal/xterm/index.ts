@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-duplicate-enum-values */
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 
@@ -76,7 +77,7 @@ function toDisposable(f: () => void): IDisposable {
 function addEventListener(
   target: EventTarget,
   type: string,
-  listener: EventListener
+  listener: EventListener,
 ): IDisposable {
   target.addEventListener(type, listener);
   return toDisposable(() => target.removeEventListener(type, listener));
@@ -107,7 +108,10 @@ export class Xterm {
   private writeFunc = (data: ArrayBuffer) =>
     this.writeData(new Uint8Array(data));
 
-  constructor(private options: XtermOptions, private sendCb: () => void) {
+  constructor(
+    private options: XtermOptions,
+    private sendCb: () => void,
+  ) {
     this.register = this.register.bind(this);
     this.refreshToken = this.refreshToken.bind(this);
     this.onWindowUnload = this.onWindowUnload.bind(this);
@@ -187,34 +191,34 @@ export class Xterm {
         if (data && data !== "" && !this.titleFixed) {
           document.title = data + " | " + this.title;
         }
-      })
+      }),
     );
     register(terminal.onData((data) => sendData(data)));
     register(
       terminal.onBinary((data) =>
-        sendData(Uint8Array.from(data, (v) => v.charCodeAt(0)))
-      )
+        sendData(Uint8Array.from(data, (v) => v.charCodeAt(0))),
+      ),
     );
     register(
       terminal.onResize(({ cols, rows }) => {
         const msg = JSON.stringify({ columns: cols, rows: rows });
         this.socket?.send(
-          this.textEncoder.encode(Command.RESIZE_TERMINAL + msg)
+          this.textEncoder.encode(Command.RESIZE_TERMINAL + msg),
         );
         if (this.resizeOverlay)
           overlayAddon.showOverlay(`${cols}x${rows}`, 300);
-      })
+      }),
     );
     register(
       terminal.onSelectionChange(() => {
         if (this.terminal.getSelection() === "") return;
         try {
           document.execCommand("copy");
-        } catch (e) {
+        } catch {
           return;
         }
         this.overlayAddon?.showOverlay("\u2702", 200);
-      })
+      }),
     );
     register(addEventListener(window, "resize", () => fitAddon.fit()));
     register(addEventListener(window, "beforeunload", this.onWindowUnload));
@@ -266,13 +270,13 @@ export class Xterm {
     socket.binaryType = "arraybuffer";
     register(addEventListener(socket, "open", this.onSocketOpen));
     register(
-      addEventListener(socket, "message", this.onSocketData as EventListener)
+      addEventListener(socket, "message", this.onSocketData as EventListener),
     );
     register(
-      addEventListener(socket, "close", this.onSocketClose as EventListener)
+      addEventListener(socket, "close", this.onSocketClose as EventListener),
     );
     register(
-      addEventListener(socket, "error", () => (this.doReconnect = false))
+      addEventListener(socket, "error", () => (this.doReconnect = false)),
     );
   }
 
@@ -336,7 +340,7 @@ export class Xterm {
     const { clientOptions } = this.options;
     const prefs = {} as Preferences;
     const queryObj = Array.from(
-      new URLSearchParams(query) as unknown as Iterable<[string, string]>
+      new URLSearchParams(query) as unknown as Iterable<[string, string]>,
     );
 
     for (const [k, queryVal] of queryObj) {
@@ -358,7 +362,7 @@ export class Xterm {
           break;
         default:
           console.warn(
-            `[ttyd] maybe unknown option: ${k}=${queryVal}, treating as string`
+            `[ttyd] maybe unknown option: ${k}=${queryVal}, treating as string`,
           );
           prefs[k] = queryVal;
           break;
@@ -461,7 +465,7 @@ export class Xterm {
             terminal.options[key] = Object.assign(
               {},
               terminal.options[key],
-              value
+              value,
             );
           } else {
             terminal.options[key] = value;
@@ -499,7 +503,7 @@ export class Xterm {
       } catch (e) {
         console.log(
           "[ttyd] canvas renderer could not be loaded, falling back to dom renderer",
-          e
+          e,
         );
         disposeCanvasRenderer();
       }
@@ -516,7 +520,7 @@ export class Xterm {
       } catch (e) {
         console.log(
           "[ttyd] WebGL renderer could not be loaded, falling back to canvas renderer",
-          e
+          e,
         );
         disposeWebglRenderer();
         enableCanvasRenderer();

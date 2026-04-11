@@ -26,7 +26,7 @@ type MarkdownProps = { children: string };
 
 export function Markdown({ children }: MarkdownProps) {
   return (
-    <div className="p-6 bg-background shadow-sm space-y-6 text-sm leading-6 text-foreground">
+    <div className="shadow-sm space-y-6 text-sm leading-6 text-foreground">
       <ReactMarkdown components={components}>{children}</ReactMarkdown>
     </div>
   );

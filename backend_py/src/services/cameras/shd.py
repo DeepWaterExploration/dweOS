@@ -20,6 +20,8 @@ import collections
 import threading
 from typing import Optional
 
+import logging
+
 
 class StorageOption(BaseOption, EventEmitter):
     def __init__(self, name: str, value):
@@ -37,15 +39,20 @@ class StorageOption(BaseOption, EventEmitter):
 
 class CustomOption(BaseOption):
 
-    def __init__(self, name: str, setter: Callable[[Any], None], getter: Callable[[], Any]):
+    def __init__(self, name: str, setter: Callable[[Any], None], getter: Callable[[], Any], is_integer_only=True):
         BaseOption.__init__(self, name)
         self.setter = setter
+        self.is_integer_only = is_integer_only
 
         # FIXME: I did this since the getter seems to be unreliable for asic controls, so we just trust the value stored
         self.getter = getter
         self.value = getter()
+        self.logger = logging.getLogger("CustomOption")
 
     def set_value(self, value):
+        self.logger.info(f"{self.name}: {value}")
+        if self.is_integer_only:
+            value = int(value)
         self.setter(value)
         self.value = value
 
@@ -77,6 +84,7 @@ class SHDDevice(Device):
 
         # Copy MJPEG over to Software H264, since they are the same thing
         mjpg_camera = self.find_camera_with_format("MJPG")
+        assert mjpg_camera
         mjpg_camera.formats["SOFTWARE_H264"] = mjpg_camera.formats["MJPG"]
 
         # List of followers
@@ -108,6 +116,10 @@ class SHDDevice(Device):
 
             self.add_control_from_option(
                 'strobe_width', 0, ControlTypeEnum.INTEGER, 4095, 0, 1)
+
+            self.add_control_from_option(
+                'hw_bitrate', 5000, ControlTypeEnum.INTEGER, 65535, 0, 1
+            )
 
             # self.add_control_from_option(
             #     'strobe_enabled', False, ControlTypeEnum.BOOLEAN)
@@ -187,7 +199,7 @@ class SHDDevice(Device):
             self._command_queue.append((key, func, args, result_queue))
             self._queue_cond.notify()
 
-        if wait:
+        if wait and result_queue:
             return result_queue.get()
         return None
 
@@ -303,7 +315,7 @@ class SHDDevice(Device):
         ret |= self._asic_write(xu.StellarRegisterMap.REG_TRIG, 0x55)
 
         if ret != 0:
-            return ret
+            return ret, -1
 
         ret, val = self._asic_read(xu.StellarRegisterMap.REG_DATA)
 
@@ -313,7 +325,8 @@ class SHDDevice(Device):
         unit = xu.Unit.SYS_ID
         selector = xu.Selector.SYS_ASIC_RW
         # Accept enum
-        addr_val = addr.value if hasattr(addr, 'value') else addr
+        addr_val = addr.value if hasattr(  # type: ignore
+            addr, 'value') else addr
         size = 4
 
         # Dummy writes are used for asic reading
@@ -324,12 +337,13 @@ class SHDDevice(Device):
         return self.cameras[0].uvc_set_ctrl(unit.value, selector.value, ctrl_data, size)
 
     def _asic_read(self, addr: int | xu.StellarRegisterMap) -> tuple[int, int]:
-        addr_val = addr.value if hasattr(addr, 'value') else addr
+        addr_val = addr.value if hasattr(  # type: ignore
+            addr, 'value') else addr
 
         # perform a dummy write to select the correct address
         ret = self._asic_write(addr_val, 0, True)
         if ret != 0:
-            return ret
+            return (ret, -1)
 
         unit = xu.Unit.SYS_ID
         selector = xu.Selector.SYS_ASIC_RW
@@ -343,6 +357,22 @@ class SHDDevice(Device):
 
         val = ctrl_data[2]
         return (ret, val)
+
+    def _asic_write_high_low(self, addr_high: int | xu.StellarRegisterMap, addr_low: int | xu.StellarRegisterMap, value: int):
+        val_low = value & 0xFF
+        # TODO: return after first fails... (we dont even use the status anyway)
+        ret = self._asic_write(addr_low, val_low)
+
+        val_high = value >> 8 & 0xFF
+        ret = self._asic_write(addr_high, val_high)
+        return ret
+
+    def _asic_read_high_low(self, addr_high: int | xu.StellarRegisterMap, addr_low: int | xu.StellarRegisterMap):
+        ret, val_high = self._asic_read(addr_high)
+        ret, val_low = self._asic_read(addr_low)
+        if ret != 0:
+            return None
+        return val_high << 8 | val_low
 
     def remove_manual(self, follower_bus_info: str):
         '''
@@ -396,6 +426,16 @@ class SHDDevice(Device):
         return self._run_asic_command(None, self._sensor_read_high_low,
                                       (xu.StellarSensorMap.STROBE_WIDTH_HIGH, xu.StellarSensorMap.STROBE_WIDTH_LOW), wait=True)
 
+    def set_hw_bitrate(self, value: int):
+        self._run_asic_command('hw_bitrate', self._asic_write_high_low, (
+            xu.StellarRegisterMap.REG_HW_BITRATE_HIGH, xu.StellarRegisterMap.REG_HW_BITRATE_LOW, value))
+        self._run_asic_command(
+            'hw_bitrate', self._asic_write, (xu.StellarRegisterMap.REG_HW_BITRATE_TRIG, 1))
+
+    def get_hw_bitrate(self) -> int | None:
+        return self._run_asic_command('hw_bitrate', self._asic_read_high_low, (
+            xu.StellarRegisterMap.REG_HW_BITRATE_HIGH, xu.StellarRegisterMap.REG_HW_BITRATE_LOW), wait=True)
+
     def _get_options(self) -> Dict[str, BaseOption]:
         options = {}
 
@@ -433,6 +473,10 @@ class SHDDevice(Device):
             options['strobe_width'] = CustomOption(
                 "Strobe Width", self.set_strobe_width, self.get_strobe_width)
 
+            options['hw_bitrate'] = CustomOption(
+                "HW Bitrate", self.set_hw_bitrate, self.get_hw_bitrate
+            )
+
         return options
 
     def load_settings(self, saved_device: SavedDeviceModel):
@@ -462,7 +506,4 @@ class SHDDevice(Device):
         super().start_stream()
 
     def unconfigure_stream(self):
-        # remove leader when unconfiguring
-        if self.leader_device:
-            self.remove_leader()
         return super().unconfigure_stream()

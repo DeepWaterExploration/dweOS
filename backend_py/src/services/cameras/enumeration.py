@@ -24,10 +24,9 @@ class DeviceInfo:
     pid: int
 
 
-def _get_device_attr(device_path, attr) -> str | None:
+def _get_device_attr(device_path, attr) -> str:
     with open(device_path + "/" + attr) as file_object:
         return file_object.read().strip()
-    return None
 
 
 def _get_vid_pid(devname) -> tuple[int, int] | None:

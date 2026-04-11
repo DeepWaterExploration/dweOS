@@ -5,8 +5,8 @@ Abstract class definition / interface all PWM drivers must follow
 Maintains consistency with PWM functionality
 """
 
-from abc import ABC, abstractmethod
 import logging
+from abc import ABC, abstractmethod
 
 
 class PWMController(ABC):

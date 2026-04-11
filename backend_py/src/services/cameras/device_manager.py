@@ -8,25 +8,24 @@ Manages a devices streaming state as well as changes to device name
 Manages the leader follower connections
 """
 
-from typing import List, cast
-import logging
-import event_emitter as events
 import asyncio
+import logging
 import traceback
+from typing import cast
 
-from .pydantic_schemas import DeviceModel, StreamInfoModel, StreamEncodeTypeEnum, StreamTypeEnum
-from .device import Device, lookup_pid_vid, DeviceInfo, DeviceType
-from .settings import SettingsManager
-from .enumeration import list_devices
-from .device_utils import list_diff, find_device_with_bus_info
-from .exceptions import DeviceNotFoundException
-
+import event_emitter as events
 import socketio
 
-from .ehd import EHDDevice
-from .shd import SHDDevice
-from .pwm.serial_pwm_controller import SerialPWMController
 from ..preferences import SavedPreferencesModel
+from .device import Device, DeviceInfo, DeviceType, lookup_pid_vid
+from .device_utils import find_device_with_bus_info, list_diff
+from .ehd import EHDDevice
+from .enumeration import list_devices
+from .exceptions import DeviceNotFoundException
+from .pwm.serial_pwm_controller import SerialPWMController
+from .pydantic_schemas import DeviceModel, StreamEncodeTypeEnum, StreamInfoModel, StreamTypeEnum
+from .settings import SettingsManager
+from .shd import SHDDevice
 
 
 def todict(obj, classkey=None):
@@ -66,12 +65,12 @@ class DeviceManager(events.EventEmitter):
         use_serial=False,
         settings_manager=SettingsManager(),
     ) -> None:
-        self.devices: List[Device] = []
+        self.devices: list[Device] = []
         self.sio = sio
         self.settings_manager = settings_manager
         self._is_monitoring = False
         # List of devices with stream errors
-        self.stream_errors: List[str] = []
+        self.stream_errors: list[str] = []
 
         self.serial = None
         if use_serial:
@@ -265,7 +264,7 @@ class DeviceManager(events.EventEmitter):
             raise DeviceNotFoundException(bus_info)
         return device
 
-    async def _get_devices(self, old_devices: List[DeviceInfo]):
+    async def _get_devices(self, old_devices: list[DeviceInfo]):
         # enumerate the devices
         devices_info = list_devices()
 

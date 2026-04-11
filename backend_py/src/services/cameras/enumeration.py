@@ -5,12 +5,13 @@ Searches the system for cameras using video4linux, create a DeviceInfo based on 
 and return a sorted list of device_infos
 """
 
-from dataclasses import dataclass
-from . import v4l2
 import fcntl
 import os
+from dataclasses import dataclass
+
 from natsort import natsorted
-from typing import List, Dict
+
+from . import v4l2
 
 
 @dataclass
@@ -40,13 +41,13 @@ def _get_vid_pid(devname):
 
 def list_devices():
     # traverse the directory that has the list of all devices
-    devnames: List[str] = []
+    devnames: list[str] = []
     try:
         devnames = os.listdir("/sys/class/video4linux/")
     except FileNotFoundError:
         return []
-    devices_info: List[DeviceInfo] = []
-    devices_map: Dict[str, DeviceInfo] = {}
+    devices_info: list[DeviceInfo] = []
+    devices_map: dict[str, DeviceInfo] = {}
     for devname in devnames:
         devpath = f"/dev/{devname}"
         try:

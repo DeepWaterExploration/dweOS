@@ -2,14 +2,16 @@
 stream_runner.py
 """
 
-import threading
-import event_emitter as events
 import logging
-from .stream_engines.stream import Stream
-from .stream_engines.base_stream_engine import BaseStreamEngine
-from .stream_engines.synchronized_stream_engine import SynchronizedStreamEngine
-from .stream_engines.gstreamer_stream_engine import GStreamerProcessEngine
+import threading
 import time
+
+import event_emitter as events
+
+from .stream_engines.base_stream_engine import BaseStreamEngine
+from .stream_engines.gstreamer_stream_engine import GStreamerProcessEngine
+from .stream_engines.stream import Stream
+from .stream_engines.synchronized_stream_engine import SynchronizedStreamEngine
 
 
 class StreamRunner(events.EventEmitter):

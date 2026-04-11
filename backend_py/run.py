@@ -2,13 +2,15 @@
 # both are passed into a Server instance to handle logic, and a combination of the two is hosted
 # as a uvicorn server, which handles traffic
 
-from src import Server, FeatureSupport
+import asyncio
+import logging
+from contextlib import asynccontextmanager
+
 import socketio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import asyncio
-from contextlib import asynccontextmanager
-import logging
+
+from src import FeatureSupport, Server
 
 # TODO: narrow
 ORIGINS = ["*"]

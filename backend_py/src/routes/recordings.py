@@ -5,16 +5,17 @@ API endpoints for accessing video file library
 Handles listing recording metadata, downloading / deleting / renaming recordings, and downloading all recordings as ZIP
 """
 
-from fastapi import APIRouter, Request, HTTPException
+
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
-from typing import List
-from ..services.recordings import RecordingsService, RecordingInfo
+
+from ..services.recordings import RecordingInfo, RecordingsService
 
 recordings_router = APIRouter(tags=["recordings"])
 
 
 @recordings_router.get("", summary="Get all recordings")
-def get_recordings(request: Request) -> List[RecordingInfo]:
+def get_recordings(request: Request) -> list[RecordingInfo]:
     recordings_service: RecordingsService = request.app.state.recordings_service
 
     return recordings_service.get_recordings()

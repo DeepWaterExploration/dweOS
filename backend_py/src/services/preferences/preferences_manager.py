@@ -6,27 +6,33 @@ Handles loading saved prefs and updating the json when settings are modified
 """
 
 import json
-from typing import Dict
-from .pydantic_schemas import SavedPreferencesModel
+
 from event_emitter import events
+
+from .pydantic_schemas import SavedPreferencesModel
 
 
 class PreferencesManager(events.EventEmitter):
     def __init__(self, settings_path: str = ".") -> None:
         super().__init__()
 
-        path = f"{settings_path}/server_preferences.json"
+        self.path = f"{settings_path}/server_preferences.json"
+
+    def __enter__(self):
         try:
-            self.file_object = open(path, "r+")
+            self.file_object = open(self.path, "r+")
         except FileNotFoundError:
-            open(path, "w").close()
-            self.file_object = open(path, "r+")
+            open(self.path, "w").close()
+            self.file_object = open(self.path, "r+")
 
         try:
-            settings: list[Dict] = json.loads(self.file_object.read())
+            settings: list[dict] = json.loads(self.file_object.read())
             self.settings: SavedPreferencesModel = SavedPreferencesModel.model_validate(settings)
         except json.JSONDecodeError:
             self.settings = SavedPreferencesModel()
+
+    def __exit__(self, exc_type, exc, tb):
+        self.file_object.close()
 
     def save(self, preferences: SavedPreferencesModel):
         self.settings = preferences

@@ -6,7 +6,6 @@ Specifies the constants of where each extension unit feature's register address 
 
 from enum import Enum
 
-
 DWE_DEVICE_TAG = 0x9A
 
 

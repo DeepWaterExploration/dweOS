@@ -6,42 +6,35 @@ Handles v4l2 device finding, uvc controls, stream configuration, and device sett
 """
 
 import fcntl
+import logging
 import struct
-from typing import Dict, Callable, Any, Tuple
 from abc import ABC, abstractmethod
+from collections.abc import Callable
+from typing import Any
 
 import event_emitter as events
-
 from linuxpy.video import device
 
 from . import v4l2
 from . import xu_controls as xu
-
-from .stream_utils import fourcc2s
-
-from typing import List
-
+from .camera_helper.camera_helper_loader import camera_helper
+from .enumeration import DeviceInfo
 from .pydantic_schemas import (
+    ControlFlagsModel,
+    ControlModel,
+    ControlTypeEnum,
+    DeviceType,
     FormatSizeModel,
     IntervalModel,
-    ControlModel,
-    V4LControlTypeEnum,
-    ControlTypeEnum,
     MenuItemModel,
-    ControlFlagsModel,
     StreamEncodeTypeEnum,
-    StreamTypeEnum,
     StreamEndpointModel,
+    StreamTypeEnum,
+    V4LControlTypeEnum,
 )
-
-from .enumeration import DeviceInfo
-from .camera_helper.camera_helper_loader import camera_helper
-from .stream_runner import Stream, StreamRunner
-from .stream_utils import string_to_stream_encode_type
-from .pydantic_schemas import DeviceType
 from .saved_pydantic_schemas import SavedDeviceModel
-
-import logging
+from .stream_runner import Stream, StreamRunner
+from .stream_utils import fourcc2s, string_to_stream_encode_type
 
 PID_VIDS = {
     "exploreHD": {"VID": 0xC45, "PID": 0x6366, "device_type": DeviceType.EXPLOREHD},
@@ -95,7 +88,7 @@ PID_VIDS = {
 }
 
 
-def lookup_pid_vid(vid: int, pid: int) -> Tuple[str, DeviceType] | Tuple[None, None]:
+def lookup_pid_vid(vid: int, pid: int) -> tuple[str, DeviceType] | tuple[None, None]:
     for name in PID_VIDS:
         dev = PID_VIDS[name]
         if dev["VID"] == vid and dev["PID"] == pid:
@@ -126,7 +119,7 @@ class Camera:
         return pixformat in self.formats.keys()
 
     def _get_formats(self):
-        self.formats: Dict[str, List[FormatSizeModel]] = {}
+        self.formats: dict[str, list[FormatSizeModel]] = {}
         for i in range(1000):
             v4l2_fmt = v4l2.v4l2_fmtdesc()
             v4l2_fmt.index = i
@@ -281,7 +274,7 @@ class Option(BaseOption):
 class Device(events.EventEmitter):
     def __init__(self, device_info: DeviceInfo) -> None:
         super().__init__()
-        self.cameras: List[Camera] = []
+        self.cameras: list[Camera] = []
         for device_path in device_info.device_paths:
             self.cameras.append(Camera(device_path))
 
@@ -325,7 +318,7 @@ class Device(events.EventEmitter):
         self.v4l2_device.open()
 
         # This must be configured by the implementing class
-        self._options: Dict[str, BaseOption] = self._get_options()
+        self._options: dict[str, BaseOption] = self._get_options()
 
         # list the controls and store them
         self.controls = []
@@ -338,12 +331,12 @@ class Device(events.EventEmitter):
         self.logger.error(err)
         # TODO
 
-    def _get_options(self) -> Dict[str, BaseOption]:
+    def _get_options(self) -> dict[str, BaseOption]:
         return {}
 
     def _get_controls(self):
         # fd = self.cameras[0]._fd
-        self.controls: List[ControlModel] = []
+        self.controls: list[ControlModel] = []
 
         if not self.v4l2_device.controls:
             self.logger.error(
@@ -376,7 +369,7 @@ class Device(events.EventEmitter):
 
             default_value = ctrl._info.default_value
 
-            menu: List[MenuItemModel] = []
+            menu: list[MenuItemModel] = []
             match control_type:
                 case ControlTypeEnum.MENU:
                     for i in ctrl.data:
@@ -410,7 +403,7 @@ class Device(events.EventEmitter):
         height: int,
         interval: IntervalModel,
         stream_type: StreamTypeEnum,
-        stream_endpoints: List[StreamEndpointModel] = [],
+        stream_endpoints: list[StreamEndpointModel] = [],
     ):
         self.logger.info(self._fmt_log("Configuring stream"))
 

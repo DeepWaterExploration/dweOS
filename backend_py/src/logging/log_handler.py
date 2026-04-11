@@ -1,16 +1,17 @@
-import logging
-import socketio
-from typing import List
-from .log_schemas import LogSchema
 import datetime
+import logging
+
+import socketio
+
+from .log_schemas import LogSchema
 
 
 class LogHandler(logging.Handler):
     def __init__(self, sio: socketio.AsyncServer, level: int | str = 0) -> None:
         super().__init__(level)
         self.sio = sio
-        self.logs: List[LogSchema] = []
-        self.to_emit: List[LogSchema] = []
+        self.logs: list[LogSchema] = []
+        self.to_emit: list[LogSchema] = []
         self.file_path = self._create_path()
 
     def _create_path(self):

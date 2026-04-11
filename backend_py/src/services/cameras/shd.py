@@ -4,23 +4,21 @@ shd.py
 Adds additional features to stellarHD devices
 """
 
-import struct
-import time
-from event_emitter import EventEmitter
-from typing import Dict, List
-
-from .saved_pydantic_schemas import SavedDeviceModel
-from .enumeration import DeviceInfo
-from .device import Device, BaseOption, ControlTypeEnum, StreamEncodeTypeEnum
-from . import xu_controls as xu
-from typing import Callable, Any
-
-import queue
 import collections
-import threading
-from typing import Optional
-
 import logging
+import queue
+import struct
+import threading
+import time
+from collections.abc import Callable
+from typing import Any
+
+from event_emitter import EventEmitter
+
+from . import xu_controls as xu
+from .device import BaseOption, ControlTypeEnum, Device, StreamEncodeTypeEnum
+from .enumeration import DeviceInfo
+from .saved_pydantic_schemas import SavedDeviceModel
 
 
 class StorageOption(BaseOption, EventEmitter):
@@ -93,10 +91,10 @@ class SHDDevice(Device):
 
         # List of followers
         # Zero inherent truth to the existance of these devices
-        self.followers: List[str] = []
+        self.followers: list[str] = []
 
         # These exist
-        self.follower_devices: List["SHDDevice"] = []
+        self.follower_devices: list[SHDDevice] = []
 
         # Is true if it is managed, false otherwise
         self.is_managed = False
@@ -150,7 +148,7 @@ class SHDDevice(Device):
                 time.sleep(self.ASIC_COMMAND_DELAY)
 
     def _run_asic_command(
-        self, key: Optional[str], func: Callable, args: tuple, wait: bool = True
+        self, key: str | None, func: Callable, args: tuple, wait: bool = True
     ) -> Any:
         """
         Helper to submit a command to the queue and wait for the result synchronously.
@@ -487,7 +485,7 @@ class SHDDevice(Device):
             wait=True,
         )
 
-    def _get_options(self) -> Dict[str, BaseOption]:
+    def _get_options(self) -> dict[str, BaseOption]:
         options = {}
 
         self.bitrate_option = StorageOption("Software H.264 Bitrate", 5)  # 5 mpbs

@@ -5,18 +5,17 @@ Manages persisting camera settings and configs
 Handles loading and saving device configs to JSON, keeping setting across reboots, and manages background sync of settings
 """
 
-from typing import List, Dict, cast
-import threading
-import time
 import json
 import logging
+import threading
+import time
+from typing import cast
 
+from .device import Device
+from .device_utils import find_device_with_bus_info
 from .pydantic_schemas import DeviceType
 from .saved_pydantic_schemas import SavedDeviceModel, SavedLeaderFollowerPairModel
-from .device import Device
 from .shd import SHDDevice
-
-from .device_utils import find_device_with_bus_info
 
 
 class SettingsManager:
@@ -27,21 +26,21 @@ class SettingsManager:
         except FileNotFoundError:
             open(path, "w").close()
             self.file_object = open(path, "r+")
-        self.to_save: List[SavedDeviceModel] = []
+        self.to_save: list[SavedDeviceModel] = []
         self.thread = threading.Thread(target=self._run_settings_sync)
         self.thread.start()
 
-        self.leader_follower_pairs: List[SavedLeaderFollowerPairModel] = []
+        self.leader_follower_pairs: list[SavedLeaderFollowerPairModel] = []
 
         self.logger = logging.getLogger("dwe_os_2.SettingsManager")
 
         try:
-            settings: list[Dict] = json.loads(self.file_object.read())
-            self.settings: List[SavedDeviceModel] = [
+            settings: list[dict] = json.loads(self.file_object.read())
+            self.settings: list[SavedDeviceModel] = [
                 SavedDeviceModel.model_validate(saved_device) for saved_device in settings
             ]
 
-            self.saved_by_bus_info: Dict[str, SavedDeviceModel] = {
+            self.saved_by_bus_info: dict[str, SavedDeviceModel] = {
                 dev.bus_info: dev for dev in self.settings
             }
         except json.JSONDecodeError:
@@ -51,7 +50,7 @@ class SettingsManager:
             self.settings = []
             self.file_object.flush()
 
-    def load_device(self, device: Device, devices: List[Device]):
+    def load_device(self, device: Device, devices: list[Device]):
         for saved_device in self.settings:
             if saved_device.bus_info == device.bus_info:
                 if device.device_type != saved_device.device_type:
@@ -113,7 +112,7 @@ class SettingsManager:
 
                 return
 
-    def link_followers(self, devices: List[Device]):
+    def link_followers(self, devices: list[Device]):
         """
         Run this when we need to check for new devices
         """

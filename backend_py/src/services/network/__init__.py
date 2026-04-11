@@ -1,9 +1,9 @@
 from .nm_wrapper import (
-    NetworkWrapper,
-    WiredDeviceModel,
     ConnectionProfileModel,
     IPV4Configuration,
     IPV4Method,
+    NetworkWrapper,
+    WiredDeviceModel,
 )
 
 __all__ = [

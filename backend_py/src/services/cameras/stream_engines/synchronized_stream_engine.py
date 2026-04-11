@@ -1,12 +1,11 @@
-from ..synchronized_camera import V4L2Camera, SynchronizedCamera, CopiedFrame
-from ..pydantic_schemas import StreamEndpointModel
-import time
-import struct
-import socket
-import threading
 import collections
-from typing import List
+import socket
+import struct
+import threading
+import time
 
+from ..pydantic_schemas import StreamEndpointModel
+from ..synchronized_camera import CopiedFrame, SynchronizedCamera, V4L2Camera
 from .base_stream_engine import BaseStreamEngine
 
 
@@ -31,7 +30,7 @@ class SynchronizedStreamEngine(BaseStreamEngine):
 
         # Always MJPEG
         try:
-            self.cameras: List[V4L2Camera] = [
+            self.cameras: list[V4L2Camera] = [
                 V4L2Camera(
                     stream.device_path, stream.width, stream.height, stream.interval.denominator
                 )
@@ -45,7 +44,7 @@ class SynchronizedStreamEngine(BaseStreamEngine):
                 self.emit_error(e.strerror)
 
     # <AI> Assisted with this code. Custom RTP improves performance compared to RTP class
-    def _send_frame(self, frames: List[CopiedFrame], endpoint: StreamEndpointModel):
+    def _send_frame(self, frames: list[CopiedFrame], endpoint: StreamEndpointModel):
         # TODO: change protocol to handle more than two cameras
         assert len(frames) == 2
         left_frame = frames[0]

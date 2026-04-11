@@ -1,7 +1,6 @@
 import os
-from dataclasses import dataclass
-from typing import List
 import re
+from dataclasses import dataclass
 
 
 @dataclass
@@ -14,7 +13,7 @@ class PWMChannel:
 @dataclass
 class PWMChip:
     chip: int
-    channels: List[PWMChannel]
+    channels: list[PWMChannel]
 
 
 class PWMManager:
@@ -23,7 +22,7 @@ class PWMManager:
     CHANNEL_REGEX = re.compile(r"pwm(\d+)")
 
     def __init__(self) -> None:
-        self.chips: List[PWMChip] = []
+        self.chips: list[PWMChip] = []
 
         self._enumerate()
 
@@ -103,10 +102,10 @@ class PWMManager:
                 chip_path = os.path.join(self.PWM_BASE_PATH, chip_entry)
 
                 npwm_path = os.path.join(chip_path, "npwm")
-                with open(npwm_path, "r") as f:
+                with open(npwm_path) as f:
                     npwm = int(f.read().strip())
 
-                channels: List[PWMChannel] = []
+                channels: list[PWMChannel] = []
 
                 # Iterate over every channel
                 export_path = os.path.join(chip_path, "export")

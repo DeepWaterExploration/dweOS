@@ -48,7 +48,6 @@ Python bindings for the v4l2 userspace api in Linux 2.6.34
 
 import ctypes
 
-
 _IOC_NRBITS = 8
 _IOC_TYPEBITS = 8
 _IOC_SIZEBITS = 14

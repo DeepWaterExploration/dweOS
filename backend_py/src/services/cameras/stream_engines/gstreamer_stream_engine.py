@@ -1,13 +1,13 @@
 import os
-from .stream import Stream
-from ..pydantic_schemas import StreamEncodeTypeEnum, StreamTypeEnum
+import signal
 import stat
 import subprocess
-from typing import Optional
-import signal
 import threading
 from datetime import datetime
+
+from ..pydantic_schemas import StreamEncodeTypeEnum, StreamTypeEnum
 from .base_stream_engine import BaseStreamEngine
+from .stream import Stream
 
 
 class GStreamerPipelineBuilder:
@@ -109,8 +109,8 @@ class GStreamerProcessEngine(BaseStreamEngine):
     def __init__(self, streams, error_callback):
         super().__init__(streams, error_callback)
 
-        self._process: Optional[subprocess.Popen] = None
-        self._error_thread: Optional[threading.Thread] = None
+        self._process: subprocess.Popen | None = None
+        self._error_thread: threading.Thread | None = None
         self._lock = threading.RLock()
         self.started = False
 

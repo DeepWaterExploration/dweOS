@@ -1,6 +1,6 @@
-from ctypes import CDLL
 import os
 import subprocess
+from ctypes import CDLL
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 CAMERA_HELPER_SO_FILE = f"{dir_path}/build/camera_helper.so"

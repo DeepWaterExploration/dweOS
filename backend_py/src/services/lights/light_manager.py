@@ -6,16 +6,16 @@ Serves as the main interface for setting light intensity or disbaling lights
 Calls on PWM controllers to do the actual PWM
 """
 
-from typing import List
-from .pwm_controller import PWMController
-from .light import Light
 import logging
+
+from .light import Light
+from .pwm_controller import PWMController
 
 
 class LightManager:
-    def __init__(self, pwm_controllers: List[PWMController]) -> None:
+    def __init__(self, pwm_controllers: list[PWMController]) -> None:
         self.pwm_controllers = pwm_controllers
-        self.lights: List[Light] = []
+        self.lights: list[Light] = []
         self.logger = logging.getLogger("dwe_os_2.LightManager")
         for controller_index in range(len(self.pwm_controllers)):
             controller = self.pwm_controllers[controller_index]

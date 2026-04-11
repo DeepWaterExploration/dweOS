@@ -1,6 +1,7 @@
-import serial
-import logging
 import asyncio
+import logging
+
+import serial
 from serial.tools import list_ports
 
 DWE_PWM_USB_VID = 0x3961

@@ -1,25 +1,26 @@
-from .async_network_manager import (
-    AsyncNetworkManager,
-    IPV4Configuration,
-    IPV4Method,
-    DeviceState,
-)
+import asyncio
+import logging
+import time
+
+import socketio
 from event_emitter import EventEmitter
 from pydantic import BaseModel
-from typing import Optional, List
-import socketio
-import time
-import logging
-import asyncio
+
+from .async_network_manager import (
+    AsyncNetworkManager,
+    DeviceState,
+    IPV4Configuration,
+    IPV4Method,
+)
 
 
 class WiredDeviceModel(BaseModel):
     interface: str
     state: DeviceState
     is_active: bool
-    active_profile_id: Optional[str] = None
-    active_ip_configuration: Optional[IPV4Configuration] = None
-    available_profiles: List[str]
+    active_profile_id: str | None = None
+    active_ip_configuration: IPV4Configuration | None = None
+    available_profiles: list[str]
 
 
 class ConnectionProfileModel(BaseModel):
@@ -49,7 +50,7 @@ class NetworkWrapper(EventEmitter):
         self.nm.on("ip_config_changed", lambda device: self._refresh_ui())
         self.nm.on("state_changed", lambda device: self._refresh_ui())
 
-        self._rollback_timer_task: Optional[asyncio.Task] = None
+        self._rollback_timer_task: asyncio.Task | None = None
 
     def _refresh_ui(self):
         self.emit("refresh_ui")
@@ -57,7 +58,7 @@ class NetworkWrapper(EventEmitter):
     async def initialize(self):
         await self.nm.initialize()
 
-    def get_wired_devices(self) -> List[WiredDeviceModel]:
+    def get_wired_devices(self) -> list[WiredDeviceModel]:
         device_models = []
         for device in self.nm.ethernet_devices:
             device_model = WiredDeviceModel(
@@ -73,7 +74,7 @@ class NetworkWrapper(EventEmitter):
             device_models.append(device_model)
         return device_models
 
-    def get_connection_profiles(self) -> List[ConnectionProfileModel]:
+    def get_connection_profiles(self) -> list[ConnectionProfileModel]:
         connection_profiles = []
         for profile in self.nm.profiles.values():
             if not profile.ipv4_settings or not profile.id:

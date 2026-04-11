@@ -5,35 +5,32 @@ Handles server logic and initializes all the managers (settings, devices, lights
 Starts device monitoring, wifi scan, and starts ttyd (teletypewriter daemon) to run in the background
 """
 
+import asyncio
+import logging
 import logging.handlers
 
+import socketio
+from fastapi import FastAPI
 
-from .services.cameras import DeviceManager, SettingsManager
-from .services.preferences import PreferencesManager
-from .services.system import SystemManager
-from .services.lights import LightManager, create_pwm_controllers
-from .services.recordings import RecordingsService
-from .services.ttyd import TTYDManager
-from .services.network import NetworkWrapper
-
+from .logging import LogHandler
 from .routes import (
     camera_router,
-    preferences_router,
-    system_router,
     lights_router,
     logs_router,
-    recordings_router,
     network_router,
+    preferences_router,
     pwm_router,
+    recordings_router,
+    system_router,
 )
-from .logging import LogHandler
 from .schemas import FeatureSupport
-
-import asyncio
-from fastapi import FastAPI
-import socketio
-
-import logging
+from .services.cameras import DeviceManager, SettingsManager
+from .services.lights import LightManager, create_pwm_controllers
+from .services.network import NetworkWrapper
+from .services.preferences import PreferencesManager
+from .services.recordings import RecordingsService
+from .services.system import SystemManager
+from .services.ttyd import TTYDManager
 
 
 class Server:

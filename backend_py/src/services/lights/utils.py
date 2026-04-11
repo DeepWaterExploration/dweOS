@@ -5,10 +5,10 @@ Determines what kind of system/hardware the application is on, and then tries to
 """
 
 import logging
+import os
 
 # from .fake_pwm import FakePWMController
 import re
-import os
 
 
 def is_overlay_loaded():
@@ -22,7 +22,7 @@ def is_overlay_loaded():
 def get_rpi_version():
     try:
         # Read the device model from the file
-        with open("/sys/firmware/devicetree/base/model", "r") as f:
+        with open("/sys/firmware/devicetree/base/model") as f:
             model = f.read().strip()
 
         # Check if the device is a Raspberry Pi

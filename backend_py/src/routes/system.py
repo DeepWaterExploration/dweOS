@@ -6,6 +6,7 @@ Handles rebooting / shutting down the system
 """
 
 from fastapi import APIRouter, Request
+
 from ..services.system import SystemManager
 
 system_router = APIRouter(tags=["system"])

@@ -5,6 +5,7 @@ API endpoints for pwm config
 """
 
 from fastapi import APIRouter, Request
+
 from ..services.cameras import DeviceManager
 
 pwm_router = APIRouter(tags=["pwm"])

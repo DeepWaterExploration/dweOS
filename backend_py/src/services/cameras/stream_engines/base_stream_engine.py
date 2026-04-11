@@ -1,7 +1,8 @@
-from abc import ABC, abstractmethod
-from typing import List, Callable
-from .stream import Stream
 import logging
+from abc import ABC, abstractmethod
+from collections.abc import Callable
+
+from .stream import Stream
 
 
 class BaseStreamEngine(ABC):
@@ -9,7 +10,7 @@ class BaseStreamEngine(ABC):
     Abstract class for any streaming backend
     """
 
-    def __init__(self, streams: List[Stream], error_callback: Callable[[str], None]):
+    def __init__(self, streams: list[Stream], error_callback: Callable[[str], None]):
         super().__init__()
 
         self.streams = streams

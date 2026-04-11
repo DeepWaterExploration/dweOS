@@ -5,11 +5,12 @@ Adds additional features to exploreHD devices through extension units (xu) as pe
 Uses options functionality to set defaults, ranges, and specifies registers for where these features store data
 """
 
-from typing import Dict, cast
-from .enumeration import DeviceInfo
-from .device import Device, Option, ControlTypeEnum
-from .pydantic_schemas import H264Mode
+from typing import cast
+
 from . import xu_controls as xu
+from .device import ControlTypeEnum, Device, Option
+from .enumeration import DeviceInfo
+from .pydantic_schemas import H264Mode
 
 
 class EHDDevice(Device):
@@ -26,7 +27,7 @@ class EHDDevice(Device):
 
         self.add_control_from_option("bitrate", 10, ControlTypeEnum.INTEGER, 15, 0.1, 0.1)
 
-    def _get_options(self) -> Dict[str, Option]:
+    def _get_options(self) -> dict[str, Option]:
         options = {}
 
         # UVC xu bitrate control

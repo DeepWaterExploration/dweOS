@@ -5,8 +5,9 @@ API endpoints for server perferences
 Handles getting and setting preferences
 """
 
+
 from fastapi import APIRouter, Request
-from typing import Dict
+
 from ..services.preferences import PreferencesManager, SavedPreferencesModel
 
 preferences_router = APIRouter(tags=["preferences"])
@@ -29,5 +30,5 @@ def set_preferences(request: Request, preferences: SavedPreferencesModel):
 
 
 @preferences_router.get("/get_recommended_host")
-def get_recommended_host(request: Request) -> Dict[str, str]:
+def get_recommended_host(request: Request) -> dict[str, str]:
     return {"host": request.client.host if request.client else ""}

@@ -6,9 +6,10 @@ Determines pins the lights are connected to as well as if they support pwm
 Raspberry Pi generates a square wave at set intensity (50% = square wave where 50% is on, 50% is off)
 """
 
+
 from rpi_hardware_pwm import HardwarePWM, HardwarePWMException
+
 from .pwm_controller import PWMController
-from typing import Dict
 
 
 class RPiHardwarePWMController(PWMController):
@@ -26,7 +27,7 @@ class RPiHardwarePWMController(PWMController):
             pins = {18: 0, 19: 1}
         self.PWM_PINS = pins
 
-        self.pwm_objects: Dict[int, HardwarePWM] = {}
+        self.pwm_objects: dict[int, HardwarePWM] = {}
 
         for pin in self.PWM_PINS.keys():
             try:

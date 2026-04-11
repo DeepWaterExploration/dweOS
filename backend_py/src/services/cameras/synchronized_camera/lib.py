@@ -2,14 +2,13 @@
 #
 # Minimal Python V4L2 capture + multi-camera synchronizer
 
-import os
-import fcntl
-import mmap
-from dataclasses import dataclass
-from collections import deque
-from typing import List, Optional
 import ctypes
+import fcntl
 import logging
+import mmap
+import os
+from collections import deque
+from dataclasses import dataclass
 
 from .. import v4l2
 
@@ -167,7 +166,7 @@ class V4L2Camera:
 
     def grab_copied_frame(
         self, blocking: bool = True, timeout_s: float = 1.0
-    ) -> Optional[CopiedFrame]:
+    ) -> CopiedFrame | None:
         """
         Dequeue one buffer, copy its contents into a new bytes object,
         requeue the buffer, and return a CopiedFrame.
@@ -250,7 +249,7 @@ class SynchronizedCamera:
     Synchronized Camera Class
     """
 
-    def __init__(self, cameras: List[V4L2Camera], queue_cap: int = 8):
+    def __init__(self, cameras: list[V4L2Camera], queue_cap: int = 8):
         for camera in cameras:
             if camera.critical_error:
                 raise AssertionError(
@@ -262,7 +261,7 @@ class SynchronizedCamera:
 
         self.sync_threshold_us = sync_threshold_us
         self.queue_cap = queue_cap
-        self.queues: List[deque[CopiedFrame]] = [deque() for _ in cameras]
+        self.queues: list[deque[CopiedFrame]] = [deque() for _ in cameras]
         self.logger = logging.getLogger("dwe_os_2.cameras.SynchronizedCamera")
 
         # For those curious about the synchronization logic, it can be summarized as follows:
@@ -282,7 +281,7 @@ class SynchronizedCamera:
         for cam in self.cameras:
             cam.close()
 
-    def grab(self) -> Optional[List[CopiedFrame]]:
+    def grab(self) -> list[CopiedFrame] | None:
         """
         Grab and synchronize frames from all cameras.
         Returns a list[CopiedFrame] of length camera_count() if synced,
@@ -290,7 +289,7 @@ class SynchronizedCamera:
         """
 
         # grab one frame from each camera
-        grabbed_frames: List[CopiedFrame] = []
+        grabbed_frames: list[CopiedFrame] = []
         for cam in self.cameras:
             cf = cam.grab_copied_frame(blocking=True)
             if cf is None:

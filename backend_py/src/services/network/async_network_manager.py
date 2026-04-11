@@ -1,28 +1,29 @@
 import asyncio
 import logging
-import sdbus
-from sdbus_async.networkmanager import (
-    NetworkManager,
-    NetworkDeviceGeneric,
-    DeviceState,
-    DeviceType,
-    DeviceCapabilities as Capabilities,
-    ActiveConnection,
-    NetworkDeviceWired,
-    IPv4Config,
-    NetworkManagerSetting,
-    NetworkConnectionSettings,
-    NetworkManagerSettings,
-    NetworkManagerConnectionProperties,
-)
-from enum import Enum
-from event_emitter import EventEmitter
-
-from typing import Optional, List, Any, Dict
-from pydantic import BaseModel
-
 import socket
 import struct
+from enum import Enum
+from typing import Any
+
+import sdbus
+from event_emitter import EventEmitter
+from pydantic import BaseModel
+from sdbus_async.networkmanager import (
+    ActiveConnection,
+    DeviceState,
+    DeviceType,
+    IPv4Config,
+    NetworkConnectionSettings,
+    NetworkDeviceGeneric,
+    NetworkDeviceWired,
+    NetworkManager,
+    NetworkManagerConnectionProperties,
+    NetworkManagerSetting,
+    NetworkManagerSettings,
+)
+from sdbus_async.networkmanager import (
+    DeviceCapabilities as Capabilities,
+)
 
 
 class IPV4Method(Enum):
@@ -37,11 +38,11 @@ class IPV4Address(BaseModel):
 
 
 class IPV4Configuration(BaseModel):
-    ip_addresses: Optional[List[IPV4Address]] = None
-    gateway: Optional[str] = None
+    ip_addresses: list[IPV4Address] | None = None
+    gateway: str | None = None
     method: IPV4Method = IPV4Method.unknown
-    dns: Optional[List[str]] = None
-    never_default: Optional[bool] = None
+    dns: list[str] | None = None
+    never_default: bool | None = None
 
 
 # ip to integer and reverse: https://stackoverflow.com/a/13294427
@@ -359,10 +360,10 @@ class AsyncNetworkManager(EventEmitter):
         self.nm = NetworkManager()
         self.nm_settings = NetworkManagerSettings()
 
-        self.ethernet_devices: List[WiredDevice] = []
+        self.ethernet_devices: list[WiredDevice] = []
 
         # dbus path: ConnectionProfile
-        self.profiles: Dict[str, ConnectionProfile] = {}
+        self.profiles: dict[str, ConnectionProfile] = {}
 
         self._profiles_updated_task: asyncio.Task | None = None
 
@@ -384,7 +385,7 @@ class AsyncNetworkManager(EventEmitter):
                 return device
         return None
 
-    def get_compatible_profiles(self, wired_device: WiredDevice) -> List[ConnectionProfile]:
+    def get_compatible_profiles(self, wired_device: WiredDevice) -> list[ConnectionProfile]:
         """
         Get a list of compatible profiles for a given wired device
         """
@@ -529,38 +530,3 @@ class AsyncNetworkManager(EventEmitter):
                 self.ethernet_devices.append(eth_device)
 
             # TODO: Wireless
-
-
-async def main():
-    nm = AsyncNetworkManager()
-    await nm.initialize()
-
-    wired_conn_1 = nm.get_profile_by_id("Wired connection 1")
-
-    dev = None
-    for device in nm.ethernet_devices:
-        if device.is_available():
-            dev = device
-
-    if not dev:
-        logging.warning("No available devices")
-        return
-
-    await nm.activate_ethernet_device(dev, wired_conn_1)
-
-    await asyncio.sleep(2)
-
-    # await wired_conn_1.update_ipv4_configuration(IPV4Configuration(ip_addresses=[IPV4Address(
-    #     "192.168.2.1", 24)], gateway="192.168.2.1", method=IPV4Method.manual, dns=["0.0.0.0", "1.1.1.1"]))
-
-    await wired_conn_1.update_ipv4_configuration(IPV4Configuration(method=IPV4Method.auto))
-
-    while True:
-        await asyncio.sleep(1)
-
-
-if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        pass

@@ -18,6 +18,10 @@ jobs:
   Frontend:
     runs-on: ubuntu-22.04
 
+    defaults:
+      run:
+        working-directory: ./frontend
+
     steps:
       - name: "Checkout code"
         uses: actions/checkout@v6

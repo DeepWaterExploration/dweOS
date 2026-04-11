@@ -34,12 +34,10 @@ class StreamRunner(events.EventEmitter):
         # Ideally we would have a way for either the user or the backend to control
 
         if len(self.streams) > 1:
-            self.logger.info(
-                "Multiple streams detected: Using SynchronizedStreamEngine.")
+            self.logger.info("Multiple streams detected: Using SynchronizedStreamEngine.")
             return SynchronizedStreamEngine(self.streams, self._on_engine_error)
         else:
-            self.logger.info(
-                "Single stream detected: Using GStreamerProcessEngine.")
+            self.logger.info("Single stream detected: Using GStreamerProcessEngine.")
             return GStreamerProcessEngine(self.streams, self._on_engine_error)
 
     def _on_engine_error(self, error_data):
@@ -50,8 +48,7 @@ class StreamRunner(events.EventEmitter):
 
     def start(self):
         with self._lock:
-            self.logger.info(
-                f"Starting streams: {[s.device_path for s in self.streams]}")
+            self.logger.info(f"Starting streams: {[s.device_path for s in self.streams]}")
             if self.started:
                 self.stop()
                 time.sleep(1)

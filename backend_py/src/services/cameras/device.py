@@ -40,22 +40,42 @@ PID_VIDS = {
         "PID": 0x6368,
         "device_type": DeviceType.STELLARHD_FOLLOWER,
     },
-    "exploreHD": {
-        "VID": 0x3961,
-        "PID": 0x2100,
-        "device_type": DeviceType.EXPLOREHD
-    },
+    "exploreHD": {"VID": 0x3961, "PID": 0x2100, "device_type": DeviceType.EXPLOREHD},
     "exploreHD Heavy": {"VID": 0x3961, "PID": 0x2200, "device_type": DeviceType.EXPLOREHD},
     "exploreHD Heavy (AQ)": {"VID": 0x3961, "PID": 0x2210, "device_type": DeviceType.EXPLOREHD},
-    "stellarHD Elite (AQ-L)": {"VID": 0x3961, "PID": 0x1211, "device_type": DeviceType.STELLARHD_LEADER},
-    "stellarHD Elite (AQ-F)": {"VID": 0x3961, "PID": 0x1212, "device_type": DeviceType.STELLARHD_FOLLOWER},
-    "stellarHD Elite (L)": {"VID": 0x3961, "PID": 0x1201, "device_type": DeviceType.STELLARHD_LEADER},
-    "stellarHD Elite (F)": {"VID": 0x3961, "PID": 0x1202, "device_type": DeviceType.STELLARHD_FOLLOWER},
+    "stellarHD Elite (AQ-L)": {
+        "VID": 0x3961,
+        "PID": 0x1211,
+        "device_type": DeviceType.STELLARHD_LEADER,
+    },
+    "stellarHD Elite (AQ-F)": {
+        "VID": 0x3961,
+        "PID": 0x1212,
+        "device_type": DeviceType.STELLARHD_FOLLOWER,
+    },
+    "stellarHD Elite (L)": {
+        "VID": 0x3961,
+        "PID": 0x1201,
+        "device_type": DeviceType.STELLARHD_LEADER,
+    },
+    "stellarHD Elite (F)": {
+        "VID": 0x3961,
+        "PID": 0x1202,
+        "device_type": DeviceType.STELLARHD_FOLLOWER,
+    },
     "stellarHD (AQ-L)": {"VID": 0x3961, "PID": 0x1111, "device_type": DeviceType.STELLARHD_LEADER},
-    "stellarHD (AQ-F)": {"VID": 0x3961, "PID": 0x1112, "device_type": DeviceType.STELLARHD_FOLLOWER},
+    "stellarHD (AQ-F)": {
+        "VID": 0x3961,
+        "PID": 0x1112,
+        "device_type": DeviceType.STELLARHD_FOLLOWER,
+    },
     "stellarHD (L)": {"VID": 0x3961, "PID": 0x1101, "device_type": DeviceType.STELLARHD_LEADER},
     "stellarHD (F)": {"VID": 0x3961, "PID": 0x1102, "device_type": DeviceType.STELLARHD_FOLLOWER},
-    "explore3D (Left)": {"VID": 0x3961, "PID": 0x3112, "device_type": DeviceType.STELLARHD_FOLLOWER},
+    "explore3D (Left)": {
+        "VID": 0x3961,
+        "PID": 0x3112,
+        "device_type": DeviceType.STELLARHD_FOLLOWER,
+    },
     "explore3D (Right)": {"VID": 0x3961, "PID": 0x3111, "device_type": DeviceType.STELLARHD_LEADER},
 }
 
@@ -80,15 +100,11 @@ class Camera:
         self._get_formats()
 
     # uvc_set_ctrl function defined in uvc_functions.c
-    def uvc_set_ctrl(
-        self, unit: int, ctrl: int, data: bytes, size: int
-    ) -> int:
+    def uvc_set_ctrl(self, unit: int, ctrl: int, data: bytes, size: int) -> int:
         return camera_helper.uvc_set_ctrl(self._fd, unit, ctrl, data, size)
 
     # uvc_get_ctrl function defined in uvc_functions.c
-    def uvc_get_ctrl(
-        self, unit: int, ctrl: int, data: bytes, size: int
-    ) -> int:
+    def uvc_get_ctrl(self, unit: int, ctrl: int, data: bytes, size: int) -> int:
         return camera_helper.uvc_get_ctrl(self._fd, unit, ctrl, data, size)
 
     def has_format(self, pixformat: str) -> bool:
@@ -127,9 +143,7 @@ class Camera:
                         frmival.width = frmsize.discrete.width
                         frmival.height = frmsize.discrete.height
                         try:
-                            fcntl.ioctl(
-                                self._fd, v4l2.VIDIOC_ENUM_FRAMEINTERVALS, frmival
-                            )
+                            fcntl.ioctl(self._fd, v4l2.VIDIOC_ENUM_FRAMEINTERVALS, frmival)
                         except:
                             break
                         if frmival.type == v4l2.V4L2_FRMIVAL_TYPE_DISCRETE:
@@ -231,13 +245,9 @@ class Option(BaseOption):
         data[1] = self._command.value
 
         # Switch command
-        self._camera.uvc_set_ctrl(
-            self._unit.value, self._ctrl.value, bytes(data), self._size
-        )
+        self._camera.uvc_set_ctrl(self._unit.value, self._ctrl.value, bytes(data), self._size)
 
-        self._camera.uvc_set_ctrl(
-            self._unit.value, self._ctrl.value, self._data, self._size
-        )
+        self._camera.uvc_set_ctrl(self._unit.value, self._ctrl.value, self._data, self._size)
 
     def _get_ctrl(self):
         data = bytearray(self._size)
@@ -245,20 +255,15 @@ class Option(BaseOption):
         data[1] = self._command.value
         self._data = bytes(self._size)
         # Switch command
-        self._camera.uvc_set_ctrl(
-            self._unit.value, self._ctrl.value, bytes(data), self._size
-        )
+        self._camera.uvc_set_ctrl(self._unit.value, self._ctrl.value, bytes(data), self._size)
 
-        self._camera.uvc_get_ctrl(
-            self._unit.value, self._ctrl.value, self._data, self._size
-        )
+        self._camera.uvc_get_ctrl(self._unit.value, self._ctrl.value, self._data, self._size)
 
     def _clear(self):
         self._data = b"\x00" * self._size
 
 
 class Device(events.EventEmitter):
-
     def __init__(self, device_info: DeviceInfo) -> None:
         super().__init__()
         self.cameras: List[Camera] = []
@@ -282,8 +287,7 @@ class Device(events.EventEmitter):
         self.stream = Stream()
 
         # each device has a streamrunner, but not all of them are used if they are a follower (shd)
-        self.stream_runner = StreamRunner(
-            self.stream)
+        self.stream_runner = StreamRunner(self.stream)
 
         for camera in self.cameras:
             for encoding in camera.formats:
@@ -302,8 +306,7 @@ class Device(events.EventEmitter):
                     )
                     break
 
-        self.v4l2_device = device.Device(
-            self.cameras[0].path)  # for control purposes
+        self.v4l2_device = device.Device(self.cameras[0].path)  # for control purposes
         self.v4l2_device.open()
 
         # This must be configured by the implementing class
@@ -329,7 +332,8 @@ class Device(events.EventEmitter):
 
         if not self.v4l2_device.controls:
             self.logger.error(
-                "v4l2_device.controls == None. Unable to get controls. This might be fatal.")
+                "v4l2_device.controls == None. Unable to get controls. This might be fatal."
+            )
             return
 
         for ctrl in self.v4l2_device.controls.values():
@@ -430,7 +434,7 @@ class Device(events.EventEmitter):
         control_type: ControlTypeEnum,
         max_value: float = 0,
         min_value: float = 0,
-        step: float = 0
+        step: float = 0,
     ):
         try:
             option = self._options[option_name]
@@ -446,13 +450,14 @@ class Device(events.EventEmitter):
                         max_value=max_value,
                         min_value=min_value,
                         step=step,
-                        control_type=control_type
+                        control_type=control_type,
                     ),
                 ),
             )
             self._id_counter += 1
         except AttributeError:
             import traceback
+
             traceback.print_exc()
             self.logger.error(
                 f"Unknown attribute: {self.__class__.__name__}._options[{option_name}]"
@@ -502,8 +507,7 @@ class Device(events.EventEmitter):
 
     def set_pu(self, control_id: int, value: int | float):
         if not self.v4l2_device.controls:
-            self.logger.critical(
-                "v4l2_device.controls is None; unable to run set_pu")
+            self.logger.critical("v4l2_device.controls is None; unable to run set_pu")
             return
 
         if control_id < 0:

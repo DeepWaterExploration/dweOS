@@ -10,18 +10,18 @@ from typing import Dict
 from .pydantic_schemas import SavedPreferencesModel
 from event_emitter import events
 
-class PreferencesManager(events.EventEmitter):
 
-    def __init__(self, settings_path: str = '.') -> None:
+class PreferencesManager(events.EventEmitter):
+    def __init__(self, settings_path: str = ".") -> None:
         super().__init__()
 
-        path = f'{settings_path}/server_preferences.json'
+        path = f"{settings_path}/server_preferences.json"
         try:
-            self.file_object = open(path, 'r+')
+            self.file_object = open(path, "r+")
         except FileNotFoundError:
-            open(path, 'w').close()
-            self.file_object = open(path, 'r+')
-        
+            open(path, "w").close()
+            self.file_object = open(path, "r+")
+
         try:
             settings: list[Dict] = json.loads(self.file_object.read())
             self.settings: SavedPreferencesModel = SavedPreferencesModel.model_validate(settings)

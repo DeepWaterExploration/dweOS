@@ -13,7 +13,7 @@ from ..services import (
     Status,
     AccessPoint,
     Connection,
-    ConnectionResultModel
+    ConnectionResultModel,
 )
 
 wifi_router = APIRouter(tags=["wifi"])
@@ -35,11 +35,9 @@ def access_points(request: Request) -> List[AccessPoint]:
     for ap in aps:
         try:
             requires_password = wifi_manager._requires_password(ap)
-            ap_list.append({
-                "ssid": ap.ssid,
-                "strength": ap.strength,
-                "requires_password": requires_password
-            })
+            ap_list.append(
+                {"ssid": ap.ssid, "strength": ap.strength, "requires_password": requires_password}
+            )
         except Exception as e:
             # Network is no longer available, ignore it
             continue

@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+
 class LogSchema(BaseModel):
     timestamp: str
     level: str

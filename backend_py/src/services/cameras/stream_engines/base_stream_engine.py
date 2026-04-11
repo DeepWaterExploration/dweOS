@@ -14,8 +14,7 @@ class BaseStreamEngine(ABC):
 
         self.streams = streams
         self.emit_error = error_callback
-        self.logger = logging.getLogger(
-            f"dwe_os_2.cameras.{self.__class__.__name__}")
+        self.logger = logging.getLogger(f"dwe_os_2.cameras.{self.__class__.__name__}")
 
     @abstractmethod
     def start(self):

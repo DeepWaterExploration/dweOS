@@ -26,6 +26,7 @@ class CopiedFrame:
         pixel_format     number defining the format of the image (currently always jpeg)
         timestamp_us     the timestamp of the frame in microseconds
     """
+
     data: bytes
     width: int
     height: int
@@ -38,12 +39,15 @@ class V4L2Camera:
     Python V4L2 camera wrapper using mmap buffers.
     """
 
-    def __init__(self, device: str,
-                 width: int,
-                 height: int,
-                 fps: int,
-                 pixel_format: int = v4l2.V4L2_PIX_FMT_MJPEG,
-                 buffer_count: int = 4):
+    def __init__(
+        self,
+        device: str,
+        width: int,
+        height: int,
+        fps: int,
+        pixel_format: int = v4l2.V4L2_PIX_FMT_MJPEG,
+        buffer_count: int = 4,
+    ):
 
         self.device = device
         self.width = width
@@ -97,8 +101,7 @@ class V4L2Camera:
 
         # Check capability
         if not (parm.parm.capture.capability & v4l2.V4L2_CAP_TIMEPERFRAME):
-            raise RuntimeError(
-                "Camera does not support FPS control (TIMEPERFRAME).")
+            raise RuntimeError("Camera does not support FPS control (TIMEPERFRAME).")
 
         parm.parm.capture.timeperframe.numerator = 1
         parm.parm.capture.timeperframe.denominator = self.fps
@@ -163,7 +166,9 @@ class V4L2Camera:
 
     # Public API
 
-    def grab_copied_frame(self, blocking: bool = True, timeout_s: float = 1.0) -> Optional[CopiedFrame]:
+    def grab_copied_frame(
+        self, blocking: bool = True, timeout_s: float = 1.0
+    ) -> Optional[CopiedFrame]:
         """
         Dequeue one buffer, copy its contents into a new bytes object,
         requeue the buffer, and return a CopiedFrame.
@@ -172,11 +177,11 @@ class V4L2Camera:
         """
         if blocking:
             import select
+
             # select() polling
             readable, _, _ = select.select([self.fd], [], [], timeout_s)
             if not readable:
-                self.logger.warning(
-                    f"Timeout waiting for frame on {self.device}")
+                self.logger.warning(f"Timeout waiting for frame on {self.device}")
                 return None
 
         buf = v4l2.v4l2_buffer()
@@ -187,7 +192,7 @@ class V4L2Camera:
             return None
 
         mm = self._buffers[buf.index]
-        frame_bytes = mm[:buf.bytesused]
+        frame_bytes = mm[: buf.bytesused]
         ts_us = buf.timestamp.secs * 1_000_000 + buf.timestamp.usecs
 
         # Requeue the buffer immediately
@@ -246,24 +251,20 @@ class SynchronizedCamera:
     Synchronized Camera Class
     """
 
-    def __init__(self,
-                 cameras: List[V4L2Camera],
-                 queue_cap: int = 8):
+    def __init__(self, cameras: List[V4L2Camera], queue_cap: int = 8):
         for camera in cameras:
             if camera.critical_error:
                 raise AssertionError(
-                    "Cannot create a SynchronizedCamera with cameras containing errors! Please check your camera status.")
+                    "Cannot create a SynchronizedCamera with cameras containing errors! Please check your camera status."
+                )
 
         self.cameras = cameras
         sync_threshold_us = 1.0 / self.cameras[0].fps * 1000000
 
         self.sync_threshold_us = sync_threshold_us
         self.queue_cap = queue_cap
-        self.queues: List[deque[CopiedFrame]] = [
-            deque() for _ in cameras
-        ]
-        self.logger = logging.getLogger(
-            f"dwe_os_2.cameras.SynchronizedCamera")
+        self.queues: List[deque[CopiedFrame]] = [deque() for _ in cameras]
+        self.logger = logging.getLogger(f"dwe_os_2.cameras.SynchronizedCamera")
 
         # For those curious about the synchronization logic, it can be summarized as follows:
         # The synch threshold is **NOT** the precision. It is generally specified as 1/FPS.
@@ -308,8 +309,7 @@ class SynchronizedCamera:
 
         # attempt synchronization
         while self._queues_full():
-            timestamps = [self.queues[i]
-                          [0].timestamp_us for i in range(self.camera_count())]
+            timestamps = [self.queues[i][0].timestamp_us for i in range(self.camera_count())]
             min_ts = min(timestamps)
             max_ts = max(timestamps)
 
@@ -322,8 +322,7 @@ class SynchronizedCamera:
             else:
                 # Drop the earliest frame (smallest timestamp) and try again
                 min_index = timestamps.index(min_ts)
-                self.logger.info(
-                    f"Dropping frame of difference: {max_ts - min_ts}")
+                self.logger.info(f"Dropping frame of difference: {max_ts - min_ts}")
                 self.queues[min_index].popleft()
 
         # Not enough frames anymore to sync

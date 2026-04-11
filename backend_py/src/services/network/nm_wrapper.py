@@ -1,4 +1,12 @@
-from .async_network_manager import AsyncNetworkManager, IPV4Configuration, IPV4Address, IPV4Method, WiredDevice, ConnectionProfile, DeviceState
+from .async_network_manager import (
+    AsyncNetworkManager,
+    IPV4Configuration,
+    IPV4Address,
+    IPV4Method,
+    WiredDevice,
+    ConnectionProfile,
+    DeviceState,
+)
 from event_emitter import EventEmitter
 from pydantic import BaseModel, Field
 from typing import Optional, List
@@ -24,7 +32,6 @@ class ConnectionProfileModel(BaseModel):
 
 
 class NetworkWrapper(EventEmitter):
-
     def __init__(self, sio: socketio.Server):
         super().__init__()
 
@@ -56,9 +63,16 @@ class NetworkWrapper(EventEmitter):
     def get_wired_devices(self) -> List[WiredDeviceModel]:
         device_models = []
         for device in self.nm.ethernet_devices:
-            device_model = WiredDeviceModel(interface=device.interface or "", state=device.state,
-                                            active_profile_id=device.connection_profile_path, active_ip_configuration=device.active_ip_configuration, is_active=device.has_active_connection,
-                                            available_profiles=[profile.dbus_path for profile in self.nm.get_compatible_profiles(device)])
+            device_model = WiredDeviceModel(
+                interface=device.interface or "",
+                state=device.state,
+                active_profile_id=device.connection_profile_path,
+                active_ip_configuration=device.active_ip_configuration,
+                is_active=device.has_active_connection,
+                available_profiles=[
+                    profile.dbus_path for profile in self.nm.get_compatible_profiles(device)
+                ],
+            )
             device_models.append(device_model)
         return device_models
 
@@ -68,7 +82,8 @@ class NetworkWrapper(EventEmitter):
             if not profile.ipv4_settings or not profile.id:
                 continue
             profile_model = ConnectionProfileModel(
-                id=profile.id, path=profile.dbus_path, ipv4_settings=profile.ipv4_settings)
+                id=profile.id, path=profile.dbus_path, ipv4_settings=profile.ipv4_settings
+            )
             connection_profiles.append(profile_model)
         return connection_profiles
 
@@ -95,18 +110,20 @@ class NetworkWrapper(EventEmitter):
             if self._rollback_timer_task:
                 self._rollback_timer_task.cancel()
             self._rollback_timer_task = asyncio.create_task(
-                self._rollback_timer(interface, profile_path, time_of_change, 30))
+                self._rollback_timer(interface, profile_path, time_of_change, 30)
+            )
 
         return True
 
     async def _force_dhcp(self, interface: str, profile_path: str):
-        safe_ip_config = IPV4Configuration(
-            method=IPV4Method.auto, never_default=False)
+        safe_ip_config = IPV4Configuration(method=IPV4Method.auto, never_default=False)
 
         await self.update_connection_profile(profile_path, safe_ip_config)
         await self.activate_interface(interface, profile_path, False)
 
-    async def _rollback_timer(self, interface: str, profile_path: str, time_of_change: float, timeout: int):
+    async def _rollback_timer(
+        self, interface: str, profile_path: str, time_of_change: float, timeout: int
+    ):
         await asyncio.sleep(timeout)
 
         if self.last_connection_time < time_of_change:
@@ -114,5 +131,4 @@ class NetworkWrapper(EventEmitter):
 
             await self._force_dhcp(interface, profile_path)
         else:
-            self.logger.info(
-                "Active connection detected, not forcing rollback!")
+            self.logger.info("Active connection detected, not forcing rollback!")

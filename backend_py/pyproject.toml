@@ -1,0 +1,10 @@
+[tool.ruff]
+line-length = 100
+indent-width = 4
+
+[tool.ruff.lint]
+# TODO
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

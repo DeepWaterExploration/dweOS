@@ -10,17 +10,17 @@ from fastapi.responses import FileResponse
 from typing import List
 from ..services import RecordingsService, RecordingInfo
 
-recordings_router = APIRouter(tags=['recordings'])
+recordings_router = APIRouter(tags=["recordings"])
 
 
-@recordings_router.get('', summary='Get all recordings')
+@recordings_router.get("", summary="Get all recordings")
 def get_recordings(request: Request) -> List[RecordingInfo]:
     recordings_service: RecordingsService = request.app.state.recordings_service
 
     return recordings_service.get_recordings()
 
 
-@recordings_router.get('/{recording_path}', summary='Get a specific recording')
+@recordings_router.get("/{recording_path}", summary="Get a specific recording")
 def get_recording(request: Request, recording_path: str):
 
     recordings_service: RecordingsService = request.app.state.recordings_service
@@ -30,38 +30,37 @@ def get_recording(request: Request, recording_path: str):
         raise HTTPException(status_code=404, detail="Recording not found")
 
     headers = {}
-    if request.query_params.get('download', 'false').lower() == 'true':
-        headers['Content-Disposition'] = "attachment; filename=" + \
-            recording_info.name + "." + recording_info.format
+    if request.query_params.get("download", "false").lower() == "true":
+        headers["Content-Disposition"] = (
+            "attachment; filename=" + recording_info.name + "." + recording_info.format
+        )
 
     return FileResponse(recording_info.path, headers=headers)
 
 
-@recordings_router.delete('/{recording_path}', summary='Delete a recording')
+@recordings_router.delete("/{recording_path}", summary="Delete a recording")
 def delete_recording(request: Request, recording_path: str):
     recordings_service: RecordingsService = request.app.state.recordings_service
 
     response = recordings_service.delete_recording(recording_path)
     if response == False:
-        raise HTTPException(
-            status_code=404, detail="Recording not found or could not be deleted")
+        raise HTTPException(status_code=404, detail="Recording not found or could not be deleted")
 
     return response
 
 
-@recordings_router.patch('/{old_name}/{new_name}', summary='Rename a recording')
+@recordings_router.patch("/{old_name}/{new_name}", summary="Rename a recording")
 def rename_recording(request: Request, old_name: str, new_name: str):
     recordings_service: RecordingsService = request.app.state.recordings_service
 
     response = recordings_service.rename_recording(old_name, new_name)
     if response == False:
-        raise HTTPException(
-            status_code=404, detail="Recording not found or could not be renamed")
+        raise HTTPException(status_code=404, detail="Recording not found or could not be renamed")
 
     return response
 
 
-@recordings_router.get('/zip', summary='Download all recordings as a zip file')
+@recordings_router.get("/zip", summary="Download all recordings as a zip file")
 def zip_recordings(request: Request):
     recordings_service: RecordingsService = request.app.state.recordings_service
 
@@ -69,6 +68,10 @@ def zip_recordings(request: Request):
     if not zip_file_path:
         raise HTTPException(status_code=404, detail="No recordings to zip")
 
-    resp = FileResponse(zip_file_path, media_type='application/zip', filename='recordings.zip',
-                        headers={"Content-Disposition": "attachment; filename=recordings.zip"})
+    resp = FileResponse(
+        zip_file_path,
+        media_type="application/zip",
+        filename="recordings.zip",
+        headers={"Content-Disposition": "attachment; filename=recordings.zip"},
+    )
     return resp

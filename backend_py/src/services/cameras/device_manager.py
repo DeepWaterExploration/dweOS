@@ -60,7 +60,11 @@ class DeviceManager(events.EventEmitter):
     """
 
     def __init__(
-        self, sio: socketio.AsyncServer, preferences: SavedPreferencesModel, use_serial=False, settings_manager=SettingsManager()
+        self,
+        sio: socketio.AsyncServer,
+        preferences: SavedPreferencesModel,
+        use_serial=False,
+        settings_manager=SettingsManager(),
     ) -> None:
         self.devices: List[Device] = []
         self.sio = sio
@@ -71,8 +75,7 @@ class DeviceManager(events.EventEmitter):
 
         self.serial = None
         if use_serial:
-            self.serial = SerialPWMController(
-                frequency_offset=preferences.frequency_offset)
+            self.serial = SerialPWMController(frequency_offset=preferences.frequency_offset)
 
         self.logger = logging.getLogger("dwe_os_2.cameras.DeviceManager")
 
@@ -118,12 +121,11 @@ class DeviceManager(events.EventEmitter):
 
         # we need to broadcast that there was a gst error so that the frontend knows there may be a kernel issue
         device.stream_runner.on(
-            "stream_error", lambda _: self._append_stream_error(
-                DeviceModel.model_validate(device)))
+            "stream_error", lambda _: self._append_stream_error(DeviceModel.model_validate(device))
+        )
 
         if self.serial:
-            device.on("pwm_frequency",
-                      lambda fps: self.serial.apply_from_fps(fps))  # type: ignore
+            device.on("pwm_frequency", lambda fps: self.serial.apply_from_fps(fps))  # type: ignore
 
         return device
 
@@ -138,13 +140,10 @@ class DeviceManager(events.EventEmitter):
         """
         Compile and sort a list of devices for jsonifcation
         """
-        device_list = [DeviceModel.model_validate(
-            device) for device in self.devices]
+        device_list = [DeviceModel.model_validate(device) for device in self.devices]
         return device_list
 
-    def set_device_option(
-        self, bus_info: str, option: str, option_value: int | bool
-    ) -> bool:
+    def set_device_option(self, bus_info: str, option: str, option_value: int | bool) -> bool:
         """
         Set a device option
         """
@@ -169,9 +168,7 @@ class DeviceManager(events.EventEmitter):
         stream_type: StreamTypeEnum = stream_info.stream_type
         endpoints = stream_info.endpoints
 
-        device.configure_stream(
-            encode_type, width, height, interval, stream_type, endpoints
-        )
+        device.configure_stream(encode_type, width, height, interval, stream_type, endpoints)
 
         if stream_info.enabled:
             device.start_stream()
@@ -187,16 +184,14 @@ class DeviceManager(events.EventEmitter):
         """
         device = self._find_device_with_bus_info(bus_info)
 
-        self.logger.info(f'Setting nickname of {bus_info} to {nickname}')
+        self.logger.info(f"Setting nickname of {bus_info} to {nickname}")
 
         device.nickname = nickname
 
         self.settings_manager.save_device(device)
         return True
 
-    def set_device_uvc_control(
-        self, bus_info: str, control_id: int, control_value: int
-    ) -> bool:
+    def set_device_uvc_control(self, bus_info: str, control_id: int, control_value: int) -> bool:
         """
         Set a device UVC control
         """
@@ -208,15 +203,14 @@ class DeviceManager(events.EventEmitter):
         return True
 
     def add_follower(self, leader_bus_info: str, follower_bus_info: str):
-        '''
+        """
         Add a follower to a leader
-        '''
+        """
         leader_device = self._find_device_with_bus_info(leader_bus_info)
         follower_device = self._find_device_with_bus_info(follower_bus_info)
 
         if follower_device.device_type != DeviceType.STELLARHD_FOLLOWER:
-            self.logger.warning(
-                'Attempted to add follower of non-follower type')
+            self.logger.warning("Attempted to add follower of non-follower type")
             return False
 
         leader_device = cast(SHDDevice, leader_device)
@@ -229,14 +223,13 @@ class DeviceManager(events.EventEmitter):
         return True
 
     def remove_follower(self, leader_bus_info: str, follower_bus_info: str):
-        '''
+        """
         Remove a follower from a leader
-        '''
+        """
         leader_device = self._find_device_with_bus_info(leader_bus_info)
         leader_device = cast(SHDDevice, leader_device)
         try:
-            follower_device = self._find_device_with_bus_info(
-                follower_bus_info)
+            follower_device = self._find_device_with_bus_info(follower_bus_info)
         except DeviceNotFoundException:
             # THERE IS NO INHERENT TRUTH TO THE EXISTANCE OF THE FOLLOWER
             # Expected in the case of an unplugged follower
@@ -250,8 +243,7 @@ class DeviceManager(events.EventEmitter):
         #     return False
 
         if follower_device.device_type != DeviceType.STELLARHD_FOLLOWER:
-            self.logger.warning(
-                'Attempted to remove follower of non-follower type')
+            self.logger.warning("Attempted to remove follower of non-follower type")
             return False
 
         follower_device = cast(SHDDevice, follower_device)
@@ -320,30 +312,32 @@ class DeviceManager(events.EventEmitter):
 
                     # What to do when a device is unplugged
                     # Remove unplugged followers from leaders, and unplugged leaders as leaders
-                    if device.device_type == DeviceType.STELLARHD_LEADER or device.device_type == DeviceType.STELLARHD_FOLLOWER:
+                    if (
+                        device.device_type == DeviceType.STELLARHD_LEADER
+                        or device.device_type == DeviceType.STELLARHD_FOLLOWER
+                    ):
                         leader_casted = cast(SHDDevice, device)
                         for follower_bus_info in leader_casted.followers:
                             # This can be optimized, but it truly does not matter
-                            follower = self._find_device_with_bus_info(
-                                follower_bus_info)
+                            follower = self._find_device_with_bus_info(follower_bus_info)
                             # Remember, follower might not exist now - never inherent truth to its existance
                             if follower:
                                 follower_casted = cast(SHDDevice, follower)
                                 leader_casted.remove_follower(follower_casted)
-                                self.settings_manager.save_device(
-                                    leader_casted)
+                                self.settings_manager.save_device(leader_casted)
                     if device.device_type == DeviceType.STELLARHD_FOLLOWER:
                         follower_casted = cast(SHDDevice, device)
                         if follower_casted.is_managed:
                             # TODO: Fix this
                             for device in self.devices:
-                                if device.device_type == DeviceType.STELLARHD_LEADER or device.device_type == DeviceType.STELLARHD_FOLLOWER:
+                                if (
+                                    device.device_type == DeviceType.STELLARHD_LEADER
+                                    or device.device_type == DeviceType.STELLARHD_FOLLOWER
+                                ):
                                     leader_casted = cast(SHDDevice, device)
                                     if follower_casted.bus_info in leader_casted.followers:
-                                        leader_casted.remove_follower(
-                                            follower_casted)
-                                        self.settings_manager.save_device(
-                                            leader_casted)
+                                        leader_casted.remove_follower(follower_casted)
+                                        self.settings_manager.save_device(leader_casted)
 
                     self.devices.remove(device)
                     self.logger.info(f"Device Removed: {device_info.bus_info}")

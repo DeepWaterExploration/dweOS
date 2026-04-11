@@ -33,7 +33,7 @@ class Server:
         app: FastAPI,
         settings_path: str = "/",
         log_level=logging.INFO,
-        is_dev_mode=False
+        is_dev_mode=False,
     ) -> None:
         # initialize the app
         self.app = app
@@ -70,7 +70,10 @@ class Server:
 
         # Device Manager
         self.device_manager = DeviceManager(
-            settings_manager=self.settings_manager, sio=self.sio, use_serial=self.feature_support.serial, preferences=self.preferences_manager.get_preferences()
+            settings_manager=self.settings_manager,
+            sio=self.sio,
+            use_serial=self.feature_support.serial,
+            preferences=self.preferences_manager.get_preferences(),
         )
 
         # Lights
@@ -81,7 +84,8 @@ class Server:
         self.network_wrapper = NetworkWrapper(sio)
 
         self.network_wrapper.on(
-            "refresh_ui", lambda: asyncio.create_task(self.sio.emit("refresh_wired_config")))
+            "refresh_ui", lambda: asyncio.create_task(self.sio.emit("refresh_wired_config"))
+        )
 
         self.system_manager = SystemManager()
 
@@ -98,9 +102,7 @@ class Server:
         self.app.state.settings_manager = self.settings_manager
         self.app.state.preferences_manager = self.preferences_manager
         self.app.state.system_manager = self.system_manager
-        self.app.state.ttyd_manager = (
-            self.ttyd_manager if self.feature_support.ttyd else None
-        )
+        self.app.state.ttyd_manager = self.ttyd_manager if self.feature_support.ttyd else None
         self.app.state.network_manager = self.network_wrapper
         self.app.state.recordings_service = self.recordings_service
 
@@ -115,7 +117,11 @@ class Server:
         if feature_support.serial:
             self.app.include_router(pwm_router, prefix="/api/pwm")
             self.preferences_manager.on(
-                "preferences_updated", lambda preferences: self.device_manager.serial.set_frequency_offset(preferences.frequency_offset))  # type: ignore
+                "preferences_updated",
+                lambda preferences: self.device_manager.serial.set_frequency_offset(
+                    preferences.frequency_offset
+                ),
+            )  # type: ignore
 
         self.app.add_api_route(
             "/api/features",

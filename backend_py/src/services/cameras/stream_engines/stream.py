@@ -7,6 +7,7 @@ class Stream:
     """
     Pure configuration object for a video stream.
     """
+
     device_path: str = ""
     encode_type: StreamEncodeTypeEnum = StreamEncodeTypeEnum.NONE
     stream_type: StreamTypeEnum = StreamTypeEnum.UDP

@@ -13,7 +13,6 @@ import logging
 
 
 class LightManager:
-
     def __init__(self, pwm_controllers: List[PWMController]) -> None:
         self.pwm_controllers = pwm_controllers
         self.lights: List[Light] = []
@@ -35,9 +34,7 @@ class LightManager:
         light = self.lights[index]
         light.intensity = intensity
         pwm_controller = self.pwm_controllers[light.controller_index]
-        self.logger.info(
-            f"Setting light ({pwm_controller.NAME}): {light.pin}, {light.intensity}"
-        )
+        self.logger.info(f"Setting light ({pwm_controller.NAME}): {light.pin}, {light.intensity}")
         pwm_controller.set_intensity(light.pin, intensity)
 
     def disable_light(self, controller_index: int, pin: int):

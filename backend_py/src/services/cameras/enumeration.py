@@ -16,7 +16,6 @@ from typing import List, Dict
 
 @dataclass
 class DeviceInfo:
-
     device_name: str
     bus_info: str
     device_paths: list[str]
@@ -25,30 +24,32 @@ class DeviceInfo:
 
 
 def _get_device_attr(device_path, attr):
-    file_object = open(device_path + '/' + attr)
+    file_object = open(device_path + "/" + attr)
     return file_object.read().strip()
 
 
 def _get_vid_pid(devname):
     cam_name = devname
-    syspath = '/sys/class/video4linux/' + cam_name
-    link = os.readlink(syspath) + '../../../../'
-    device_path = os.path.abspath(
-        '/sys/class/video4linux/' + link)
-    return (int(_get_device_attr(device_path, 'idVendor'), base=16), int(_get_device_attr(device_path, 'idProduct'), base=16))
+    syspath = "/sys/class/video4linux/" + cam_name
+    link = os.readlink(syspath) + "../../../../"
+    device_path = os.path.abspath("/sys/class/video4linux/" + link)
+    return (
+        int(_get_device_attr(device_path, "idVendor"), base=16),
+        int(_get_device_attr(device_path, "idProduct"), base=16),
+    )
 
 
 def list_devices():
     # traverse the directory that has the list of all devices
     devnames: List[str] = []
     try:
-        devnames = os.listdir('/sys/class/video4linux/')
+        devnames = os.listdir("/sys/class/video4linux/")
     except FileNotFoundError as e:
         return []
     devices_info: List[DeviceInfo] = []
     devices_map: Dict[str, DeviceInfo] = {}
     for devname in devnames:
-        devpath = f'/dev/{devname}'
+        devpath = f"/dev/{devname}"
         try:
             fd = open(devpath)
         except:
@@ -59,7 +60,7 @@ def list_devices():
         fd.close()
         bus_info: str = bytes.decode(cap.bus_info)
         # Correct type of bus info
-        if bus_info.startswith('usb'):
+        if bus_info.startswith("usb"):
             if bus_info in devices_map:
                 devices_map[bus_info].device_paths.append(devpath)
             else:
@@ -68,8 +69,7 @@ def list_devices():
                     (vid, pid) = _get_vid_pid(devname)
                 except OSError:
                     continue
-                devices_map[bus_info] = DeviceInfo(
-                    device_name, bus_info, [devpath], vid, pid)
+                devices_map[bus_info] = DeviceInfo(device_name, bus_info, [devpath], vid, pid)
 
     # flatten the dict
     for bus_info in devices_map:

@@ -30,7 +30,5 @@ def set_intensity(request: Request, set_light_info: SetLightInfo):
 @lights_router.route("/disable_pin", methods=["POST"])
 def disable_light(request: Request, disable_light_info: DisableLightInfo):
     light_manager: LightManager = request.app.state.light_manager
-    light_manager.disable_light(
-        disable_light_info.controller_index, disable_light_info.pin
-    )
+    light_manager.disable_light(disable_light_info.controller_index, disable_light_info.pin)
     return {}

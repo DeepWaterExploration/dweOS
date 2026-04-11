@@ -10,7 +10,7 @@ from datetime import datetime
 from .base_stream_engine import BaseStreamEngine
 
 
-class GStreamerPipelineBuilder():
+class GStreamerPipelineBuilder:
     """
     Responsible for creation of GStreamer pipelines based on a Stream configuraiton
     """
@@ -81,14 +81,18 @@ class GStreamerPipelineBuilder():
                 video_dir = os.path.join(home_dir, "videos")
                 if not os.path.exists(video_dir):
                     os.makedirs(video_dir)
-                permissions = stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH
+                permissions = (
+                    stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH
+                )
                 os.chmod(video_dir, permissions)
                 extension = "avi" if stream.encode_type == StreamEncodeTypeEnum.MJPG else "mp4"
                 timestamp = datetime.now().strftime("%F-%T")
                 unique_filename = f"{stream.device_path.split('/')[-1]}_{timestamp}.{extension}"
                 unique_path = os.path.join(video_dir, unique_filename)
                 if os.path.exists(unique_path):
-                    unique_filename = f"{stream.device_path.split('/')[-1]}_{timestamp}_{os.getpid()}.{extension}"
+                    unique_filename = (
+                        f"{stream.device_path.split('/')[-1]}_{timestamp}_{os.getpid()}.{extension}"
+                    )
                 unique_path = os.path.join(video_dir, unique_filename)
                 stream.file_path = unique_path
                 return f"filesink location={unique_path} sync=true"
@@ -112,7 +116,8 @@ class GStreamerProcessEngine(BaseStreamEngine):
     def start(self):
         with self._lock:
             self.logger.info(
-                f"Starting stream for devices: {[stream.device_path for stream in self.streams]}")
+                f"Starting stream for devices: {[stream.device_path for stream in self.streams]}"
+            )
             if self.started:
                 self.stop()
             self.started = True
@@ -122,10 +127,10 @@ class GStreamerProcessEngine(BaseStreamEngine):
         pipeline_str = self._construct_pipeline()
         self.logger.info(pipeline_str)
         has_recording_stream = any(
-            stream.stream_type == StreamTypeEnum.RECORDING for stream in self.streams)
+            stream.stream_type == StreamTypeEnum.RECORDING for stream in self.streams
+        )
         self._process = subprocess.Popen(
-            f"gst-launch-1.0 {'-e' if has_recording_stream else ''} {pipeline_str}".split(
-                " "),
+            f"gst-launch-1.0 {'-e' if has_recording_stream else ''} {pipeline_str}".split(" "),
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
             text=True,
@@ -143,7 +148,8 @@ class GStreamerProcessEngine(BaseStreamEngine):
 
             # For recording streams, send EOS to properly finalize the file
             has_recording_stream = any(
-                stream.stream_type == StreamTypeEnum.RECORDING for stream in self.streams)
+                stream.stream_type == StreamTypeEnum.RECORDING for stream in self.streams
+            )
 
             try:
                 if has_recording_stream:
@@ -175,7 +181,10 @@ class GStreamerProcessEngine(BaseStreamEngine):
                 line_stripped = stderr_line.strip()
 
                 # Log all stderr output but only stop on actual errors
-                if any(error_keyword in line_stripped.lower() for error_keyword in ['error', 'failed', 'warning', 'critical']):
+                if any(
+                    error_keyword in line_stripped.lower()
+                    for error_keyword in ["error", "failed", "warning", "critical"]
+                ):
                     error_block.append(line_stripped)
         except:
             pass
@@ -185,9 +194,8 @@ class GStreamerProcessEngine(BaseStreamEngine):
             return_code = self._process.returncode
 
             if self.started and return_code != 0:
-                self.logger.error(
-                    f"GStreamer process crashed with return code: {return_code}")
-                
+                self.logger.error(f"GStreamer process crashed with return code: {return_code}")
+
                 for error in error_block:
                     self.logger.error(error)
 

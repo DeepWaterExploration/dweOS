@@ -9,13 +9,7 @@ DWE_PWM_USB_PID = 0x5000
 LEG_PWM_USB_VID = 0x0403
 LEG_PWM_USB_PID = 0x6001
 
-frequency_table = {
-    60: 60.0,
-    50: 50.0,
-    40: 40.0,
-    30: 30.0,
-    15: 15.0
-}
+frequency_table = {60: 60.0, 50: 50.0, 40: 40.0, 30: 30.0, 15: 15.0}
 
 MONITOR_INTERVAL_SEC = 0.75
 
@@ -30,7 +24,9 @@ def _find_pwm_device_path() -> str | None:
     for port in list_ports.comports():
         if port.vid is None or port.pid is None:
             continue
-        if (port.vid == DWE_PWM_USB_VID and port.pid == DWE_PWM_USB_PID) or (port.vid == LEG_PWM_USB_VID and port.pid == LEG_PWM_USB_PID):
+        if (port.vid == DWE_PWM_USB_VID and port.pid == DWE_PWM_USB_PID) or (
+            port.vid == LEG_PWM_USB_VID and port.pid == LEG_PWM_USB_PID
+        ):
             return port.device
     return None
 
@@ -78,16 +74,12 @@ class SerialPWMController:
                             )
                             self.found_port = True
                             self.has_printed_error = False
-                            self.logger.info(
-                                "PWM USB serial connected at %s", path
-                            )
+                            self.logger.info("PWM USB serial connected at %s", path)
                             # Perform initial apply
                             self.apply(self.frequency, self.duty_cycle)
                         except serial.SerialException as e:
                             if not self.has_printed_error:
-                                self.logger.error(
-                                    "PWM serial open failed: %s", e
-                                )
+                                self.logger.error("PWM serial open failed: %s", e)
                                 self.has_printed_error = True
                             self._disconnect_serial()
                 else:

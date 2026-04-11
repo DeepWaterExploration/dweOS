@@ -39,16 +39,16 @@ class RecordingsService:
 
         self.recordings = []
         for filename in os.listdir(self.recordings_path):
-            if filename.endswith(('.mp4', '.avi')):
+            if filename.endswith((".mp4", ".avi")):
                 file_path = os.path.join(self.recordings_path, filename)
                 file_stat = os.stat(file_path)
                 recording_info = RecordingInfo(
                     path=file_path,
-                    name=filename.split('.')[0],
-                    format=filename.split('.')[-1],
+                    name=filename.split(".")[0],
+                    format=filename.split(".")[-1],
                     duration=self._get_duration(file_path),
                     created=self._epoch_to_readable(file_stat.st_ctime),
-                    size=f"{file_stat.st_size / (1024 * 1024):.2f} MB"
+                    size=f"{file_stat.st_size / (1024 * 1024):.2f} MB",
                 )
                 self.recordings.append(recording_info)
 
@@ -56,27 +56,26 @@ class RecordingsService:
 
     def _epoch_to_readable(self, epoch: float) -> str:
         from datetime import datetime
-        return datetime.fromtimestamp(epoch).strftime('%Y-%m-%d %H:%M:%S')
+
+        return datetime.fromtimestamp(epoch).strftime("%Y-%m-%d %H:%M:%S")
 
     @lru_cache(maxsize=10000)
     def _get_duration(self, file_path: str) -> str:
         try:
             result = subprocess.run(
-                ['exiftool', '-json', file_path],
-                capture_output=True,
-                text=True
+                ["exiftool", "-json", file_path], capture_output=True, text=True
             )
             output = result.stdout.strip()
             if output:
                 data = json.loads(output)
-                if file_path.endswith('.mp4'):
-                    duration = data[0].get('Duration', '00:00:00')
+                if file_path.endswith(".mp4"):
+                    duration = data[0].get("Duration", "00:00:00")
                     if "s" in duration:
                         duration = float(duration.replace(" s", ""))
                         return f"00:00:{round(duration):02}"
                     return duration
-                totalFrameCount = data[0].get('TotalFrameCount', 0)
-                frameRate = data[0].get('FrameRate', 0)
+                totalFrameCount = data[0].get("TotalFrameCount", 0)
+                frameRate = data[0].get("FrameRate", 0)
                 if frameRate > 0:
                     duration = totalFrameCount / frameRate
                     hours = int(duration // 3600)
@@ -100,8 +99,7 @@ class RecordingsService:
         recording_path = os.path.join(self.recordings_path, filename)
         if os.path.exists(recording_path):
             os.remove(recording_path)
-            self.recordings = [
-                rec for rec in self.recordings if rec.path != recording_path]
+            self.recordings = [rec for rec in self.recordings if rec.path != recording_path]
             return self.recordings
         return False
 
@@ -113,9 +111,9 @@ class RecordingsService:
             os.rename(old_path, new_path)
             for recording in self.recordings:
                 if recording.path == old_path:
-                    recording.name = new_name.split('.')[0]
+                    recording.name = new_name.split(".")[0]
                     recording.path = new_path
-                    recording.format = new_name.split('.')[-1]
+                    recording.format = new_name.split(".")[-1]
             return self.recordings
         return False
 
@@ -126,8 +124,7 @@ class RecordingsService:
 
         zip_filename = os.path.join(self.recordings_path, "recordings.zip")
 
-        with zipfile.ZipFile(zip_filename, 'w') as zipf:
+        with zipfile.ZipFile(zip_filename, "w") as zipf:
             for recording in self.recordings:
-                zipf.write(recording.path, arcname=recording.name +
-                           '.' + recording.format)
+                zipf.write(recording.path, arcname=recording.name + "." + recording.format)
         return zip_filename

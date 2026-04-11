@@ -14,9 +14,7 @@ import logging
 ORIGINS = ["*"]
 
 # Use AsyncServer
-sio = socketio.AsyncServer(
-    cors_allowed_origins='*', async_mode="asgi", transports=["websocket"]
-)
+sio = socketio.AsyncServer(cors_allowed_origins="*", async_mode="asgi", transports=["websocket"])
 
 
 # Define events
@@ -28,9 +26,7 @@ async def lifespan(app: FastAPI):
 
 
 # FastAPI application
-app = FastAPI(
-    lifespan=lifespan, title="DWE OS API", description="API for DWE OS", version="0.1.0"
-)
+app = FastAPI(lifespan=lifespan, title="DWE OS API", description="API for DWE OS", version="0.1.0")
 
 # CORS
 app.add_middleware(
@@ -44,7 +40,12 @@ app.add_middleware(
 # Server instance
 # server = Server(FeatureSupport.none(), sio, app, settings_path='.')
 server = Server(
-    FeatureSupport(ttyd=True, wifi=True, serial=True), sio, app, settings_path=".", log_level=logging.DEBUG, is_dev_mode=True
+    FeatureSupport(ttyd=True, wifi=True, serial=True),
+    sio,
+    app,
+    settings_path=".",
+    log_level=logging.DEBUG,
+    is_dev_mode=True,
 )
 
 # Combine FastAPI and Socket.IO ASGI apps
@@ -55,8 +56,7 @@ if __name__ == "__main__":
     import uvicorn
 
     async def main():
-        config = uvicorn.Config(app, host="0.0.0.0",
-                                port=5000, log_level="warning")
+        config = uvicorn.Config(app, host="0.0.0.0", port=5000, log_level="warning")
         server = uvicorn.Server(config)
         await server.serve()
 

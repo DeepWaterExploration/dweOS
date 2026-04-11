@@ -20,7 +20,6 @@ from .device_utils import find_device_with_bus_info
 
 
 class SettingsManager:
-
     def __init__(self, settings_path: str = ".") -> None:
         path = f"{settings_path}/device_settings.json"
         try:
@@ -39,8 +38,7 @@ class SettingsManager:
         try:
             settings: list[Dict] = json.loads(self.file_object.read())
             self.settings: List[SavedDeviceModel] = [
-                SavedDeviceModel.model_validate(saved_device)
-                for saved_device in settings
+                SavedDeviceModel.model_validate(saved_device) for saved_device in settings
             ]
 
             self.saved_by_bus_info: Dict[str, SavedDeviceModel] = {
@@ -68,8 +66,7 @@ class SettingsManager:
                 # We plugged in a new leader
                 if isinstance(device, SHDDevice):
                     for follower_bus_info in saved_device.followers:
-                        follower = find_device_with_bus_info(
-                            devices, follower_bus_info)
+                        follower = find_device_with_bus_info(devices, follower_bus_info)
                         if not follower:
                             self.logger.warning(
                                 f"Follower device with bus_info {follower_bus_info} not currently connected"
@@ -86,8 +83,7 @@ class SettingsManager:
                         follower = cast(SHDDevice, follower)
                         device = cast(SHDDevice, device)
                         if follower.is_managed:
-                            self.logger.info(
-                                f"Saved follower already has a new leader")
+                            self.logger.info(f"Saved follower already has a new leader")
                             # This is true when the follower has now gotten a new leader
                             saved_device.followers.remove(follower_bus_info)
                             continue
@@ -96,7 +92,7 @@ class SettingsManager:
                 # We plugged in a new follower
                 if device.device_type == DeviceType.STELLARHD_FOLLOWER:
                     for potential_leader in devices:
-                       # Skip if the potential leader is not an SHDDevice (cannot lead)
+                        # Skip if the potential leader is not an SHDDevice (cannot lead)
                         if not isinstance(potential_leader, SHDDevice):
                             continue
 
@@ -105,8 +101,7 @@ class SettingsManager:
                         if potential_leader.bus_info == device.bus_info:
                             continue
 
-                        saved_leader = self.saved_by_bus_info.get(
-                            potential_leader.bus_info)
+                        saved_leader = self.saved_by_bus_info.get(potential_leader.bus_info)
                         if not saved_leader:
                             continue
 
@@ -119,9 +114,9 @@ class SettingsManager:
                 return
 
     def link_followers(self, devices: List[Device]):
-        '''
+        """
         Run this when we need to check for new devices
-        '''
+        """
         for leader in devices:
             # Changed: We now allow followers to be leaders (of other followers)
             if not isinstance(leader, SHDDevice):
@@ -140,8 +135,7 @@ class SettingsManager:
                     # Already loaded
                     continue
 
-                follower = find_device_with_bus_info(
-                    devices, follower_bus_info)
+                follower = find_device_with_bus_info(devices, follower_bus_info)
 
                 # If this follower does not exist, that is ok
                 # There is no inherent truth to the existance of the followers list
@@ -167,9 +161,7 @@ class SettingsManager:
                 break
         self.settings.append(saved_device)
         self.file_object.seek(0)
-        self.file_object.write(
-            json.dumps([model.model_dump() for model in self.settings])
-        )
+        self.file_object.write(json.dumps([model.model_dump() for model in self.settings]))
         self.file_object.truncate()
         self.file_object.flush()
 

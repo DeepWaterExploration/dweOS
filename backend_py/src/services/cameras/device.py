@@ -60,7 +60,7 @@ PID_VIDS = {
 }
 
 
-def lookup_pid_vid(vid: int, pid: int) -> Tuple[str, DeviceType]:
+def lookup_pid_vid(vid: int, pid: int) -> Tuple[str, DeviceType] | Tuple[None, None]:
     for name in PID_VIDS:
         dev = PID_VIDS[name]
         if dev["VID"] == vid and dev["PID"] == pid:
@@ -222,7 +222,7 @@ class Option(BaseOption):
         self._data = data + bytearray(self._size - len(data))
 
     # unpack data from internal buffer
-    def _unpack(self, fmt: str) -> list:
+    def _unpack(self, fmt: str) -> tuple[Any, ...]:
         return struct.unpack_from(fmt, self._data)
 
     def _set_ctrl(self):
@@ -327,6 +327,11 @@ class Device(events.EventEmitter):
         fd = self.cameras[0]._fd
         self.controls: List[ControlModel] = []
 
+        if not self.v4l2_device.controls:
+            self.logger.error(
+                "v4l2_device.controls == None. Unable to get controls. This might be fatal.")
+            return
+
         for ctrl in self.v4l2_device.controls.values():
             internal_enum = V4LControlTypeEnum(ctrl.type)
             control_type = ControlTypeEnum(internal_enum.name)
@@ -390,7 +395,7 @@ class Device(events.EventEmitter):
     ):
         self.logger.info(self._fmt_log("Configuring stream"))
 
-        camera: Camera = None
+        camera: Camera | None = None
         match encode_type:
             case StreamEncodeTypeEnum.H264:
                 camera = self.find_camera_with_format("H264")
@@ -489,10 +494,17 @@ class Device(events.EventEmitter):
         self.logger.info(self._fmt_log(f"Stream stopped"))
 
     def get_pu(self, control_id: int):
+        if not self.v4l2_device.controls:
+            self.logger.error("v4l2_device.controls == None. Unable to get pu")
+            return None
         control = self.v4l2_device.controls[control_id]
         return control.value
 
-    def set_pu(self, control_id: int, value: int):
+    def set_pu(self, control_id: int, value: int | float):
+        if not self.v4l2_device.controls:
+            self.logger.critical(
+                "v4l2_device.controls is None; unable to run set_pu")
+            return
 
         if control_id < 0:
             # DWE control
@@ -510,7 +522,7 @@ class Device(events.EventEmitter):
         try:
             control.value = value
         except (AttributeError, PermissionError) as e:
-            self.logger.debug(f"Error setting control value: {e.strerror}")
+            self.logger.debug(f"Error setting control value: {e}")
             return False
         for ctrl in self.controls:
             if ctrl.control_id == control_id:

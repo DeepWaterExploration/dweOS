@@ -68,8 +68,7 @@ class SerialPWMController:
                     if (
                         self.found_port
                         and self.serial is not None
-                        and self.serial.port != path
-                        and self.serial.is_open
+                        and (self.serial.port != path or not self.serial.is_open)
                     ):
                         self._disconnect_serial()
                     if not self.found_port:

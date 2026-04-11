@@ -20,8 +20,6 @@ import { io, Socket } from "socket.io-client";
 import { useEffect, useRef, useState } from "react";
 import WebsocketContext from "./contexts/WebsocketContext";
 import { Toaster } from "@/components/ui/toaster";
-import { WifiDropdown } from "./components/dwe/wireless/wifi-dropdown";
-import { WiredDropdown } from "./components/dwe/wireless/wired-dropdown";
 import { SystemDropdown } from "./components/dwe/system/system-dropdown";
 import { API_CLIENT } from "./api";
 import { TourAlertDialog, TourProvider, useTour } from "@/components/tour/tour";

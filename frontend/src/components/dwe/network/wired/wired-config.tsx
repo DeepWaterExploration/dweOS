@@ -8,17 +8,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import {
-  CameraIcon,
-  Check,
-  Edit2Icon,
-  Globe,
-  Network,
-  PlusIcon,
-  SettingsIcon,
-  Trash2Icon,
-  Wrench,
-} from "lucide-react";
+import { Check, PlusIcon, SettingsIcon, Trash2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -150,13 +140,11 @@ function EditProfileDialog({
   profile,
   isOpen,
   setIsOpen,
-  device,
   onSave,
 }: {
   profile: ConnectionProfileModel;
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
-  device?: WiredDeviceModel;
   onSave: (newConfig: IPV4Configuration) => void;
 }) {
   const config = profile.ipv4_settings;
@@ -345,7 +333,6 @@ function ConnectionProfile({
   return (
     <>
       <EditProfileDialog
-        device={master_device}
         isOpen={isEditing}
         setIsOpen={setIsEditing}
         onSave={onSave}

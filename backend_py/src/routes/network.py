@@ -1,6 +1,11 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Request
 from typing import List
-from ..services import NetworkWrapper, IPV4Configuration, WiredDeviceModel, ConnectionProfileModel
+from ..services.network import (
+    NetworkWrapper,
+    IPV4Configuration,
+    WiredDeviceModel,
+    ConnectionProfileModel,
+)
 
 network_router = APIRouter(tags=["network"])
 

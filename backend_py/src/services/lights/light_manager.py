@@ -6,7 +6,7 @@ Serves as the main interface for setting light intensity or disbaling lights
 Calls on PWM controllers to do the actual PWM
 """
 
-from typing import List, Dict
+from typing import List
 from .pwm_controller import PWMController
 from .light import Light
 import logging

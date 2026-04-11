@@ -5,9 +5,8 @@ Base class for camera device management
 Handles v4l2 device finding, uvc controls, stream configuration, and device settings management
 """
 
-from ctypes import *
+import fcntl
 import struct
-from dataclasses import dataclass
 from typing import Dict, Callable, Any, Tuple
 from abc import ABC, abstractmethod
 
@@ -19,12 +18,28 @@ from . import v4l2
 from . import xu_controls as xu
 
 from .stream_utils import fourcc2s
-from .enumeration import *
-from .camera_helper.camera_helper_loader import *
+
+from typing import List
+
+from .pydantic_schemas import (
+    FormatSizeModel,
+    IntervalModel,
+    ControlModel,
+    V4LControlTypeEnum,
+    ControlTypeEnum,
+    MenuItemModel,
+    ControlFlagsModel,
+    StreamEncodeTypeEnum,
+    StreamTypeEnum,
+    StreamEndpointModel,
+)
+
+from .enumeration import DeviceInfo
+from .camera_helper.camera_helper_loader import camera_helper
 from .stream_runner import Stream, StreamRunner
 from .stream_utils import string_to_stream_encode_type
-from .pydantic_schemas import *
-from .saved_pydantic_schemas import *
+from .pydantic_schemas import DeviceType
+from .saved_pydantic_schemas import SavedDeviceModel
 
 import logging
 
@@ -40,7 +55,7 @@ PID_VIDS = {
         "PID": 0x6368,
         "device_type": DeviceType.STELLARHD_FOLLOWER,
     },
-    "exploreHD": {"VID": 0x3961, "PID": 0x2100, "device_type": DeviceType.EXPLOREHD},
+    "exploreHD ": {"VID": 0x3961, "PID": 0x2100, "device_type": DeviceType.EXPLOREHD},
     "exploreHD Heavy": {"VID": 0x3961, "PID": 0x2200, "device_type": DeviceType.EXPLOREHD},
     "exploreHD Heavy (AQ)": {"VID": 0x3961, "PID": 0x2210, "device_type": DeviceType.EXPLOREHD},
     "stellarHD Elite (AQ-L)": {
@@ -221,7 +236,7 @@ class Option(BaseOption):
 
     def set_value(self, value):
         converted = self._conversion_func_set(value)
-        if type(converted) == list:
+        if isinstance(converted, list):
             self.set_value_raw(*converted)
         else:
             self.set_value_raw(converted)
@@ -327,7 +342,7 @@ class Device(events.EventEmitter):
         return {}
 
     def _get_controls(self):
-        fd = self.cameras[0]._fd
+        # fd = self.cameras[0]._fd
         self.controls: List[ControlModel] = []
 
         if not self.v4l2_device.controls:
@@ -496,7 +511,7 @@ class Device(events.EventEmitter):
 
     def unconfigure_stream(self):
         self.stream_runner.stop()
-        self.logger.info(self._fmt_log(f"Stream stopped"))
+        self.logger.info(self._fmt_log("Stream stopped"))
 
     def get_pu(self, control_id: int):
         if not self.v4l2_device.controls:

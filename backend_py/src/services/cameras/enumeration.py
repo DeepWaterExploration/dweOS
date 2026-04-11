@@ -10,7 +10,6 @@ from . import v4l2
 import fcntl
 import os
 from natsort import natsorted
-import logging
 from typing import List, Dict
 
 
@@ -44,7 +43,7 @@ def list_devices():
     devnames: List[str] = []
     try:
         devnames = os.listdir("/sys/class/video4linux/")
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         return []
     devices_info: List[DeviceInfo] = []
     devices_map: Dict[str, DeviceInfo] = {}

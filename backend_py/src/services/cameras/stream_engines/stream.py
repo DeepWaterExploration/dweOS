@@ -1,5 +1,11 @@
 from dataclasses import dataclass, field
-from ..pydantic_schemas import *
+from typing import List, Optional
+from ..pydantic_schemas import (
+    StreamEncodeTypeEnum,
+    StreamTypeEnum,
+    StreamEndpointModel,
+    IntervalModel,
+)
 
 
 @dataclass

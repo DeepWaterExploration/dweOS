@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Request
 from typing import List
 from ..logging import LogSchema, LogHandler
 

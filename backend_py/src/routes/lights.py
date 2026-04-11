@@ -5,9 +5,9 @@ API endpoints for light device management
 Handles listing connected lights, setting intensity, and disabling lights
 """
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Request
 from typing import List
-from ..services import LightManager, Light, DisableLightInfo, SetLightInfo
+from ..services.lights import LightManager, Light, DisableLightInfo, SetLightInfo
 
 lights_router = APIRouter(tags=["lights"])
 

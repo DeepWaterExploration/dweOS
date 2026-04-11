@@ -1,16 +1,13 @@
 from ..synchronized_camera import V4L2Camera, SynchronizedCamera, CopiedFrame
 from ..pydantic_schemas import StreamEndpointModel
-from rtp import RTP
 import time
 import struct
 import socket
 import threading
-import time
 import collections
 from typing import List
 
 from .base_stream_engine import BaseStreamEngine
-from .stream import Stream
 
 
 class SynchronizedStreamEngine(BaseStreamEngine):

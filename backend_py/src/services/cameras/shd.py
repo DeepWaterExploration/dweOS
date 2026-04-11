@@ -223,7 +223,7 @@ class SHDDevice(Device):
             self.start_stream()
 
     def remove_follower(self, device: "SHDDevice"):
-        if not device.bus_info in self.followers:
+        if device.bus_info not in self.followers:
             self.logger.info("Cannot remove follower from device that does not contain it.")
             return
         # Reconstruct the list without the follower

@@ -1,14 +1,11 @@
 from .async_network_manager import (
     AsyncNetworkManager,
     IPV4Configuration,
-    IPV4Address,
     IPV4Method,
-    WiredDevice,
-    ConnectionProfile,
     DeviceState,
 )
 from event_emitter import EventEmitter
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import Optional, List
 import socketio
 import time
@@ -32,7 +29,7 @@ class ConnectionProfileModel(BaseModel):
 
 
 class NetworkWrapper(EventEmitter):
-    def __init__(self, sio: socketio.Server):
+    def __init__(self, sio: socketio.AsyncServer):
         super().__init__()
 
         self.logger = logging.getLogger("dwe_os_2.network.NetworkWrapper")
@@ -42,7 +39,7 @@ class NetworkWrapper(EventEmitter):
 
         self.last_connection_time = time.time()
 
-        @self.sio.on("connect")
+        @self.sio.on("connect")  # type: ignore
         def on_connect(sid, environ):
             self.logger.info(f"Connection detected: {sid}")
             self.last_connection_time = time.time()

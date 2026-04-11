@@ -5,7 +5,6 @@
 import os
 import fcntl
 import mmap
-import time
 from dataclasses import dataclass
 from collections import deque
 from typing import List, Optional
@@ -264,7 +263,7 @@ class SynchronizedCamera:
         self.sync_threshold_us = sync_threshold_us
         self.queue_cap = queue_cap
         self.queues: List[deque[CopiedFrame]] = [deque() for _ in cameras]
-        self.logger = logging.getLogger(f"dwe_os_2.cameras.SynchronizedCamera")
+        self.logger = logging.getLogger("dwe_os_2.cameras.SynchronizedCamera")
 
         # For those curious about the synchronization logic, it can be summarized as follows:
         # The synch threshold is **NOT** the precision. It is generally specified as 1/FPS.

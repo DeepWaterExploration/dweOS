@@ -83,7 +83,7 @@ class SettingsManager:
                         follower = cast(SHDDevice, follower)
                         device = cast(SHDDevice, device)
                         if follower.is_managed:
-                            self.logger.info(f"Saved follower already has a new leader")
+                            self.logger.info("Saved follower already has a new leader")
                             # This is true when the follower has now gotten a new leader
                             saved_device.followers.remove(follower_bus_info)
                             continue

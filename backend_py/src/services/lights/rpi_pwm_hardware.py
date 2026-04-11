@@ -9,7 +9,6 @@ Raspberry Pi generates a square wave at set intensity (50% = square wave where 5
 from rpi_hardware_pwm import HardwarePWM, HardwarePWMException
 from .pwm_controller import PWMController
 from typing import Dict
-import logging
 
 
 class RPiHardwarePWMController(PWMController):

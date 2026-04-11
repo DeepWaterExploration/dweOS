@@ -1,7 +1,3 @@
-from .cameras import *
-from .lights import *
-from .preferences import *
-from .network import *
-from .system import *
-from .ttyd import *
-from .recordings import *
+from . import cameras, lights, preferences, network, system, ttyd, recordings
+
+__all__ = ["cameras", "lights", "preferences", "network", "system", "ttyd", "recordings"]

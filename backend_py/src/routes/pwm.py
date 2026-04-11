@@ -4,9 +4,8 @@ pwm.py
 API endpoints for pwm config
 """
 
-from fastapi import APIRouter, Depends, Request
-from typing import Dict
-from ..services import DeviceManager, SavedPreferencesModel
+from fastapi import APIRouter, Request
+from ..services.cameras import DeviceManager
 
 pwm_router = APIRouter(tags=["pwm"])
 
@@ -15,6 +14,7 @@ pwm_router = APIRouter(tags=["pwm"])
 def get_frequency(request: Request) -> float:
     device_manager: DeviceManager = request.app.state.device_manager
 
+    # FIXME: all serial related items should be exclusively accessible via a wrapper
     return device_manager.serial.frequency
 
 

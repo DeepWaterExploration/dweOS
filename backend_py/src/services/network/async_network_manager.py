@@ -17,11 +17,9 @@ from sdbus_async.networkmanager import (
 )
 from enum import Enum
 from event_emitter import EventEmitter
-from pathlib import Path
 
-from dataclasses import dataclass
 from typing import Optional, List, Any, Dict
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 import socket
 import struct
@@ -122,7 +120,7 @@ def _serialize_ipv4_config(ipv4_configuration: IPV4Configuration) -> NetworkConn
         if ipv4_configuration.gateway:
             serialized_ip_config["gateway"] = ("s", ipv4_configuration.gateway)
 
-        if ipv4_configuration != None:
+        if ipv4_configuration is not None:
             serialized_ip_config["never-default"] = ("b", ipv4_configuration.never_default)
 
     if ipv4_configuration.dns:
@@ -402,7 +400,7 @@ class AsyncNetworkManager(EventEmitter):
 
             # Ensure it's not a locked down connection
             interface_name = connection_settings.get("interface-name", None)
-            if interface_name != None and interface_name != wired_device.interface:
+            if interface_name is not None and interface_name != wired_device.interface:
                 continue
 
             # TODO: mac filtering
@@ -452,7 +450,7 @@ class AsyncNetworkManager(EventEmitter):
             )
             return
 
-        if profile == None:
+        if profile is None:
             profile = await self._get_best_connection(target_device)
             if not profile:
                 self.logger.error(f"Device {target_device.interface} has no available profile")

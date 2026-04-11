@@ -64,6 +64,7 @@ class GStreamerPipelineBuilder:
             case _:
                 return ""
 
+    @staticmethod
     def _build_sink(stream: Stream):
         match stream.stream_type:
             case StreamTypeEnum.UDP:
@@ -109,7 +110,7 @@ class GStreamerProcessEngine(BaseStreamEngine):
         super().__init__(streams, error_callback)
 
         self._process: Optional[subprocess.Popen] = None
-        self._error_thread: Optional[threading.thread] = None
+        self._error_thread: Optional[threading.Thread] = None
         self._lock = threading.RLock()
         self.started = False
 
@@ -176,6 +177,13 @@ class GStreamerProcessEngine(BaseStreamEngine):
 
     def _monitor_stderr(self):
         error_block = []
+
+        if not self._process or not self._process.stderr:
+            self.logger.error(
+                "Unable to monitor stderr for process. Is the GStreamer process running?"
+            )
+            return
+
         try:
             for stderr_line in iter(self._process.stderr.readline, ""):
                 line_stripped = stderr_line.strip()

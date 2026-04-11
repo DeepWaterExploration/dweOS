@@ -74,12 +74,14 @@ class SerialPWMController:
                             )
                             self.found_port = True
                             self.has_printed_error = False
-                            self.logger.info("PWM USB serial connected at %s", path)
+                            self.logger.info(
+                                "PWM USB serial connected at %s", path)
                             # Perform initial apply
                             self.apply(self.frequency, self.duty_cycle)
                         except serial.SerialException as e:
                             if not self.has_printed_error:
-                                self.logger.error("PWM serial open failed: %s", e)
+                                self.logger.error(
+                                    "PWM serial open failed: %s", e)
                                 self.has_printed_error = True
                             self._disconnect_serial()
                 else:
@@ -107,7 +109,7 @@ class SerialPWMController:
         self.frequency = frequency
         self.duty_cycle = duty_cycle
         if not self.found_port:
-            self.logger.info(f"No connected USB serial PWM controller")
+            self.logger.info("No connected USB serial PWM controller")
             return
         command = f"{frequency + self.frequency_offset},{duty_cycle}\n"
         self.logger.info(f"Sending command {command.strip()}")

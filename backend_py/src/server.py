@@ -7,18 +7,33 @@ Starts device monitoring, wifi scan, and starts ttyd (teletypewriter daemon) to 
 
 import logging.handlers
 
-from fastapi.staticfiles import StaticFiles
 
-from .services import *  # type: ignore
-from .routes import *
+from .services.cameras import DeviceManager, SettingsManager
+from .services.preferences import PreferencesManager
+from .services.system import SystemManager
+from .services.lights import LightManager, create_pwm_controllers
+from .services.recordings import RecordingsService
+from .services.ttyd import TTYDManager
+from .services.network import NetworkWrapper
+
+from .routes import (
+    camera_router,
+    preferences_router,
+    system_router,
+    lights_router,
+    logs_router,
+    recordings_router,
+    network_router,
+    pwm_router,
+)
 from .logging import LogHandler
 from .schemas import FeatureSupport
 
+import asyncio
 from fastapi import FastAPI
 import socketio
 
 import logging
-import datetime
 
 
 class Server:
@@ -121,7 +136,7 @@ class Server:
                 lambda preferences: self.device_manager.serial.set_frequency_offset(
                     preferences.frequency_offset
                 ),
-            )  # type: ignore
+            )
 
         self.app.add_api_route(
             "/api/features",
@@ -166,7 +181,3 @@ class Server:
 
         if self.feature_support.ttyd:
             self.ttyd_manager.kill()
-
-        # FIXME
-        # if self.feature_support.wifi:
-        #     self.wifi_manager.stop_scanning()

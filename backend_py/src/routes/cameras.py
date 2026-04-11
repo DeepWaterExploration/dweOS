@@ -5,16 +5,7 @@ API endpoints for camera device management and streaming config
 Handles listing connected devices, updating stream settings (resolution / fps), setting UVC controls, and dealing with Leader/Follower for stereo cameras
 """
 
-from fastapi import APIRouter, Depends, Request
-from ..services import (
-    DeviceManager,
-    StreamInfoModel,
-    DeviceNicknameModel,
-    UVCControlModel,
-    DeviceDescriptorModel,
-    DeviceLeaderModel,
-)
-import logging
+from fastapi import APIRouter, Request
 
 from typing import List, cast
 
@@ -22,11 +13,12 @@ from ..services.cameras.pydantic_schemas import (
     StreamInfoModel,
     DeviceNicknameModel,
     UVCControlModel,
-    DeviceLeaderModel,
     DeviceModel,
     AddFollowerPayload,
     SimpleRequestStatusModel,
+    DeviceDescriptorModel,
 )
+from ..services.cameras import DeviceManager
 from ..services.cameras.exceptions import DeviceNotFoundException
 from ..services.cameras.pydantic_schemas import DeviceType
 from ..services.cameras.shd import SHDDevice

@@ -1,6 +1,4 @@
 from .pwm_controller import PWMController
-from typing import Dict
-import logging
 
 
 class FakePWMController(PWMController):

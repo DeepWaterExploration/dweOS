@@ -5,7 +5,7 @@ Defines Pydantic models for persistent server settings
 Includes schemas for saved preferences, like default stream endpoints
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import Optional
 from ..cameras.pydantic_schemas import StreamEndpointModel
 

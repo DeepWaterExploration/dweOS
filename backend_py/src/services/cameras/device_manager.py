@@ -14,7 +14,7 @@ import event_emitter as events
 import asyncio
 import traceback
 
-from .pydantic_schemas import *
+from .pydantic_schemas import DeviceModel, StreamInfoModel, StreamEncodeTypeEnum, StreamTypeEnum
 from .device import Device, lookup_pid_vid, DeviceInfo, DeviceType
 from .settings import SettingsManager
 from .enumeration import list_devices
@@ -191,7 +191,9 @@ class DeviceManager(events.EventEmitter):
         self.settings_manager.save_device(device)
         return True
 
-    def set_device_uvc_control(self, bus_info: str, control_id: int, control_value: int) -> bool:
+    def set_device_uvc_control(
+        self, bus_info: str, control_id: int, control_value: int | float
+    ) -> bool:
         """
         Set a device UVC control
         """
@@ -234,7 +236,7 @@ class DeviceManager(events.EventEmitter):
             # THERE IS NO INHERENT TRUTH TO THE EXISTANCE OF THE FOLLOWER
             # Expected in the case of an unplugged follower
             leader_device.remove_manual(follower_bus_info)
-            return
+            return False
 
         # This is allowed
         # if leader_device.device_type != DeviceType.STELLARHD_LEADER:

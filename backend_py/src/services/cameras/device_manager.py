@@ -95,6 +95,9 @@ class DeviceManager(events.EventEmitter):
         if self.serial:
             self.serial.close()
 
+        if self.serial:
+            self.serial.close()
+
     def create_device(self, device_info: DeviceInfo) -> Device | None:
         """
         Create a new device based on enumerated device info

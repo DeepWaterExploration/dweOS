@@ -105,8 +105,6 @@ function AppContent() {
             <ModeToggle />
             <div className="ml-auto flex items-center">
               <CommandPalette />
-              {features?.wifi ? <WiredDropdown /> : <></>}
-              {features?.wifi ? <WifiDropdown /> : <></>}
               <SystemDropdown />
             </div>
           </div>

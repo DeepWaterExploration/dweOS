@@ -20,8 +20,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 
 // Import types from the generated schema
-type IPConfiguration = components["schemas"]["IPConfiguration"];
-type IPType = components["schemas"]["IPType"];
+type IPConfiguration = components["schemas"]["IPV4Configuration"];
+type IPType = components["schemas"]["IPV4Method"];
+type IPAddress = components["schemas"]["IPV4Address"];
 
 export function WiredDropdown() {
   const { connected, socket } = useContext(WebsocketContext)!;
@@ -33,7 +34,7 @@ export function WiredDropdown() {
 
   // State for the form inputs - initially null or empty
   const [formIpType, setFormIpType] = useState<IPType | null>(null);
-  const [formStaticIp, setFormStaticIp] = useState<string>("");
+  const [formStaticIp, setFormStaticIp] = useState<string>();
   const [formPrefix, setFormPrefix] = useState<number | null>(null);
   const [formGateway, setFormGateway] = useState<string>("");
   const [formDns, setFormDns] = useState<string>(""); // Stored as comma-separated string
@@ -100,31 +101,31 @@ export function WiredDropdown() {
     }
 
     setIsSaving(true);
-    const payload: IPConfiguration = {
-      ip_type: formIpType,
-      static_ip: formIpType === "STATIC" ? formStaticIp || null : null, // Only include if STATIC
-      prefix: formIpType === "STATIC" ? (formPrefix ?? null) : null, // Only include if STATIC
-      gateway: formIpType === "STATIC" ? formGateway || null : null, // Only include if STATIC
-      dns: formDns
-        ? formDns
-            .split(",")
-            .map((d) => d.trim())
-            .filter((d) => d !== "") // Split, trim, remove empty
-        : null, // Send null if empty string
-    };
+    // const payload: IPConfiguration = {
+    //   ip_type: formIpType,
+    //   static_ip: formIpType === "manual" ? formStaticIp || null : null, // Only include if manual
+    //   prefix: formIpType === "manual" ? (formPrefix ?? null) : null, // Only include if manual
+    //   gateway: formIpType === "manual" ? formGateway || null : null, // Only include if manual
+    //   dns: formDns
+    //     ? formDns
+    //         .split(",")
+    //         .map((d) => d.trim())
+    //         .filter((d) => d !== "") // Split, trim, remove empty
+    //     : null, // Send null if empty string
+    // };
 
-    if (payload.ip_type === "STATIC") {
-      if (!payload.static_ip || !payload.prefix || !payload.gateway) {
-        toast({
-          title: "Validation Error",
-          description:
-            "IP Address, Prefix, and Gateway are required for Static IP.",
-          variant: "destructive",
-        });
-        setIsSaving(false);
-        return;
-      }
-    }
+    // if (payload.method === "manual") {
+    //   if (!payload.static_ip || !payload.prefix || !payload.gateway) {
+    //     toast({
+    //       title: "Validation Error",
+    //       description:
+    //         "IP Address, Prefix, and Gateway are required for Static IP.",
+    //       variant: "destructive",
+    //     });
+    //     setIsSaving(false);
+    //     return;
+    //   }
+    // }
 
     try {
       const { error } = await API_CLIENT.POST(
@@ -183,22 +184,22 @@ export function WiredDropdown() {
     }
   }, [connected]);
 
-  useEffect(() => {
-    if (ipConfiguration) {
-      setFormIpType(ipConfiguration.ip_type);
-      setFormStaticIp(ipConfiguration.static_ip || "");
-      setFormPrefix(ipConfiguration.prefix ?? 24);
-      setFormGateway(ipConfiguration.gateway || "");
-      setFormDns(ipConfiguration.dns ? ipConfiguration.dns.join(", ") : "");
-    } else {
-      // If ipConfiguration becomes undefined, reset form states
-      setFormIpType(null);
-      setFormStaticIp("");
-      setFormPrefix(null);
-      setFormGateway("");
-      setFormDns("");
-    }
-  }, [ipConfiguration]);
+  // useEffect(() => {
+  //   if (ipConfiguration) {
+  //     setFormIpType(ipConfiguration.ip_type);
+  //     setFormStaticIp(ipConfiguration.static_ip || "");
+  //     setFormPrefix(ipConfiguration.prefix ?? 24);
+  //     setFormGateway(ipConfiguration.gateway || "");
+  //     setFormDns(ipConfiguration.dns ? ipConfiguration.dns.join(", ") : "");
+  //   } else {
+  //     // If ipConfiguration becomes undefined, reset form states
+  //     setFormIpType(null);
+  //     setFormStaticIp("");
+  //     setFormPrefix(null);
+  //     setFormGateway("");
+  //     setFormDns("");
+  //   }
+  // }, [ipConfiguration]);
 
   return (
     <div id={TOUR_STEP_IDS.ETHERNET_SWITCH}>
@@ -248,13 +249,13 @@ export function WiredDropdown() {
                     <Label htmlFor="dynamic">DHCP (Dynamic)</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="STATIC" id="static" />
+                    <RadioGroupItem value="manual" id="static" />
                     <Label htmlFor="static">Static</Label>
                   </div>
                 </RadioGroup>
               </div>
 
-              {formIpType === "STATIC" && (
+              {formIpType === "manual" && (
                 <>
                   <div className="space-y-2">
                     <Label htmlFor="static-ip">IP Address</Label>

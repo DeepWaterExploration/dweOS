@@ -78,41 +78,10 @@ class Server:
 
         self.server_logger = logging.getLogger("dwe_os_2.Server")
 
-        # Wifi support
-        if self.feature_support.wifi:
-            try:
-                self.wifi_manager = AsyncNetworkManager()
-                self.app.include_router(wifi_router, prefix="/api/wifi")
-                self.app.include_router(wired_router, prefix="/api/wired")
-                self.wifi_manager.on(
-                    "ip_changed",
-                    lambda: asyncio.create_task(self.sio.emit("ip_changed")),
-                )
-                self.wifi_manager.on(
-                    "aps_changed",
-                    lambda: asyncio.create_task(self.sio.emit("aps_changed")),
-                )
-                self.wifi_manager.on(
-                    "connections_changed",
-                    lambda: asyncio.create_task(
-                        self.sio.emit("connections_changed")),
-                )
-                self.wifi_manager.on(
-                    "connection_changed",
-                    lambda: asyncio.create_task(
-                        self.sio.emit("connection_changed")),
-                )
-                self.wifi_manager.on(
-                    "disconnected",
-                    lambda: asyncio.create_task(
-                        self.sio.emit("wifi_disconnected")),
-                )
+        self.network_wrapper = NetworkWrapper(sio)
 
-            except Exception as e:
-                self.server_logger.warning(
-                    f"Error occurred while initializing WiFi: {e} so WiFi will not be supported"
-                )
-                self.feature_support.wifi = False
+        self.network_wrapper.on(
+            "refresh_ui", lambda: asyncio.create_task(self.sio.emit("refresh_wired_config")))
 
         self.system_manager = SystemManager()
 
@@ -132,9 +101,7 @@ class Server:
         self.app.state.ttyd_manager = (
             self.ttyd_manager if self.feature_support.ttyd else None
         )
-        self.app.state.wifi_manager = (
-            self.wifi_manager if self.feature_support.wifi else None
-        )
+        self.app.state.network_manager = self.network_wrapper
         self.app.state.recordings_service = self.recordings_service
 
         self.app.include_router(camera_router, prefix="/api/devices")
@@ -143,6 +110,7 @@ class Server:
         self.app.include_router(lights_router, prefix="/api/lights")
         self.app.include_router(logs_router, prefix="/api/logs")
         self.app.include_router(recordings_router, prefix="/api/recordings")
+        self.app.include_router(network_router, prefix="/api/network")
 
         if feature_support.serial:
             self.app.include_router(pwm_router, prefix="/api/pwm")
@@ -168,7 +136,7 @@ class Server:
                 await self.sio.emit("log", log.model_dump())
             await asyncio.sleep(0.1)
 
-    def serve(self):
+    async def serve(self):
         # loop over and emit the logs to the client
         asyncio.create_task(self.emit_logs())
 
@@ -176,8 +144,9 @@ class Server:
             self.device_manager.serial.start()
 
         self.device_manager.start_monitoring()
-        if self.feature_support.wifi:
-            self.wifi_manager.start_scanning()
+
+        await self.network_wrapper.initialize()
+
         if self.feature_support.ttyd:
             self.ttyd_manager.start()
         else:

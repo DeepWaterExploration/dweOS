@@ -5,7 +5,6 @@ API endpoints for server perferences
 Handles getting and setting preferences
 """
 
-
 from fastapi import APIRouter, Request
 
 from ..services.preferences import PreferencesManager, SavedPreferencesModel

@@ -2,9 +2,11 @@
 device.py
 
 Base class for camera device management
-Handles v4l2 device finding, uvc controls, stream configuration, and device settings management
+Handles v4l2 device finding, uvc controls, stream configuration,
+and device settings management
 """
 
+import contextlib
 import fcntl
 import logging
 import struct
@@ -49,8 +51,16 @@ PID_VIDS = {
         "device_type": DeviceType.STELLARHD_FOLLOWER,
     },
     "exploreHD ": {"VID": 0x3961, "PID": 0x2100, "device_type": DeviceType.EXPLOREHD},
-    "exploreHD Heavy": {"VID": 0x3961, "PID": 0x2200, "device_type": DeviceType.EXPLOREHD},
-    "exploreHD Heavy (AQ)": {"VID": 0x3961, "PID": 0x2210, "device_type": DeviceType.EXPLOREHD},
+    "exploreHD Heavy": {
+        "VID": 0x3961,
+        "PID": 0x2200,
+        "device_type": DeviceType.EXPLOREHD,
+    },
+    "exploreHD Heavy (AQ)": {
+        "VID": 0x3961,
+        "PID": 0x2210,
+        "device_type": DeviceType.EXPLOREHD,
+    },
     "stellarHD Elite (AQ-L)": {
         "VID": 0x3961,
         "PID": 0x1211,
@@ -71,20 +81,36 @@ PID_VIDS = {
         "PID": 0x1202,
         "device_type": DeviceType.STELLARHD_FOLLOWER,
     },
-    "stellarHD (AQ-L)": {"VID": 0x3961, "PID": 0x1111, "device_type": DeviceType.STELLARHD_LEADER},
+    "stellarHD (AQ-L)": {
+        "VID": 0x3961,
+        "PID": 0x1111,
+        "device_type": DeviceType.STELLARHD_LEADER,
+    },
     "stellarHD (AQ-F)": {
         "VID": 0x3961,
         "PID": 0x1112,
         "device_type": DeviceType.STELLARHD_FOLLOWER,
     },
-    "stellarHD (L)": {"VID": 0x3961, "PID": 0x1101, "device_type": DeviceType.STELLARHD_LEADER},
-    "stellarHD (F)": {"VID": 0x3961, "PID": 0x1102, "device_type": DeviceType.STELLARHD_FOLLOWER},
+    "stellarHD (L)": {
+        "VID": 0x3961,
+        "PID": 0x1101,
+        "device_type": DeviceType.STELLARHD_LEADER,
+    },
+    "stellarHD (F)": {
+        "VID": 0x3961,
+        "PID": 0x1102,
+        "device_type": DeviceType.STELLARHD_FOLLOWER,
+    },
     "explore3D (Left)": {
         "VID": 0x3961,
         "PID": 0x3112,
         "device_type": DeviceType.STELLARHD_FOLLOWER,
     },
-    "explore3D (Right)": {"VID": 0x3961, "PID": 0x3111, "device_type": DeviceType.STELLARHD_LEADER},
+    "explore3D (Right)": {
+        "VID": 0x3961,
+        "PID": 0x3111,
+        "device_type": DeviceType.STELLARHD_LEADER,
+    },
 }
 
 
@@ -103,9 +129,12 @@ class Camera:
 
     def __init__(self, path: str) -> None:
         self.path = path
-        self._file_object = open(path)
+        self._file_object = open(path)  # noqa: SIM115
         self._fd = self._file_object.fileno()  # get the file descriptor
         self._get_formats()
+
+    def close(self):
+        self._file_object.close()
 
     # uvc_set_ctrl function defined in uvc_functions.c
     def uvc_set_ctrl(self, unit: int, ctrl: int, data: bytes, size: int) -> int:
@@ -116,7 +145,7 @@ class Camera:
         return camera_helper.uvc_get_ctrl(self._fd, unit, ctrl, data, size)
 
     def has_format(self, pixformat: str) -> bool:
-        return pixformat in self.formats.keys()
+        return pixformat in self.formats
 
     def _get_formats(self):
         self.formats: dict[str, list[FormatSizeModel]] = {}
@@ -126,7 +155,7 @@ class Camera:
             v4l2_fmt.type = v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE
             try:
                 fcntl.ioctl(self._fd, v4l2.VIDIOC_ENUM_FMT, v4l2_fmt)
-            except:
+            except OSError:
                 break
 
             format_sizes = []
@@ -136,7 +165,7 @@ class Camera:
                 frmsize.pixel_format = v4l2_fmt.pixelformat
                 try:
                     fcntl.ioctl(self._fd, v4l2.VIDIOC_ENUM_FRAMESIZES, frmsize)
-                except:
+                except OSError:
                     break
                 if frmsize.type == v4l2.V4L2_FRMSIZE_TYPE_DISCRETE:
                     format_size = FormatSizeModel(
@@ -151,8 +180,10 @@ class Camera:
                         frmival.width = frmsize.discrete.width
                         frmival.height = frmsize.discrete.height
                         try:
-                            fcntl.ioctl(self._fd, v4l2.VIDIOC_ENUM_FRAMEINTERVALS, frmival)
-                        except:
+                            fcntl.ioctl(
+                                self._fd, v4l2.VIDIOC_ENUM_FRAMEINTERVALS, frmival
+                            )
+                        except OSError:  # This is expected and/or possible
                             break
                         if frmival.type == v4l2.V4L2_FRMIVAL_TYPE_DISCRETE:
                             format_size.intervals.append(
@@ -253,9 +284,13 @@ class Option(BaseOption):
         data[1] = self._command.value
 
         # Switch command
-        self._camera.uvc_set_ctrl(self._unit.value, self._ctrl.value, bytes(data), self._size)
+        self._camera.uvc_set_ctrl(
+            self._unit.value, self._ctrl.value, bytes(data), self._size
+        )
 
-        self._camera.uvc_set_ctrl(self._unit.value, self._ctrl.value, self._data, self._size)
+        self._camera.uvc_set_ctrl(
+            self._unit.value, self._ctrl.value, self._data, self._size
+        )
 
     def _get_ctrl(self):
         data = bytearray(self._size)
@@ -263,9 +298,13 @@ class Option(BaseOption):
         data[1] = self._command.value
         self._data = bytes(self._size)
         # Switch command
-        self._camera.uvc_set_ctrl(self._unit.value, self._ctrl.value, bytes(data), self._size)
+        self._camera.uvc_set_ctrl(
+            self._unit.value, self._ctrl.value, bytes(data), self._size
+        )
 
-        self._camera.uvc_get_ctrl(self._unit.value, self._ctrl.value, self._data, self._size)
+        self._camera.uvc_get_ctrl(
+            self._unit.value, self._ctrl.value, self._data, self._size
+        )
 
     def _clear(self):
         self._data = b"\x00" * self._size
@@ -294,7 +333,8 @@ class Device(events.EventEmitter):
         self.nickname = ""
         self.stream = Stream()
 
-        # each device has a streamrunner, but not all of them are used if they are a follower (shd)
+        # each device has a streamrunner, but not all of them are used if
+        # they are a follower (shd)
         self.stream_runner = StreamRunner(self.stream)
 
         for camera in self.cameras:
@@ -303,7 +343,8 @@ class Device(events.EventEmitter):
                 if encode_type:
                     self.stream.encode_type = encode_type
                     # The highest resolution is the default
-                    # Most users will use this, however it is available to be changed in the frontend
+                    # Most users will use this, however it is available to be changed
+                    # in the frontend
                     self.stream.width = camera.formats[encoding][0].width
                     self.stream.height = camera.formats[encoding][0].height
                     self.stream.interval.denominator = (
@@ -339,8 +380,11 @@ class Device(events.EventEmitter):
         self.controls: list[ControlModel] = []
 
         if not self.v4l2_device.controls:
+            # TODO: If this happens, should delete the device, instead of just
+            # potentially dying (will never happen anyway)
             self.logger.error(
-                "v4l2_device.controls == None. Unable to get controls. This might be fatal."
+                "v4l2_device.controls == None. Unable to get controls. "
+                "This might be fatal."
             )
             return
 
@@ -352,20 +396,16 @@ class Device(events.EventEmitter):
             min_value = 0
             step = 0
 
-            try:
+            # FIXME: Should not surpress, should instead log this and use it
+
+            with contextlib.suppress(BaseException):
                 max_value = ctrl.maximum
-            except:
-                pass
 
-            try:
+            with contextlib.suppress(BaseException):
                 min_value = ctrl.minimum
-            except:
-                pass
 
-            try:
+            with contextlib.suppress(BaseException):
                 step = ctrl.step
-            except:
-                pass
 
             default_value = ctrl._info.default_value
 
@@ -403,8 +443,11 @@ class Device(events.EventEmitter):
         height: int,
         interval: IntervalModel,
         stream_type: StreamTypeEnum,
-        stream_endpoints: list[StreamEndpointModel] = [],
+        stream_endpoints: list[StreamEndpointModel] | None = None,
     ):
+        if stream_endpoints is None:
+            stream_endpoints = []
+
         self.logger.info(self._fmt_log("Configuring stream"))
 
         camera: Camera | None = None
@@ -420,7 +463,8 @@ class Device(events.EventEmitter):
 
         if not camera:
             self.logger.warning(
-                "Attempting to select incompatible encoding type. This is undefined behavior."
+                "Attempting to select incompatible encoding type. "
+                "This is undefined behavior."
             )
             return
 
@@ -480,14 +524,20 @@ class Device(events.EventEmitter):
         self.stream.enabled = False
         self.stream_runner.stop()
 
+    def close(self):
+        """
+        Cleanup resources of the device
+        """
+        for camera in self.cameras:
+            camera.close()
+        self.v4l2_device.close()
+
     def load_settings(self, saved_device: SavedDeviceModel):
         self.logger.info(self._fmt_log("Loading device settings"))
 
         for control in saved_device.controls:
-            try:
-                self.set_pu(control.control_id, control.value)
-            except:
-                continue
+            # CHECK: There used to be a try catch here..
+            self.set_pu(control.control_id, control.value)
 
         self.configure_stream(
             saved_device.stream.encode_type,

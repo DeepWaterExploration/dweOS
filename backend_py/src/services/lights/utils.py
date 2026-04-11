@@ -1,7 +1,8 @@
 """
 utils.py
 
-Determines what kind of system/hardware the application is on, and then tries to enable PWM controllers on them
+Determines what kind of system/hardware the application is on, and then tries to
+enable PWM controllers on them
 """
 
 import logging
@@ -52,7 +53,8 @@ def create_pwm_controllers():
         logger.info(f"Device is Raspberry Pi {version}")
         if not is_overlay_loaded():
             logger.warning(
-                "PWM Overlay not loaded. Need to add 'dtoverlay=pwm-2chan' to /boot/config.txt and reboot"
+                "PWM Overlay not loaded. Need to add 'dtoverlay=pwm-2chan' to "
+                "/boot/config.txt and reboot"
             )
             return []
         from .rpi_pwm_hardware import RPiHardwarePWMController

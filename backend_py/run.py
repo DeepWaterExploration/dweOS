@@ -1,6 +1,7 @@
-# run.py runs the backend, creating a async socketio server and a FastAPI web framework, then
-# both are passed into a Server instance to handle logic, and a combination of the two is hosted
-# as a uvicorn server, which handles traffic
+# run.py runs the backend, creating a async socketio server and a FastAPI web
+# framework, then
+# both are passed into a Server instance to handle logic, and a combination of the
+# two is hosted as a uvicorn server, which handles traffic
 
 import asyncio
 import logging
@@ -16,7 +17,9 @@ from src import FeatureSupport, Server
 ORIGINS = ["*"]
 
 # Use AsyncServer
-sio = socketio.AsyncServer(cors_allowed_origins="*", async_mode="asgi", transports=["websocket"])
+sio = socketio.AsyncServer(
+    cors_allowed_origins="*", async_mode="asgi", transports=["websocket"]
+)
 
 
 # Define events
@@ -25,10 +28,16 @@ async def lifespan(app: FastAPI):
     await server.serve()
     yield
     print("Shutting down server...")
+    try:
+        server.shutdown()
+    except Exception as e:
+        print(f"Error during shutdown: {e}")
 
 
 # FastAPI application
-app = FastAPI(lifespan=lifespan, title="DWE OS API", description="API for DWE OS", version="0.1.0")
+app = FastAPI(
+    lifespan=lifespan, title="DWE OS API", description="API for DWE OS", version="0.1.0"
+)
 
 # CORS
 app.add_middleware(

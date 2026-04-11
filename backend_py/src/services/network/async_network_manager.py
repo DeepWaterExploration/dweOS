@@ -86,13 +86,18 @@ def _deserialize_ipv4_config(ipv4_settings: dict) -> IPV4Configuration:
     If no profile is active, `None` is returned
     """
     method = ipv4_settings.get("method", "unknown")
-    raw_addresses = _unpack_dbus_value(ipv4_settings.get("address-data", ("aa{sv}", [])), "aa{sv}")
+    raw_addresses = _unpack_dbus_value(
+        ipv4_settings.get("address-data", ("aa{sv}", [])), "aa{sv}"
+    )
     dns_servers = _unpack_dbus_value(ipv4_settings.get("dns", ("au", [])), "au")
     gateway = _unpack_dbus_value(ipv4_settings.get("gateway", ("s", "")), "s")
-    never_default = _unpack_dbus_value(ipv4_settings.get("never-default", ("b", None)), "b")
+    never_default = _unpack_dbus_value(
+        ipv4_settings.get("never-default", ("b", None)), "b"
+    )
 
     ip_addresses = [
-        IPV4Address(address=addr["address"], prefix=addr["prefix"]) for addr in raw_addresses
+        IPV4Address(address=addr["address"], prefix=addr["prefix"])
+        for addr in raw_addresses
     ]
 
     ip_v4_config = IPV4Configuration(
@@ -106,15 +111,25 @@ def _deserialize_ipv4_config(ipv4_settings: dict) -> IPV4Configuration:
     return ip_v4_config
 
 
-def _serialize_ipv4_config(ipv4_configuration: IPV4Configuration) -> NetworkConnectionSettings:
+def _serialize_ipv4_config(
+    ipv4_configuration: IPV4Configuration,
+) -> NetworkConnectionSettings:
     serialized_ip_config = {
-        "method": ("s", "auto" if ipv4_configuration.method == IPV4Method.auto else "manual")
+        "method": (
+            "s",
+            "auto" if ipv4_configuration.method == IPV4Method.auto else "manual",
+        )
     }
 
-    if ipv4_configuration.method == IPV4Method.manual and ipv4_configuration.ip_addresses:
+    if (
+        ipv4_configuration.method == IPV4Method.manual
+        and ipv4_configuration.ip_addresses
+    ):
         addr_data = []
         for addr in ipv4_configuration.ip_addresses:
-            addr_data.append({"address": ("s", addr.address), "prefix": ("u", addr.prefix)})
+            addr_data.append(
+                {"address": ("s", addr.address), "prefix": ("u", addr.prefix)}
+            )
 
         serialized_ip_config["address-data"] = ("aa{sv}", addr_data)
 
@@ -122,7 +137,10 @@ def _serialize_ipv4_config(ipv4_configuration: IPV4Configuration) -> NetworkConn
             serialized_ip_config["gateway"] = ("s", ipv4_configuration.gateway)
 
         if ipv4_configuration is not None:
-            serialized_ip_config["never-default"] = ("b", ipv4_configuration.never_default)
+            serialized_ip_config["never-default"] = (
+                "b",
+                ipv4_configuration.never_default,
+            )
 
     if ipv4_configuration.dns:
         serialized_ip_config["dns"] = (
@@ -139,7 +157,9 @@ class ConnectionProfile(EventEmitter):
 
         self.logger = logging.getLogger("dwe_os_2.network.ConnectionProfile")
 
-        self.settings: NetworkConnectionSettings | None = NetworkConnectionSettings(dbus_path)
+        self.settings: NetworkConnectionSettings | None = NetworkConnectionSettings(
+            dbus_path
+        )
         self.dbus_path = dbus_path
 
         # https://networkmanager.dev/docs/api/latest/nm-settings-nmcli.html
@@ -150,13 +170,17 @@ class ConnectionProfile(EventEmitter):
 
         self.ipv4_settings: IPV4Configuration | None = None
 
-        self._on_update_task: asyncio.Task = asyncio.create_task(self._on_update_listener())
+        self._on_update_task: asyncio.Task = asyncio.create_task(
+            self._on_update_listener()
+        )
 
     def delete(self):
         if self._on_update_task:
             self._on_update_task.cancel()
 
-    async def _update_configuration(self, new_configuration: NetworkManagerConnectionProperties):
+    async def _update_configuration(
+        self, new_configuration: NetworkManagerConnectionProperties
+    ):
         await self.settings.update(new_configuration)
 
     async def update_ipv4_configuration(self, new_configuration: IPV4Configuration):
@@ -189,7 +213,9 @@ class ConnectionProfile(EventEmitter):
 
         self.settings_dict = _unpack_dbus_value(await self.settings.get_settings())
 
-        self.ipv4_settings = _deserialize_ipv4_config(self.settings_dict.get("ipv4", {}))
+        self.ipv4_settings = _deserialize_ipv4_config(
+            self.settings_dict.get("ipv4", {})
+        )
 
         self.id = self.settings_dict["connection"]["id"]
 
@@ -209,8 +235,10 @@ class WiredDevice(EventEmitter):
 
         # Live state
         self.state: DeviceState = DeviceState.UNKNOWN
-        # `has_active_connection` being True does not mean it has an active ip configuration yet. It takes some time after between IP_CONFIG and ACTIVATED
-        # The only way to verify this will be valid is either checking if it's None or checking if the state == ACTIVATED
+        # `has_active_connection` being True does not mean it has an active ip
+        # configuration yet. It takes some time after between IP_CONFIG and ACTIVATED
+        # The only way to verify this will be valid is either checking if it's None or
+        # checking if the state == ACTIVATED
         self.active_ip_configuration: IPV4Configuration | None = None
 
         # Settings
@@ -229,7 +257,8 @@ class WiredDevice(EventEmitter):
         # Initialized here
         self.interface = await self.nm_device.interface
 
-        # Set the initial state (dbus returns uint32; coerce to DeviceState like _listen does)
+        # Set the initial state
+        # (dbus returns uint32; coerce to DeviceState like _listen does)
         await self._set_state(None, DeviceState(await self.nm_device.state))
 
         # Add the ip configuration listener task
@@ -245,7 +274,8 @@ class WiredDevice(EventEmitter):
 
     async def _update_ipv4_connection_profile(self):
         """
-        Determine if the device is still active. If so, start/continue utilizing the active connection. If not, delete it.
+        Determine if the device is still active.
+        If so, start/continue utilizing the active connection. If not, delete it.
         """
 
         # Path to the actual connection object
@@ -266,11 +296,15 @@ class WiredDevice(EventEmitter):
 
         self.active_profile_path = active_connection_path
 
-        self.connection_profile_path = await ActiveConnection(active_connection_path).connection
+        self.connection_profile_path = await ActiveConnection(
+            active_connection_path
+        ).connection
 
     async def _update_active_connection_settings(self):
         if self.state != DeviceState.ACTIVATED:
-            self.logger.warning(f"{self.interface}: Cannot update IP config of an inactive device")
+            self.logger.warning(
+                f"{self.interface}: Cannot update IP config of an inactive device"
+            )
             self.active_ip_configuration = None
             return
 
@@ -291,7 +325,8 @@ class WiredDevice(EventEmitter):
         address_data = _unpack_dbus_value(await config.address_data)
 
         self.active_ip_configuration.ip_addresses = [
-            IPV4Address(address=addr["address"], prefix=addr["prefix"]) for addr in address_data
+            IPV4Address(address=addr["address"], prefix=addr["prefix"])
+            for addr in address_data
         ]
         self.active_ip_configuration.gateway = await config.gateway
         # Maybe we can do a single unpack
@@ -307,9 +342,11 @@ class WiredDevice(EventEmitter):
         """
         self.state = new_state
 
-        # Yes, we can decouple this into two methods, and remove the checking if there is a connection logic, but this is 100% guaranteed to be reliable
-        # and there is no tangible performance benefit for the former
-        # We update the profile earlier to ensure there will never be a time when the active ip configuration is available, while the connection settings are not
+        # Yes, we can decouple this into two methods, and remove the checking
+        # if there is a connection logic, but this is 100% guaranteed to be reliable
+        # and there is no tangible performance benefit for the former.
+        # We update the profile earlier to ensure there will never be a time when the
+        # active ip configuration is available, while the connection settings are not
         if self.state in [
             DeviceState.ACTIVATED,
             DeviceState.DEACTIVATING,
@@ -338,7 +375,7 @@ class WiredDevice(EventEmitter):
         async for (
             new_state,
             old_state,
-            reason,
+            _reason,
         ) in self.nm_device.state_changed.catch():
             self.logger.info(
                 f"{self.interface}: "
@@ -372,7 +409,10 @@ class AsyncNetworkManager(EventEmitter):
         self.profiles = {}
         for path in all_paths:
             profile = ConnectionProfile(path)
-            profile.on("settings_changed", lambda: self.emit("profile_updated", profile))
+            profile.on(
+                "settings_changed",
+                lambda profile=profile: self.emit("profile_updated", profile),
+            )
             await profile.initialize()
             self.profiles[path] = profile
 
@@ -385,7 +425,9 @@ class AsyncNetworkManager(EventEmitter):
                 return device
         return None
 
-    def get_compatible_profiles(self, wired_device: WiredDevice) -> list[ConnectionProfile]:
+    def get_compatible_profiles(
+        self, wired_device: WiredDevice
+    ) -> list[ConnectionProfile]:
         """
         Get a list of compatible profiles for a given wired device
         """
@@ -416,7 +458,8 @@ class AsyncNetworkManager(EventEmitter):
 
     def get_profile(self, path: str):
         """
-        Get a connection profile by its dbus path. This is a nondeterministic value and is only used for indexing live profiles
+        Get a connection profile by its dbus path.
+        This is a nondeterministic value and is only used for indexing live profiles
         """
         return self.profiles.get(path, None)
 
@@ -429,7 +472,9 @@ class AsyncNetworkManager(EventEmitter):
                 return profile
         return None
 
-    async def _get_best_connection(self, wired_device: WiredDevice) -> ConnectionProfile | None:
+    async def _get_best_connection(
+        self, wired_device: WiredDevice
+    ) -> ConnectionProfile | None:
         profiles = self.get_compatible_profiles(wired_device)
         return profiles[0] if len(profiles) > 0 else None
 
@@ -447,14 +492,17 @@ class AsyncNetworkManager(EventEmitter):
     ):
         if not target_device.is_available():
             self.logger.error(
-                f"Device {target_device.interface} cannot be activated (state: {target_device.state.name})"
+                f"Device {target_device.interface} cannot be activated "
+                f"(state: {target_device.state.name})"
             )
             return
 
         if profile is None:
             profile = await self._get_best_connection(target_device)
             if not profile:
-                self.logger.error(f"Device {target_device.interface} has no available profile")
+                self.logger.error(
+                    f"Device {target_device.interface} has no available profile"
+                )
                 return
 
         self.logger.info(
@@ -497,9 +545,9 @@ class AsyncNetworkManager(EventEmitter):
         self.all_devices = await self.nm.devices
 
         await self._update_profiles()
-        self._profiles_updated_task = asyncio.create_task(self._listen_connection_profiles())
-
-        self.nm_settings.new_connection
+        self._profiles_updated_task = asyncio.create_task(
+            self._listen_connection_profiles()
+        )
 
         for device_path in self.all_devices:
             generic = NetworkDeviceGeneric(device_path)
@@ -518,14 +566,19 @@ class AsyncNetworkManager(EventEmitter):
                 await eth_device.initialize()
                 eth_device.on(
                     "request_activation",
-                    lambda dev: asyncio.create_task(self._activate_ethernet_device(dev)),
+                    lambda dev: asyncio.create_task(self.activate_ethernet_device(dev)),
                 )
                 eth_device.on(
-                    "ip_config_changed", lambda: self.emit("ip_config_changed", eth_device)
+                    "ip_config_changed",
+                    lambda eth_device=eth_device: self.emit(
+                        "ip_config_changed", eth_device
+                    ),
                 )
                 eth_device.on(
                     "state_changed",
-                    lambda old_state, new_state: self.emit("state_changed", eth_device),
+                    lambda old_state, new_state, eth_device=eth_device: self.emit(
+                        "state_changed", eth_device
+                    ),
                 )
                 self.ethernet_devices.append(eth_device)
 

@@ -66,7 +66,10 @@ class RecordingsService:
         # FIXME: We need to change this function to use a better metadata library
         try:
             result = subprocess.run(
-                ["exiftool", "-json", file_path], capture_output=True, text=True, check=True
+                ["exiftool", "-json", file_path],
+                capture_output=True,
+                text=True,
+                check=True,
             )
             output = result.stdout.strip()
             if output:
@@ -75,7 +78,9 @@ class RecordingsService:
                 if file_path.endswith(".mp4"):
                     duration = data[0].get("Duration", "00:00:00")
                     if "s" in duration:
-                        duration = f"00:00:{round(float(duration.replace(' s', ''))):02}"
+                        duration = (
+                            f"00:00:{round(float(duration.replace(' s', ''))):02}"
+                        )
                     self.durations[file_path] = duration
                     return duration
 
@@ -114,7 +119,9 @@ class RecordingsService:
         recording_path = os.path.join(self.recordings_path, filename)
         if os.path.exists(recording_path):
             os.remove(recording_path)
-            self.recordings = [rec for rec in self.recordings if rec.path != recording_path]
+            self.recordings = [
+                rec for rec in self.recordings if rec.path != recording_path
+            ]
             return self.recordings
         return False
 
@@ -141,5 +148,7 @@ class RecordingsService:
 
         with zipfile.ZipFile(zip_filename, "w") as zipf:
             for recording in self.recordings:
-                zipf.write(recording.path, arcname=recording.name + "." + recording.format)
+                zipf.write(
+                    recording.path, arcname=recording.name + "." + recording.format
+                )
         return zip_filename

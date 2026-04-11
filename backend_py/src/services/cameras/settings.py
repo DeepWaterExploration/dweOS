@@ -2,7 +2,8 @@
 settings.py
 
 Manages persisting camera settings and configs
-Handles loading and saving device configs to JSON, keeping setting across reboots, and manages background sync of settings
+Handles loading and saving device configs to JSON, keeping setting across reboots,
+and manages background sync of settings
 """
 
 import json
@@ -22,11 +23,14 @@ class SettingsManager:
     def __init__(self, settings_path: str = ".") -> None:
         path = f"{settings_path}/device_settings.json"
         try:
-            self.file_object = open(path, "r+")
+            self.file_object = open(path, "r+")  # noqa: SIM115
         except FileNotFoundError:
             open(path, "w").close()
-            self.file_object = open(path, "r+")
+            self.file_object = open(path, "r+")  # noqa: SIM115
         self.to_save: list[SavedDeviceModel] = []
+        self.is_running = True
+
+        # TODO: Switch to asyncio or lock
         self.thread = threading.Thread(target=self._run_settings_sync)
         self.thread.start()
 
@@ -37,7 +41,8 @@ class SettingsManager:
         try:
             settings: list[dict] = json.loads(self.file_object.read())
             self.settings: list[SavedDeviceModel] = [
-                SavedDeviceModel.model_validate(saved_device) for saved_device in settings
+                SavedDeviceModel.model_validate(saved_device)
+                for saved_device in settings
             ]
 
             self.saved_by_bus_info: dict[str, SavedDeviceModel] = {
@@ -50,12 +55,22 @@ class SettingsManager:
             self.settings = []
             self.file_object.flush()
 
+    def cleanup(self):
+        if self.file_object:
+            self.file_object.close()
+
+        self.is_running = False
+        self.thread.join(timeout=1)
+
     def load_device(self, device: Device, devices: list[Device]):
         for saved_device in self.settings:
             if saved_device.bus_info == device.bus_info:
                 if device.device_type != saved_device.device_type:
                     self.logger.info(
-                        f"Device {device.bus_info} with device_type: {str(device.device_type)} plugged into port of saved device_type: {str(saved_device.device_type)}. Discarding stored data."
+                        f"Device {device.bus_info} with device_type: "
+                        f"{str(device.device_type)} plugged into port of saved "
+                        f"device_type: {str(saved_device.device_type)}. "
+                        "Discarding stored data."
                     )
                     self.settings.remove(saved_device)
                     return
@@ -68,13 +83,15 @@ class SettingsManager:
                         follower = find_device_with_bus_info(devices, follower_bus_info)
                         if not follower:
                             self.logger.warning(
-                                f"Follower device with bus_info {follower_bus_info} not currently connected"
+                                f"Follower device with bus_info {follower_bus_info} "
+                                "not currently connected"
                             )
                             continue
 
                         if follower.device_type != DeviceType.STELLARHD_FOLLOWER:
                             self.logger.warning(
-                                f"Follower device {follower.bus_info} is not of follower type, skipping"
+                                f"Follower device {follower.bus_info} is not of "
+                                "follower type, skipping"
                             )
                             saved_device.followers.remove(follower_bus_info)
                             continue
@@ -100,7 +117,9 @@ class SettingsManager:
                         if potential_leader.bus_info == device.bus_info:
                             continue
 
-                        saved_leader = self.saved_by_bus_info.get(potential_leader.bus_info)
+                        saved_leader = self.saved_by_bus_info.get(
+                            potential_leader.bus_info
+                        )
                         if not saved_leader:
                             continue
 
@@ -141,11 +160,12 @@ class SettingsManager:
                 if not follower:
                     continue
 
-                # What is worse than it not existing, however, is it not being a follower
-                # So, we delete
+                # What is worse than it not existing, however, is it not being a
+                # follower. So, we delete
                 if follower.device_type != DeviceType.STELLARHD_FOLLOWER:
                     self.logger.warning(
-                        f"Follower device {follower.bus_info} is not of follower type, skipping"
+                        f"Follower device {follower.bus_info} is not of follower type, "
+                        "skipping"
                     )
                     saved.followers.remove(follower_bus_info)
                     continue
@@ -160,12 +180,14 @@ class SettingsManager:
                 break
         self.settings.append(saved_device)
         self.file_object.seek(0)
-        self.file_object.write(json.dumps([model.model_dump() for model in self.settings]))
+        self.file_object.write(
+            json.dumps([model.model_dump() for model in self.settings])
+        )
         self.file_object.truncate()
         self.file_object.flush()
 
     def _run_settings_sync(self):
-        while True:
+        while self.is_running:
             for saved_device in self.to_save:
                 self._save_device(saved_device)
             self.to_save = []

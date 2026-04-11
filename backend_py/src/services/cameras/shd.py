@@ -47,7 +47,8 @@ class CustomOption(BaseOption):
         self.setter = setter
         self.is_integer_only = is_integer_only
 
-        # FIXME: I did this since the getter seems to be unreliable for asic controls, so we just trust the value stored
+        # FIXME: I did this since the getter seems to be unreliable for asic controls,
+        # so we just trust the value stored
         self.getter = getter
         self.value = getter()
         self.logger = logging.getLogger("CustomOption")
@@ -79,7 +80,9 @@ class SHDDevice(Device):
         self._queue_cond = threading.Condition(self._queue_lock)
 
         self._asic_worker_running = True
-        self._asic_thread = threading.Thread(target=self._asic_command_worker, daemon=True)
+        self._asic_thread = threading.Thread(
+            target=self._asic_command_worker, daemon=True
+        )
         self._asic_thread.start()
 
         super().__init__(device_info)
@@ -99,18 +102,28 @@ class SHDDevice(Device):
         # Is true if it is managed, false otherwise
         self.is_managed = False
 
-        self.add_control_from_option("bitrate", 5, ControlTypeEnum.INTEGER, 10, 0.1, 0.1)
+        self.add_control_from_option(
+            "bitrate", 5, ControlTypeEnum.INTEGER, 10, 0.1, 0.1
+        )
 
         if self.is_pro:
-            self.add_control_from_option("shutter", 100, ControlTypeEnum.INTEGER, 8000, 10, 1)
+            self.add_control_from_option(
+                "shutter", 100, ControlTypeEnum.INTEGER, 8000, 10, 1
+            )
 
             self.add_control_from_option("ae", False, ControlTypeEnum.BOOLEAN)
 
-            self.add_control_from_option("iso", 400, ControlTypeEnum.INTEGER, 4095, 0, 1)
+            self.add_control_from_option(
+                "iso", 400, ControlTypeEnum.INTEGER, 4095, 0, 1
+            )
 
-            self.add_control_from_option("strobe_width", 0, ControlTypeEnum.INTEGER, 4095, 0, 1)
+            self.add_control_from_option(
+                "strobe_width", 0, ControlTypeEnum.INTEGER, 4095, 0, 1
+            )
 
-            self.add_control_from_option("hw_bitrate", 5000, ControlTypeEnum.INTEGER, 65535, 0, 1)
+            self.add_control_from_option(
+                "hw_bitrate", 5000, ControlTypeEnum.INTEGER, 65535, 0, 1
+            )
 
             # self.add_control_from_option(
             #     'strobe_enabled', False, ControlTypeEnum.BOOLEAN)
@@ -159,33 +172,35 @@ class SHDDevice(Device):
         result_queue = queue.Queue() if wait else None
 
         with self._queue_cond:
-            if key is not None:
+            if key is not None and any(item[0] == key for item in self._command_queue):
                 # Filter out previous pending commands of the same type
                 # This implements the "ignore previous requests" logic
                 # We rebuild the deque without the matching keys
 
                 # Check if we even need to filter to avoid list overhead
-                if any(item[0] == key for item in self._command_queue):
-                    # Filter existing items.
-                    # Note: We only drop items that don't have a result_queue waiting
-                    # (though in this design, keyed items are usually fire-and-forget writes)
-                    new_queue = collections.deque()
-                    while self._command_queue:
-                        item = self._command_queue.popleft()
-                        existing_key, _, _, existing_result_q = item
+                # Filter existing items.
+                # Note: We only drop items that don't have a result_queue waiting
+                # (though in this design, keyed items are usually fire-and-forget
+                # writes)
+                new_queue = collections.deque()
+                while self._command_queue:
+                    item = self._command_queue.popleft()
+                    existing_key, _, _, existing_result_q = item
 
-                        # If keys match, we drop the OLD one.
-                        # Ideally, we only drop if no one is waiting on it (wait=False).
-                        # If wait=True, we probably shouldn't drop it, or we should send None to the queue.
-                        if existing_key == key:
-                            if existing_result_q:
-                                # If something was waiting on the old command, release it
-                                existing_result_q.put(None)
-                            # Item is dropped
-                            continue
+                    # If keys match, we drop the OLD one.
+                    # Ideally, we only drop if no one is waiting on it (wait=False).
+                    # If wait=True, we probably shouldn't drop it, or we should
+                    # send None to the queue.
+                    if existing_key == key:
+                        if existing_result_q:
+                            # If something was waiting on the old command,
+                            # release it
+                            existing_result_q.put(None)
+                        # Item is dropped
+                        continue
 
-                        new_queue.append(item)
-                    self._command_queue = new_queue
+                    new_queue.append(item)
+                self._command_queue = new_queue
 
             # Add the new command to the end
             self._command_queue.append((key, func, args, result_queue))
@@ -198,12 +213,15 @@ class SHDDevice(Device):
     def add_follower(self, device: "SHDDevice"):
         if device.bus_info in self.followers:
             self.logger.info(
-                "Trying to add follower to device that already has this device as a follower. Ignoring request."
+                "Trying to add follower to device that already has this device as a "
+                "follower. Ignoring request."
             )
             return
 
         if device.bus_info == self.bus_info:
-            self.logger.info("Trying to add follower of same bus id as self. This is not allowed.")
+            self.logger.info(
+                "Trying to add follower of same bus id as self. This is not allowed."
+            )
             return
 
         self.logger.info("Adding follower")
@@ -222,7 +240,9 @@ class SHDDevice(Device):
 
     def remove_follower(self, device: "SHDDevice"):
         if device.bus_info not in self.followers:
-            self.logger.info("Cannot remove follower from device that does not contain it.")
+            self.logger.info(
+                "Cannot remove follower from device that does not contain it."
+            )
             return
         # Reconstruct the list without the follower
         self.followers = [dev for dev in self.followers if dev != device.bus_info]
@@ -239,14 +259,16 @@ class SHDDevice(Device):
 
     # ASIC stuff
     # Sensor writes are not supported by all firmwares
-    # Only recent stellarHD firmware, no exploreHD firmware - but explore does support asic writes as well
+    # Only recent stellarHD firmware, no exploreHD firmware -
+    # but explore does support asic writes as well
 
     def _sensor_write_high_low(self, reg_high: int, reg_low: int, value: int):
         """
         Write high byte from value to high register, low byte to low
         """
         self._sensor_write(reg_high, (value >> 8) & 0xFF)
-        # This is extremely scuffed: switch to waiting for trigger register before release (See below)
+        # This is extremely scuffed: switch to waiting for
+        # trigger register before release (See below)
         time.sleep(0.1)
         self._sensor_write(reg_low, value & 0xFF)
 
@@ -310,7 +332,9 @@ class SHDDevice(Device):
 
         return ret, val
 
-    def _asic_write(self, addr: int | xu.StellarRegisterMap, data: int, dummy: bool = False) -> int:
+    def _asic_write(
+        self, addr: int | xu.StellarRegisterMap, data: int, dummy: bool = False
+    ) -> int:
         unit = xu.Unit.SYS_ID
         selector = xu.Selector.SYS_ASIC_RW
         # Accept enum
@@ -325,7 +349,8 @@ class SHDDevice(Device):
 
         # Dummy writes are used for asic reading
         write_mode = 0xFF if dummy else 0
-        # Little endian unsigned short (asic address), byte (data), byte (write mode: 0 = normal, 0xFF = dummy)
+        # Little endian unsigned short (asic address), byte (data),
+        # byte (write mode: 0 = normal, 0xFF = dummy)
         ctrl_data = struct.pack("<HBB", addr_val, data, write_mode)
 
         return self.cameras[0].uvc_set_ctrl(unit.value, selector.value, ctrl_data, size)
@@ -371,7 +396,9 @@ class SHDDevice(Device):
         return ret
 
     def _asic_read_high_low(
-        self, addr_high: int | xu.StellarRegisterMap, addr_low: int | xu.StellarRegisterMap
+        self,
+        addr_high: int | xu.StellarRegisterMap,
+        addr_low: int | xu.StellarRegisterMap,
     ):
         ret, val_high = self._asic_read(addr_high)
         ret, val_low = self._asic_read(addr_low)
@@ -389,18 +416,22 @@ class SHDDevice(Device):
         self.is_managed = is_managed
 
         # Configure stream if needbe
-        if not is_managed:
-            if self.stream.enabled:
-                self.start_stream()
+        if not is_managed and self.stream.enabled:
+            self.start_stream()
 
     # This goes against the architecture created in the exploreHD
-    # When we designed that, it was preferred to not have any functions that could control asic values.
+    # When we designed that, it was preferred to not have any functions that could
+    # control asic values.
     # TODO: FIXME
     def set_shutter_speed(self, value: int):
         self._run_asic_command(
             "shutter",
             self._sensor_write_high_low,
-            (xu.StellarSensorMap.SHUTTER_HIGH, xu.StellarSensorMap.SHUTTER_LOW, int(value)),
+            (
+                xu.StellarSensorMap.SHUTTER_HIGH,
+                xu.StellarSensorMap.SHUTTER_LOW,
+                int(value),
+            ),
             wait=False,
         )
 
@@ -437,11 +468,12 @@ class SHDDevice(Device):
         )
 
     def get_asic_ae(self) -> bool | None:
-        # We can run asic read commands without worrying, since they don't write to the camera..? I think
+        # We can run asic read commands without worrying, since they don't write to the
+        # camera. - besides dummy writes
         ret, val = self._asic_read(xu.StellarRegisterMap.REG_AE)
         if ret != 0:
             return None
-        return True if val == 0x01 else False
+        return val == 0x01
 
     def set_strobe_width(self, value: int):
         self._run_asic_command(
@@ -459,7 +491,10 @@ class SHDDevice(Device):
         return self._run_asic_command(
             None,
             self._sensor_read_high_low,
-            (xu.StellarSensorMap.STROBE_WIDTH_HIGH, xu.StellarSensorMap.STROBE_WIDTH_LOW),
+            (
+                xu.StellarSensorMap.STROBE_WIDTH_HIGH,
+                xu.StellarSensorMap.STROBE_WIDTH_LOW,
+            ),
             wait=True,
         )
 
@@ -474,14 +509,19 @@ class SHDDevice(Device):
             ),
         )
         self._run_asic_command(
-            "hw_bitrate", self._asic_write, (xu.StellarRegisterMap.REG_HW_BITRATE_TRIG, 1)
+            "hw_bitrate",
+            self._asic_write,
+            (xu.StellarRegisterMap.REG_HW_BITRATE_TRIG, 1),
         )
 
     def get_hw_bitrate(self) -> int | None:
         return self._run_asic_command(
             "hw_bitrate",
             self._asic_read_high_low,
-            (xu.StellarRegisterMap.REG_HW_BITRATE_HIGH, xu.StellarRegisterMap.REG_HW_BITRATE_LOW),
+            (
+                xu.StellarRegisterMap.REG_HW_BITRATE_HIGH,
+                xu.StellarRegisterMap.REG_HW_BITRATE_LOW,
+            ),
             wait=True,
         )
 
@@ -506,7 +546,9 @@ class SHDDevice(Device):
         options["bitrate"] = self.bitrate_option
 
         if self.is_pro:
-            options["ae"] = CustomOption("Auto Exposure (ASIC)", self.set_asic_ae, self.get_asic_ae)
+            options["ae"] = CustomOption(
+                "Auto Exposure (ASIC)", self.set_asic_ae, self.get_asic_ae
+            )
 
             # UVC shutter speed control
             options["shutter"] = CustomOption(
@@ -535,14 +577,15 @@ class SHDDevice(Device):
     def start_stream(self):
         if self.is_managed:
             self.logger.warning(
-                f"{self.bus_info if not self.nickname else self.nickname}: Cannot start stream that is managed."
+                f"{self.bus_info}: Cannot start stream that is managed."
             )
             return
 
         self.stream_runner.streams = [self.stream]
 
         for follower_device in self.follower_devices:
-            # A not so hacky fix (very clever :]) to ensure the stream's device_path is set
+            # A not so hacky fix (very clever :]) to ensure the stream's device_path is
+            # set
             follower_device.configure_stream(
                 self.stream.encode_type,
                 self.stream.width,

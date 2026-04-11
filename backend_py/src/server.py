@@ -2,7 +2,8 @@
 server.py
 
 Handles server logic and initializes all the managers (settings, devices, lights, etc)
-Starts device monitoring, wifi scan, and starts ttyd (teletypewriter daemon) to run in the background
+Starts device monitoring, wifi scan, and starts ttyd (teletypewriter daemon) to run in
+the background
 """
 
 import asyncio
@@ -62,7 +63,8 @@ class Server:
         self.root_logger.addHandler(self.stream_handler)
         self.log_handler = LogHandler(self.sio)
         self.log_formatter = logging.Formatter(
-            "%(asctime)s - %(levelname)s - [%(name)s] - %(filename)s:%(lineno)d - %(funcName)s() - %(message)s"
+            "%(asctime)s - %(levelname)s - [%(name)s] - %(filename)s:%(lineno)d - "
+            "%(funcName)s() - %(message)s"
         )
         self.stream_handler.setFormatter(self.log_formatter)
         self.file_handler = logging.handlers.RotatingFileHandler(
@@ -96,7 +98,8 @@ class Server:
         self.network_wrapper = NetworkWrapper(sio)
 
         self.network_wrapper.on(
-            "refresh_ui", lambda: asyncio.create_task(self.sio.emit("refresh_wired_config"))
+            "refresh_ui",
+            lambda: asyncio.create_task(self.sio.emit("refresh_wired_config")),
         )
 
         self.system_manager = SystemManager()
@@ -114,7 +117,9 @@ class Server:
         self.app.state.settings_manager = self.settings_manager
         self.app.state.preferences_manager = self.preferences_manager
         self.app.state.system_manager = self.system_manager
-        self.app.state.ttyd_manager = self.ttyd_manager if self.feature_support.ttyd else None
+        self.app.state.ttyd_manager = (
+            self.ttyd_manager if self.feature_support.ttyd else None
+        )
         self.app.state.network_manager = self.network_wrapper
         self.app.state.recordings_service = self.recordings_service
 
@@ -175,6 +180,7 @@ class Server:
 
         self.light_manager.cleanup()
         self.device_manager.stop_monitoring()
+        self.settings_manager.cleanup()
 
         if self.feature_support.ttyd:
             self.ttyd_manager.kill()

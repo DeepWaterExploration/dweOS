@@ -1,7 +1,9 @@
 """
 light_manager.py
 
-Manages the light system, initiates the proper PWM controllers and creates Light objects for each available pin
+Manages the light system, initiates the proper PWM controllers and creates Light objects
+for each available pin.
+
 Serves as the main interface for setting light intensity or disbaling lights
 Calls on PWM controllers to do the actual PWM
 """
@@ -34,7 +36,9 @@ class LightManager:
         light = self.lights[index]
         light.intensity = intensity
         pwm_controller = self.pwm_controllers[light.controller_index]
-        self.logger.info(f"Setting light ({pwm_controller.NAME}): {light.pin}, {light.intensity}")
+        self.logger.info(
+            f"Setting light ({pwm_controller.NAME}): {light.pin}, {light.intensity}"
+        )
         pwm_controller.set_intensity(light.pin, intensity)
 
     def disable_light(self, controller_index: int, pin: int):

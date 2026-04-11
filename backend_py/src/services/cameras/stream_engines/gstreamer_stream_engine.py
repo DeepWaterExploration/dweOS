@@ -41,14 +41,22 @@ class GStreamerPipelineBuilder:
 
     @staticmethod
     def _construct_caps(stream: Stream):
-        return f"{GStreamerPipelineBuilder._get_format(stream)},width={stream.width},height={stream.height},framerate={stream.interval.denominator}/{stream.interval.numerator}"
+        return (
+            f"{GStreamerPipelineBuilder._get_format(stream)},width={stream.width},"
+            f"height={stream.height},framerate={stream.interval.denominator}/{stream.interval.numerator}"
+        )
 
     @staticmethod
     def _build_payload(stream: Stream):
         match stream.encode_type:
             case StreamEncodeTypeEnum.H264:
                 if stream.stream_type == StreamTypeEnum.RECORDING:
-                    return f"h264parse ! video/x-h264,width={stream.width},height={stream.height},framerate={stream.interval.denominator}/{stream.interval.numerator} ! queue ! mp4mux"
+                    return (
+                        f"h264parse ! video/x-h264,width={stream.width},"
+                        f"height={stream.height},"
+                        f"framerate={stream.interval.denominator}/"
+                        f"{stream.interval.numerator} ! queue ! mp4mux"
+                    )
                 else:
                     return "h264parse ! queue ! rtph264pay config-interval=10 pt=96"
             case StreamEncodeTypeEnum.MJPG:
@@ -58,9 +66,26 @@ class GStreamerPipelineBuilder:
                     return "rtpjpegpay"
             case StreamEncodeTypeEnum.SOFTWARE_H264:
                 if stream.stream_type == StreamTypeEnum.RECORDING:
-                    return f"jpegdec ! queue ! x264enc byte-stream=false tune=zerolatency bitrate={stream.software_h264_bitrate} speed-preset=ultrafast ! h264parse ! video/x-h264,width={stream.width},height={stream.height},framerate={stream.interval.denominator}/{stream.interval.numerator} ! queue ! mp4mux"
+                    # FIXME: This was done to make it not exceed the 88 char limit for
+                    # ruff. It looks bad, and can be solved with a better formatting
+                    # system.
+                    return (
+                        "jpegdec ! queue ! "
+                        "x264enc byte-stream=false tune=zerolatency "
+                        f"bitrate={stream.software_h264_bitrate} "
+                        "speed-preset=ultrafast ! "
+                        "h264parse ! video/x-h264,"
+                        f"width={stream.width},height={stream.height},"
+                        f"framerate={stream.interval.denominator}"
+                        f"/{stream.interval.numerator} ! queue ! mp4mux"
+                    )
                 else:
-                    return f"jpegdec ! queue ! x264enc byte-stream=true tune=zerolatency bitrate={stream.software_h264_bitrate} speed-preset=ultrafast ! rtph264pay config-interval=10 pt=96"
+                    return (
+                        "jpegdec ! queue ! x264enc byte-stream=true "
+                        f"tune=zerolatency bitrate={stream.software_h264_bitrate} "
+                        "speed-preset=ultrafast ! rtph264pay "
+                        "config-interval=10 pt=96"
+                    )
             case _:
                 return ""
 
@@ -71,11 +96,7 @@ class GStreamerPipelineBuilder:
                 if len(stream.endpoints) == 0:
                     return "fakesink"
                 sink = "multiudpsink sync=true clients="
-                for endpoint, i in zip(stream.endpoints, range(len(stream.endpoints))):
-                    sink += f"{endpoint.host}:{endpoint.port}"
-                    if i < len(stream.endpoints) - 1:
-                        sink += ","
-
+                sink += ",".join(f"{e.host}:{e.port}" for e in stream.endpoints)
                 return sink
             case StreamTypeEnum.RECORDING:
                 home_dir = os.getcwd()
@@ -83,16 +104,26 @@ class GStreamerPipelineBuilder:
                 if not os.path.exists(video_dir):
                     os.makedirs(video_dir)
                 permissions = (
-                    stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH
+                    stat.S_IRWXU
+                    | stat.S_IRGRP
+                    | stat.S_IXGRP
+                    | stat.S_IROTH
+                    | stat.S_IXOTH
                 )
                 os.chmod(video_dir, permissions)
-                extension = "avi" if stream.encode_type == StreamEncodeTypeEnum.MJPG else "mp4"
+                extension = (
+                    "avi" if stream.encode_type == StreamEncodeTypeEnum.MJPG else "mp4"
+                )
                 timestamp = datetime.now().strftime("%F-%T")
-                unique_filename = f"{stream.device_path.split('/')[-1]}_{timestamp}.{extension}"
+                unique_filename = (
+                    f"{stream.device_path.split('/')[-1]}_{timestamp}.{extension}"
+                )
                 unique_path = os.path.join(video_dir, unique_filename)
                 if os.path.exists(unique_path):
+                    # TODO: use pathlib
                     unique_filename = (
-                        f"{stream.device_path.split('/')[-1]}_{timestamp}_{os.getpid()}.{extension}"
+                        f"{stream.device_path.split('/')[-1]}"
+                        f"_{timestamp}_{os.getpid()}.{extension}"
                     )
                 unique_path = os.path.join(video_dir, unique_filename)
                 stream.file_path = unique_path
@@ -117,7 +148,8 @@ class GStreamerProcessEngine(BaseStreamEngine):
     def start(self):
         with self._lock:
             self.logger.info(
-                f"Starting stream for devices: {[stream.device_path for stream in self.streams]}"
+                "Starting stream for devices: "
+                f"{[stream.device_path for stream in self.streams]}"
             )
             if self.started:
                 self.stop()
@@ -131,7 +163,11 @@ class GStreamerProcessEngine(BaseStreamEngine):
             stream.stream_type == StreamTypeEnum.RECORDING for stream in self.streams
         )
         self._process = subprocess.Popen(
-            f"gst-launch-1.0 {'-e' if has_recording_stream else ''} {pipeline_str}".split(" "),
+            [
+                "gst-launch-1.0",
+                f"{'-e' if has_recording_stream else ''}",  # EOS on shutdown
+                *pipeline_str.split(" "),
+            ],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
             text=True,
@@ -149,7 +185,8 @@ class GStreamerProcessEngine(BaseStreamEngine):
 
             # For recording streams, send EOS to properly finalize the file
             has_recording_stream = any(
-                stream.stream_type == StreamTypeEnum.RECORDING for stream in self.streams
+                stream.stream_type == StreamTypeEnum.RECORDING
+                for stream in self.streams
             )
 
             try:
@@ -180,29 +217,29 @@ class GStreamerProcessEngine(BaseStreamEngine):
 
         if not self._process or not self._process.stderr:
             self.logger.error(
-                "Unable to monitor stderr for process. Is the GStreamer process running?"
+                "Unable to monitor stderr for process. "
+                "Is the GStreamer process running?"
             )
             return
 
-        try:
-            for stderr_line in iter(self._process.stderr.readline, ""):
-                line_stripped = stderr_line.strip()
+        for stderr_line in iter(self._process.stderr.readline, ""):
+            line_stripped = stderr_line.strip()
 
-                # Log all stderr output but only stop on actual errors
-                if any(
-                    error_keyword in line_stripped.lower()
-                    for error_keyword in ["error", "failed", "warning", "critical"]
-                ):
-                    error_block.append(line_stripped)
-        except:
-            pass
+            # Log all stderr output but only stop on actual errors
+            if any(
+                error_keyword in line_stripped.lower()
+                for error_keyword in ["error", "failed", "warning", "critical"]
+            ):
+                error_block.append(line_stripped)
 
         if self._process:
             self._process.wait()
             return_code = self._process.returncode
 
             if self.started and return_code != 0:
-                self.logger.error(f"GStreamer process crashed with return code: {return_code}")
+                self.logger.error(
+                    f"GStreamer process crashed with return code: {return_code}"
+                )
 
                 for error in error_block:
                     self.logger.error(error)

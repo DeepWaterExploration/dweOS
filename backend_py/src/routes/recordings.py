@@ -2,9 +2,9 @@
 recording.py
 
 API endpoints for accessing video file library
-Handles listing recording metadata, downloading / deleting / renaming recordings, and downloading all recordings as ZIP
+Handles listing recording metadata, downloading / deleting / renaming recordings,
+and downloading all recordings as ZIP
 """
-
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
@@ -45,7 +45,9 @@ def delete_recording(request: Request, recording_path: str):
 
     response = recordings_service.delete_recording(recording_path)
     if not response:
-        raise HTTPException(status_code=404, detail="Recording not found or could not be deleted")
+        raise HTTPException(
+            status_code=404, detail="Recording not found or could not be deleted"
+        )
 
     return response
 
@@ -56,7 +58,9 @@ def rename_recording(request: Request, old_name: str, new_name: str):
 
     response = recordings_service.rename_recording(old_name, new_name)
     if not response:
-        raise HTTPException(status_code=404, detail="Recording not found or could not be renamed")
+        raise HTTPException(
+            status_code=404, detail="Recording not found or could not be renamed"
+        )
 
     return response
 

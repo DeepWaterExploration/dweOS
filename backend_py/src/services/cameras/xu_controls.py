@@ -1,7 +1,8 @@
 """
 xu_controls.py
 
-Specifies the constants of where each extension unit feature's register address is stored
+Specifies the constants of where each extension unit feature's register address is
+stored
 """
 
 from enum import Enum

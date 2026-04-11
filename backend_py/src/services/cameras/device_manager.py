@@ -2,7 +2,8 @@
 device_manager.py
 
 Handles functionality of device and montiors for devices
-When it finds a new device, it creates a new device object and updates the device list and that devices settings
+When it finds a new device, it creates a new device object and updates the device list
+and that devices settings
 When it sees a missing device, it removes that device ojbect from the device list
 Manages a devices streaming state as well as changes to device name
 Manages the leader follower connections
@@ -23,7 +24,12 @@ from .ehd import EHDDevice
 from .enumeration import list_devices
 from .exceptions import DeviceNotFoundException
 from .pwm.serial_pwm_controller import SerialPWMController
-from .pydantic_schemas import DeviceModel, StreamEncodeTypeEnum, StreamInfoModel, StreamTypeEnum
+from .pydantic_schemas import (
+    DeviceModel,
+    StreamEncodeTypeEnum,
+    StreamInfoModel,
+    StreamTypeEnum,
+)
 from .settings import SettingsManager
 from .shd import SHDDevice
 
@@ -61,9 +67,9 @@ class DeviceManager(events.EventEmitter):
     def __init__(
         self,
         sio: socketio.AsyncServer,
+        settings_manager: SettingsManager,
         preferences: SavedPreferencesModel,
         use_serial=False,
-        settings_manager=SettingsManager(),
     ) -> None:
         self.devices: list[Device] = []
         self.sio = sio
@@ -74,7 +80,9 @@ class DeviceManager(events.EventEmitter):
 
         self.serial = None
         if use_serial:
-            self.serial = SerialPWMController(frequency_offset=preferences.frequency_offset)
+            self.serial = SerialPWMController(
+                frequency_offset=preferences.frequency_offset
+            )
 
         self.logger = logging.getLogger("dwe_os_2.cameras.DeviceManager")
 
@@ -93,9 +101,7 @@ class DeviceManager(events.EventEmitter):
 
         for device in self.devices:
             device.stream_runner.stop()
-
-        if self.serial:
-            self.serial.close()
+            device.close()
 
         if self.serial:
             self.serial.close()
@@ -118,9 +124,11 @@ class DeviceManager(events.EventEmitter):
                 # Not a DWE device
                 return None
 
-        # we need to broadcast that there was a gst error so that the frontend knows there may be a kernel issue
+        # we need to broadcast that there was a gst error so that the frontend knows
+        # there may be a kernel issue
         device.stream_runner.on(
-            "stream_error", lambda _: self._append_stream_error(DeviceModel.model_validate(device))
+            "stream_error",
+            lambda _: self._append_stream_error(DeviceModel.model_validate(device)),
         )
 
         if self.serial:
@@ -142,7 +150,9 @@ class DeviceManager(events.EventEmitter):
         device_list = [DeviceModel.model_validate(device) for device in self.devices]
         return device_list
 
-    def set_device_option(self, bus_info: str, option: str, option_value: int | bool) -> bool:
+    def set_device_option(
+        self, bus_info: str, option: str, option_value: int | bool
+    ) -> bool:
         """
         Set a device option
         """
@@ -167,7 +177,9 @@ class DeviceManager(events.EventEmitter):
         stream_type: StreamTypeEnum = stream_info.stream_type
         endpoints = stream_info.endpoints
 
-        device.configure_stream(encode_type, width, height, interval, stream_type, endpoints)
+        device.configure_stream(
+            encode_type, width, height, interval, stream_type, endpoints
+        )
 
         if stream_info.enabled:
             device.start_stream()
@@ -312,7 +324,8 @@ class DeviceManager(events.EventEmitter):
                     device.stream_runner.stop()
 
                     # What to do when a device is unplugged
-                    # Remove unplugged followers from leaders, and unplugged leaders as leaders
+                    # Remove unplugged followers from leaders, and unplugged leaders
+                    # as leaders
                     if (
                         device.device_type == DeviceType.STELLARHD_LEADER
                         or device.device_type == DeviceType.STELLARHD_FOLLOWER
@@ -320,8 +333,11 @@ class DeviceManager(events.EventEmitter):
                         leader_casted = cast(SHDDevice, device)
                         for follower_bus_info in leader_casted.followers:
                             # This can be optimized, but it truly does not matter
-                            follower = self._find_device_with_bus_info(follower_bus_info)
-                            # Remember, follower might not exist now - never inherent truth to its existance
+                            follower = self._find_device_with_bus_info(
+                                follower_bus_info
+                            )
+                            # Remember, follower might not exist now - never inherent
+                            # truth to its existance
                             if follower:
                                 follower_casted = cast(SHDDevice, follower)
                                 leader_casted.remove_follower(follower_casted)
@@ -333,10 +349,14 @@ class DeviceManager(events.EventEmitter):
                             for device in self.devices:
                                 if (
                                     device.device_type == DeviceType.STELLARHD_LEADER
-                                    or device.device_type == DeviceType.STELLARHD_FOLLOWER
+                                    or device.device_type
+                                    == DeviceType.STELLARHD_FOLLOWER
                                 ):
                                     leader_casted = cast(SHDDevice, device)
-                                    if follower_casted.bus_info in leader_casted.followers:
+                                    if (
+                                        follower_casted.bus_info
+                                        in leader_casted.followers
+                                    ):
                                         leader_casted.remove_follower(follower_casted)
                                         self.settings_manager.save_device(leader_casted)
 
@@ -346,7 +366,8 @@ class DeviceManager(events.EventEmitter):
                     await self.sio.emit("device_removed", device_info.bus_info)
 
         if device_added:
-            # FIXME: Issue where sometimes frontend updates too quickly before the changes have been made
+            # FIXME: Issue where sometimes frontend updates too quickly before the
+            # changes have been made
             await self.sio.emit("device_added")
 
         return devices_info
@@ -372,7 +393,9 @@ class DeviceManager(events.EventEmitter):
 
         for dev_info in devices_info:
             if device == dev_info.bus_info:
-                await self.sio.emit("stream_error", {"errors": errors, "bus_info": device})
+                await self.sio.emit(
+                    "stream_error", {"errors": errors, "bus_info": device}
+                )
                 return
 
         self.logger.debug("stream_error ignored due to device unplugged")

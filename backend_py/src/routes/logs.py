@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, Request
 
 from ..logging import LogHandler, LogSchema

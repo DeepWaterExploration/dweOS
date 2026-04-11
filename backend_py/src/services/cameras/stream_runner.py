@@ -18,7 +18,8 @@ class StreamRunner(events.EventEmitter):
     """
     The main entry point. Automatically decides which engine to use based on usage.
 
-    Streams are expected to be added dynamically. Calling start() will construct the correct engine on the fly with the provided streams.
+    Streams are expected to be added dynamically. Calling start() will construct the
+    correct engine on the fly with the provided streams.
     """
 
     def __init__(self, *streams: Stream) -> None:
@@ -36,7 +37,9 @@ class StreamRunner(events.EventEmitter):
         # Ideally we would have a way for either the user or the backend to control
 
         if len(self.streams) > 1:
-            self.logger.info("Multiple streams detected: Using SynchronizedStreamEngine.")
+            self.logger.info(
+                "Multiple streams detected: Using SynchronizedStreamEngine."
+            )
             return SynchronizedStreamEngine(self.streams, self._on_engine_error)
         else:
             self.logger.info("Single stream detected: Using GStreamerProcessEngine.")
@@ -50,12 +53,15 @@ class StreamRunner(events.EventEmitter):
 
     def start(self):
         with self._lock:
-            self.logger.info(f"Starting streams: {[s.device_path for s in self.streams]}")
+            self.logger.info(
+                f"Starting streams: {[s.device_path for s in self.streams]}"
+            )
             if self.started:
                 self.stop()
                 time.sleep(1)
 
-            # We create the engine on start, so the engine can perform initial setup on constructor
+            # We create the engine on start, so the engine can perform initial setup on
+            # constructor
             self.engine: BaseStreamEngine = self._select_engine()
 
             self.started = True

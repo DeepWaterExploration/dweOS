@@ -1,8 +1,10 @@
 """
 ehd.py
 
-Adds additional features to exploreHD devices through extension units (xu) as per UVC protocol
-Uses options functionality to set defaults, ranges, and specifies registers for where these features store data
+Adds additional features to exploreHD devices through extension units (xu)
+as per UVC protocol
+Uses options functionality to set defaults, ranges, and specifies registers for where
+these features store data
 """
 
 from typing import cast
@@ -25,7 +27,9 @@ class EHDDevice(Device):
 
         self.add_control_from_option("gop", 29, ControlTypeEnum.INTEGER, 29, 0, 1)
 
-        self.add_control_from_option("bitrate", 10, ControlTypeEnum.INTEGER, 15, 0.1, 0.1)
+        self.add_control_from_option(
+            "bitrate", 10, ControlTypeEnum.INTEGER, 15, 0.1, 0.1
+        )
 
     def _get_options(self) -> dict[str, Option]:
         options = {}

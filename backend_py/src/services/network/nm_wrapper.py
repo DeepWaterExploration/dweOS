@@ -68,7 +68,8 @@ class NetworkWrapper(EventEmitter):
                 active_ip_configuration=device.active_ip_configuration,
                 is_active=device.has_active_connection,
                 available_profiles=[
-                    profile.dbus_path for profile in self.nm.get_compatible_profiles(device)
+                    profile.dbus_path
+                    for profile in self.nm.get_compatible_profiles(device)
                 ],
             )
             device_models.append(device_model)
@@ -80,12 +81,16 @@ class NetworkWrapper(EventEmitter):
             if not profile.ipv4_settings or not profile.id:
                 continue
             profile_model = ConnectionProfileModel(
-                id=profile.id, path=profile.dbus_path, ipv4_settings=profile.ipv4_settings
+                id=profile.id,
+                path=profile.dbus_path,
+                ipv4_settings=profile.ipv4_settings,
             )
             connection_profiles.append(profile_model)
         return connection_profiles
 
-    async def update_connection_profile(self, path: str, ip_configuration: IPV4Configuration):
+    async def update_connection_profile(
+        self, path: str, ip_configuration: IPV4Configuration
+    ):
         profile = self.nm.get_profile(path)
         if profile:
             await profile.update_ipv4_configuration(ip_configuration)
@@ -94,7 +99,9 @@ class NetworkWrapper(EventEmitter):
 
         return False
 
-    async def activate_interface(self, interface: str, profile_path: str, enable_rollback=True):
+    async def activate_interface(
+        self, interface: str, profile_path: str, enable_rollback=True
+    ):
         profile = self.nm.get_profile(profile_path)
         device = self.nm.get_device_by_iface(interface)
         if not profile or not device:

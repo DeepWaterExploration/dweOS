@@ -1,9 +1,9 @@
 """
 device_utils.py
 
-Utility functions for device_manager.py, specifically for finding added devices / removed devices
+Utility functions for device_manager.py, specifically for finding added devices /
+ removed devices
 """
-
 
 from .device import Device
 

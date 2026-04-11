@@ -186,7 +186,8 @@ class DeviceModel(BaseModel):
     device_info: DeviceInfoModel | None = None
     # 0 (exploreHD), 1 (Leader), 2 (Follower)
     device_type: DeviceType
-    # Only required for stellarHD (remember, followers CAN be leaders in some circumstances)
+    # Only required for stellarHD
+    # (remember, followers CAN be leaders in some circumstances)
     followers: list[str] = []
     # True if is a follower and stream is managed by the leader
     is_managed: bool = False

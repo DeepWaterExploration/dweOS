@@ -65,9 +65,13 @@ class SerialPWMController:
             while self._running:
                 path = _find_pwm_device_path()
                 if path:
-                    if self.found_port and self.serial is not None:
-                        if self.serial.port != path or not self.serial.is_open:
-                            self._disconnect_serial()
+                    if (
+                        self.found_port
+                        and self.serial is not None
+                        and self.serial.port != path
+                        and self.serial.is_open
+                    ):
+                        self._disconnect_serial()
                     if not self.found_port:
                         try:
                             self.serial = serial.Serial(
@@ -75,14 +79,12 @@ class SerialPWMController:
                             )
                             self.found_port = True
                             self.has_printed_error = False
-                            self.logger.info(
-                                "PWM USB serial connected at %s", path)
+                            self.logger.info("PWM USB serial connected at %s", path)
                             # Perform initial apply
                             self.apply(self.frequency, self.duty_cycle)
                         except serial.SerialException as e:
                             if not self.has_printed_error:
-                                self.logger.error(
-                                    "PWM serial open failed: %s", e)
+                                self.logger.error("PWM serial open failed: %s", e)
                                 self.has_printed_error = True
                             self._disconnect_serial()
                 else:

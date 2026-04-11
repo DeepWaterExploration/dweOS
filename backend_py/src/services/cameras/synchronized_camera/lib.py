@@ -2,6 +2,7 @@
 #
 # Minimal Python V4L2 capture + multi-camera synchronizer
 
+import contextlib
 import ctypes
 import fcntl
 import logging
@@ -117,9 +118,11 @@ class V4L2Camera:
         self._ioctl(v4l2.VIDIOC_REQBUFS, req)
 
         if req.count != self.buffer_count:
-            # Count: `The number of buffers requested or granted.` (can rarely change after request)
+            # Count: `The number of buffers requested or granted.`
+            #   (can rarely change after request)
             # Driver might reduce the buffer count?
-            # Might want to research this, because I'd bet it only happens with EXTREMELY large buffer counts
+            # Might want to research this, because I'd bet it only happens with
+            # EXTREMELY large buffer counts
             self.buffer_count = req.count
 
         self._buffers = []
@@ -212,10 +215,9 @@ class V4L2Camera:
 
         # Unmap buffers
         for mm in self._buffers:
-            try:
+            # We don't care if it fails
+            with contextlib.suppress(Exception):
                 mm.close()
-            except Exception:
-                pass
 
         self._buffers.clear()
 
@@ -253,7 +255,8 @@ class SynchronizedCamera:
         for camera in cameras:
             if camera.critical_error:
                 raise AssertionError(
-                    "Cannot create a SynchronizedCamera with cameras containing errors! Please check your camera status."
+                    "Cannot create a SynchronizedCamera with cameras containing errors!"
+                    "Please check your camera status."
                 )
 
         self.cameras = cameras
@@ -264,12 +267,16 @@ class SynchronizedCamera:
         self.queues: list[deque[CopiedFrame]] = [deque() for _ in cameras]
         self.logger = logging.getLogger("dwe_os_2.cameras.SynchronizedCamera")
 
-        # For those curious about the synchronization logic, it can be summarized as follows:
-        # The synch threshold is **NOT** the precision. It is generally specified as 1/FPS.
-        # For 60 fps, this is 16667. If synchronized to within 1/FPS, the frames can be considered synchronized at the sensor level.
-        # The frames are captured at precisely the same time, but become jumbled when they reach the userspace API.
-        # As the Linux kernel is not an RTOS, we have no way of strictly forcing provided frames to be synchronized,
-        # but we can make it happen after the fact with kernel timestamps.
+        # For those curious about the synchronization logic,
+        # it can be summarized as follows:
+        # - The sync threshold is **NOT** the precision. It is specified as 1/FPS.
+        # - For 60 fps, this is 16667. If synchronized to within 1/FPS, the frames
+        #   can be considered synchronized at the sensor level.
+        # - The frames are captured at precisely the same time,
+        #   but become jumbled when they reach the userspace API.
+        # - As the Linux kernel is not an RTOS, we have no way of strictly
+        #   forcing provided frames to be synchronized, but we can make it
+        #   happen after the fact with kernel timestamps.
 
     def camera_count(self) -> int:
         return len(self.cameras)
@@ -307,7 +314,9 @@ class SynchronizedCamera:
 
         # attempt synchronization
         while self._queues_full():
-            timestamps = [self.queues[i][0].timestamp_us for i in range(self.camera_count())]
+            timestamps = [
+                self.queues[i][0].timestamp_us for i in range(self.camera_count())
+            ]
             min_ts = min(timestamps)
             max_ts = max(timestamps)
 

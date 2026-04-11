@@ -2,7 +2,8 @@
 camera.py
 
 API endpoints for camera device management and streaming config
-Handles listing connected devices, updating stream settings (resolution / fps), setting UVC controls, and dealing with Leader/Follower for stereo cameras
+Handles listing connected devices, updating stream settings (resolution / fps),
+setting UVC controls, and dealing with Leader/Follower for stereo cameras
 """
 
 from typing import cast
@@ -57,7 +58,9 @@ async def configure_stream(request: Request, stream_info: StreamInfoModel):
 def set_nickname(request: Request, device_nickname: DeviceNicknameModel):
     device_manager: DeviceManager = request.app.state.device_manager
 
-    device_manager.set_device_nickname(device_nickname.bus_info, device_nickname.nickname)
+    device_manager.set_device_nickname(
+        device_nickname.bus_info, device_nickname.nickname
+    )
 
     return {}
 
@@ -73,20 +76,32 @@ def set_uvc_control(request: Request, uvc_control: UVCControlModel):
     return {}
 
 
-@camera_router.post("/add_follower", summary="Add a device as a follower to another device")
-def add_follower(request: Request, payload: AddFollowerPayload) -> SimpleRequestStatusModel:
+@camera_router.post(
+    "/add_follower", summary="Add a device as a follower to another device"
+)
+def add_follower(
+    request: Request, payload: AddFollowerPayload
+) -> SimpleRequestStatusModel:
     device_manager: DeviceManager = request.app.state.device_manager
 
-    success = device_manager.add_follower(payload.leader_bus_info, payload.follower_bus_info)
+    success = device_manager.add_follower(
+        payload.leader_bus_info, payload.follower_bus_info
+    )
 
     return SimpleRequestStatusModel(success=success)
 
 
-@camera_router.post("/remove_follower", summary="Add a device as a follower to another device")
-def remove_follower(request: Request, payload: AddFollowerPayload) -> SimpleRequestStatusModel:
+@camera_router.post(
+    "/remove_follower", summary="Add a device as a follower to another device"
+)
+def remove_follower(
+    request: Request, payload: AddFollowerPayload
+) -> SimpleRequestStatusModel:
     device_manager: DeviceManager = request.app.state.device_manager
 
-    success = device_manager.remove_follower(payload.leader_bus_info, payload.follower_bus_info)
+    success = device_manager.remove_follower(
+        payload.leader_bus_info, payload.follower_bus_info
+    )
 
     return SimpleRequestStatusModel(success=success)
 

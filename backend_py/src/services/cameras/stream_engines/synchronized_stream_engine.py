@@ -14,8 +14,8 @@ class SynchronizedStreamEngine(BaseStreamEngine):
         super().__init__(streams, error_callback)
 
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.frame_queue: collections.deque[tuple[CopiedFrame, CopiedFrame]] = collections.deque(
-            maxlen=2
+        self.frame_queue: collections.deque[tuple[CopiedFrame, CopiedFrame]] = (
+            collections.deque(maxlen=2)
         )
 
         self.MTU = 1400
@@ -32,7 +32,10 @@ class SynchronizedStreamEngine(BaseStreamEngine):
         try:
             self.cameras: list[V4L2Camera] = [
                 V4L2Camera(
-                    stream.device_path, stream.width, stream.height, stream.interval.denominator
+                    stream.device_path,
+                    stream.width,
+                    stream.height,
+                    stream.interval.denominator,
                 )
                 for stream in streams
             ]
@@ -43,7 +46,7 @@ class SynchronizedStreamEngine(BaseStreamEngine):
             if e.strerror:
                 self.emit_error(e.strerror)
 
-    # <AI> Assisted with this code. Custom RTP improves performance compared to RTP class
+    # <AI-Assisted> Custom RTP improves performance compared to RTP class
     def _send_frame(self, frames: list[CopiedFrame], endpoint: StreamEndpointModel):
         # TODO: change protocol to handle more than two cameras
         assert len(frames) == 2
@@ -84,12 +87,15 @@ class SynchronizedStreamEngine(BaseStreamEngine):
             m_pt = (marker_bit << 7) | rtp_type
 
             # Pack header: [Ver][Marker+PT][SeqNum][Timestamp][SSRC]
-            rtp_header = struct.pack("!BBHII", rtp_ver, m_pt, sequence_number, timestamp, self.SSRC)
+            rtp_header = struct.pack(
+                "!BBHII", rtp_ver, m_pt, sequence_number, timestamp, self.SSRC
+            )
 
             # Zero-copy slice using memoryview
             chunk_view = payload_view[offset : offset + chunk_size]
 
-            # Send directly (Python concatenates bytes + memoryview efficiently in sendto)
+            # Send directly:
+            #   (Python concatenates bytes + memoryview efficiently in sendto)
             self.socket.sendto(rtp_header + chunk_view, target_address)
 
             offset += chunk_size
@@ -97,16 +103,20 @@ class SynchronizedStreamEngine(BaseStreamEngine):
 
     def start(self):
         self.logger.info(
-            f"Starting synchronized stream with: {(', '.join([stream.device_path for stream in self.streams]))}"
+            "Starting synchronized stream with: "
+            f"{(', '.join([stream.device_path for stream in self.streams]))}"
         )
         # self.logger.warning("SynchronizedStreamEngine is not yet implemented")
         if len(self.streams) != 2:
-            self.logger.error("SynchronizedStreamEngine cannot support more than 2 streams yet!")
+            self.logger.error(
+                "SynchronizedStreamEngine cannot support more than 2 streams yet!"
+            )
             return
 
         if not self.synchronized_camera:
             self.logger.error(
-                "Synchronized camera does not exist. An error occurred previously in construction!"
+                "Synchronized camera does not exist. An error occurred previously in "
+                "construction!"
             )
             return
 
@@ -131,7 +141,9 @@ class SynchronizedStreamEngine(BaseStreamEngine):
 
     def capture_loop_(self):
         if not self.synchronized_camera:
-            self.logger.error("Cannot run capture loop when synchronized camera is not defined!")
+            self.logger.error(
+                "Cannot run capture loop when synchronized camera is not defined!"
+            )
             return
 
         # We need to be careful about the blocking aspect of grab

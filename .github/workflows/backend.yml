@@ -1,16 +1,17 @@
 name: Backend CI
 
 on:
+  # Commented to avoid double runs
   push:
     branches:
       - main
-      - "feature/**"
-      - "fix/**"
-      - "bugfix/**"
-      - "refactor/**"
-    paths:
-      - backend_py/**
-      - ".github/workflows/backend.yml"
+  #     - "feature/**"
+  #     - "fix/**"
+  #     - "bugfix/**"
+  #     - "refactor/**"
+  #   paths:
+  #     - backend_py/**
+  #     - ".github/workflows/backend.yml"
   pull_request:
     branches: ["main"]
 

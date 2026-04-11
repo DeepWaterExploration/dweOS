@@ -1,16 +1,17 @@
 name: Frontend CI
 
 on:
+  # Commented to avoid double runs
   push:
     branches:
       - main
-      - "feature/**"
-      - "fix/**"
-      - "bugfix/**"
-      - "refactor/**"
-    paths:
-      - frontend/**
-      - ".github/workflows/frontend.yml"
+  #     - "feature/**"
+  #     - "fix/**"
+  #     - "bugfix/**"
+  #     - "refactor/**"
+  #   paths:
+  #     - frontend/**
+  #     - ".github/workflows/frontend.yml"
   pull_request:
     branches: ["main"]
 

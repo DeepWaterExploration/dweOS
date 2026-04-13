@@ -49,7 +49,13 @@ class SynchronizedStreamEngine(BaseStreamEngine):
     # <AI-Assisted> Custom RTP improves performance compared to RTP class
     def _send_frame(self, frames: list[CopiedFrame], endpoint: StreamEndpointModel):
         # TODO: change protocol to handle more than two cameras
-        assert len(frames) == 2
+        if len(frames) > 2:
+            self.logger.warning(
+                "Only 2 cameras are supported for synchronized streaming. "
+                "This is an in progress feature- please contact us if you "
+                "require it sooner."
+            )
+
         left_frame = frames[0]
         right_frame = frames[1]
 

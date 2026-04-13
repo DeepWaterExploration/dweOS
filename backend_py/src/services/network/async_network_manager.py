@@ -114,7 +114,7 @@ def _deserialize_ipv4_config(ipv4_settings: dict) -> IPV4Configuration:
 
 def _serialize_ipv4_config(
     ipv4_configuration: IPV4Configuration,
-) -> NetworkManagerConnectionProperties:
+) -> dict:
     serialized_ip_config: dict = {
         "method": (
             "s",

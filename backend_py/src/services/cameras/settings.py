@@ -97,7 +97,6 @@ class SettingsManager:
                             continue
 
                         follower = cast(SHDDevice, follower)
-                        device = cast(SHDDevice, device)
                         if follower.is_managed:
                             self.logger.info("Saved follower already has a new leader")
                             # This is true when the follower has now gotten a new leader
@@ -125,8 +124,7 @@ class SettingsManager:
 
                         if device.bus_info in saved_leader.followers:
                             follower = cast(SHDDevice, device)
-                            leader = cast(SHDDevice, potential_leader)
-                            leader.add_follower(follower)
+                            potential_leader.add_follower(follower)
                             break  # Only follow one leader
 
                 return
@@ -139,8 +137,6 @@ class SettingsManager:
             # Changed: We now allow followers to be leaders (of other followers)
             if not isinstance(leader, SHDDevice):
                 continue
-
-            leader = cast(SHDDevice, leader)
 
             saved = self.saved_by_bus_info.get(leader.bus_info)
 

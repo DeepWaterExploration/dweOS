@@ -96,7 +96,10 @@ class SHDDevice(Device):
 
         # Copy MJPEG over to Software H264, since they are the same thing
         mjpg_camera = self.find_camera_with_format("MJPG")
-        assert mjpg_camera
+        if not mjpg_camera:
+            raise RuntimeError(
+                "Failed to initialize stellarHD: MJPG camera format not found."
+            )
         mjpg_camera.formats["SOFTWARE_H264"] = mjpg_camera.formats["MJPG"]
 
         # List of followers

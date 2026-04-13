@@ -118,7 +118,7 @@ def lookup_pid_vid(vid: int, pid: int) -> tuple[str, DeviceType] | tuple[None, N
     for name in PID_VIDS:
         dev = PID_VIDS[name]
         if dev["VID"] == vid and dev["PID"] == pid:
-            return (name, dev["device_type"])
+            return (name, DeviceType(dev["device_type"]))
     return (None, None)
 
 

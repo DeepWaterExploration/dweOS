@@ -126,7 +126,7 @@ class DeviceManager(events.EventEmitter):
         )
 
         if self.serial:
-            device.on("pwm_frequency", lambda fps: self.serial.apply_from_fps(fps))  # type: ignore
+            device.on("pwm_frequency", lambda fps: self.serial.apply_from_fps(fps))
 
         return device
 

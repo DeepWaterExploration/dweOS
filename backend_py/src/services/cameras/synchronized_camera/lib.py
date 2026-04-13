@@ -73,7 +73,8 @@ class V4L2Camera:
         self._start_stream()
 
     def _ioctl(self, req, arg):
-        assert self.fd is not None
+        if self.fd is None:
+            raise RuntimeError("V4L2Camera.fd is not defined. Unable to run ioctl.")
 
         try:
             return fcntl.ioctl(self.fd, req, arg)
@@ -108,7 +109,8 @@ class V4L2Camera:
         self._ioctl(v4l2.VIDIOC_S_PARM, parm)
 
     def _request_and_map_buffers(self):
-        assert self.fd is not None
+        if self.fd is None:
+            raise RuntimeError("V4L2Camera.fd is not defined. Unable to map buffers.")
 
         req = v4l2.v4l2_requestbuffers()
         req.count = self.buffer_count

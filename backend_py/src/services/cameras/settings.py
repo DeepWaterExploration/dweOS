@@ -78,7 +78,7 @@ class SettingsManager:
                 device.load_settings(saved_device)
 
                 # We plugged in a new leader
-                if isinstance(device, SHDDevice):
+                if isinstance(device, SHDDevice) and saved_device.followers:
                     for follower_bus_info in saved_device.followers:
                         follower = find_device_with_bus_info(devices, follower_bus_info)
                         if not follower:
@@ -120,7 +120,7 @@ class SettingsManager:
                         saved_leader = self.saved_by_bus_info.get(
                             potential_leader.bus_info
                         )
-                        if not saved_leader:
+                        if not saved_leader or not saved_leader.followers:
                             continue
 
                         if device.bus_info in saved_leader.followers:
@@ -145,7 +145,7 @@ class SettingsManager:
             saved = self.saved_by_bus_info.get(leader.bus_info)
 
             # This device has not been saved
-            if not saved:
+            if not saved or not saved.followers:
                 continue
 
             for follower_bus_info in saved.followers:

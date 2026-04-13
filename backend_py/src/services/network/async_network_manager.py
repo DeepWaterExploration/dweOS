@@ -8,6 +8,7 @@ from typing import Any
 import sdbus
 from event_emitter import EventEmitter
 from pydantic import BaseModel
+from sdbus.utils.inspect import inspect_dbus_path
 from sdbus_async.networkmanager import (
     ActiveConnection,
     DeviceState,
@@ -113,8 +114,8 @@ def _deserialize_ipv4_config(ipv4_settings: dict) -> IPV4Configuration:
 
 def _serialize_ipv4_config(
     ipv4_configuration: IPV4Configuration,
-) -> NetworkConnectionSettings:
-    serialized_ip_config = {
+) -> NetworkManagerConnectionProperties:
+    serialized_ip_config: dict = {
         "method": (
             "s",
             "auto" if ipv4_configuration.method == IPV4Method.auto else "manual",
@@ -157,9 +158,7 @@ class ConnectionProfile(EventEmitter):
 
         self.logger = logging.getLogger("dwe_os_2.network.ConnectionProfile")
 
-        self.settings: NetworkConnectionSettings | None = NetworkConnectionSettings(
-            dbus_path
-        )
+        self.settings: NetworkConnectionSettings = NetworkConnectionSettings(dbus_path)
         self.dbus_path = dbus_path
 
         # https://networkmanager.dev/docs/api/latest/nm-settings-nmcli.html
@@ -268,6 +267,9 @@ class WiredDevice(EventEmitter):
         if self.state != DeviceState.ACTIVATED or not self.active_ip_configuration:
             return None
         return self.active_ip_configuration
+
+    def get_dbus_path(self) -> str:
+        return inspect_dbus_path(self.nm_device)
 
     def is_available(self) -> bool:
         return self.state in [DeviceState.DISCONNECTED, DeviceState.ACTIVATED]
@@ -509,7 +511,7 @@ class AsyncNetworkManager(EventEmitter):
             f"Activating device '{target_device.interface}' with profile '{profile.id}'"
         )
         await self.nm.activate_connection(
-            profile.dbus_path, target_device.nm_device._dbus.object_path
+            profile.dbus_path, target_device.get_dbus_path()
         )
 
     async def get_first_active_device(self) -> WiredDevice | None:

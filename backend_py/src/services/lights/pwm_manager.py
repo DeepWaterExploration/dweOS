@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 from dataclasses import dataclass
@@ -26,6 +27,8 @@ class PWMManager:
 
         self._enumerate()
 
+        self.logger = logging.getLogger("dwe_os_2.services.PWMManager")
+
     def enable_channel(self, chip_id: int, channel_id: int):
         self._echo(
             os.path.join(self._get_channel_path(chip_id, channel_id), "enable"), 1
@@ -38,6 +41,11 @@ class PWMManager:
 
     def set_channel_frequency(self, chip_id: int, channel_id: int, frequency: float):
         channel = self._get_channel(chip_id, channel_id)
+
+        if not channel:
+            self.logger.error(f"Failed to get channel: {chip_id}:{channel_id}")
+            return
+
         channel.frequency = frequency
 
         # Save the current duty cycle and zero it
@@ -53,6 +61,11 @@ class PWMManager:
 
     def set_channel_duty_cycle(self, chip_id: int, channel_id: int, duty_cycle: float):
         channel = self._get_channel(chip_id, channel_id)
+
+        if not channel:
+            self.logger.error(f"Failed to get channel: {chip_id}:{channel_id}")
+            return
+
         self._set_duty_cycle(chip_id, channel_id, duty_cycle, channel.frequency)
         channel.duty_cycle = duty_cycle
 
@@ -85,6 +98,10 @@ class PWMManager:
 
     def _get_channel(self, chip_id: int, channel_id: int):
         chip = self._get_chip(chip_id)
+
+        if not chip:
+            self.logger.error(f"Failed to get chip: {chip_id}:{channel_id}")
+            return
 
         for channel in chip.channels:
             if channel.channel == channel_id:

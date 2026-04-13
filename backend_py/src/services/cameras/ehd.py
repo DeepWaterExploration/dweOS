@@ -10,7 +10,7 @@ these features store data
 from typing import cast
 
 from . import xu_controls as xu
-from .device import ControlTypeEnum, Device, Option
+from .device import BaseOption, ControlTypeEnum, Device, Option
 from .enumeration import DeviceInfo
 from .pydantic_schemas import H264Mode
 
@@ -31,7 +31,7 @@ class EHDDevice(Device):
             "bitrate", 10, ControlTypeEnum.INTEGER, 15, 0.1, 0.1
         )
 
-    def _get_options(self) -> dict[str, Option]:
+    def _get_options(self) -> dict[str, BaseOption]:
         options = {}
 
         # UVC xu bitrate control

@@ -17,7 +17,6 @@ from typing import cast
 import event_emitter as events
 import socketio
 
-from ..preferences import SavedPreferencesModel
 from .device import Device, DeviceInfo, DeviceType, lookup_pid_vid
 from .device_utils import find_device_with_bus_info, list_diff
 from .ehd import EHDDevice
@@ -68,8 +67,7 @@ class DeviceManager(events.EventEmitter):
         self,
         sio: socketio.AsyncServer,
         settings_manager: SettingsManager,
-        preferences: SavedPreferencesModel,
-        use_serial=False,
+        serial: SerialPWMController,
     ) -> None:
         self.devices: list[Device] = []
         self.sio = sio
@@ -78,11 +76,7 @@ class DeviceManager(events.EventEmitter):
         # List of devices with stream errors
         self.stream_errors: list[str] = []
 
-        self.serial = None
-        if use_serial:
-            self.serial = SerialPWMController(
-                frequency_offset=preferences.frequency_offset
-            )
+        self.serial = serial
 
         self.logger = logging.getLogger("dwe_os_2.cameras.DeviceManager")
 

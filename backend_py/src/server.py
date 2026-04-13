@@ -25,7 +25,7 @@ from .routes import (
     system_router,
 )
 from .schemas import FeatureSupport
-from .services.cameras import DeviceManager, SettingsManager
+from .services.cameras import DeviceManager, SerialPWMController, SettingsManager
 from .services.lights import LightManager, create_pwm_controllers
 from .services.network import NetworkWrapper
 from .services.preferences import PreferencesManager
@@ -82,12 +82,14 @@ class Server:
         self.settings_manager = SettingsManager(settings_path)
         self.preferences_manager = PreferencesManager(settings_path)
 
+        # Serial
+        self.serial = SerialPWMController(
+            frequency_offset=self.preferences_manager.get_preferences().frequency_offset
+        )
+
         # Device Manager
         self.device_manager = DeviceManager(
-            settings_manager=self.settings_manager,
-            sio=self.sio,
-            use_serial=self.feature_support.serial,
-            preferences=self.preferences_manager.get_preferences(),
+            settings_manager=self.settings_manager, sio=self.sio, serial=self.serial
         )
 
         # Lights
@@ -110,6 +112,8 @@ class Server:
         if self.feature_support.ttyd:
             self.ttyd_manager = TTYDManager(is_dev_mode)
 
+        # TODO: https://fastapi.tiangolo.com/tutorial/dependencies/
+
         # FAST API
         self.app.state.device_manager = self.device_manager
         self.app.state.log_handler = self.log_handler
@@ -122,6 +126,7 @@ class Server:
         )
         self.app.state.network_manager = self.network_wrapper
         self.app.state.recordings_service = self.recordings_service
+        self.app.state.serial = self.serial
 
         self.app.include_router(camera_router, prefix="/api/devices")
         self.app.include_router(preferences_router, prefix="/api/preferences")
@@ -135,7 +140,7 @@ class Server:
             self.app.include_router(pwm_router, prefix="/api/pwm")
             self.preferences_manager.on(
                 "preferences_updated",
-                lambda preferences: self.device_manager.serial.set_frequency_offset(
+                lambda preferences: self.serial.set_frequency_offset(
                     preferences.frequency_offset
                 ),
             )
@@ -163,8 +168,8 @@ class Server:
         # loop over and emit the logs to the client
         asyncio.create_task(self.emit_logs())
 
-        if self.feature_support.serial and self.device_manager.serial:
-            self.device_manager.serial.start()
+        if self.feature_support.serial:
+            self.serial.start()
 
         self.device_manager.start_monitoring()
 

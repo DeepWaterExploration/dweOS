@@ -11,6 +11,7 @@ import struct
 import threading
 import time
 from collections.abc import Callable
+from enum import Enum
 from typing import Any
 
 from event_emitter import EventEmitter
@@ -19,6 +20,12 @@ from . import xu_controls as xu
 from .device import BaseOption, ControlTypeEnum, Device, StreamEncodeTypeEnum
 from .enumeration import DeviceInfo
 from .saved_pydantic_schemas import SavedDeviceModel
+
+
+def get_val(addr: Enum | int):
+    if isinstance(addr, Enum):
+        return addr.value
+    return addr
 
 
 class StorageOption(BaseOption, EventEmitter):
@@ -338,13 +345,7 @@ class SHDDevice(Device):
         unit = xu.Unit.SYS_ID
         selector = xu.Selector.SYS_ASIC_RW
         # Accept enum
-        addr_val = (
-            addr.value
-            if hasattr(  # type: ignore
-                addr, "value"
-            )
-            else addr
-        )
+        addr_val = get_val(addr)
         size = 4
 
         # Dummy writes are used for asic reading
@@ -356,13 +357,7 @@ class SHDDevice(Device):
         return self.cameras[0].uvc_set_ctrl(unit.value, selector.value, ctrl_data, size)
 
     def _asic_read(self, addr: int | xu.StellarRegisterMap) -> tuple[int, int]:
-        addr_val = (
-            addr.value
-            if hasattr(  # type: ignore
-                addr, "value"
-            )
-            else addr
-        )
+        addr_val = get_val(addr)
 
         # perform a dummy write to select the correct address
         ret = self._asic_write(addr_val, 0, True)

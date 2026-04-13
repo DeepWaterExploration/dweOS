@@ -33,6 +33,7 @@ jobs:
 
       - name: Install dependencies
         run: | # TODO: switch to using proper dev dependencies
+          apt-get install build-essential libdbus-glib-1-dev libdbus-1-dev libpython3-dev -y # For dbus-python
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install ruff bandit ty # dev dependencies

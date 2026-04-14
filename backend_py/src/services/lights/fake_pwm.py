@@ -10,14 +10,14 @@ class FakePWMController(PWMController):
     def is_pwm_pin(self, pin: int) -> bool:
         return True
 
-    def set_intensity(self, pin: int, intensity: float):
+    def set_intensity(self, pin: int, intensity: float) -> None:
         # logging.log(f'{}')
         pass
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         pass
 
-    def disable_pin(self, pin: int):
+    def disable_pin(self, pin: int) -> None:
         pass
 
     def get_pins(self):

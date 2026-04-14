@@ -29,17 +29,19 @@ class PWMManager:
 
         self.logger = logging.getLogger("dwe_os_2.services.PWMManager")
 
-    def enable_channel(self, chip_id: int, channel_id: int):
+    def enable_channel(self, chip_id: int, channel_id: int) -> None:
         self._echo(
             os.path.join(self._get_channel_path(chip_id, channel_id), "enable"), 1
         )
 
-    def disable_channel(self, chip_id: int, channel_id: int):
+    def disable_channel(self, chip_id: int, channel_id: int) -> None:
         self._echo(
             os.path.join(self._get_channel_path(chip_id, channel_id), "enable"), 0
         )
 
-    def set_channel_frequency(self, chip_id: int, channel_id: int, frequency: float):
+    def set_channel_frequency(
+        self, chip_id: int, channel_id: int, frequency: float
+    ) -> None:
         channel = self._get_channel(chip_id, channel_id)
 
         if not channel:
@@ -59,7 +61,9 @@ class PWMManager:
         # Restore the original duty cycle
         self._set_duty_cycle(chip_id, channel_id, original_duty_cycle, frequency)
 
-    def set_channel_duty_cycle(self, chip_id: int, channel_id: int, duty_cycle: float):
+    def set_channel_duty_cycle(
+        self, chip_id: int, channel_id: int, duty_cycle: float
+    ) -> None:
         channel = self._get_channel(chip_id, channel_id)
 
         if not channel:
@@ -69,7 +73,9 @@ class PWMManager:
         self._set_duty_cycle(chip_id, channel_id, duty_cycle, channel.frequency)
         channel.duty_cycle = duty_cycle
 
-    def _set_channel_frequency(self, chip_id: int, channel_id: int, frequency: float):
+    def _set_channel_frequency(
+        self, chip_id: int, channel_id: int, frequency: float
+    ) -> None:
         period_ns = int((1 / frequency) * 1_000_000_000)
         period_path = os.path.join(
             self._get_channel_path(chip_id, channel_id), "period"
@@ -79,7 +85,7 @@ class PWMManager:
 
     def _set_duty_cycle(
         self, chip_id: int, channel_id: int, duty_cycle: float, frequency: float
-    ):
+    ) -> None:
         # Compute duty cycle in nanoseconds
         period_ns = int((1 / frequency) * 1_000_000_000)
         duty_cycle_ns = int((duty_cycle / 100) * period_ns)
@@ -96,12 +102,12 @@ class PWMManager:
     def _get_channel_path(self, chip_id: int, channel_id: int) -> str:
         return os.path.join(self._get_chip_path(chip_id), f"pwm{channel_id}")
 
-    def _get_channel(self, chip_id: int, channel_id: int):
+    def _get_channel(self, chip_id: int, channel_id: int) -> PWMChannel | None:
         chip = self._get_chip(chip_id)
 
         if not chip:
             self.logger.error(f"Failed to get chip: {chip_id}:{channel_id}")
-            return
+            return None
 
         for channel in chip.channels:
             if channel.channel == channel_id:
@@ -109,17 +115,17 @@ class PWMManager:
 
         return None
 
-    def _get_chip(self, chip_id: int):
+    def _get_chip(self, chip_id: int) -> PWMChip | None:
         for chip in self.chips:
             if chip.chip == chip_id:
                 return chip
         return None
 
-    def _echo(self, file: str, value: int):
+    def _echo(self, file: str, value: int) -> None:
         with open(file, "w") as export_file:
             export_file.write(str(value))
 
-    def _enumerate(self):
+    def _enumerate(self) -> None:
         for chip_entry in os.listdir(self.PWM_BASE_PATH):
             # Get the match of the chip
             chip_match = self.CHIP_REGEX.match(chip_entry)

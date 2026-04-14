@@ -60,12 +60,12 @@ class RPiHardwarePWMController(PWMController):
         """
         return pin in self.PWM_PINS if self.pwm_supported else False
 
-    def disable_pin(self, pin: int):
+    def disable_pin(self, pin: int) -> None:
         # FIXME: Not implemented
         # Planned to be implemented soon
         pass
 
-    def set_intensity(self, pin: int, intensity: float):
+    def set_intensity(self, pin: int, intensity: float) -> None:
         if not self.is_pwm_pin(pin):
             self.logger.warning(
                 f"Attempted to use pin: {pin}, which is not supported by this device"
@@ -75,7 +75,7 @@ class RPiHardwarePWMController(PWMController):
         duty_cycle = max(0, min(100, intensity))
         self.pwm_objects[pin].change_duty_cycle(duty_cycle)
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         for pwm in self.pwm_objects.values():
             pwm.stop()
 

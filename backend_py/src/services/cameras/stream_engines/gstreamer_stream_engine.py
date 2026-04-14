@@ -24,7 +24,7 @@ class GStreamerPipelineBuilder:
         return f"{source} ! {caps} ! {payload} ! {sink}"
 
     @staticmethod
-    def _get_format(stream: Stream):
+    def _get_format(stream: Stream) -> str:
         match stream.encode_type:
             case StreamEncodeTypeEnum.H264:
                 return "video/x-h264"
@@ -36,18 +36,18 @@ class GStreamerPipelineBuilder:
                 return ""
 
     @staticmethod
-    def _build_source(stream: Stream):
+    def _build_source(stream: Stream) -> str:
         return f"v4l2src device={stream.device_path}"
 
     @staticmethod
-    def _construct_caps(stream: Stream):
+    def _construct_caps(stream: Stream) -> str:
         return (
             f"{GStreamerPipelineBuilder._get_format(stream)},width={stream.width},"
             f"height={stream.height},framerate={stream.interval.denominator}/{stream.interval.numerator}"
         )
 
     @staticmethod
-    def _build_payload(stream: Stream):
+    def _build_payload(stream: Stream) -> str:
         match stream.encode_type:
             case StreamEncodeTypeEnum.H264:
                 if stream.stream_type == StreamTypeEnum.RECORDING:
@@ -137,7 +137,7 @@ class GStreamerProcessEngine(BaseStreamEngine):
     GStreamer stream Engine
     """
 
-    def __init__(self, streams, error_callback):
+    def __init__(self, streams, error_callback) -> None:
         super().__init__(streams, error_callback)
 
         self._process: subprocess.Popen | None = None
@@ -145,7 +145,7 @@ class GStreamerProcessEngine(BaseStreamEngine):
         self._lock = threading.RLock()
         self.started = False
 
-    def start(self):
+    def start(self) -> None:
         with self._lock:
             self.logger.info(
                 "Starting stream for devices: "
@@ -156,7 +156,7 @@ class GStreamerProcessEngine(BaseStreamEngine):
             self.started = True
             self._run_pipeline()
 
-    def _run_pipeline(self):
+    def _run_pipeline(self) -> None:
         pipeline_str = self._construct_pipeline()
         self.logger.info(pipeline_str)
         has_recording_stream = any(
@@ -175,7 +175,7 @@ class GStreamerProcessEngine(BaseStreamEngine):
         self._error_thread = threading.Thread(target=self._monitor_stderr)
         self._error_thread.start()
 
-    def stop(self):
+    def stop(self) -> None:
         with self._lock:
             if not self.started or not self._process:
                 return
@@ -212,7 +212,7 @@ class GStreamerProcessEngine(BaseStreamEngine):
         parts = [GStreamerPipelineBuilder.build(s) for s in self.streams]
         return " ".join(parts)
 
-    def _monitor_stderr(self):
+    def _monitor_stderr(self) -> None:
         error_block = []
 
         if not self._process or not self._process.stderr:

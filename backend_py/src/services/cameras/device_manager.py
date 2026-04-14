@@ -12,7 +12,7 @@ Manages the leader follower connections
 import asyncio
 import logging
 import traceback
-from typing import cast
+from typing import Any, cast
 
 import event_emitter as events
 import socketio
@@ -33,7 +33,7 @@ from .settings import SettingsManager
 from .shd import SHDDevice
 
 
-def todict(obj, classkey=None):
+def todict(obj, classkey=None) -> Any:
     if isinstance(obj, dict):
         data = {}
         for k, v in obj.items():
@@ -80,14 +80,14 @@ class DeviceManager(events.EventEmitter):
 
         self.logger = logging.getLogger("dwe_os_2.cameras.DeviceManager")
 
-    def start_monitoring(self):
+    def start_monitoring(self) -> None:
         """
         Begin monitoring for devices in the background
         """
         self._is_monitoring = True
         asyncio.create_task(self._monitor())
 
-    def stop_monitoring(self):
+    def stop_monitoring(self) -> None:
         """
         Stop monitoring for devices
         """
@@ -130,14 +130,14 @@ class DeviceManager(events.EventEmitter):
 
         return device
 
-    def _append_stream_error(self, device: DeviceModel):
+    def _append_stream_error(self, device: DeviceModel) -> None:
         """
         Helper function to append a gst error
         """
         device.stream.enabled = False
         self.stream_errors.append(device.bus_info)
 
-    def get_devices(self):
+    def get_devices(self) -> list[DeviceModel]:
         """
         Compile and sort a list of devices for jsonifcation
         """
@@ -209,7 +209,7 @@ class DeviceManager(events.EventEmitter):
         self.settings_manager.save_device(device)
         return True
 
-    def add_follower(self, leader_bus_info: str, follower_bus_info: str):
+    def add_follower(self, leader_bus_info: str, follower_bus_info: str) -> bool:
         """
         Add a follower to a leader
         """
@@ -229,7 +229,7 @@ class DeviceManager(events.EventEmitter):
 
         return True
 
-    def remove_follower(self, leader_bus_info: str, follower_bus_info: str):
+    def remove_follower(self, leader_bus_info: str, follower_bus_info: str) -> bool:
         """
         Remove a follower from a leader
         """
@@ -270,7 +270,7 @@ class DeviceManager(events.EventEmitter):
             raise DeviceNotFoundException(bus_info)
         return device
 
-    async def _get_devices(self, old_devices: list[DeviceInfo]):
+    async def _get_devices(self, old_devices: list[DeviceInfo]) -> list[DeviceInfo]:
         # enumerate the devices
         devices_info = list_devices()
 
@@ -366,7 +366,7 @@ class DeviceManager(events.EventEmitter):
 
         return devices_info
 
-    async def _monitor(self):
+    async def _monitor(self) -> None:
         """
         Internal code to monitor devices for changes
         """
@@ -379,7 +379,7 @@ class DeviceManager(events.EventEmitter):
             # get the list of devices and update the internal array
             devices_info = await self._get_devices(devices_info)
 
-    async def _emit_stream_error(self, device: str, errors: list | str):
+    async def _emit_stream_error(self, device: str, errors: list | str) -> None:
         """
         Emit a stream_error and make sure it is not due to the device being unplugged
         """

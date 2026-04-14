@@ -66,7 +66,7 @@ app = socketio.ASGIApp(sio, other_asgi_app=app)
 if __name__ == "__main__":
     import uvicorn
 
-    async def main():
+    async def main() -> None:
         config = uvicorn.Config(app, host="0.0.0.0", port=5000, log_level="warning")
         server = uvicorn.Server(config)
         await server.serve()

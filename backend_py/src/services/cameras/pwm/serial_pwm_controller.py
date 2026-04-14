@@ -33,7 +33,7 @@ def _find_pwm_device_path() -> str | None:
 
 
 class SerialPWMController:
-    def __init__(self, baudrate: int = 9600, frequency_offset: float = 0):
+    def __init__(self, baudrate: int = 9600, frequency_offset: float = 0) -> None:
         self.found_port = False
         self.has_printed_error = False
         self.frequency_offset = frequency_offset
@@ -46,7 +46,7 @@ class SerialPWMController:
         self._monitor_task: asyncio.Task | None = None
         self._running = False
 
-    def set_frequency_offset(self, frequency_offset: float):
+    def set_frequency_offset(self, frequency_offset: float) -> None:
         self.frequency_offset = frequency_offset
         self.apply(self.frequency, self.duty_cycle)
 
@@ -98,14 +98,14 @@ class SerialPWMController:
         finally:
             self._disconnect_serial()
 
-    def start(self):
+    def start(self) -> None:
         """Starts the background asyncio task to sync settings."""
         if self._monitor_task is not None and not self._monitor_task.done():
             return
         self._running = True
         self._monitor_task = asyncio.create_task(self._monitor_loop())
 
-    def apply(self, frequency: float, duty_cycle: int):
+    def apply(self, frequency: float, duty_cycle: int) -> None:
         # Make sure that even if the serial pwm is not yet connected, it will
         # have the correct clock frequency
         self.frequency = frequency
@@ -119,13 +119,13 @@ class SerialPWMController:
         if self.serial:
             self.serial.write(command.encode("utf-8"))
 
-    def apply_from_fps(self, fps: int):
+    def apply_from_fps(self, fps: int) -> None:
         self.apply(frequency_table[fps], 30)
 
-    def stop(self):
+    def stop(self) -> None:
         self.apply(0, 0)
 
-    def close(self):
+    def close(self) -> None:
         self._running = False
         if self._monitor_task is not None:
             self._monitor_task.cancel()

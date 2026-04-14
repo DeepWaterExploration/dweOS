@@ -47,7 +47,7 @@ def _get_vid_pid(devname) -> tuple[int, int] | None:
     )
 
 
-def list_devices():
+def list_devices() -> list[DeviceInfo]:
     # traverse the directory that has the list of all devices
     devnames: list[str] = []
     try:

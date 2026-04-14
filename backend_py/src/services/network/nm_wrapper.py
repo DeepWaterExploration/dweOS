@@ -30,7 +30,7 @@ class ConnectionProfileModel(BaseModel):
 
 
 class NetworkWrapper(EventEmitter):
-    def __init__(self, sio: socketio.AsyncServer):
+    def __init__(self, sio: socketio.AsyncServer) -> None:
         super().__init__()
 
         self.logger = logging.getLogger("dwe_os_2.network.NetworkWrapper")
@@ -41,7 +41,7 @@ class NetworkWrapper(EventEmitter):
         self.last_connection_time = time.time()
 
         @self.sio.on("connect")
-        def on_connect(sid, environ):
+        def on_connect(sid, environ) -> None:
             self.logger.info(f"Connection detected: {sid}")
             self.last_connection_time = time.time()
 
@@ -52,10 +52,10 @@ class NetworkWrapper(EventEmitter):
 
         self._rollback_timer_task: asyncio.Task | None = None
 
-    def _refresh_ui(self):
+    def _refresh_ui(self) -> None:
         self.emit("refresh_ui")
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         await self.nm.initialize()
 
     def get_wired_devices(self) -> list[WiredDeviceModel]:
@@ -90,7 +90,7 @@ class NetworkWrapper(EventEmitter):
 
     async def update_connection_profile(
         self, path: str, ip_configuration: IPV4Configuration
-    ):
+    ) -> bool:
         profile = self.nm.get_profile(path)
         if profile:
             await profile.update_ipv4_configuration(ip_configuration)
@@ -101,7 +101,7 @@ class NetworkWrapper(EventEmitter):
 
     async def activate_interface(
         self, interface: str, profile_path: str, enable_rollback=True
-    ):
+    ) -> bool:
         profile = self.nm.get_profile(profile_path)
         device = self.nm.get_device_by_iface(interface)
         if not profile or not device:
@@ -120,7 +120,7 @@ class NetworkWrapper(EventEmitter):
 
         return True
 
-    async def _force_dhcp(self, interface: str, profile_path: str):
+    async def _force_dhcp(self, interface: str, profile_path: str) -> None:
         safe_ip_config = IPV4Configuration(method=IPV4Method.auto, never_default=False)
 
         await self.update_connection_profile(profile_path, safe_ip_config)
@@ -128,7 +128,7 @@ class NetworkWrapper(EventEmitter):
 
     async def _rollback_timer(
         self, interface: str, profile_path: str, time_of_change: float, timeout: int
-    ):
+    ) -> None:
         await asyncio.sleep(timeout)
 
         if self.last_connection_time < time_of_change:

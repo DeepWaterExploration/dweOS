@@ -10,7 +10,7 @@ from .base_stream_engine import BaseStreamEngine
 
 
 class SynchronizedStreamEngine(BaseStreamEngine):
-    def __init__(self, streams, error_callback):
+    def __init__(self, streams, error_callback) -> None:
         super().__init__(streams, error_callback)
 
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -47,7 +47,9 @@ class SynchronizedStreamEngine(BaseStreamEngine):
                 self.emit_error(e.strerror)
 
     # <AI-Assisted> Custom RTP improves performance compared to RTP class
-    def _send_frame(self, frames: list[CopiedFrame], endpoint: StreamEndpointModel):
+    def _send_frame(
+        self, frames: list[CopiedFrame], endpoint: StreamEndpointModel
+    ) -> None:
         # TODO: change protocol to handle more than two cameras
         if len(frames) > 2:
             self.logger.warning(
@@ -107,7 +109,7 @@ class SynchronizedStreamEngine(BaseStreamEngine):
             offset += chunk_size
             sequence_number = (sequence_number + 1) & 0xFFFF
 
-    def start(self):
+    def start(self) -> None:
         self.logger.info(
             "Starting synchronized stream with: "
             f"{(', '.join([stream.device_path for stream in self.streams]))}"
@@ -134,7 +136,7 @@ class SynchronizedStreamEngine(BaseStreamEngine):
         self.stream_thread = threading.Thread(target=self.stream_loop_)
         self.stream_thread.start()
 
-    def stop(self):
+    def stop(self) -> None:
         try:
             self._running = False
 
@@ -145,7 +147,7 @@ class SynchronizedStreamEngine(BaseStreamEngine):
         except TimeoutError as e:
             self.logger.error(f"Timeout exceeded while joining capture thread: {e}")
 
-    def capture_loop_(self):
+    def capture_loop_(self) -> None:
         if not self.synchronized_camera:
             self.logger.error(
                 "Cannot run capture loop when synchronized camera is not defined!"
@@ -162,7 +164,7 @@ class SynchronizedStreamEngine(BaseStreamEngine):
             self.frame_queue.append((frames[0], frames[1]))
         self.synchronized_camera.stop()
 
-    def stream_loop_(self):
+    def stream_loop_(self) -> None:
         while self._running:
             try:
                 endpoint = self.streams[0].endpoints[0]

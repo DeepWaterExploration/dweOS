@@ -20,14 +20,14 @@ def get_frequency(request: Request) -> float:
 
 
 @pwm_router.post("/frequency")
-def set_frequency(request: Request, frequency: float):
+def set_frequency(request: Request, frequency: float) -> None:
     serial: SerialPWMController = request.app.state.serial
 
     serial.apply(frequency, 30)
 
 
 @pwm_router.post("/apply_from_fps")
-def apply_from_fps(request: Request, fps: int):
+def apply_from_fps(request: Request, fps: int) -> None:
     serial: SerialPWMController = request.app.state.serial
 
     serial.apply_from_fps(fps)

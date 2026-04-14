@@ -9,14 +9,14 @@ class SystemManager:
     def __init__(self) -> None:
         self.logger = logging.getLogger("dwe_os_2.SystemManager")
 
-    def restart_system(self):
+    def restart_system(self) -> None:
         self.logger.info("Restarting system")
         try:
             subprocess.run(self.REBOOT_COMMAND, check=True)
         except subprocess.CalledProcessError as e:
             self.logger.error(f"Failed to restart system: {e}")
 
-    def shutdown_system(self):
+    def shutdown_system(self) -> None:
         self.logger.info("Shutting down system")
         try:
             subprocess.run(self.SHUTDOWN_COMMAND, check=True)

@@ -32,7 +32,7 @@ class LightManager:
                     )
                 )
 
-    def set_intensity(self, index: int, intensity: float):
+    def set_intensity(self, index: int, intensity: float) -> None:
         light = self.lights[index]
         light.intensity = intensity
         pwm_controller = self.pwm_controllers[light.controller_index]
@@ -41,7 +41,7 @@ class LightManager:
         )
         pwm_controller.set_intensity(light.pin, intensity)
 
-    def disable_light(self, controller_index: int, pin: int):
+    def disable_light(self, controller_index: int, pin: int) -> None:
         if controller_index >= len(self.pwm_controllers):
             self.logger.error("Invalid index given for pwm controller")
             return
@@ -53,6 +53,6 @@ class LightManager:
     def get_lights(self):
         return self.lights
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         for pwm_controller in self.pwm_controllers:
             pwm_controller.cleanup()

@@ -17,7 +17,7 @@ class LogHandler(logging.Handler):
         self.to_emit = []
         return logs
 
-    def emit(self, record):
+    def emit(self, record) -> None:
         log = {
             "timestamp": record.asctime,
             "level": record.levelname,

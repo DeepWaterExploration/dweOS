@@ -10,7 +10,7 @@ class BaseStreamEngine(ABC):
     Abstract class for any streaming backend
     """
 
-    def __init__(self, streams: list[Stream], error_callback: Callable[[str], None]):
+    def __init__(self, streams: list[Stream], error_callback: Callable[[str], None]) -> None:
         super().__init__()
 
         self.streams = streams

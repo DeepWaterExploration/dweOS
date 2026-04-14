@@ -17,6 +17,7 @@ select = [
   "SIM",
   # isort
   "I",
+  "ANN2",
 ]
 
 [tool.ruff.format]

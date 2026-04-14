@@ -24,7 +24,7 @@ class RecordingInfo(BaseModel):
 
 
 class RecordingsService:
-    def __init__(self):
+    def __init__(self) -> None:
 
         self.recordings_path = os.path.join(os.getcwd(), "videos")
         self.recordings: list[RecordingInfo] = []

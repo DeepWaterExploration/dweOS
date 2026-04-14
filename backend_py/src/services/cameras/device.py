@@ -16,6 +16,7 @@ from typing import Any
 
 import event_emitter as events
 from linuxpy.video import device
+from pydantic.v1 import NoneBytes
 
 from . import v4l2
 from . import xu_controls as xu
@@ -133,7 +134,7 @@ class Camera:
         self._fd = self._file_object.fileno()  # get the file descriptor
         self._get_formats()
 
-    def close(self):
+    def close(self) -> None:
         self._file_object.close()
 
     # uvc_set_ctrl function defined in uvc_functions.c
@@ -147,7 +148,7 @@ class Camera:
     def has_format(self, pixformat: str) -> bool:
         return pixformat in self.formats
 
-    def _get_formats(self):
+    def _get_formats(self) -> None:
         self.formats: dict[str, list[FormatSizeModel]] = {}
         for i in range(1000):
             v4l2_fmt = v4l2.v4l2_fmtdesc()
@@ -197,7 +198,7 @@ class Camera:
 
 
 class BaseOption(ABC):
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         self.name = name
 
     @abstractmethod
@@ -205,7 +206,7 @@ class BaseOption(ABC):
         pass
 
     @abstractmethod
-    def set_value(self, value):
+    def set_value(self, value) -> NoneBytes:
         pass
 
 
@@ -243,7 +244,7 @@ class Option(BaseOption):
         self._data = b"\x00" * size
 
     # get the control value(s)
-    def get_value_raw(self):
+    def get_value_raw(self) -> tuple[Any, ...] | Any:
         self._get_ctrl()
         values = self._unpack(self._fmt)
         self._clear()
@@ -253,19 +254,19 @@ class Option(BaseOption):
         return values
 
     # set the control value
-    def set_value_raw(self, *arg: list):
+    def set_value_raw(self, *arg: list) -> None:
         self._pack(self._fmt, *arg)
         self._set_ctrl()
         self._clear()
 
-    def set_value(self, value):
+    def set_value(self, value) -> None:
         converted = self._conversion_func_set(value)
         if isinstance(converted, list):
             self.set_value_raw(*converted)
         else:
             self.set_value_raw(converted)
 
-    def get_value(self):
+    def get_value(self) -> list | Any:
         return self._conversion_func_get(self.get_value_raw())
 
     # pack data to internal buffer
@@ -278,7 +279,7 @@ class Option(BaseOption):
     def _unpack(self, fmt: str) -> tuple[Any, ...]:
         return struct.unpack_from(fmt, self._data)
 
-    def _set_ctrl(self):
+    def _set_ctrl(self) -> None:
         data = bytearray(self._size)
         data[0] = xu.DWE_DEVICE_TAG
         data[1] = self._command.value
@@ -292,7 +293,7 @@ class Option(BaseOption):
             self._unit.value, self._ctrl.value, self._data, self._size
         )
 
-    def _get_ctrl(self):
+    def _get_ctrl(self) -> None:
         data = bytearray(self._size)
         data[0] = xu.DWE_DEVICE_TAG
         data[1] = self._command.value
@@ -306,7 +307,7 @@ class Option(BaseOption):
             self._unit.value, self._ctrl.value, self._data, self._size
         )
 
-    def _clear(self):
+    def _clear(self) -> None:
         self._data = b"\x00" * self._size
 
 
@@ -340,7 +341,7 @@ class Device(events.EventEmitter):
         for camera in self.cameras:
             for encoding in camera.formats:
                 encode_type = string_to_stream_encode_type(encoding)
-                if encode_type:
+                if encode_type != StreamEncodeTypeEnum.NONE:
                     self.stream.encode_type = encode_type
                     # The highest resolution is the default
                     # Most users will use this, however it is available to be changed
@@ -368,14 +369,14 @@ class Device(events.EventEmitter):
 
         self._get_controls()
 
-    def _on_stream_error(self, err: str):
+    def _on_stream_error(self, err: str) -> None:
         self.logger.error(err)
         # TODO
 
     def _get_options(self) -> dict[str, BaseOption]:
         return {}
 
-    def _get_controls(self):
+    def _get_controls(self) -> None:
         # fd = self.cameras[0]._fd
         self.controls: list[ControlModel] = []
 
@@ -444,7 +445,7 @@ class Device(events.EventEmitter):
         interval: IntervalModel,
         stream_type: StreamTypeEnum,
         stream_endpoints: list[StreamEndpointModel] | None = None,
-    ):
+    ) -> None:
         if stream_endpoints is None:
             stream_endpoints = []
 
@@ -487,7 +488,7 @@ class Device(events.EventEmitter):
         max_value: float = 0,
         min_value: float = 0,
         step: float = 0,
-    ):
+    ) -> None:
         try:
             option = self._options[option_name]
             value = int(option.get_value())
@@ -516,15 +517,15 @@ class Device(events.EventEmitter):
             )
             self.logger.error("Failed to add option to controls list.")
 
-    def start_stream(self):
+    def start_stream(self) -> None:
         self.stream.enabled = True
         self.stream_runner.start()
 
-    def stop_stream(self):
+    def stop_stream(self) -> None:
         self.stream.enabled = False
         self.stream_runner.stop()
 
-    def close(self):
+    def close(self) -> None:
         """
         Cleanup resources of the device
         """
@@ -532,7 +533,7 @@ class Device(events.EventEmitter):
             camera.close()
         self.v4l2_device.close()
 
-    def load_settings(self, saved_device: SavedDeviceModel):
+    def load_settings(self, saved_device: SavedDeviceModel) -> None:
         self.logger.info(self._fmt_log("Loading device settings"))
 
         for control in saved_device.controls:
@@ -552,18 +553,18 @@ class Device(events.EventEmitter):
         if self.stream.enabled:
             self.start_stream()
 
-    def unconfigure_stream(self):
+    def unconfigure_stream(self) -> None:
         self.stream_runner.stop()
         self.logger.info(self._fmt_log("Stream stopped"))
 
-    def get_pu(self, control_id: int):
+    def get_pu(self, control_id: int) -> int | None:
         if not self.v4l2_device.controls:
             self.logger.error("v4l2_device.controls == None. Unable to get pu")
             return None
         control = self.v4l2_device.controls[control_id]
         return control.value
 
-    def set_pu(self, control_id: int, value: int | float):
+    def set_pu(self, control_id: int, value: int | float) -> bool | None:
         if not self.v4l2_device.controls:
             self.logger.critical("v4l2_device.controls is None; unable to run set_pu")
             return
@@ -600,11 +601,10 @@ class Device(events.EventEmitter):
         return None
 
     # set an option
-    def set_option(self, opt: str, value: Any):
+    def set_option(self, opt: str, value: Any) -> None:
         # self.logger.debug(self._fmt_log(f"Setting option - {opt} to {value}"))
         if opt in self._options:
-            return self._options[opt].set_value(value)
-        return None
+            self._options[opt].set_value(value)
 
     def _fmt_log(self, message: str) -> str:
         return f"{self.bus_info} - {message}"

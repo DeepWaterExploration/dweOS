@@ -46,7 +46,7 @@ class V4L2Camera:
         fps: int,
         pixel_format: int = v4l2.V4L2_PIX_FMT_MJPEG,
         buffer_count: int = 4,
-    ):
+    ) -> None:
 
         self.device = device
         self.width = width
@@ -72,7 +72,7 @@ class V4L2Camera:
         self._queue_all_buffers()
         self._start_stream()
 
-    def _ioctl(self, req, arg):
+    def _ioctl(self, req, arg) -> int:
         if self.fd is None:
             raise RuntimeError("V4L2Camera.fd is not defined. Unable to run ioctl.")
 
@@ -82,7 +82,7 @@ class V4L2Camera:
             self.logger.error(f"IOCTL error: {e.strerror}")
             return -1
 
-    def _set_format(self):
+    def _set_format(self) -> None:
         fmt = v4l2.v4l2_format()
         fmt.type = v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE
         fmt.fmt.pix.width = self.width
@@ -92,7 +92,7 @@ class V4L2Camera:
 
         self._ioctl(v4l2.VIDIOC_S_FMT, fmt)
 
-    def _set_fps(self):
+    def _set_fps(self) -> None:
         parm = v4l2.v4l2_streamparm()
         parm.type = v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE
 
@@ -108,7 +108,7 @@ class V4L2Camera:
 
         self._ioctl(v4l2.VIDIOC_S_PARM, parm)
 
-    def _request_and_map_buffers(self):
+    def _request_and_map_buffers(self) -> None:
         if self.fd is None:
             raise RuntimeError("V4L2Camera.fd is not defined. Unable to map buffers.")
 
@@ -147,7 +147,7 @@ class V4L2Camera:
             )
             self._buffers.append(mm)
 
-    def _queue_all_buffers(self):
+    def _queue_all_buffers(self) -> None:
         for i in range(self.buffer_count):
             buf = v4l2.v4l2_buffer()
             buf.type = v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE
@@ -155,12 +155,12 @@ class V4L2Camera:
             buf.index = i
             self._ioctl(v4l2.VIDIOC_QBUF, buf)
 
-    def _start_stream(self):
+    def _start_stream(self) -> None:
         buf_type = ctypes.c_int(v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE)
         self._ioctl(v4l2.VIDIOC_STREAMON, buf_type)
         self._running = True
 
-    def _stop_stream(self):
+    def _stop_stream(self) -> None:
         if not self._running:
             return
         buf_type = ctypes.c_int(v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE)
@@ -209,7 +209,7 @@ class V4L2Camera:
             timestamp_us=ts_us,
         )
 
-    def close(self):
+    def close(self) -> None:
         if self.critical_error:
             return
 
@@ -236,15 +236,15 @@ class V4L2Camera:
             os.close(self.fd)
             self.fd = None
 
-    def __enter__(self):
+    def __enter__(self) -> "V4L2Camera":
         # Cool
         return self
 
-    def __exit__(self, exc_type, exc, tb):
+    def __exit__(self, exc_type, exc, tb) -> None:
         # We don't use this, but is useful in the case of with v4l2_camera as...
         self.close()
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.close()
 
 
@@ -253,7 +253,7 @@ class SynchronizedCamera:
     Synchronized Camera Class
     """
 
-    def __init__(self, cameras: list[V4L2Camera], queue_cap: int = 8):
+    def __init__(self, cameras: list[V4L2Camera], queue_cap: int = 8) -> None:
         for camera in cameras:
             if camera.critical_error:
                 raise AssertionError(
@@ -286,7 +286,7 @@ class SynchronizedCamera:
     def _queues_full(self) -> bool:
         return all(len(q) > 0 for q in self.queues)
 
-    def stop(self):
+    def stop(self) -> None:
         for cam in self.cameras:
             cam.close()
 

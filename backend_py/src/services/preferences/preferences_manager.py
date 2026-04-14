@@ -23,7 +23,7 @@ class PreferencesManager(events.EventEmitter):
         self.settings = SavedPreferencesModel()
         self._load_settings()
 
-    def save(self, preferences: SavedPreferencesModel):
+    def save(self, preferences: SavedPreferencesModel) -> None:
         self.settings = preferences
         self.emit("preferences_updated", preferences)
         self._save_settings()
@@ -34,14 +34,14 @@ class PreferencesManager(events.EventEmitter):
     def serialize_preferences(self):
         return self.settings
 
-    def _load_settings(self):
+    def _load_settings(self) -> None:
         with self.path.open("r") as f:
             settings: list[dict] = json.loads(f.read())
             self.settings: SavedPreferencesModel = SavedPreferencesModel.model_validate(
                 settings
             )
 
-    def _save_settings(self):
+    def _save_settings(self) -> None:
         # CHECK: is this thread safe?
         with self.path.open("w", encoding="utf-8") as f:
             f.write(self.settings.model_dump_json(indent=4))

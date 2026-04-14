@@ -45,13 +45,13 @@ class StreamRunner(events.EventEmitter):
             self.logger.info("Single stream detected: Using GStreamerProcessEngine.")
             return GStreamerProcessEngine(self.streams, self._on_engine_error)
 
-    def _on_engine_error(self, error_data):
+    def _on_engine_error(self, error_data) -> None:
         """Callback to bubble up errors from the engine to the runner's listeners."""
         # TODO: change to general stream error
         self.emit("stream_error", error_data)
         self.stop()
 
-    def start(self):
+    def start(self) -> None:
         with self._lock:
             self.logger.info(
                 f"Starting streams: {[s.device_path for s in self.streams]}"
@@ -72,7 +72,7 @@ class StreamRunner(events.EventEmitter):
                 self.logger.error(f"Failed to start engine: {e}")
                 self.started = False
 
-    def stop(self):
+    def stop(self) -> None:
         with self._lock:
             if not self.started:
                 return

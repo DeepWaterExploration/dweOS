@@ -24,6 +24,6 @@ class TTYDManager:
             self.TTYD_CMD, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
         )
 
-    def kill(self):
+    def kill(self) -> None:
         if self._process:
             self._process.kill()

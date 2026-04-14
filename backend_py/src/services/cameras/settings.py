@@ -55,14 +55,14 @@ class SettingsManager:
             self.settings = []
             self.file_object.flush()
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         if self.file_object:
             self.file_object.close()
 
         self.is_running = False
         self.thread.join(timeout=1)
 
-    def load_device(self, device: Device, devices: list[Device]):
+    def load_device(self, device: Device, devices: list[Device]) -> None:
         for saved_device in self.settings:
             if saved_device.bus_info == device.bus_info:
                 if device.device_type != saved_device.device_type:
@@ -129,7 +129,7 @@ class SettingsManager:
 
                 return
 
-    def link_followers(self, devices: list[Device]):
+    def link_followers(self, devices: list[Device]) -> None:
         """
         Run this when we need to check for new devices
         """
@@ -169,7 +169,7 @@ class SettingsManager:
                 follower = cast(SHDDevice, follower)
                 leader.add_follower(follower)
 
-    def _save_device(self, saved_device: SavedDeviceModel):
+    def _save_device(self, saved_device: SavedDeviceModel) -> None:
         for dev in self.settings:
             if dev.bus_info == saved_device.bus_info:
                 self.settings.remove(dev)
@@ -182,13 +182,13 @@ class SettingsManager:
         self.file_object.truncate()
         self.file_object.flush()
 
-    def _run_settings_sync(self):
+    def _run_settings_sync(self) -> None:
         while self.is_running:
             for saved_device in self.to_save:
                 self._save_device(saved_device)
             self.to_save = []
             time.sleep(1)
 
-    def save_device(self, device: Device):
+    def save_device(self, device: Device) -> None:
         # schedule a save command
         self.to_save.append(SavedDeviceModel.model_validate(device))

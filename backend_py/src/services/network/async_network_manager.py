@@ -49,11 +49,11 @@ class IPV4Configuration(BaseModel):
 # ip to integer and reverse: https://stackoverflow.com/a/13294427
 
 
-def _ip_to_integer(addr: str):
+def _ip_to_integer(addr: str) -> int:
     return struct.unpack("!I", socket.inet_aton(addr))[0]
 
 
-def _integer_to_ip(addr: int):
+def _integer_to_ip(addr: int) -> str:
     return socket.inet_ntoa(struct.pack("!I", addr))
 
 
@@ -153,7 +153,7 @@ def _serialize_ipv4_config(
 
 
 class ConnectionProfile(EventEmitter):
-    def __init__(self, dbus_path: str):
+    def __init__(self, dbus_path: str) -> None:
         super().__init__()
 
         self.logger = logging.getLogger("dwe_os_2.network.ConnectionProfile")
@@ -173,27 +173,29 @@ class ConnectionProfile(EventEmitter):
             self._on_update_listener()
         )
 
-    def delete(self):
+    def delete(self) -> None:
         if self._on_update_task:
             self._on_update_task.cancel()
 
     async def _update_configuration(
         self, new_configuration: NetworkManagerConnectionProperties
-    ):
+    ) -> None:
         await self.settings.update(new_configuration)
 
-    async def update_ipv4_configuration(self, new_configuration: IPV4Configuration):
+    async def update_ipv4_configuration(
+        self, new_configuration: IPV4Configuration
+    ) -> None:
         old_settings: dict = await self.settings.get_settings()
         old_settings["ipv4"] = _serialize_ipv4_config(new_configuration)
         await self.settings.update_unsaved(old_settings)
 
-    async def save(self):
+    async def save(self) -> None:
         await self.settings.save()
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         await self._update_settings()
 
-    async def _on_update_listener(self):
+    async def _on_update_listener(self) -> None:
         async for _ in self.settings.updated.catch():
             if self.settings:
                 self.logger.debug(
@@ -201,7 +203,7 @@ class ConnectionProfile(EventEmitter):
                 )
                 await self._update_settings()
 
-    async def _update_settings(self):
+    async def _update_settings(self) -> None:
         self.emit("settings_updated")
 
         if not self.settings:
@@ -224,7 +226,7 @@ class WiredDevice(EventEmitter):
     Represents a NetworkManager wired device
     """
 
-    def __init__(self, device_path: str):
+    def __init__(self, device_path: str) -> None:
         super().__init__()
 
         self.logger = logging.getLogger("dwe_os_2.network.WiredDevice")
@@ -252,7 +254,7 @@ class WiredDevice(EventEmitter):
 
         self.manual_autoconnect = False
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         # Initialized here
         self.interface = await self.nm_device.interface
 
@@ -274,7 +276,7 @@ class WiredDevice(EventEmitter):
     def is_available(self) -> bool:
         return self.state in [DeviceState.DISCONNECTED, DeviceState.ACTIVATED]
 
-    async def _update_ipv4_connection_profile(self):
+    async def _update_ipv4_connection_profile(self) -> None:
         """
         Determine if the device is still active.
         If so, start/continue utilizing the active connection. If not, delete it.
@@ -302,7 +304,7 @@ class WiredDevice(EventEmitter):
             active_connection_path
         ).connection
 
-    async def _update_active_connection_settings(self):
+    async def _update_active_connection_settings(self) -> None:
         if self.state != DeviceState.ACTIVATED:
             self.logger.warning(
                 f"{self.interface}: Cannot update IP config of an inactive device"
@@ -338,7 +340,9 @@ class WiredDevice(EventEmitter):
 
         self.emit("ip_config_changed")
 
-    async def _set_state(self, old_state: DeviceState | None, new_state: DeviceState):
+    async def _set_state(
+        self, old_state: DeviceState | None, new_state: DeviceState
+    ) -> None:
         """
         Update the device state
         """
@@ -373,7 +377,7 @@ class WiredDevice(EventEmitter):
 
         self.emit("state_changed", old_state, self.state)
 
-    async def _listen(self):
+    async def _listen(self) -> None:
         async for (
             new_state,
             old_state,
@@ -388,7 +392,7 @@ class WiredDevice(EventEmitter):
 
 
 class AsyncNetworkManager(EventEmitter):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.logger = logging.getLogger("dwe_os_2.network.AsyncNetworkManager")
@@ -406,7 +410,7 @@ class AsyncNetworkManager(EventEmitter):
 
         self._profiles_updated_task: asyncio.Task | None = None
 
-    async def _update_profiles(self):
+    async def _update_profiles(self) -> None:
         all_paths = await self.nm_settings.connections
         self.profiles = {}
         for path in all_paths:
@@ -458,7 +462,7 @@ class AsyncNetworkManager(EventEmitter):
 
         return [p["profile"] for p in compatible_profiles]
 
-    def get_profile(self, path: str):
+    def get_profile(self, path: str) -> ConnectionProfile | None:
         """
         Get a connection profile by its dbus path.
         This is a nondeterministic value and is only used for indexing live profiles
@@ -482,7 +486,7 @@ class AsyncNetworkManager(EventEmitter):
 
     async def activate_ethernet_device_by_index(
         self, index: int, profile: ConnectionProfile | None = None
-    ):
+    ) -> None:
         if index >= len(self.ethernet_devices):
             raise IndexError("Device index out of range")
 
@@ -491,7 +495,7 @@ class AsyncNetworkManager(EventEmitter):
 
     async def activate_ethernet_device(
         self, target_device: WiredDevice, profile: ConnectionProfile | None = None
-    ):
+    ) -> None:
         if not target_device.is_available():
             self.logger.error(
                 f"Device {target_device.interface} cannot be activated "
@@ -520,11 +524,11 @@ class AsyncNetworkManager(EventEmitter):
                 return device
         return None
 
-    async def _listen_connection_profiles(self):
+    async def _listen_connection_profiles(self) -> None:
         new_conn_iter = self.nm_settings.new_connection.catch()
         rem_conn_iter = self.nm_settings.connection_removed.catch()
 
-        async def handle_new():
+        async def handle_new() -> None:
             async for path in new_conn_iter:
                 self.logger.info(f"New connection profile detected at {path}")
 
@@ -534,7 +538,7 @@ class AsyncNetworkManager(EventEmitter):
 
                 self.emit("profiles_changed")
 
-        async def handle_removed():
+        async def handle_removed() -> None:
             async for path in rem_conn_iter:
                 self.profiles[path].delete()
                 del self.profiles[path]
@@ -543,7 +547,7 @@ class AsyncNetworkManager(EventEmitter):
 
         await asyncio.gather(handle_new(), handle_removed())
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         self.all_devices = await self.nm.devices
 
         await self._update_profiles()

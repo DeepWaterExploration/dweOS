@@ -157,14 +157,14 @@ class Server:
         # Error handling
         # TODO
 
-    async def emit_logs(self):
+    async def emit_logs(self) -> None:
         while True:
             logs = self.log_handler.pop_logs()
             for log in logs:
                 await self.sio.emit("log", log.model_dump())
             await asyncio.sleep(0.1)
 
-    async def serve(self):
+    async def serve(self) -> None:
         # loop over and emit the logs to the client
         asyncio.create_task(self.emit_logs())
 
@@ -180,7 +180,7 @@ class Server:
         else:
             self.server_logger.info("Running without TTYD")
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         self.server_logger.info("Shutting down")
 
         self.light_manager.cleanup()

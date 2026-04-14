@@ -1,7 +1,7 @@
 from .pydantic_schemas import StreamEncodeTypeEnum
 
 
-def fourcc2s(fourcc: int):
+def fourcc2s(fourcc: int) -> str:
     res = ""
     res += chr(fourcc & 0x7F)
     res += chr((fourcc >> 8) & 0x7F)
@@ -12,7 +12,7 @@ def fourcc2s(fourcc: int):
     return res
 
 
-def stream_encode_type_to_string(encode_type: StreamEncodeTypeEnum):
+def stream_encode_type_to_string(encode_type: StreamEncodeTypeEnum) -> str | None:
     match encode_type:
         case StreamEncodeTypeEnum.MJPG:
             return "MJPG"
@@ -21,10 +21,10 @@ def stream_encode_type_to_string(encode_type: StreamEncodeTypeEnum):
     return None
 
 
-def string_to_stream_encode_type(encoding: str):
+def string_to_stream_encode_type(encoding: str) -> StreamEncodeTypeEnum:
     match encoding:
         case "MJPG":
             return StreamEncodeTypeEnum.MJPG
         case "H264":
             return StreamEncodeTypeEnum.H264
-    return None
+    return StreamEncodeTypeEnum.NONE

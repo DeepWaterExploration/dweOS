@@ -22,23 +22,23 @@ from .enumeration import DeviceInfo
 from .saved_pydantic_schemas import SavedDeviceModel
 
 
-def get_val(addr: Enum | int):
+def get_val(addr: Enum | int) -> int:
     if isinstance(addr, Enum):
         return addr.value
     return addr
 
 
 class StorageOption(BaseOption, EventEmitter):
-    def __init__(self, name: str, value):
+    def __init__(self, name: str, value) -> None:
         BaseOption.__init__(self, name)
         EventEmitter.__init__(self)
-        self.value = value
+        self.value: int | float = value
 
-    def set_value(self, value):
+    def set_value(self, value) -> None:
         self.value = value
         self.emit("value_changed")
 
-    def get_value(self):
+    def get_value(self) -> int | float:
         return self.value
 
 
@@ -47,9 +47,9 @@ class CustomOption(BaseOption):
         self,
         name: str,
         setter: Callable[[Any], None],
-        getter: Callable[[], Any],
+        getter: Callable[[], int | float | None],
         is_integer_only=True,
-    ):
+    ) -> None:
         BaseOption.__init__(self, name)
         self.setter = setter
         self.is_integer_only = is_integer_only
@@ -57,17 +57,17 @@ class CustomOption(BaseOption):
         # FIXME: I did this since the getter seems to be unreliable for asic controls,
         # so we just trust the value stored
         self.getter = getter
-        self.value = getter()
+        self.value: int | float | None = getter()
         self.logger = logging.getLogger("CustomOption")
 
-    def set_value(self, value):
+    def set_value(self, value) -> None:
         self.logger.info(f"{self.name}: {value}")
         if self.is_integer_only:
             value = int(value)
         self.setter(value)
         self.value = value
 
-    def get_value(self):
+    def get_value(self) -> int | float | None:
         return self.value
 
 
@@ -138,7 +138,7 @@ class SHDDevice(Device):
             # self.add_control_from_option(
             #     'strobe_enabled', False, ControlTypeEnum.BOOLEAN)
 
-    def _asic_command_worker(self):
+    def _asic_command_worker(self) -> None:
         """
         Background worker that processes ASIC/Sensor commands sequentionally
         """
@@ -220,7 +220,7 @@ class SHDDevice(Device):
             return result_queue.get()
         return None
 
-    def add_follower(self, device: "SHDDevice"):
+    def add_follower(self, device: "SHDDevice") -> None:
         if device.bus_info in self.followers:
             self.logger.info(
                 "Trying to add follower to device that already has this device as a "
@@ -248,7 +248,7 @@ class SHDDevice(Device):
         if self.stream.enabled:
             self.start_stream()
 
-    def remove_follower(self, device: "SHDDevice"):
+    def remove_follower(self, device: "SHDDevice") -> None:
         if device.bus_info not in self.followers:
             self.logger.info(
                 "Cannot remove follower from device that does not contain it."
@@ -272,7 +272,7 @@ class SHDDevice(Device):
     # Only recent stellarHD firmware, no exploreHD firmware -
     # but explore does support asic writes as well
 
-    def _sensor_write_high_low(self, reg_high: int, reg_low: int, value: int):
+    def _sensor_write_high_low(self, reg_high: int, reg_low: int, value: int) -> None:
         """
         Write high byte from value to high register, low byte to low
         """
@@ -297,7 +297,7 @@ class SHDDevice(Device):
 
         return (high << 8) | (low & 0xFF)
 
-    def _sensor_write(self, reg: int, val: int):
+    def _sensor_write(self, reg: int, val: int) -> int:
         high = (reg >> 8) & 0xFF
         low = reg & 0xFF
 
@@ -318,7 +318,7 @@ class SHDDevice(Device):
 
         return ret
 
-    def _sensor_read(self, reg: int):
+    def _sensor_read(self, reg: int) -> tuple[int, int]:
         high = (reg >> 8) & 0xFF
         low = reg & 0xFF
 
@@ -384,7 +384,7 @@ class SHDDevice(Device):
         addr_high: int | xu.StellarRegisterMap,
         addr_low: int | xu.StellarRegisterMap,
         value: int,
-    ):
+    ) -> int:
         val_low = value & 0xFF
         # TODO: return after first fails... (we dont even use the status anyway)
         ret = self._asic_write(addr_low, val_low)
@@ -397,20 +397,20 @@ class SHDDevice(Device):
         self,
         addr_high: int | xu.StellarRegisterMap,
         addr_low: int | xu.StellarRegisterMap,
-    ):
+    ) -> int | None:
         ret, val_high = self._asic_read(addr_high)
         ret, val_low = self._asic_read(addr_low)
         if ret != 0:
             return None
         return val_high << 8 | val_low
 
-    def remove_manual(self, follower_bus_info: str):
+    def remove_manual(self, follower_bus_info: str) -> None:
         """
         This should be called in the case the follower no longer exists
         """
         self.followers.remove(follower_bus_info)
 
-    def set_is_managed(self, is_managed: bool):
+    def set_is_managed(self, is_managed: bool) -> None:
         self.is_managed = is_managed
 
         # Configure stream if needbe
@@ -421,7 +421,7 @@ class SHDDevice(Device):
     # When we designed that, it was preferred to not have any functions that could
     # control asic values.
     # TODO: FIXME
-    def set_shutter_speed(self, value: int):
+    def set_shutter_speed(self, value: int) -> None:
         self._run_asic_command(
             "shutter",
             self._sensor_write_high_low,
@@ -441,7 +441,7 @@ class SHDDevice(Device):
             wait=True,
         )
 
-    def set_iso(self, value: int):
+    def set_iso(self, value: int) -> None:
         self._run_asic_command(
             "iso",
             self._sensor_write_high_low,
@@ -457,7 +457,7 @@ class SHDDevice(Device):
             wait=True,
         )
 
-    def set_asic_ae(self, enabled: bool):
+    def set_asic_ae(self, enabled: bool) -> None:
         self._run_asic_command(
             "ae",
             self._asic_write,
@@ -473,7 +473,7 @@ class SHDDevice(Device):
             return None
         return val == 0x01
 
-    def set_strobe_width(self, value: int):
+    def set_strobe_width(self, value: int) -> None:
         self._run_asic_command(
             "strobe",
             self._sensor_write_high_low,
@@ -496,7 +496,7 @@ class SHDDevice(Device):
             wait=True,
         )
 
-    def set_hw_bitrate(self, value: int):
+    def set_hw_bitrate(self, value: int) -> None:
         self._run_asic_command(
             "hw_bitrate",
             self._asic_write_high_low,
@@ -528,7 +528,7 @@ class SHDDevice(Device):
 
         self.bitrate_option = StorageOption("Software H.264 Bitrate", 5)  # 5 mpbs
 
-        def update_bitrate():
+        def update_bitrate() -> None:
             if (
                 self.stream.enabled
                 and self.stream.encode_type == StreamEncodeTypeEnum.SOFTWARE_H264
@@ -569,10 +569,10 @@ class SHDDevice(Device):
 
         return options
 
-    def load_settings(self, saved_device: SavedDeviceModel):
-        return super().load_settings(saved_device)
+    def load_settings(self, saved_device: SavedDeviceModel) -> None:
+        super().load_settings(saved_device)
 
-    def start_stream(self):
+    def start_stream(self) -> None:
         if self.is_managed:
             self.logger.warning(
                 f"{self.bus_info}: Cannot start stream that is managed."
@@ -601,5 +601,5 @@ class SHDDevice(Device):
 
         super().start_stream()
 
-    def unconfigure_stream(self):
-        return super().unconfigure_stream()
+    def unconfigure_stream(self) -> None:
+        super().unconfigure_stream()

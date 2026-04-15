@@ -7,6 +7,7 @@ Handles listing connected lights, setting intensity, and disabling lights
 
 from fastapi import APIRouter, Request
 
+from ..schemas import SimpleRequestStatusModel
 from ..services.lights import DisableLightInfo, Light, LightManager, SetLightInfo
 
 lights_router = APIRouter(tags=["lights"])
@@ -20,17 +21,21 @@ def get_lights(request: Request) -> list[Light]:
 
 
 @lights_router.post("/set_intensity")
-def set_intensity(request: Request, set_light_info: SetLightInfo):
+def set_intensity(
+    request: Request, set_light_info: SetLightInfo
+) -> SimpleRequestStatusModel:
     light_manager: LightManager = request.app.state.light_manager
 
     light_manager.set_intensity(set_light_info.index, set_light_info.intensity)
-    return {}
+    return SimpleRequestStatusModel(success=True)
 
 
 @lights_router.route("/disable_pin", methods=["POST"])
-def disable_light(request: Request, disable_light_info: DisableLightInfo):
+def disable_light(
+    request: Request, disable_light_info: DisableLightInfo
+) -> SimpleRequestStatusModel:
     light_manager: LightManager = request.app.state.light_manager
     light_manager.disable_light(
         disable_light_info.controller_index, disable_light_info.pin
     )
-    return {}
+    return SimpleRequestStatusModel(success=True)

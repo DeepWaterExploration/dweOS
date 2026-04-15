@@ -10,6 +10,7 @@ from typing import cast
 
 from fastapi import APIRouter, Request
 
+from ..schemas import SimpleRequestStatusModel
 from ..services.cameras import DeviceManager
 from ..services.cameras.exceptions import DeviceNotFoundException
 from ..services.cameras.pydantic_schemas import (
@@ -18,7 +19,6 @@ from ..services.cameras.pydantic_schemas import (
     DeviceModel,
     DeviceNicknameModel,
     DeviceType,
-    SimpleRequestStatusModel,
     StreamInfoModel,
     UVCControlModel,
 )
@@ -35,7 +35,9 @@ def get_devices(request: Request) -> list[DeviceModel]:
 
 
 @camera_router.post("/configure_stream", summary="Configure a stream")
-async def configure_stream(request: Request, stream_info: StreamInfoModel):
+async def configure_stream(
+    request: Request, stream_info: StreamInfoModel
+) -> SimpleRequestStatusModel:
     device_manager: DeviceManager = request.app.state.device_manager
 
     device_manager.configure_device_stream(stream_info)
@@ -43,7 +45,7 @@ async def configure_stream(request: Request, stream_info: StreamInfoModel):
     for device in device_manager.devices:
         if device.bus_info == stream_info.bus_info:
             if device.device_type != DeviceType.STELLARHD_FOLLOWER:
-                return {}
+                return SimpleRequestStatusModel(success=False)
             break
     for device in device_manager.devices:
         if device.device_type == DeviceType.STELLARHD_LEADER:
@@ -51,29 +53,33 @@ async def configure_stream(request: Request, stream_info: StreamInfoModel):
             if stream_info.bus_info in stellarhd_device.followers:
                 stellarhd_device.start_stream()
 
-    return {}
+    return SimpleRequestStatusModel(success=True)
 
 
 @camera_router.post("/set_nickname", summary="Set a device nickname")
-def set_nickname(request: Request, device_nickname: DeviceNicknameModel):
+def set_nickname(
+    request: Request, device_nickname: DeviceNicknameModel
+) -> SimpleRequestStatusModel:
     device_manager: DeviceManager = request.app.state.device_manager
 
     device_manager.set_device_nickname(
         device_nickname.bus_info, device_nickname.nickname
     )
 
-    return {}
+    return SimpleRequestStatusModel(success=True)
 
 
 @camera_router.post("/set_uvc_control", summary="Set a UVC control")
-def set_uvc_control(request: Request, uvc_control: UVCControlModel):
+def set_uvc_control(
+    request: Request, uvc_control: UVCControlModel
+) -> SimpleRequestStatusModel:
     device_manager: DeviceManager = request.app.state.device_manager
 
     device_manager.set_device_uvc_control(
         uvc_control.bus_info, uvc_control.control_id, uvc_control.value
     )
 
-    return {}
+    return SimpleRequestStatusModel(success=True)
 
 
 @camera_router.post(
@@ -107,7 +113,9 @@ def remove_follower(
 
 
 @camera_router.post("/restart_stream", summary="Restart a stream")
-def restart_stream(request: Request, device_descriptor: DeviceDescriptorModel):
+def restart_stream(
+    request: Request, device_descriptor: DeviceDescriptorModel
+) -> SimpleRequestStatusModel:
     device_manager: DeviceManager = request.app.state.device_manager
 
     # will raise DeviceNotFoundException which will be handled by server

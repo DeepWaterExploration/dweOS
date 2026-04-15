@@ -28,18 +28,22 @@ class PreferencesManager(events.EventEmitter):
         self.emit("preferences_updated", preferences)
         self._save_settings()
 
-    def get_preferences(self):
+    def get_preferences(self) -> SavedPreferencesModel:
+        # FIXME: why
         return self.settings
 
-    def serialize_preferences(self):
+    def serialize_preferences(self) -> SavedPreferencesModel:
         return self.settings
 
     def _load_settings(self) -> None:
-        with self.path.open("r") as f:
-            settings: list[dict] = json.loads(f.read())
-            self.settings: SavedPreferencesModel = SavedPreferencesModel.model_validate(
-                settings
-            )
+        try:
+            with self.path.open("r") as f:
+                settings: dict = json.loads(f.read())
+                self.settings: SavedPreferencesModel = (
+                    SavedPreferencesModel.model_validate(settings)
+                )
+        except FileNotFoundError:
+            self.settings = SavedPreferencesModel()
 
     def _save_settings(self) -> None:
         # CHECK: is this thread safe?

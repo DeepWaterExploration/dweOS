@@ -13,3 +13,7 @@ class FeatureSupport(BaseModel):
     @classmethod
     def none(cls) -> "FeatureSupport":
         return cls(ttyd=False, wifi=False, serial=False)
+
+
+class SimpleRequestStatusModel(BaseModel):
+    success: bool = True

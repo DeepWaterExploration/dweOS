@@ -22,7 +22,7 @@ def get_recordings(request: Request) -> list[RecordingInfo]:
 
 
 @recordings_router.get("/{recording_path}", summary="Get a specific recording")
-def get_recording(request: Request, recording_path: str):
+def get_recording(request: Request, recording_path: str) -> FileResponse:
 
     recordings_service: RecordingsService = request.app.state.recordings_service
 
@@ -40,7 +40,7 @@ def get_recording(request: Request, recording_path: str):
 
 
 @recordings_router.delete("/{recording_path}", summary="Delete a recording")
-def delete_recording(request: Request, recording_path: str):
+def delete_recording(request: Request, recording_path: str) -> list[RecordingInfo]:
     recordings_service: RecordingsService = request.app.state.recordings_service
 
     response = recordings_service.delete_recording(recording_path)
@@ -53,7 +53,9 @@ def delete_recording(request: Request, recording_path: str):
 
 
 @recordings_router.patch("/{old_name}/{new_name}", summary="Rename a recording")
-def rename_recording(request: Request, old_name: str, new_name: str):
+def rename_recording(
+    request: Request, old_name: str, new_name: str
+) -> list[RecordingInfo]:
     recordings_service: RecordingsService = request.app.state.recordings_service
 
     response = recordings_service.rename_recording(old_name, new_name)
@@ -66,7 +68,7 @@ def rename_recording(request: Request, old_name: str, new_name: str):
 
 
 @recordings_router.get("/zip", summary="Download all recordings as a zip file")
-def zip_recordings(request: Request):
+def zip_recordings(request: Request) -> FileResponse:
     recordings_service: RecordingsService = request.app.state.recordings_service
 
     zip_file_path = recordings_service.zip_recordings()

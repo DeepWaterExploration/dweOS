@@ -7,5 +7,5 @@ class FeatureSupport:
     wifi: bool
 
     @classmethod
-    def all(cls):
+    def all(cls) -> "FeatureSupport":
         return cls(ttyd=True, wifi=True)

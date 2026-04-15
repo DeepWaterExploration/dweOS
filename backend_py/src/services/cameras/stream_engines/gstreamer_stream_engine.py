@@ -90,7 +90,7 @@ class GStreamerPipelineBuilder:
                 return ""
 
     @staticmethod
-    def _build_sink(stream: Stream):
+    def _build_sink(stream: Stream) -> str:
         match stream.stream_type:
             case StreamTypeEnum.UDP:
                 if len(stream.endpoints) == 0:

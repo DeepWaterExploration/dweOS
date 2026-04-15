@@ -7,6 +7,7 @@ Handles getting and setting preferences
 
 from fastapi import APIRouter, Request
 
+from ..schemas import SimpleRequestStatusModel
 from ..services.preferences import PreferencesManager, SavedPreferencesModel
 
 preferences_router = APIRouter(tags=["preferences"])
@@ -20,14 +21,17 @@ def get_preferences(request: Request) -> SavedPreferencesModel:
 
 
 @preferences_router.post("/save_preferences")
-def set_preferences(request: Request, preferences: SavedPreferencesModel):
+def set_preferences(
+    request: Request, preferences: SavedPreferencesModel
+) -> SimpleRequestStatusModel:
     preferences_manager: PreferencesManager = request.app.state.preferences_manager
 
     preferences_manager.save(preferences)
 
-    return {}
+    return SimpleRequestStatusModel(success=True)
 
 
 @preferences_router.get("/get_recommended_host")
 def get_recommended_host(request: Request) -> dict[str, str]:
+    # FIXME
     return {"host": request.client.host if request.client else ""}

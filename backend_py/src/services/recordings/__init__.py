@@ -32,7 +32,7 @@ class RecordingsService:
 
         self.durations = {}
 
-    def get_recordings(self):
+    def get_recordings(self) -> list[RecordingInfo]:
         if not os.path.exists(self.recordings_path):
             os.makedirs(self.recordings_path)
 
@@ -112,7 +112,7 @@ class RecordingsService:
                 return recording
         return None
 
-    def delete_recording(self, filename: str):
+    def delete_recording(self, filename: str) -> list[RecordingInfo] | None:
         if filename in self.durations:
             self.durations.pop(filename, None)
 
@@ -123,9 +123,11 @@ class RecordingsService:
                 rec for rec in self.recordings if rec.path != recording_path
             ]
             return self.recordings
-        return False
+        return None
 
-    def rename_recording(self, old_name: str, new_name: str):
+    def rename_recording(
+        self, old_name: str, new_name: str
+    ) -> list[RecordingInfo] | None:
         old_path = os.path.join(self.recordings_path, old_name)
         new_path = os.path.join(self.recordings_path, new_name)
 
@@ -137,9 +139,9 @@ class RecordingsService:
                     recording.path = new_path
                     recording.format = new_name.split(".")[-1]
             return self.recordings
-        return False
+        return None
 
-    def zip_recordings(self):
+    def zip_recordings(self) -> str | None:
         self.get_recordings()  # Refresh the recordings list
         if not self.recordings:
             return None

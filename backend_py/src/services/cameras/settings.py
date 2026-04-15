@@ -52,6 +52,7 @@ class SettingsManager:
             self.file_object.seek(0)
             self.file_object.write("[]")
             self.file_object.truncate()
+            self.saved_by_bus_info = {}
             self.settings = []
             self.file_object.flush()
 

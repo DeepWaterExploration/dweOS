@@ -24,7 +24,7 @@ sio = socketio.AsyncServer(
 
 # Define events
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI):  # noqa: ANN201
     await server.serve()
     yield
     print("Shutting down server...")

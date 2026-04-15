@@ -79,5 +79,5 @@ class RPiHardwarePWMController(PWMController):
         for pwm in self.pwm_objects.values():
             pwm.stop()
 
-    def get_pins(self):
-        return self.PWM_PINS.keys() if self.pwm_supported else []
+    def get_pins(self) -> list[int]:
+        return list(self.PWM_PINS.keys()) if self.pwm_supported else []

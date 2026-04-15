@@ -252,7 +252,3 @@ class DeviceDescriptorModel(BaseModel):
 class AddFollowerPayload(BaseModel):
     leader_bus_info: str
     follower_bus_info: str
-
-
-class SimpleRequestStatusModel(BaseModel):
-    success: bool = True

@@ -10,7 +10,9 @@ class BaseStreamEngine(ABC):
     Abstract class for any streaming backend
     """
 
-    def __init__(self, streams: list[Stream], error_callback: Callable[[str], None]) -> None:
+    def __init__(
+        self, streams: list[Stream], error_callback: Callable[[str], None]
+    ) -> None:
         super().__init__()
 
         self.streams = streams
@@ -18,9 +20,9 @@ class BaseStreamEngine(ABC):
         self.logger = logging.getLogger(f"dwe_os_2.cameras.{self.__class__.__name__}")
 
     @abstractmethod
-    def start(self):
+    def start(self) -> None:
         pass
 
     @abstractmethod
-    def stop(self):
+    def stop(self) -> None:
         pass

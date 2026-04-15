@@ -28,7 +28,8 @@ def get_connection_profiles(request: Request) -> list[ConnectionProfileModel]:
 )
 async def update_connection_profile(
     request: Request, path: str, ip_configuration: IPV4Configuration
-):
+) -> dict:
+    # TODO: change return type to a proper schema
     network_manager: NetworkWrapper = request.app.state.network_manager
     return {
         "status": await network_manager.update_connection_profile(
@@ -40,6 +41,6 @@ async def update_connection_profile(
 @network_router.post(
     "/wired/activate_profile", summary="Activate a given profile for a device"
 )
-async def activate_profile(request: Request, interface: str, profile_path: str):
+async def activate_profile(request: Request, interface: str, profile_path: str) -> dict:
     network_manager: NetworkWrapper = request.app.state.network_manager
     return {"status": await network_manager.activate_interface(interface, profile_path)}

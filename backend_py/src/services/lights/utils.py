@@ -7,12 +7,13 @@ enable PWM controllers on them
 
 import logging
 import os
-
-# from .fake_pwm import FakePWMController
 import re
 
+from .pwm_controller import PWMController
+from .rpi_pwm_hardware import RPiHardwarePWMController
 
-def is_overlay_loaded():
+
+def is_overlay_loaded() -> bool:
     """
     Based on function from rpi_hardware_pwm
     """
@@ -20,7 +21,7 @@ def is_overlay_loaded():
     return os.path.isdir(chippath)
 
 
-def get_rpi_version():
+def get_rpi_version() -> int | None:
     try:
         # Read the device model from the file
         with open("/sys/firmware/devicetree/base/model") as f:
@@ -45,8 +46,8 @@ def get_rpi_version():
         return None
 
 
-def create_pwm_controllers():
-    pwm_controllers = []
+def create_pwm_controllers() -> list[PWMController]:
+    pwm_controllers: list[PWMController] = []
     version = get_rpi_version()
     logger = logging.getLogger("dwe_os_2.pwm")
     if version is not None:
@@ -57,7 +58,6 @@ def create_pwm_controllers():
                 "/boot/config.txt and reboot"
             )
             return []
-        from .rpi_pwm_hardware import RPiHardwarePWMController
 
         if version == 5:
             pwm_controllers.append(

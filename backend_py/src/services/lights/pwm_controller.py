@@ -20,7 +20,7 @@ class PWMController(ABC):
         self.logger.info(f"Setting light intensity: {pin} to {intensity}")
 
     @abstractmethod
-    def disable_pin(self, pin: int):
+    def disable_pin(self, pin: int) -> None:
         pass
 
     @abstractmethod
@@ -28,9 +28,9 @@ class PWMController(ABC):
         pass
 
     @abstractmethod
-    def cleanup(self):
+    def cleanup(self) -> None:
         pass
 
     @abstractmethod
-    def get_pins(self):
+    def get_pins(self) -> list[int]:
         return []

@@ -15,7 +15,7 @@ def find_device_with_bus_info(devices: list[Device], bus_info: str) -> Device | 
     return None
 
 
-def list_diff(listA, listB):
+def list_diff(listA: list, listB: list) -> list:
     # find the difference between lists
     diff = []
     for element in listA:

@@ -12,7 +12,7 @@ class LogHandler(logging.Handler):
         self.logs: list[LogSchema] = []
         self.to_emit: list[LogSchema] = []
 
-    def pop_logs(self):
+    def pop_logs(self) -> list[LogSchema]:
         logs = self.to_emit
         self.to_emit = []
         return logs

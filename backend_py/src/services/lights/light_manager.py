@@ -50,7 +50,7 @@ class LightManager:
         self.logger.info(f"Disabling light ({pwm_controller.NAME}): {pin}")
         pwm_controller.disable_pin(pin)
 
-    def get_lights(self):
+    def get_lights(self) -> list[Light]:
         return self.lights
 
     def cleanup(self) -> None:

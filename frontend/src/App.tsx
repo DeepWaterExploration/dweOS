@@ -27,7 +27,6 @@ import { getSteps } from "./components/tour/tour-steps";
 import FeaturesContext from "./contexts/FeaturesContext";
 import { useLogSocketToasts } from "./hooks/use-log-socket-toasts";
 import { components } from "./schemas/dwe_os_2";
-import { toast } from "sonner";
 
 type WelcomeTourProps = { features: components["schemas"]["FeatureSupport"] };
 function WelcomeTourManager(props: WelcomeTourProps) {
@@ -148,8 +147,6 @@ function App() {
     } else {
       //
     }
-
-    toast("test");
   }, [connected]);
 
   return (

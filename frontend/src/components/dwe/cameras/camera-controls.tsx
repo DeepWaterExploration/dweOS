@@ -133,7 +133,7 @@ export const CameraControls = () => {
         control.value = control.flags.default_value;
       }
     });
-    toast({ title: "Camera controls reset to default values." });
+    toast.info("Camera controls reset to default values.");
   };
 
   const supportedControls = controls.filter((c) =>

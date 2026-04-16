@@ -30,13 +30,13 @@ export function SystemDropdown() {
     try {
       if (action === "restart") {
         await API_CLIENT.POST("/api/system/restart");
-        toast({ title: "System is restarting..." });
+        toast.info("System is restarting...");
       } else if (action === "shutdown") {
         await API_CLIENT.POST("/api/system/shutdown");
-        toast({ title: "System is shutting down..." });
+        toast.info("System is shutting down...");
       }
     } catch {
-      toast({ title: `Failed to ${action}`, variant: "destructive" });
+      toast.error(`Failed to ${action} system`);
     } finally {
       setDialogOpen(false);
       setAction(null);

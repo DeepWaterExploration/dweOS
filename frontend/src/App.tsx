@@ -19,7 +19,7 @@ import { CommandPalette } from "./components/dwe/app/command-palette";
 import { io, Socket } from "socket.io-client";
 import { useEffect, useRef, useState } from "react";
 import WebsocketContext from "./contexts/WebsocketContext";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@/components/ui/sonner";
 import { SystemDropdown } from "./components/dwe/system/system-dropdown";
 import { API_CLIENT } from "./api";
 import { TourAlertDialog, TourProvider, useTour } from "@/components/tour/tour";
@@ -27,6 +27,7 @@ import { getSteps } from "./components/tour/tour-steps";
 import FeaturesContext from "./contexts/FeaturesContext";
 import { useLogSocketToasts } from "./hooks/use-log-socket-toasts";
 import { components } from "./schemas/dwe_os_2";
+import { toast } from "sonner";
 
 type WelcomeTourProps = { features: components["schemas"]["FeatureSupport"] };
 function WelcomeTourManager(props: WelcomeTourProps) {
@@ -147,16 +148,18 @@ function App() {
     } else {
       //
     }
+
+    toast("test");
   }, [connected]);
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <Toaster />
       <WebsocketContext.Provider value={{ socket: socket.current, connected }}>
         <TourProvider>
           <AppContent />
         </TourProvider>
       </WebsocketContext.Provider>
+      <Toaster richColors />
     </ThemeProvider>
   );
 }

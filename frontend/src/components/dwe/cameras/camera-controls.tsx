@@ -28,7 +28,7 @@ import BooleanControl from "./controls/boolean-control";
 import MenuControl from "./controls/menu-control";
 import { components } from "@/schemas/dwe_os_2";
 import { API_CLIENT } from "@/api";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import CameraControlMap from "./cam-control-map.json";
 import {
   Accordion,
@@ -50,7 +50,6 @@ const ControlWrapper = ({
   index: number;
 }) => {
   const key = control.control_id ?? `control-${index}`;
-  const { toast } = useToast();
   const device = useContext(DeviceContext)!;
   const bus_info = device.bus_info;
 
@@ -67,7 +66,7 @@ const ControlWrapper = ({
       },
     }).catch((error) => {
       console.error("Failed to set UVC control:", control_id, error);
-      toast({ title: error, variant: "destructive" });
+      toast.error(error);
     });
   };
 
@@ -126,7 +125,6 @@ const ControlWrapper = ({
 export const CameraControls = () => {
   const device = useContext(DeviceContext)!;
   const controls = device.controls;
-  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
 
   const resetControls = () => {

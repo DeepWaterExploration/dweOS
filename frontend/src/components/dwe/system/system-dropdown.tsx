@@ -15,14 +15,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { API_CLIENT } from "@/api";
 import { useState } from "react";
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 
 export function SystemDropdown() {
-  const { toast } = useToast();
-
   const [dialogOpen, setDialogOpen] = useState(false);
   const [action, setAction] = useState<"restart" | "shutdown" | null>(null);
 

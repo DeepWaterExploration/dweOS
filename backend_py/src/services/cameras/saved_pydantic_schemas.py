@@ -2,13 +2,19 @@
 saved_pydantic_schemas.py
 
 Defines Pydantic models and Enums for persisting device settings and configs
-Includes schemas for serializing device states (streams, controls, nicknames) to JSON, keeping setting across reboots
+Includes schemas for serializing device states (streams, controls, nicknames) to JSON,
+keeping setting across reboots
 """
 
 from pydantic import BaseModel
-from typing import List, Optional
 
-from .pydantic_schemas import StreamEndpointModel, IntervalModel, DeviceType, StreamEncodeTypeEnum, StreamTypeEnum
+from .pydantic_schemas import (
+    DeviceType,
+    IntervalModel,
+    StreamEncodeTypeEnum,
+    StreamEndpointModel,
+    StreamTypeEnum,
+)
 
 
 class SavedControlModel(BaseModel):
@@ -23,7 +29,7 @@ class SavedControlModel(BaseModel):
 class SavedStreamModel(BaseModel):
     encode_type: StreamEncodeTypeEnum
     stream_type: StreamTypeEnum
-    endpoints: List[StreamEndpointModel]
+    endpoints: list[StreamEndpointModel]
     width: int
     height: int
     interval: IntervalModel
@@ -40,9 +46,9 @@ class SavedDeviceModel(BaseModel):
     pid: int
     nickname: str
     stream: SavedStreamModel
-    controls: List[SavedControlModel]
+    controls: list[SavedControlModel]
     device_type: DeviceType
-    followers: Optional[List[str]] = []
+    followers: list[str] | None = []
 
     class Config:
         from_attributes = True

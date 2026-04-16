@@ -1,47 +1,51 @@
 """
 preference_manager.py
 
-Manages persistence of server settings by reading from / writing to server_preferences.json
+Manages persistence of server settings by reading from / writing to
+server_preferences.json
+
 Handles loading saved prefs and updating the json when settings are modified
 """
 
 import json
-from typing import Dict
-from .pydantic_schemas import SavedPreferencesModel
+import pathlib
+
 from event_emitter import events
 
-class PreferencesManager(events.EventEmitter):
+from .pydantic_schemas import SavedPreferencesModel
 
-    def __init__(self, settings_path: str = '.') -> None:
+
+class PreferencesManager(events.EventEmitter):
+    def __init__(self, settings_path: str = ".") -> None:
         super().__init__()
 
-        path = f'{settings_path}/server_preferences.json'
-        try:
-            self.file_object = open(path, 'r+')
-        except FileNotFoundError:
-            open(path, 'w').close()
-            self.file_object = open(path, 'r+')
-        
-        try:
-            settings: list[Dict] = json.loads(self.file_object.read())
-            self.settings: SavedPreferencesModel = SavedPreferencesModel.model_validate(settings)
-        except json.JSONDecodeError:
-            self.settings = SavedPreferencesModel()
+        self.path = pathlib.Path(settings_path, "server_preferences.json")
+        self.settings = SavedPreferencesModel()
+        self._load_settings()
 
-    def save(self, preferences: SavedPreferencesModel):
+    def save(self, preferences: SavedPreferencesModel) -> None:
         self.settings = preferences
         self.emit("preferences_updated", preferences)
         self._save_settings()
 
-    def get_preferences(self):
+    def get_preferences(self) -> SavedPreferencesModel:
+        # FIXME: why
         return self.settings
 
-    def serialize_preferences(self):
+    def serialize_preferences(self) -> SavedPreferencesModel:
         return self.settings
 
-    # TODO: make thread safe
-    def _save_settings(self):
-        self.file_object.seek(0)
-        self.file_object.write(self.settings.model_dump_json())
-        self.file_object.truncate()
-        self.file_object.flush()
+    def _load_settings(self) -> None:
+        try:
+            with self.path.open("r") as f:
+                settings: dict = json.loads(f.read())
+                self.settings: SavedPreferencesModel = (
+                    SavedPreferencesModel.model_validate(settings)
+                )
+        except FileNotFoundError:
+            self.settings = SavedPreferencesModel()
+
+    def _save_settings(self) -> None:
+        # CHECK: is this thread safe?
+        with self.path.open("w", encoding="utf-8") as f:
+            f.write(self.settings.model_dump_json(indent=4))

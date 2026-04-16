@@ -5,29 +5,33 @@ API endpoints for server perferences
 Handles getting and setting preferences
 """
 
-from fastapi import APIRouter, Depends, Request
-from typing import Dict
-from ..services import PreferencesManager, SavedPreferencesModel
+from fastapi import APIRouter, Request
 
-preferences_router = APIRouter(tags=['preferences'])
+from ..schemas import SimpleRequestStatusModel
+from ..services.preferences import PreferencesManager, SavedPreferencesModel
+
+preferences_router = APIRouter(tags=["preferences"])
 
 
-@preferences_router.get('')
+@preferences_router.get("")
 def get_preferences(request: Request) -> SavedPreferencesModel:
     preferences_manager: PreferencesManager = request.app.state.preferences_manager
 
     return preferences_manager.serialize_preferences()
 
 
-@preferences_router.post('/save_preferences')
-def set_preferences(request: Request, preferences: SavedPreferencesModel):
+@preferences_router.post("/save_preferences")
+def set_preferences(
+    request: Request, preferences: SavedPreferencesModel
+) -> SimpleRequestStatusModel:
     preferences_manager: PreferencesManager = request.app.state.preferences_manager
 
     preferences_manager.save(preferences)
 
-    return {}
+    return SimpleRequestStatusModel(success=True)
 
 
-@preferences_router.get('/get_recommended_host')
-def get_recommended_host(request: Request) -> Dict[str, str]:
-    return {'host': request.client.host}
+@preferences_router.get("/get_recommended_host")
+def get_recommended_host(request: Request) -> dict[str, str]:
+    # FIXME
+    return {"host": request.client.host if request.client else ""}

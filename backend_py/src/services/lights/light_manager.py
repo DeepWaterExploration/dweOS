@@ -1,22 +1,23 @@
 """
 light_manager.py
 
-Manages the light system, initiates the proper PWM controllers and creates Light objects for each available pin
+Manages the light system, initiates the proper PWM controllers and creates Light objects
+for each available pin.
+
 Serves as the main interface for setting light intensity or disbaling lights
 Calls on PWM controllers to do the actual PWM
 """
 
-from typing import List, Dict
-from .pwm_controller import PWMController
-from .light import Light
 import logging
+
+from .light import Light
+from .pwm_controller import PWMController
 
 
 class LightManager:
-
-    def __init__(self, pwm_controllers: List[PWMController]) -> None:
+    def __init__(self, pwm_controllers: list[PWMController]) -> None:
         self.pwm_controllers = pwm_controllers
-        self.lights: List[Light] = []
+        self.lights: list[Light] = []
         self.logger = logging.getLogger("dwe_os_2.LightManager")
         for controller_index in range(len(self.pwm_controllers)):
             controller = self.pwm_controllers[controller_index]
@@ -31,7 +32,7 @@ class LightManager:
                     )
                 )
 
-    def set_intensity(self, index: int, intensity: float):
+    def set_intensity(self, index: int, intensity: float) -> None:
         light = self.lights[index]
         light.intensity = intensity
         pwm_controller = self.pwm_controllers[light.controller_index]
@@ -40,7 +41,7 @@ class LightManager:
         )
         pwm_controller.set_intensity(light.pin, intensity)
 
-    def disable_light(self, controller_index: int, pin: int):
+    def disable_light(self, controller_index: int, pin: int) -> None:
         if controller_index >= len(self.pwm_controllers):
             self.logger.error("Invalid index given for pwm controller")
             return
@@ -49,9 +50,9 @@ class LightManager:
         self.logger.info(f"Disabling light ({pwm_controller.NAME}): {pin}")
         pwm_controller.disable_pin(pin)
 
-    def get_lights(self):
+    def get_lights(self) -> list[Light]:
         return self.lights
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         for pwm_controller in self.pwm_controllers:
             pwm_controller.cleanup()

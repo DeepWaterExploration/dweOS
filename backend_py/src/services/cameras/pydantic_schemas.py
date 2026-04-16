@@ -5,9 +5,9 @@ Defines Pydantic models and Enums for camera and device configs
 Includes schemas for streams, controls, device info, and API request/response strutures
 """
 
-from pydantic import BaseModel, Field
-from typing import List, Dict, Optional
 from enum import Enum, IntEnum
+
+from pydantic import BaseModel, Field
 
 
 class V4LControlTypeEnum(IntEnum):
@@ -79,7 +79,7 @@ class IntervalModel(BaseModel):
 class FormatSizeModel(BaseModel):
     width: int
     height: int
-    intervals: List[IntervalModel]
+    intervals: list[IntervalModel]
 
     class Config:
         from_attributes = True
@@ -87,7 +87,7 @@ class FormatSizeModel(BaseModel):
 
 class CameraModel(BaseModel):
     path: str
-    formats: Dict[str, List[FormatSizeModel]]
+    formats: dict[str, list[FormatSizeModel]]
 
     class Config:
         from_attributes = True
@@ -107,7 +107,7 @@ class ControlFlagsModel(BaseModel):
     min_value: float
     step: float
     control_type: ControlTypeEnum = Field(...)
-    menu: List[MenuItemModel] = Field(default_factory=list)
+    menu: list[MenuItemModel] = Field(default_factory=list)
 
     class Config:
         from_attributes = True
@@ -126,7 +126,7 @@ class ControlModel(BaseModel):
 class DeviceInfoModel(BaseModel):
     device_name: str
     bus_info: str
-    device_paths: List[str]
+    device_paths: list[str]
     vid: int
     pid: int
 
@@ -155,7 +155,7 @@ class StreamModel(BaseModel):
     device_path: str
     encode_type: StreamEncodeTypeEnum
     stream_type: StreamTypeEnum
-    endpoints: List[StreamEndpointModel]
+    endpoints: list[StreamEndpointModel]
     width: int
     height: int
     interval: IntervalModel
@@ -167,27 +167,28 @@ class StreamModel(BaseModel):
 
 class DeviceModel(BaseModel):
     # List of cameras, e.g. /dev/video0, /dev/video2
-    cameras: Optional[List[CameraModel]] = None
+    cameras: list[CameraModel] | None = None
     # List of camera controls and their values, default values, etc.
-    controls: List[ControlModel]
+    controls: list[ControlModel]
     # Stores information about the stream
     stream: StreamModel
     # e.g. exploreHD
-    name: Optional[str] = None
+    name: str | None = None
     vid: int
     pid: int
     # usb-0000:00: ... to uniquely identify the port
     bus_info: str
     # DWE.ai
-    manufacturer: Optional[str] = None
+    manufacturer: str | None = None
     # device nickname
     nickname: str
     # initial information used to construct the object, redundant data...
-    device_info: Optional[DeviceInfoModel] = None
+    device_info: DeviceInfoModel | None = None
     # 0 (exploreHD), 1 (Leader), 2 (Follower)
     device_type: DeviceType
-    # Only required for stellarHD (remember, followers CAN be leaders in some circumstances)
-    followers: List[str] = []
+    # Only required for stellarHD
+    # (remember, followers CAN be leaders in some circumstances)
+    followers: list[str] = []
     # True if is a follower and stream is managed by the leader
     is_managed: bool = False
 
@@ -213,7 +214,7 @@ class StreamInfoModel(BaseModel):
     stream_format: StreamFormatModel
     encode_type: StreamEncodeTypeEnum
     enabled: bool
-    endpoints: List[StreamEndpointModel]
+    endpoints: list[StreamEndpointModel]
 
     class Config:
         from_attributes = True
@@ -238,7 +239,7 @@ class DeviceNicknameModel(BaseModel):
 
 class DeviceLeaderModel(BaseModel):
     follower: str
-    leader: Optional[str] = None
+    leader: str | None = None
 
     class Config:
         from_attributes = True
@@ -251,7 +252,3 @@ class DeviceDescriptorModel(BaseModel):
 class AddFollowerPayload(BaseModel):
     leader_bus_info: str
     follower_bus_info: str
-
-
-class SimpleRequestStatusModel(BaseModel):
-    success: bool = True

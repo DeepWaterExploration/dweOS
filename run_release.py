@@ -17,9 +17,13 @@ sio = socketio.AsyncServer(async_mode="asgi", transports=["websocket"])
 # Define events
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    server.serve()
+    await server.serve()
     yield
     print("Shutting down server...")
+    try:
+        server.shutdown()
+    except Exception as e:
+        print(f"Error during shutdown: {e}")
 
 
 # FastAPI application
@@ -69,7 +73,9 @@ if __name__ == "__main__":
 
     # Server instance
     server = Server(
-        FeatureSupport(ttyd=not args.no_ttyd, wifi=not args.no_wifi, serial=args.serial),
+        FeatureSupport(
+            ttyd=not args.no_ttyd, wifi=not args.no_wifi, serial=args.serial
+        ),
         sio,
         app,
         settings_path=args.settings_path,

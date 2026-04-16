@@ -1,11 +1,11 @@
 """
 xu_controls.py
 
-Specifies the constants of where each extension unit feature's register address is stored
+Specifies the constants of where each extension unit feature's register address is
+stored
 """
 
 from enum import Enum
-
 
 DWE_DEVICE_TAG = 0x9A
 
@@ -49,6 +49,9 @@ class StellarRegisterMap(Enum):
     REG_MODE = 0x1677
     REG_TRIG = 0x1678
     REG_STROBE_ENABLED = 0x8100
+    REG_HW_BITRATE_HIGH = 0x2D6
+    REG_HW_BITRATE_LOW = 0x2D7
+    REG_HW_BITRATE_TRIG = 0x2DB
 
 
 class StellarSensorMap:

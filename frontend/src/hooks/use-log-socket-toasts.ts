@@ -1,5 +1,5 @@
 import { useContext, useEffect } from "react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import WebsocketContext from "@/contexts/WebsocketContext";
 import type { components } from "@/schemas/dwe_os_2";
 
@@ -24,11 +24,11 @@ function logToToast(log: LogSchema) {
     320,
   );
 
-  toast({
-    title,
-    description,
-    variant: destructive ? "destructive" : "default",
-  });
+  if (destructive)
+    toast.error(title, {
+      description,
+    });
+  else toast.info(title, { description });
 }
 
 /**

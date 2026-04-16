@@ -19,9 +19,7 @@ import { CommandPalette } from "./components/dwe/app/command-palette";
 import { io, Socket } from "socket.io-client";
 import { useEffect, useRef, useState } from "react";
 import WebsocketContext from "./contexts/WebsocketContext";
-import { Toaster } from "@/components/ui/toaster";
-import { WifiDropdown } from "./components/dwe/wireless/wifi-dropdown";
-import { WiredDropdown } from "./components/dwe/wireless/wired-dropdown";
+import { Toaster } from "@/components/ui/sonner";
 import { SystemDropdown } from "./components/dwe/system/system-dropdown";
 import { API_CLIENT } from "./api";
 import { TourAlertDialog, TourProvider, useTour } from "@/components/tour/tour";
@@ -105,8 +103,6 @@ function AppContent() {
             <ModeToggle />
             <div className="ml-auto flex items-center">
               <CommandPalette />
-              {features?.wifi ? <WiredDropdown /> : <></>}
-              {features?.wifi ? <WifiDropdown /> : <></>}
               <SystemDropdown />
             </div>
           </div>
@@ -155,12 +151,12 @@ function App() {
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <Toaster />
       <WebsocketContext.Provider value={{ socket: socket.current, connected }}>
         <TourProvider>
           <AppContent />
         </TourProvider>
       </WebsocketContext.Provider>
+      <Toaster richColors />
     </ThemeProvider>
   );
 }

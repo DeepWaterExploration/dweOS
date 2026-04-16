@@ -1,5 +1,5 @@
 import { API_CLIENT } from "@/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,28 +12,14 @@ import NotConnected from "../not-connected";
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 import { Button } from "@/components/ui/button";
 import { useTour } from "@/components/tour/tour";
-import { RangeControl } from "@/components/ui/range-control";
+import { SettingsCard } from "./settings-card";
+import WiredConfig from "../network/wired/wired-config";
+import WirelessConfig from "../network/wireless/wireless-config";
 import FeaturesContext from "@/contexts/FeaturesContext";
+import { RangeControl } from "@/components/ui/range-control";
 
 export const IP_REGEX =
   /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$|^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)+([A-Za-z]|[A-Za-z][A-Za-z0-9-]*[A-Za-z0-9])$/;
-
-const SettingsCard = ({
-  cardTitle,
-  children,
-}: {
-  cardTitle: string;
-  children: React.ReactNode;
-}) => {
-  return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>{cardTitle}</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">{children}</CardContent>
-    </Card>
-  );
-};
 
 const PreferencesLayout = () => {
   const { connected } = useContext(WebsocketContext)!;
@@ -206,6 +192,11 @@ const PreferencesLayout = () => {
           </div>
         </CardHeader>
       </Card>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>{connected && <WiredConfig />}</div>
+        <div>{connected && <WirelessConfig />}</div>
+      </div>
     </div>
   );
 };

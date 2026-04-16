@@ -1,5 +1,11 @@
 from dataclasses import dataclass, field
-from ..pydantic_schemas import *
+
+from ..pydantic_schemas import (
+    IntervalModel,
+    StreamEncodeTypeEnum,
+    StreamEndpointModel,
+    StreamTypeEnum,
+)
 
 
 @dataclass
@@ -7,10 +13,11 @@ class Stream:
     """
     Pure configuration object for a video stream.
     """
+
     device_path: str = ""
     encode_type: StreamEncodeTypeEnum = StreamEncodeTypeEnum.NONE
     stream_type: StreamTypeEnum = StreamTypeEnum.UDP
-    endpoints: List[StreamEndpointModel] = field(default_factory=list)
+    endpoints: list[StreamEndpointModel] = field(default_factory=list)
     width: int = 1600
     height: int = 1200
     interval: IntervalModel = field(
@@ -20,4 +27,4 @@ class Stream:
 
     # Configuration specific
     software_h264_bitrate: int = 5000
-    file_path: Optional[str] = None
+    file_path: str | None = None

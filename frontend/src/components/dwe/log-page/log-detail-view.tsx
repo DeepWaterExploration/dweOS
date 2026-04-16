@@ -29,7 +29,7 @@ export function LogDetailView({
     try {
       const date = new Date(timestamp.replace(",", "."));
       return date.toLocaleString();
-    } catch (e) {
+    } catch {
       return timestamp;
     }
   };

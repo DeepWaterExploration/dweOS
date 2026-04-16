@@ -1,8 +1,8 @@
+import logging
 import os
-from dataclasses import dataclass
-from typing import List
 import re
-import time
+from dataclasses import dataclass
+
 
 @dataclass
 class PWMChannel:
@@ -10,29 +10,44 @@ class PWMChannel:
     frequency: float = 0
     duty_cycle: float = 0
 
+
 @dataclass
 class PWMChip:
     chip: int
-    channels: List[PWMChannel]
+    channels: list[PWMChannel]
+
 
 class PWMManager:
-    PWM_BASE_PATH = '/sys/class/pwm'
+    PWM_BASE_PATH = "/sys/class/pwm"
     CHIP_REGEX = re.compile(r"pwmchip(\d+)")
     CHANNEL_REGEX = re.compile(r"pwm(\d+)")
 
     def __init__(self) -> None:
-        self.chips: List[PWMChip] = []
+        self.chips: list[PWMChip] = []
 
         self._enumerate()
 
-    def enable_channel(self, chip_id: int, channel_id: int):
-        self._echo(os.path.join(self._get_channel_path(chip_id, channel_id), 'enable'), 1)
+        self.logger = logging.getLogger("dwe_os_2.services.PWMManager")
 
-    def disable_channel(self, chip_id: int, channel_id: int):
-        self._echo(os.path.join(self._get_channel_path(chip_id, channel_id), 'enable'), 0)
+    def enable_channel(self, chip_id: int, channel_id: int) -> None:
+        self._echo(
+            os.path.join(self._get_channel_path(chip_id, channel_id), "enable"), 1
+        )
 
-    def set_channel_frequency(self, chip_id: int, channel_id: int, frequency: float):
+    def disable_channel(self, chip_id: int, channel_id: int) -> None:
+        self._echo(
+            os.path.join(self._get_channel_path(chip_id, channel_id), "enable"), 0
+        )
+
+    def set_channel_frequency(
+        self, chip_id: int, channel_id: int, frequency: float
+    ) -> None:
         channel = self._get_channel(chip_id, channel_id)
+
+        if not channel:
+            self.logger.error(f"Failed to get channel: {chip_id}:{channel_id}")
+            return
+
         channel.frequency = frequency
 
         # Save the current duty cycle and zero it
@@ -46,52 +61,71 @@ class PWMManager:
         # Restore the original duty cycle
         self._set_duty_cycle(chip_id, channel_id, original_duty_cycle, frequency)
 
-    def set_channel_duty_cycle(self, chip_id: int, channel_id: int, duty_cycle: float):
+    def set_channel_duty_cycle(
+        self, chip_id: int, channel_id: int, duty_cycle: float
+    ) -> None:
         channel = self._get_channel(chip_id, channel_id)
+
+        if not channel:
+            self.logger.error(f"Failed to get channel: {chip_id}:{channel_id}")
+            return
+
         self._set_duty_cycle(chip_id, channel_id, duty_cycle, channel.frequency)
         channel.duty_cycle = duty_cycle
 
-    def _set_channel_frequency(self, chip_id: int, channel_id: int, frequency: float):
+    def _set_channel_frequency(
+        self, chip_id: int, channel_id: int, frequency: float
+    ) -> None:
         period_ns = int((1 / frequency) * 1_000_000_000)
-        period_path = os.path.join(self._get_channel_path(chip_id, channel_id), 'period')
+        period_path = os.path.join(
+            self._get_channel_path(chip_id, channel_id), "period"
+        )
 
         self._echo(period_path, period_ns)
 
-    def _set_duty_cycle(self, chip_id: int, channel_id: int, duty_cycle: float, frequency: float):
+    def _set_duty_cycle(
+        self, chip_id: int, channel_id: int, duty_cycle: float, frequency: float
+    ) -> None:
         # Compute duty cycle in nanoseconds
         period_ns = int((1 / frequency) * 1_000_000_000)
         duty_cycle_ns = int((duty_cycle / 100) * period_ns)
-        duty_cycle_path = os.path.join(self._get_channel_path(chip_id, channel_id), 'duty_cycle')
+        duty_cycle_path = os.path.join(
+            self._get_channel_path(chip_id, channel_id), "duty_cycle"
+        )
 
         # Write the duty cycle value
         self._echo(duty_cycle_path, duty_cycle_ns)
 
     def _get_chip_path(self, chip_id: int) -> str:
-        return os.path.join(self.PWM_BASE_PATH, f'pwmchip{chip_id}')
-    
-    def _get_channel_path(self, chip_id: int, channel_id: int) -> str:
-        return os.path.join(self._get_chip_path(chip_id), f'pwm{channel_id}')
+        return os.path.join(self.PWM_BASE_PATH, f"pwmchip{chip_id}")
 
-    def _get_channel(self, chip_id: int, channel_id: int):
+    def _get_channel_path(self, chip_id: int, channel_id: int) -> str:
+        return os.path.join(self._get_chip_path(chip_id), f"pwm{channel_id}")
+
+    def _get_channel(self, chip_id: int, channel_id: int) -> PWMChannel | None:
         chip = self._get_chip(chip_id)
+
+        if not chip:
+            self.logger.error(f"Failed to get chip: {chip_id}:{channel_id}")
+            return None
 
         for channel in chip.channels:
             if channel.channel == channel_id:
                 return channel
-        
+
         return None
 
-    def _get_chip(self, chip_id: int):
+    def _get_chip(self, chip_id: int) -> PWMChip | None:
         for chip in self.chips:
             if chip.chip == chip_id:
                 return chip
         return None
 
-    def _echo(self, file: str, value: int):
-        with open(file, 'w') as export_file:
+    def _echo(self, file: str, value: int) -> None:
+        with open(file, "w") as export_file:
             export_file.write(str(value))
-    
-    def _enumerate(self):
+
+    def _enumerate(self) -> None:
         for chip_entry in os.listdir(self.PWM_BASE_PATH):
             # Get the match of the chip
             chip_match = self.CHIP_REGEX.match(chip_entry)
@@ -100,23 +134,23 @@ class PWMManager:
                 chip_number = int(chip_match.group(1))
                 chip_path = os.path.join(self.PWM_BASE_PATH, chip_entry)
 
-                npwm_path = os.path.join(chip_path, 'npwm')
-                with open(npwm_path, 'r') as f:
+                npwm_path = os.path.join(chip_path, "npwm")
+                with open(npwm_path) as f:
                     npwm = int(f.read().strip())
 
-                channels: List[PWMChannel] = []
+                channels: list[PWMChannel] = []
 
                 # Iterate over every channel
-                export_path = os.path.join(chip_path, 'export')
+                export_path = os.path.join(chip_path, "export")
                 for channel_number in range(npwm):
-                    pwm_channel_path = os.path.join(chip_path, f'pwm{channel_number}')
+                    pwm_channel_path = os.path.join(chip_path, f"pwm{channel_number}")
                     if not os.path.exists(pwm_channel_path):
                         # create the export
                         try:
                             self._echo(export_path, channel_number)
                         except OSError:
                             continue
-                    
+
                     channels.append(PWMChannel(channel_number))
 
                 self.chips.append(PWMChip(chip=chip_number, channels=channels))

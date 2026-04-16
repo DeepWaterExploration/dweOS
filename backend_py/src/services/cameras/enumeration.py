@@ -1,22 +1,22 @@
 """
 enumeration.py
 
-Searches the system for cameras using video4linux, create a DeviceInfo based on the camera, and then maps that to the camera's bus_info,
+Searches the system for cameras using video4linux, create a DeviceInfo based on the
+camera, and then maps that to the camera's bus_info,
 and return a sorted list of device_infos
 """
 
-from dataclasses import dataclass
-from . import v4l2
 import fcntl
 import os
+from dataclasses import dataclass
+
 from natsort import natsorted
-import logging
-from typing import List, Dict
+
+from . import v4l2
 
 
 @dataclass
 class DeviceInfo:
-
     device_name: str
     bus_info: str
     device_paths: list[str]
@@ -24,52 +24,66 @@ class DeviceInfo:
     pid: int
 
 
-def _get_device_attr(device_path, attr):
-    file_object = open(device_path + '/' + attr)
-    return file_object.read().strip()
+def _get_device_attr(device_path, attr) -> str:
+    with open(device_path + "/" + attr) as file_object:
+        return file_object.read().strip()
 
 
-def _get_vid_pid(devname):
+def _get_vid_pid(devname) -> tuple[int, int] | None:
     cam_name = devname
-    syspath = '/sys/class/video4linux/' + cam_name
-    link = os.readlink(syspath) + '../../../../'
-    device_path = os.path.abspath(
-        '/sys/class/video4linux/' + link)
-    return (int(_get_device_attr(device_path, 'idVendor'), base=16), int(_get_device_attr(device_path, 'idProduct'), base=16))
+    syspath = "/sys/class/video4linux/" + cam_name
+    link = os.readlink(syspath) + "../../../../"
+    device_path = os.path.abspath("/sys/class/video4linux/" + link)
+
+    id_vendor_str = _get_device_attr(device_path, "idVendor")
+    id_product_str = _get_device_attr(device_path, "idProduct")
+
+    if not id_vendor_str or not id_product_str:
+        return None
+
+    return (
+        int(id_vendor_str, base=16),
+        int(id_product_str, base=16),
+    )
 
 
-def list_devices():
+def list_devices() -> list[DeviceInfo]:
     # traverse the directory that has the list of all devices
-    devnames: List[str] = []
+    devnames: list[str] = []
     try:
-        devnames = os.listdir('/sys/class/video4linux/')
-    except FileNotFoundError as e:
+        devnames = os.listdir("/sys/class/video4linux/")
+    except FileNotFoundError:
         return []
-    devices_info: List[DeviceInfo] = []
-    devices_map: Dict[str, DeviceInfo] = {}
+    devices_info: list[DeviceInfo] = []
+    devices_map: dict[str, DeviceInfo] = {}
     for devname in devnames:
-        devpath = f'/dev/{devname}'
+        devpath = f"/dev/{devname}"
         try:
-            fd = open(devpath)
-        except:
+            with open(devpath) as fd:
+                cap = v4l2.v4l2_capability()
+                fcntl.ioctl(fd, v4l2.VIDIOC_QUERYCAP, cap)
+                fd.close()
+                bus_info: str = bytes.decode(cap.bus_info)
+                # Correct type of bus info
+                if bus_info.startswith("usb"):
+                    if bus_info in devices_map:
+                        devices_map[bus_info].device_paths.append(devpath)
+                    else:
+                        device_name = cap.card.decode()
+                        try:
+                            vid_pid = _get_vid_pid(devname)
+                            if not vid_pid:
+                                # Never happens, just added this for linting
+                                continue
+                            (vid, pid) = vid_pid
+                        except OSError:
+                            continue
+                        devices_map[bus_info] = DeviceInfo(
+                            device_name, bus_info, [devpath], vid, pid
+                        )
+        except OSError:
             # Device was not initialized yet, just wait a bit
             continue
-        cap = v4l2.v4l2_capability()
-        fcntl.ioctl(fd, v4l2.VIDIOC_QUERYCAP, cap)
-        fd.close()
-        bus_info: str = bytes.decode(cap.bus_info)
-        # Correct type of bus info
-        if bus_info.startswith('usb'):
-            if bus_info in devices_map:
-                devices_map[bus_info].device_paths.append(devpath)
-            else:
-                device_name = cap.card.decode()
-                try:
-                    (vid, pid) = _get_vid_pid(devname)
-                except OSError:
-                    continue
-                devices_map[bus_info] = DeviceInfo(
-                    device_name, bus_info, [devpath], vid, pid)
 
     # flatten the dict
     for bus_info in devices_map:

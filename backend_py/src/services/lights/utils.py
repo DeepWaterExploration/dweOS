@@ -1,17 +1,19 @@
 """
 utils.py
 
-Determines what kind of system/hardware the application is on, and then tries to enable PWM controllers on them
+Determines what kind of system/hardware the application is on, and then tries to
+enable PWM controllers on them
 """
 
 import logging
-
-# from .fake_pwm import FakePWMController
-import re
 import os
+import re
+
+from .pwm_controller import PWMController
+from .rpi_pwm_hardware import RPiHardwarePWMController
 
 
-def is_overlay_loaded():
+def is_overlay_loaded() -> bool:
     """
     Based on function from rpi_hardware_pwm
     """
@@ -19,10 +21,10 @@ def is_overlay_loaded():
     return os.path.isdir(chippath)
 
 
-def get_rpi_version():
+def get_rpi_version() -> int | None:
     try:
         # Read the device model from the file
-        with open("/sys/firmware/devicetree/base/model", "r") as f:
+        with open("/sys/firmware/devicetree/base/model") as f:
             model = f.read().strip()
 
         # Check if the device is a Raspberry Pi
@@ -44,18 +46,18 @@ def get_rpi_version():
         return None
 
 
-def create_pwm_controllers():
-    pwm_controllers = []
+def create_pwm_controllers() -> list[PWMController]:
+    pwm_controllers: list[PWMController] = []
     version = get_rpi_version()
     logger = logging.getLogger("dwe_os_2.pwm")
     if version is not None:
         logger.info(f"Device is Raspberry Pi {version}")
         if not is_overlay_loaded():
             logger.warning(
-                "PWM Overlay not loaded. Need to add 'dtoverlay=pwm-2chan' to /boot/config.txt and reboot"
+                "PWM Overlay not loaded. Need to add 'dtoverlay=pwm-2chan' to "
+                "/boot/config.txt and reboot"
             )
             return []
-        from .rpi_pwm_hardware import RPiHardwarePWMController
 
         if version == 5:
             pwm_controllers.append(

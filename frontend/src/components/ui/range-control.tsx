@@ -51,6 +51,18 @@ export const RangeControl = ({
     }
   }, [max]);
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      handleInputChange();
+      handleStep(1);
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      handleInputChange();
+      handleStep(-1);
+    }
+  };
+
   useEffect(() => {
     setValueSlider(value);
   }, [value]);
@@ -100,6 +112,7 @@ export const RangeControl = ({
               setInputValue(e.target.value);
             }}
             onBlur={() => handleInputChange()}
+            onKeyDown={handleKeyDown}
             min={min}
             max={max}
             step={step}

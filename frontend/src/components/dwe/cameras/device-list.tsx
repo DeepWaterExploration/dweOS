@@ -16,7 +16,7 @@ import {
 import DevicesContext from "@/contexts/DevicesContext";
 import { getDeviceByBusInfo } from "@/lib/utils";
 import NotConnected from "../not-connected";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useTour } from "@/components/tour/tour";
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 
@@ -100,8 +100,6 @@ const NoDevicesConnected = () => {
 
 const DeviceListLayout = () => {
   const { socket, connected } = useContext(WebsocketContext)!;
-
-  const { toast } = useToast();
 
   const { isActive } = useTour();
 
@@ -221,10 +219,8 @@ const DeviceListLayout = () => {
         }
         return [...currentDevices]; // Return a new array to trigger re-render
       });
-      toast({
-        title: "Stream Error",
+      toast.error("Stream Error", {
         description: `An error occurred with the device ${data.bus_info}. Please check the logs for more details.`,
-        variant: "destructive",
       });
     };
 

@@ -2,34 +2,38 @@
 device_manager.py
 
 Handles functionality of device and montiors for devices
-When it finds a new device, it creates a new device object and updates the device list and that devices settings
+When it finds a new device, it creates a new device object and updates the device list
+and that devices settings
 When it sees a missing device, it removes that device ojbect from the device list
 Manages a devices streaming state as well as changes to device name
 Manages the leader follower connections
 """
 
-from typing import List, cast
-import logging
-import event_emitter as events
 import asyncio
+import logging
 import traceback
+from typing import Any, cast
 
-from .pydantic_schemas import *
-from .device import Device, lookup_pid_vid, DeviceInfo, DeviceType
-from .settings import SettingsManager
-from .enumeration import list_devices
-from .device_utils import list_diff, find_device_with_bus_info
-from .exceptions import DeviceNotFoundException
-
+import event_emitter as events
 import socketio
 
+from .device import Device, DeviceInfo, DeviceType, lookup_pid_vid
+from .device_utils import find_device_with_bus_info, list_diff
 from .ehd import EHDDevice
-from .shd import SHDDevice
+from .enumeration import list_devices
+from .exceptions import DeviceNotFoundException
 from .pwm.serial_pwm_controller import SerialPWMController
-from ..preferences import SavedPreferencesModel
+from .pydantic_schemas import (
+    DeviceModel,
+    StreamEncodeTypeEnum,
+    StreamInfoModel,
+    StreamTypeEnum,
+)
+from .settings import SettingsManager
+from .shd import SHDDevice
 
 
-def todict(obj, classkey=None):
+def todict(obj, classkey=None) -> Any:
     if isinstance(obj, dict):
         data = {}
         for k, v in obj.items():
@@ -60,30 +64,30 @@ class DeviceManager(events.EventEmitter):
     """
 
     def __init__(
-        self, sio: socketio.AsyncServer, preferences: SavedPreferencesModel, use_serial=False, settings_manager=SettingsManager()
+        self,
+        sio: socketio.AsyncServer,
+        settings_manager: SettingsManager,
+        serial: SerialPWMController,
     ) -> None:
-        self.devices: List[Device] = []
+        self.devices: list[Device] = []
         self.sio = sio
         self.settings_manager = settings_manager
         self._is_monitoring = False
         # List of devices with stream errors
-        self.stream_errors: List[str] = []
+        self.stream_errors: list[str] = []
 
-        self.serial = None
-        if use_serial:
-            self.serial = SerialPWMController(
-                frequency_offset=preferences.frequency_offset)
+        self.serial = serial
 
         self.logger = logging.getLogger("dwe_os_2.cameras.DeviceManager")
 
-    def start_monitoring(self):
+    def start_monitoring(self) -> None:
         """
         Begin monitoring for devices in the background
         """
         self._is_monitoring = True
         asyncio.create_task(self._monitor())
 
-    def stop_monitoring(self):
+    def stop_monitoring(self) -> None:
         """
         Stop monitoring for devices
         """
@@ -91,6 +95,7 @@ class DeviceManager(events.EventEmitter):
 
         for device in self.devices:
             device.stream_runner.stop()
+            device.close()
 
         if self.serial:
             self.serial.close()
@@ -113,30 +118,30 @@ class DeviceManager(events.EventEmitter):
                 # Not a DWE device
                 return None
 
-        # we need to broadcast that there was a gst error so that the frontend knows there may be a kernel issue
+        # we need to broadcast that there was a gst error so that the frontend knows
+        # there may be a kernel issue
         device.stream_runner.on(
-            "stream_error", lambda _: self._append_stream_error(
-                DeviceModel.model_validate(device)))
+            "stream_error",
+            lambda _: self._append_stream_error(DeviceModel.model_validate(device)),
+        )
 
         if self.serial:
-            device.on("pwm_frequency",
-                      lambda fps: self.serial.apply_from_fps(fps))  # type: ignore
+            device.on("pwm_frequency", lambda fps: self.serial.apply_from_fps(fps))
 
         return device
 
-    def _append_stream_error(self, device: DeviceModel):
+    def _append_stream_error(self, device: DeviceModel) -> None:
         """
         Helper function to append a gst error
         """
         device.stream.enabled = False
         self.stream_errors.append(device.bus_info)
 
-    def get_devices(self):
+    def get_devices(self) -> list[DeviceModel]:
         """
         Compile and sort a list of devices for jsonifcation
         """
-        device_list = [DeviceModel.model_validate(
-            device) for device in self.devices]
+        device_list = [DeviceModel.model_validate(device) for device in self.devices]
         return device_list
 
     def set_device_option(
@@ -184,7 +189,7 @@ class DeviceManager(events.EventEmitter):
         """
         device = self._find_device_with_bus_info(bus_info)
 
-        self.logger.info(f'Setting nickname of {bus_info} to {nickname}')
+        self.logger.info(f"Setting nickname of {bus_info} to {nickname}")
 
         device.nickname = nickname
 
@@ -192,7 +197,7 @@ class DeviceManager(events.EventEmitter):
         return True
 
     def set_device_uvc_control(
-        self, bus_info: str, control_id: int, control_value: int
+        self, bus_info: str, control_id: int, control_value: int | float
     ) -> bool:
         """
         Set a device UVC control
@@ -204,16 +209,15 @@ class DeviceManager(events.EventEmitter):
         self.settings_manager.save_device(device)
         return True
 
-    def add_follower(self, leader_bus_info: str, follower_bus_info: str):
-        '''
+    def add_follower(self, leader_bus_info: str, follower_bus_info: str) -> bool:
+        """
         Add a follower to a leader
-        '''
+        """
         leader_device = self._find_device_with_bus_info(leader_bus_info)
         follower_device = self._find_device_with_bus_info(follower_bus_info)
 
         if follower_device.device_type != DeviceType.STELLARHD_FOLLOWER:
-            self.logger.warning(
-                'Attempted to add follower of non-follower type')
+            self.logger.warning("Attempted to add follower of non-follower type")
             return False
 
         leader_device = cast(SHDDevice, leader_device)
@@ -225,20 +229,19 @@ class DeviceManager(events.EventEmitter):
 
         return True
 
-    def remove_follower(self, leader_bus_info: str, follower_bus_info: str):
-        '''
+    def remove_follower(self, leader_bus_info: str, follower_bus_info: str) -> bool:
+        """
         Remove a follower from a leader
-        '''
+        """
         leader_device = self._find_device_with_bus_info(leader_bus_info)
         leader_device = cast(SHDDevice, leader_device)
         try:
-            follower_device = self._find_device_with_bus_info(
-                follower_bus_info)
+            follower_device = self._find_device_with_bus_info(follower_bus_info)
         except DeviceNotFoundException:
             # THERE IS NO INHERENT TRUTH TO THE EXISTANCE OF THE FOLLOWER
             # Expected in the case of an unplugged follower
             leader_device.remove_manual(follower_bus_info)
-            return
+            return False
 
         # This is allowed
         # if leader_device.device_type != DeviceType.STELLARHD_LEADER:
@@ -247,8 +250,7 @@ class DeviceManager(events.EventEmitter):
         #     return False
 
         if follower_device.device_type != DeviceType.STELLARHD_FOLLOWER:
-            self.logger.warning(
-                'Attempted to remove follower of non-follower type')
+            self.logger.warning("Attempted to remove follower of non-follower type")
             return False
 
         follower_device = cast(SHDDevice, follower_device)
@@ -268,7 +270,7 @@ class DeviceManager(events.EventEmitter):
             raise DeviceNotFoundException(bus_info)
         return device
 
-    async def _get_devices(self, old_devices: List[DeviceInfo]):
+    async def _get_devices(self, old_devices: list[DeviceInfo]) -> list[DeviceInfo]:
         # enumerate the devices
         devices_info = list_devices()
 
@@ -316,31 +318,41 @@ class DeviceManager(events.EventEmitter):
                     device.stream_runner.stop()
 
                     # What to do when a device is unplugged
-                    # Remove unplugged followers from leaders, and unplugged leaders as leaders
-                    if device.device_type == DeviceType.STELLARHD_LEADER or device.device_type == DeviceType.STELLARHD_FOLLOWER:
+                    # Remove unplugged followers from leaders, and unplugged leaders
+                    # as leaders
+                    if (
+                        device.device_type == DeviceType.STELLARHD_LEADER
+                        or device.device_type == DeviceType.STELLARHD_FOLLOWER
+                    ):
                         leader_casted = cast(SHDDevice, device)
                         for follower_bus_info in leader_casted.followers:
                             # This can be optimized, but it truly does not matter
                             follower = self._find_device_with_bus_info(
-                                follower_bus_info)
-                            # Remember, follower might not exist now - never inherent truth to its existance
+                                follower_bus_info
+                            )
+                            # Remember, follower might not exist now - never inherent
+                            # truth to its existance
                             if follower:
                                 follower_casted = cast(SHDDevice, follower)
                                 leader_casted.remove_follower(follower_casted)
-                                self.settings_manager.save_device(
-                                    leader_casted)
+                                self.settings_manager.save_device(leader_casted)
                     if device.device_type == DeviceType.STELLARHD_FOLLOWER:
                         follower_casted = cast(SHDDevice, device)
                         if follower_casted.is_managed:
                             # TODO: Fix this
                             for device in self.devices:
-                                if device.device_type == DeviceType.STELLARHD_LEADER or device.device_type == DeviceType.STELLARHD_FOLLOWER:
+                                if (
+                                    device.device_type == DeviceType.STELLARHD_LEADER
+                                    or device.device_type
+                                    == DeviceType.STELLARHD_FOLLOWER
+                                ):
                                     leader_casted = cast(SHDDevice, device)
-                                    if follower_casted.bus_info in leader_casted.followers:
-                                        leader_casted.remove_follower(
-                                            follower_casted)
-                                        self.settings_manager.save_device(
-                                            leader_casted)
+                                    if (
+                                        follower_casted.bus_info
+                                        in leader_casted.followers
+                                    ):
+                                        leader_casted.remove_follower(follower_casted)
+                                        self.settings_manager.save_device(leader_casted)
 
                     self.devices.remove(device)
                     self.logger.info(f"Device Removed: {device_info.bus_info}")
@@ -348,12 +360,13 @@ class DeviceManager(events.EventEmitter):
                     await self.sio.emit("device_removed", device_info.bus_info)
 
         if device_added:
-            # FIXME: Issue where sometimes frontend updates too quickly before the changes have been made
+            # FIXME: Issue where sometimes frontend updates too quickly before the
+            # changes have been made
             await self.sio.emit("device_added")
 
         return devices_info
 
-    async def _monitor(self):
+    async def _monitor(self) -> None:
         """
         Internal code to monitor devices for changes
         """
@@ -366,7 +379,7 @@ class DeviceManager(events.EventEmitter):
             # get the list of devices and update the internal array
             devices_info = await self._get_devices(devices_info)
 
-    async def _emit_stream_error(self, device: str, errors: list | str):
+    async def _emit_stream_error(self, device: str, errors: list | str) -> None:
         """
         Emit a stream_error and make sure it is not due to the device being unplugged
         """
@@ -374,7 +387,9 @@ class DeviceManager(events.EventEmitter):
 
         for dev_info in devices_info:
             if device == dev_info.bus_info:
-                await self.sio.emit("stream_error", {"errors": errors, "bus_info": device})
+                await self.sio.emit(
+                    "stream_error", {"errors": errors, "bus_info": device}
+                )
                 return
 
         self.logger.debug("stream_error ignored due to device unplugged")

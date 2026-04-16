@@ -1,59 +1,81 @@
 """
 ehd.py
 
-Adds additional features to exploreHD devices through extension units (xu) as per UVC protocol
-Uses options functionality to set defaults, ranges, and specifies registers for where these features store data
+Adds additional features to exploreHD devices through extension units (xu)
+as per UVC protocol
+Uses options functionality to set defaults, ranges, and specifies registers for where
+these features store data
 """
 
-from typing import Dict
-from .enumeration import DeviceInfo
-from .device import Device, Option, ControlTypeEnum
-from .pydantic_schemas import H264Mode
+from typing import cast
+
 from . import xu_controls as xu
+from .device import BaseOption, ControlTypeEnum, Device, Option
+from .enumeration import DeviceInfo
+from .pydantic_schemas import H264Mode
+
 
 class EHDDevice(Device):
-    '''
+    """
     Class for exploreHD devices
-    '''
+    """
 
     def __init__(self, device_info: DeviceInfo) -> None:
         super().__init__(device_info)
 
-        self.add_control_from_option(
-            'vbr', False, ControlTypeEnum.BOOLEAN
-        )
+        self.add_control_from_option("vbr", False, ControlTypeEnum.BOOLEAN)
+
+        self.add_control_from_option("gop", 29, ControlTypeEnum.INTEGER, 29, 0, 1)
 
         self.add_control_from_option(
-            'gop', 29, ControlTypeEnum.INTEGER, 29, 0, 1 
-        )
-        
-        self.add_control_from_option(
-            'bitrate', 10, ControlTypeEnum.INTEGER, 15, 0.1, 0.1
+            "bitrate", 10, ControlTypeEnum.INTEGER, 15, 0.1, 0.1
         )
 
-    def _get_options(self) -> Dict[str, Option]:
+    def _get_options(self) -> dict[str, BaseOption]:
         options = {}
 
         # UVC xu bitrate control
         # Standard integer options
-        options['bitrate'] = Option(
-            self.cameras[2], '>I', xu.Unit.USR_ID, xu.Selector.USR_H264_CTRL, xu.Command.H264_BITRATE_CTRL, 'Bitrate', 
-            lambda bitrate: int(round(bitrate * 1000000)), # convert to bps from mpbs (round for float imprecision)
-            lambda bitrate: bitrate / 1000000  # convert to mpbs from bps
+        options["bitrate"] = Option(
+            self.cameras[2],
+            ">I",
+            xu.Unit.USR_ID,
+            xu.Selector.USR_H264_CTRL,
+            xu.Command.H264_BITRATE_CTRL,
+            "Bitrate",
+            lambda bitrate: int(
+                round(bitrate * 1000000)
+            ),  # convert to bps from mpbs (round for float imprecision)
+            lambda bitrate: cast(int, bitrate) / 1000000.0,  # convert to mpbs from bps
         )
 
         # UVC xu gop control
-        options['gop'] = Option(
-            self.cameras[2], 'H', xu.Unit.USR_ID, xu.Selector.USR_H264_CTRL, xu.Command.GOP_CTRL, 'Group of Pictures')
+        options["gop"] = Option(
+            self.cameras[2],
+            "H",
+            xu.Unit.USR_ID,
+            xu.Selector.USR_H264_CTRL,
+            xu.Command.GOP_CTRL,
+            "Group of Pictures",
+        )
 
         # UVC xu H264 mode control
         # We want the mode option to be true or false
         #   true indicates variable bitrate and false indicates constant bitrate
         # Maybe rename mode to vbr etc.
-        options['vbr'] = Option(
-            self.cameras[2], 'B', xu.Unit.USR_ID, xu.Selector.USR_H264_CTRL, xu.Command.H264_MODE_CTRL, 'Variable Bitrate',
-            lambda mode : H264Mode.MODE_VARIABLE_BITRATE.value if mode else H264Mode.MODE_CONSTANT_BITRATE.value, 
-            lambda mode_value : H264Mode(mode_value) == H264Mode.MODE_VARIABLE_BITRATE)
+        options["vbr"] = Option(
+            self.cameras[2],
+            "B",
+            xu.Unit.USR_ID,
+            xu.Selector.USR_H264_CTRL,
+            xu.Command.H264_MODE_CTRL,
+            "Variable Bitrate",
+            lambda mode: (
+                H264Mode.MODE_VARIABLE_BITRATE.value
+                if mode
+                else H264Mode.MODE_CONSTANT_BITRATE.value
+            ),
+            lambda mode_value: H264Mode(mode_value) == H264Mode.MODE_VARIABLE_BITRATE,
+        )
 
         return options
-

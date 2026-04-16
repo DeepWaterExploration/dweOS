@@ -2,15 +2,14 @@
 #
 # Minimal Python V4L2 capture + multi-camera synchronizer
 
-import os
-import fcntl
-import mmap
-import time
-from dataclasses import dataclass
-from collections import deque
-from typing import List, Optional
+import contextlib
 import ctypes
+import fcntl
 import logging
+import mmap
+import os
+from collections import deque
+from dataclasses import dataclass
 
 from .. import v4l2
 
@@ -26,6 +25,7 @@ class CopiedFrame:
         pixel_format     number defining the format of the image (currently always jpeg)
         timestamp_us     the timestamp of the frame in microseconds
     """
+
     data: bytes
     width: int
     height: int
@@ -38,12 +38,15 @@ class V4L2Camera:
     Python V4L2 camera wrapper using mmap buffers.
     """
 
-    def __init__(self, device: str,
-                 width: int,
-                 height: int,
-                 fps: int,
-                 pixel_format: int = v4l2.V4L2_PIX_FMT_MJPEG,
-                 buffer_count: int = 4):
+    def __init__(
+        self,
+        device: str,
+        width: int,
+        height: int,
+        fps: int,
+        pixel_format: int = v4l2.V4L2_PIX_FMT_MJPEG,
+        buffer_count: int = 4,
+    ) -> None:
 
         self.device = device
         self.width = width
@@ -69,8 +72,9 @@ class V4L2Camera:
         self._queue_all_buffers()
         self._start_stream()
 
-    def _ioctl(self, req, arg):
-        assert self.fd is not None
+    def _ioctl(self, req, arg) -> int:
+        if self.fd is None:
+            raise RuntimeError("V4L2Camera.fd is not defined. Unable to run ioctl.")
 
         try:
             return fcntl.ioctl(self.fd, req, arg)
@@ -78,7 +82,7 @@ class V4L2Camera:
             self.logger.error(f"IOCTL error: {e.strerror}")
             return -1
 
-    def _set_format(self):
+    def _set_format(self) -> None:
         fmt = v4l2.v4l2_format()
         fmt.type = v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE
         fmt.fmt.pix.width = self.width
@@ -88,7 +92,7 @@ class V4L2Camera:
 
         self._ioctl(v4l2.VIDIOC_S_FMT, fmt)
 
-    def _set_fps(self):
+    def _set_fps(self) -> None:
         parm = v4l2.v4l2_streamparm()
         parm.type = v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE
 
@@ -97,16 +101,16 @@ class V4L2Camera:
 
         # Check capability
         if not (parm.parm.capture.capability & v4l2.V4L2_CAP_TIMEPERFRAME):
-            raise RuntimeError(
-                "Camera does not support FPS control (TIMEPERFRAME).")
+            raise RuntimeError("Camera does not support FPS control (TIMEPERFRAME).")
 
         parm.parm.capture.timeperframe.numerator = 1
         parm.parm.capture.timeperframe.denominator = self.fps
 
         self._ioctl(v4l2.VIDIOC_S_PARM, parm)
 
-    def _request_and_map_buffers(self):
-        assert self.fd is not None
+    def _request_and_map_buffers(self) -> None:
+        if self.fd is None:
+            raise RuntimeError("V4L2Camera.fd is not defined. Unable to map buffers.")
 
         req = v4l2.v4l2_requestbuffers()
         req.count = self.buffer_count
@@ -116,9 +120,11 @@ class V4L2Camera:
         self._ioctl(v4l2.VIDIOC_REQBUFS, req)
 
         if req.count != self.buffer_count:
-            # Count: `The number of buffers requested or granted.` (can rarely change after request)
+            # Count: `The number of buffers requested or granted.`
+            #   (can rarely change after request)
             # Driver might reduce the buffer count?
-            # Might want to research this, because I'd bet it only happens with EXTREMELY large buffer counts
+            # Might want to research this, because I'd bet it only happens with
+            # EXTREMELY large buffer counts
             self.buffer_count = req.count
 
         self._buffers = []
@@ -141,7 +147,7 @@ class V4L2Camera:
             )
             self._buffers.append(mm)
 
-    def _queue_all_buffers(self):
+    def _queue_all_buffers(self) -> None:
         for i in range(self.buffer_count):
             buf = v4l2.v4l2_buffer()
             buf.type = v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE
@@ -149,12 +155,12 @@ class V4L2Camera:
             buf.index = i
             self._ioctl(v4l2.VIDIOC_QBUF, buf)
 
-    def _start_stream(self):
+    def _start_stream(self) -> None:
         buf_type = ctypes.c_int(v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE)
         self._ioctl(v4l2.VIDIOC_STREAMON, buf_type)
         self._running = True
 
-    def _stop_stream(self):
+    def _stop_stream(self) -> None:
         if not self._running:
             return
         buf_type = ctypes.c_int(v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE)
@@ -163,36 +169,33 @@ class V4L2Camera:
 
     # Public API
 
-    def grab_copied_frame(self, blocking: bool = True, timeout_s: float = 1.0) -> Optional[CopiedFrame]:
+    def grab_copied_frame(
+        self, blocking: bool = True, timeout_s: float = 1.0
+    ) -> CopiedFrame | None:
         """
         Dequeue one buffer, copy its contents into a new bytes object,
         requeue the buffer, and return a CopiedFrame.
 
         If blocking=False, returns None immediately if no frame is ready.
         """
+        if blocking:
+            import select
+
+            # select() polling
+            readable, _, _ = select.select([self.fd], [], [], timeout_s)
+            if not readable:
+                self.logger.warning(f"Timeout waiting for frame on {self.device}")
+                return None
+
         buf = v4l2.v4l2_buffer()
         buf.type = v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE
         buf.memory = v4l2.V4L2_MEMORY_MMAP
 
-        # We emulate blocking behavior with a small poll loop
-        # Actual polling is possible but not needed
-        start_time = time.time()
-        while True:
-            if self._ioctl(v4l2.VIDIOC_DQBUF, buf) != -1:
-                break
-            else:
-                if not blocking:
-                    return None
-                if timeout_s is not None and (time.time() - start_time) > timeout_s:
-                    return None
-                # EAGAIN: no buffer ready yet, sleep a bit
-                # FIXME: I don't really like this, but it'll do for the time being
-                time.sleep(0.001)
+        if self._ioctl(v4l2.VIDIOC_DQBUF, buf) == -1:
+            return None
 
         mm = self._buffers[buf.index]
-        # Copy only the used bytes
-        frame_bytes = mm[:buf.bytesused]
-        # Convert timeval (tv_sec, tv_usec) to microseconds
+        frame_bytes = mm[: buf.bytesused]
         ts_us = buf.timestamp.secs * 1_000_000 + buf.timestamp.usecs
 
         # Requeue the buffer immediately
@@ -206,7 +209,7 @@ class V4L2Camera:
             timestamp_us=ts_us,
         )
 
-    def close(self):
+    def close(self) -> None:
         if self.critical_error:
             return
 
@@ -214,10 +217,9 @@ class V4L2Camera:
 
         # Unmap buffers
         for mm in self._buffers:
-            try:
+            # We don't care if it fails
+            with contextlib.suppress(Exception):
                 mm.close()
-            except Exception:
-                pass
 
         self._buffers.clear()
 
@@ -234,15 +236,15 @@ class V4L2Camera:
             os.close(self.fd)
             self.fd = None
 
-    def __enter__(self):
+    def __enter__(self) -> "V4L2Camera":
         # Cool
         return self
 
-    def __exit__(self, exc_type, exc, tb):
+    def __exit__(self, exc_type, exc, tb) -> None:
         # We don't use this, but is useful in the case of with v4l2_camera as...
         self.close()
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.close()
 
 
@@ -251,31 +253,32 @@ class SynchronizedCamera:
     Synchronized Camera Class
     """
 
-    def __init__(self,
-                 cameras: List[V4L2Camera],
-                 queue_cap: int = 8):
+    def __init__(self, cameras: list[V4L2Camera], queue_cap: int = 8) -> None:
         for camera in cameras:
             if camera.critical_error:
                 raise AssertionError(
-                    "Cannot create a SynchronizedCamera with cameras containing errors! Please check your camera status.")
+                    "Cannot create a SynchronizedCamera with cameras containing errors!"
+                    "Please check your camera status."
+                )
 
         self.cameras = cameras
         sync_threshold_us = 1.0 / self.cameras[0].fps * 1000000
 
         self.sync_threshold_us = sync_threshold_us
         self.queue_cap = queue_cap
-        self.queues: List[deque[CopiedFrame]] = [
-            deque() for _ in cameras
-        ]
-        self.logger = logging.getLogger(
-            f"dwe_os_2.cameras.SynchronizedCamera")
+        self.queues: list[deque[CopiedFrame]] = [deque() for _ in cameras]
+        self.logger = logging.getLogger("dwe_os_2.cameras.SynchronizedCamera")
 
-        # For those curious about the synchronization logic, it can be summarized as follows:
-        # The synch threshold is **NOT** the precision. It is generally specified as 1/FPS.
-        # For 60 fps, this is 16667. If synchronized to within 1/FPS, the frames can be considered synchronized at the sensor level.
-        # The frames are captured at precisely the same time, but become jumbled when they reach the userspace API.
-        # As the Linux kernel is not an RTOS, we have no way of strictly forcing provided frames to be synchronized,
-        # but we can make it happen after the fact with kernel timestamps.
+        # For those curious about the synchronization logic,
+        # it can be summarized as follows:
+        # - The sync threshold is **NOT** the precision. It is specified as 1/FPS.
+        # - For 60 fps, this is 16667. If synchronized to within 1/FPS, the frames
+        #   can be considered synchronized at the sensor level.
+        # - The frames are captured at precisely the same time,
+        #   but become jumbled when they reach the userspace API.
+        # - As the Linux kernel is not an RTOS, we have no way of strictly
+        #   forcing provided frames to be synchronized, but we can make it
+        #   happen after the fact with kernel timestamps.
 
     def camera_count(self) -> int:
         return len(self.cameras)
@@ -283,11 +286,11 @@ class SynchronizedCamera:
     def _queues_full(self) -> bool:
         return all(len(q) > 0 for q in self.queues)
 
-    def stop(self):
+    def stop(self) -> None:
         for cam in self.cameras:
             cam.close()
 
-    def grab(self) -> Optional[List[CopiedFrame]]:
+    def grab(self) -> list[CopiedFrame] | None:
         """
         Grab and synchronize frames from all cameras.
         Returns a list[CopiedFrame] of length camera_count() if synced,
@@ -295,7 +298,7 @@ class SynchronizedCamera:
         """
 
         # grab one frame from each camera
-        grabbed_frames: List[CopiedFrame] = []
+        grabbed_frames: list[CopiedFrame] = []
         for cam in self.cameras:
             cf = cam.grab_copied_frame(blocking=True)
             if cf is None:
@@ -313,8 +316,9 @@ class SynchronizedCamera:
 
         # attempt synchronization
         while self._queues_full():
-            timestamps = [self.queues[i]
-                          [0].timestamp_us for i in range(self.camera_count())]
+            timestamps = [
+                self.queues[i][0].timestamp_us for i in range(self.camera_count())
+            ]
             min_ts = min(timestamps)
             max_ts = max(timestamps)
 
@@ -327,8 +331,7 @@ class SynchronizedCamera:
             else:
                 # Drop the earliest frame (smallest timestamp) and try again
                 min_index = timestamps.index(min_ts)
-                self.logger.info(
-                    f"Dropping frame of difference: {max_ts - min_ts}")
+                self.logger.info(f"Dropping frame of difference: {max_ts - min_ts}")
                 self.queues[min_index].popleft()
 
         # Not enough frames anymore to sync

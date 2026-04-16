@@ -2,23 +2,36 @@
 server.py
 
 Handles server logic and initializes all the managers (settings, devices, lights, etc)
-Starts device monitoring, wifi scan, and starts ttyd (teletypewriter daemon) to run in the background
+Starts device monitoring, wifi scan, and starts ttyd (teletypewriter daemon) to run in
+the background
 """
 
+import asyncio
+import logging
 import logging.handlers
 
-from fastapi.staticfiles import StaticFiles
-
-from .services import *  # type: ignore
-from .routes import *
-from .logging import LogHandler
-from .schemas import FeatureSupport
-
-from fastapi import FastAPI
 import socketio
+from fastapi import FastAPI
 
-import logging
-import datetime
+from .logging import LogHandler
+from .routes import (
+    camera_router,
+    lights_router,
+    logs_router,
+    network_router,
+    preferences_router,
+    pwm_router,
+    recordings_router,
+    system_router,
+)
+from .schemas import FeatureSupport
+from .services.cameras import DeviceManager, SerialPWMController, SettingsManager
+from .services.lights import LightManager, create_pwm_controllers
+from .services.network import NetworkWrapper
+from .services.preferences import PreferencesManager
+from .services.recordings import RecordingsService
+from .services.system import SystemManager
+from .services.ttyd import TTYDManager
 
 
 class Server:
@@ -33,7 +46,7 @@ class Server:
         app: FastAPI,
         settings_path: str = "/",
         log_level=logging.INFO,
-        is_dev_mode=False
+        is_dev_mode=False,
     ) -> None:
         # initialize the app
         self.app = app
@@ -50,7 +63,8 @@ class Server:
         self.root_logger.addHandler(self.stream_handler)
         self.log_handler = LogHandler(self.sio)
         self.log_formatter = logging.Formatter(
-            "%(asctime)s - %(levelname)s - [%(name)s] - %(filename)s:%(lineno)d - %(funcName)s() - %(message)s"
+            "%(asctime)s - %(levelname)s - [%(name)s] - %(filename)s:%(lineno)d - "
+            "%(funcName)s() - %(message)s"
         )
         self.stream_handler.setFormatter(self.log_formatter)
         self.file_handler = logging.handlers.RotatingFileHandler(
@@ -68,9 +82,14 @@ class Server:
         self.settings_manager = SettingsManager(settings_path)
         self.preferences_manager = PreferencesManager(settings_path)
 
+        # Serial
+        self.serial = SerialPWMController(
+            frequency_offset=self.preferences_manager.get_preferences().frequency_offset
+        )
+
         # Device Manager
         self.device_manager = DeviceManager(
-            settings_manager=self.settings_manager, sio=self.sio, use_serial=self.feature_support.serial, preferences=self.preferences_manager.get_preferences()
+            settings_manager=self.settings_manager, sio=self.sio, serial=self.serial
         )
 
         # Lights
@@ -78,41 +97,12 @@ class Server:
 
         self.server_logger = logging.getLogger("dwe_os_2.Server")
 
-        # Wifi support
-        if self.feature_support.wifi:
-            try:
-                self.wifi_manager = AsyncNetworkManager()
-                self.app.include_router(wifi_router, prefix="/api/wifi")
-                self.app.include_router(wired_router, prefix="/api/wired")
-                self.wifi_manager.on(
-                    "ip_changed",
-                    lambda: asyncio.create_task(self.sio.emit("ip_changed")),
-                )
-                self.wifi_manager.on(
-                    "aps_changed",
-                    lambda: asyncio.create_task(self.sio.emit("aps_changed")),
-                )
-                self.wifi_manager.on(
-                    "connections_changed",
-                    lambda: asyncio.create_task(
-                        self.sio.emit("connections_changed")),
-                )
-                self.wifi_manager.on(
-                    "connection_changed",
-                    lambda: asyncio.create_task(
-                        self.sio.emit("connection_changed")),
-                )
-                self.wifi_manager.on(
-                    "disconnected",
-                    lambda: asyncio.create_task(
-                        self.sio.emit("wifi_disconnected")),
-                )
+        self.network_wrapper = NetworkWrapper(sio)
 
-            except Exception as e:
-                self.server_logger.warning(
-                    f"Error occurred while initializing WiFi: {e} so WiFi will not be supported"
-                )
-                self.feature_support.wifi = False
+        self.network_wrapper.on(
+            "refresh_ui",
+            lambda: asyncio.create_task(self.sio.emit("refresh_wired_config")),
+        )
 
         self.system_manager = SystemManager()
 
@@ -121,6 +111,8 @@ class Server:
         # TTYD
         if self.feature_support.ttyd:
             self.ttyd_manager = TTYDManager(is_dev_mode)
+
+        # TODO: https://fastapi.tiangolo.com/tutorial/dependencies/
 
         # FAST API
         self.app.state.device_manager = self.device_manager
@@ -132,10 +124,9 @@ class Server:
         self.app.state.ttyd_manager = (
             self.ttyd_manager if self.feature_support.ttyd else None
         )
-        self.app.state.wifi_manager = (
-            self.wifi_manager if self.feature_support.wifi else None
-        )
+        self.app.state.network_manager = self.network_wrapper
         self.app.state.recordings_service = self.recordings_service
+        self.app.state.serial = self.serial
 
         self.app.include_router(camera_router, prefix="/api/devices")
         self.app.include_router(preferences_router, prefix="/api/preferences")
@@ -143,11 +134,16 @@ class Server:
         self.app.include_router(lights_router, prefix="/api/lights")
         self.app.include_router(logs_router, prefix="/api/logs")
         self.app.include_router(recordings_router, prefix="/api/recordings")
+        self.app.include_router(network_router, prefix="/api/network")
 
         if feature_support.serial:
             self.app.include_router(pwm_router, prefix="/api/pwm")
             self.preferences_manager.on(
-                "preferences_updated", lambda preferences: self.device_manager.serial.set_frequency_offset(preferences.frequency_offset))  # type: ignore
+                "preferences_updated",
+                lambda preferences: self.serial.set_frequency_offset(
+                    preferences.frequency_offset
+                ),
+            )
 
         self.app.add_api_route(
             "/api/features",
@@ -161,37 +157,35 @@ class Server:
         # Error handling
         # TODO
 
-    async def emit_logs(self):
+    async def emit_logs(self) -> None:
         while True:
             logs = self.log_handler.pop_logs()
             for log in logs:
                 await self.sio.emit("log", log.model_dump())
             await asyncio.sleep(0.1)
 
-    def serve(self):
+    async def serve(self) -> None:
         # loop over and emit the logs to the client
         asyncio.create_task(self.emit_logs())
 
-        if self.feature_support.serial and self.device_manager.serial:
-            self.device_manager.serial.start()
+        if self.feature_support.serial:
+            self.serial.start()
 
         self.device_manager.start_monitoring()
-        if self.feature_support.wifi:
-            self.wifi_manager.start_scanning()
+
+        await self.network_wrapper.initialize()
+
         if self.feature_support.ttyd:
             self.ttyd_manager.start()
         else:
             self.server_logger.info("Running without TTYD")
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         self.server_logger.info("Shutting down")
 
         self.light_manager.cleanup()
         self.device_manager.stop_monitoring()
+        self.settings_manager.cleanup()
 
         if self.feature_support.ttyd:
             self.ttyd_manager.kill()
-
-        # FIXME
-        # if self.feature_support.wifi:
-        #     self.wifi_manager.stop_scanning()

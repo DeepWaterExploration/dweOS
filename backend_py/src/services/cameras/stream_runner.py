@@ -2,21 +2,24 @@
 stream_runner.py
 """
 
-import threading
-import event_emitter as events
 import logging
-from .stream_engines.stream import Stream
-from .stream_engines.base_stream_engine import BaseStreamEngine
-from .stream_engines.synchronized_stream_engine import SynchronizedStreamEngine
-from .stream_engines.gstreamer_stream_engine import GStreamerProcessEngine
+import threading
 import time
+
+import event_emitter as events
+
+from .stream_engines.base_stream_engine import BaseStreamEngine
+from .stream_engines.gstreamer_stream_engine import GStreamerProcessEngine
+from .stream_engines.stream import Stream
+from .stream_engines.synchronized_stream_engine import SynchronizedStreamEngine
 
 
 class StreamRunner(events.EventEmitter):
     """
     The main entry point. Automatically decides which engine to use based on usage.
 
-    Streams are expected to be added dynamically. Calling start() will construct the correct engine on the fly with the provided streams.
+    Streams are expected to be added dynamically. Calling start() will construct the
+    correct engine on the fly with the provided streams.
     """
 
     def __init__(self, *streams: Stream) -> None:
@@ -35,28 +38,30 @@ class StreamRunner(events.EventEmitter):
 
         if len(self.streams) > 1:
             self.logger.info(
-                "Multiple streams detected: Using SynchronizedStreamEngine.")
+                "Multiple streams detected: Using SynchronizedStreamEngine."
+            )
             return SynchronizedStreamEngine(self.streams, self._on_engine_error)
         else:
-            self.logger.info(
-                "Single stream detected: Using GStreamerProcessEngine.")
+            self.logger.info("Single stream detected: Using GStreamerProcessEngine.")
             return GStreamerProcessEngine(self.streams, self._on_engine_error)
 
-    def _on_engine_error(self, error_data):
+    def _on_engine_error(self, error_data) -> None:
         """Callback to bubble up errors from the engine to the runner's listeners."""
         # TODO: change to general stream error
         self.emit("stream_error", error_data)
         self.stop()
 
-    def start(self):
+    def start(self) -> None:
         with self._lock:
             self.logger.info(
-                f"Starting streams: {[s.device_path for s in self.streams]}")
+                f"Starting streams: {[s.device_path for s in self.streams]}"
+            )
             if self.started:
                 self.stop()
                 time.sleep(1)
 
-            # We create the engine on start, so the engine can perform initial setup on constructor
+            # We create the engine on start, so the engine can perform initial setup on
+            # constructor
             self.engine: BaseStreamEngine = self._select_engine()
 
             self.started = True
@@ -67,7 +72,7 @@ class StreamRunner(events.EventEmitter):
                 self.logger.error(f"Failed to start engine: {e}")
                 self.started = False
 
-    def stop(self):
+    def stop(self) -> None:
         with self._lock:
             if not self.started:
                 return

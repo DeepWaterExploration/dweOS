@@ -15,14 +15,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { API_CLIENT } from "@/api";
 import { useState } from "react";
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 
 export function SystemDropdown() {
-  const { toast } = useToast();
-
   const [dialogOpen, setDialogOpen] = useState(false);
   const [action, setAction] = useState<"restart" | "shutdown" | null>(null);
 
@@ -32,13 +30,13 @@ export function SystemDropdown() {
     try {
       if (action === "restart") {
         await API_CLIENT.POST("/api/system/restart");
-        toast({ title: "System is restarting..." });
+        toast.info("System is restarting...");
       } else if (action === "shutdown") {
         await API_CLIENT.POST("/api/system/shutdown");
-        toast({ title: "System is shutting down..." });
+        toast.info("System is shutting down...");
       }
-    } catch (error) {
-      toast({ title: `Failed to ${action}`, variant: "destructive" });
+    } catch {
+      toast.error(`Failed to ${action} system`);
     } finally {
       setDialogOpen(false);
       setAction(null);

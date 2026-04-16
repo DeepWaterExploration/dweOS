@@ -1,0 +1,51 @@
+name: Backend CI
+
+on:
+  # Commented to avoid double runs
+  push:
+    branches:
+      - main
+  #     - "feature/**"
+  #     - "fix/**"
+  #     - "bugfix/**"
+  #     - "refactor/**"
+  #   paths:
+  #     - backend_py/**
+  #     - ".github/workflows/backend.yml"
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    defaults:
+      run:
+        working-directory: ./backend_py
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: | # TODO: switch to using proper dev dependencies
+          sudo apt-get install build-essential libdbus-glib-1-dev libdbus-1-dev libpython3-dev -y # For dbus-python
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ruff bandit ty # dev dependencies
+
+      - name: Ruff linting
+        run: ruff check --output-format=github .
+
+      - name: Ruff formatting
+        run: ruff format --check .
+
+      - name: Bandit security check (high severity)
+        run: bandit -r . -lll
+
+      - name: Type checking (ty)
+        run: ty check

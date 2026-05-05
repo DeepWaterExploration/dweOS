@@ -103,7 +103,6 @@ class SynchronizedStreamEngine(BaseStreamEngine):
             chunk_view = payload_view[offset : offset + chunk_size]
 
             # Send directly:
-            #   (Python concatenates bytes + memoryview efficiently in sendto)
             self.socket.sendto(rtp_header + chunk_view, target_address)
 
             offset += chunk_size

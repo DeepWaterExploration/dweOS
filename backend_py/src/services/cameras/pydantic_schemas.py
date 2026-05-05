@@ -165,6 +165,11 @@ class StreamModel(BaseModel):
         from_attributes = True
 
 
+class FrameDropStats(BaseModel):
+    num_drops: int
+    drops_per_second: float
+
+
 class DeviceModel(BaseModel):
     # List of cameras, e.g. /dev/video0, /dev/video2
     cameras: list[CameraModel] | None = None

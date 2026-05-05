@@ -25,6 +25,7 @@ from .exceptions import DeviceNotFoundException
 from .pwm.serial_pwm_controller import SerialPWMController
 from .pydantic_schemas import (
     DeviceModel,
+    FrameDropStats,
     StreamEncodeTypeEnum,
     StreamInfoModel,
     StreamTypeEnum,
@@ -70,6 +71,7 @@ class DeviceManager(events.EventEmitter):
         serial: SerialPWMController,
     ) -> None:
         self.devices: list[Device] = []
+        self.event_bus = events.EventEmitter()
         self.sio = sio
         self.settings_manager = settings_manager
         self._is_monitoring = False
@@ -79,6 +81,10 @@ class DeviceManager(events.EventEmitter):
         self.serial = serial
 
         self.logger = logging.getLogger("dwe_os_2.cameras.DeviceManager")
+
+        self.dropped_frames: dict[str, int] = {}
+
+        # Initialize event bus
 
     def start_monitoring(self) -> None:
         """
@@ -109,11 +115,11 @@ class DeviceManager(events.EventEmitter):
         device = None
         match device_type:
             case DeviceType.EXPLOREHD:
-                device = EHDDevice(device_info)
+                device = EHDDevice(device_info, event_bus=self.event_bus)
             case DeviceType.STELLARHD_LEADER:
-                device = SHDDevice(device_info)
+                device = SHDDevice(device_info, event_bus=self.event_bus)
             case DeviceType.STELLARHD_FOLLOWER:
-                device = SHDDevice(device_info)
+                device = SHDDevice(device_info, event_bus=self.event_bus)
             case _:
                 # Not a DWE device
                 return None
@@ -123,6 +129,10 @@ class DeviceManager(events.EventEmitter):
         device.stream_runner.on(
             "stream_error",
             lambda _: self._append_stream_error(DeviceModel.model_validate(device)),
+        )
+
+        device.on(
+            "frame_stats", lambda: asyncio.create_task(self._emit_frame_stats(device))
         )
 
         if self.serial:
@@ -365,6 +375,16 @@ class DeviceManager(events.EventEmitter):
             await self.sio.emit("device_added")
 
         return devices_info
+
+    async def _emit_frame_stats(self, device: Device) -> None:
+        """
+        Emit frame stats to the frontend via SocketIO
+        """
+        # TODO: switch more to use namespace
+        await self.sio.emit(
+            "device.frame_stats",
+            {"bus_info": device.bus_info, "frame_stats": device.frame_stats},
+        )
 
     async def _monitor(self) -> None:
         """

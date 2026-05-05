@@ -2,10 +2,12 @@ import logging
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 
+from event_emitter import EventEmitter
+
 from .stream import Stream
 
 
-class BaseStreamEngine(ABC):
+class BaseStreamEngine(ABC, EventEmitter):
     """
     Abstract class for any streaming backend
     """

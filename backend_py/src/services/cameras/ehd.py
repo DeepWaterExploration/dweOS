@@ -9,6 +9,8 @@ these features store data
 
 from typing import cast
 
+from event_emitter import EventEmitter
+
 from . import xu_controls as xu
 from .device import BaseOption, ControlTypeEnum, Device, Option
 from .enumeration import DeviceInfo
@@ -20,8 +22,8 @@ class EHDDevice(Device):
     Class for exploreHD devices
     """
 
-    def __init__(self, device_info: DeviceInfo) -> None:
-        super().__init__(device_info)
+    def __init__(self, device_info: DeviceInfo, event_bus: EventEmitter) -> None:
+        super().__init__(device_info, event_bus)
 
         self.add_control_from_option("vbr", False, ControlTypeEnum.BOOLEAN)
 

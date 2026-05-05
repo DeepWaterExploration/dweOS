@@ -10,6 +10,7 @@ import contextlib
 import fcntl
 import logging
 import struct
+import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import Any
@@ -28,6 +29,7 @@ from .pydantic_schemas import (
     ControlTypeEnum,
     DeviceType,
     FormatSizeModel,
+    FrameDropStats,
     IntervalModel,
     MenuItemModel,
     StreamEncodeTypeEnum,
@@ -312,8 +314,11 @@ class Option(BaseOption):
 
 
 class Device(events.EventEmitter):
-    def __init__(self, device_info: DeviceInfo) -> None:
+    def __init__(self, device_info: DeviceInfo, event_bus: events.EventEmitter) -> None:
         super().__init__()
+
+        self.event_bus = event_bus
+
         self.cameras: list[Camera] = []
         for device_path in device_info.device_paths:
             self.cameras.append(Camera(device_path))
@@ -334,9 +339,12 @@ class Device(events.EventEmitter):
         self.nickname = ""
         self.stream = Stream()
 
+        self.frame_stats = FrameDropStats(num_drops=0, drops_per_second=0)
+
         # each device has a streamrunner, but not all of them are used if
         # they are a follower (shd)
         self.stream_runner = StreamRunner(self.stream)
+        self.stream_runner.on("frame_drop", self._update_drop_stats)
 
         for camera in self.cameras:
             for encoding in camera.formats:
@@ -368,6 +376,15 @@ class Device(events.EventEmitter):
         self._id_counter = 1
 
         self._get_controls()
+
+        self._stream_start_time = 0
+
+    def _update_drop_stats(self) -> None:
+        self.frame_stats.num_drops += 1
+        self.frame_stats.drops_per_second = self.frame_stats.num_drops / float(
+            time.time_ns() - self._stream_start_time
+        )
+        self.emit("drop_stats")
 
     def _on_stream_error(self, err: str) -> None:
         self.logger.error(err)
@@ -521,6 +538,9 @@ class Device(events.EventEmitter):
         self.stream.enabled = True
         self.stream_runner.start()
 
+        self._stream_start_time = time.time_ns()
+        self.frame_stats = FrameDropStats(num_drops=0, drops_per_second=0)
+
     def stop_stream(self) -> None:
         self.stream.enabled = False
         self.stream_runner.stop()
@@ -529,6 +549,7 @@ class Device(events.EventEmitter):
         """
         Cleanup resources of the device
         """
+        self.stream_runner.stop()
         for camera in self.cameras:
             camera.close()
         self.v4l2_device.close()

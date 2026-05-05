@@ -41,6 +41,7 @@ class SynchronizedStreamEngine(BaseStreamEngine):
             ]
 
             self.synchronized_camera = SynchronizedCamera(self.cameras)
+            self.synchronized_camera.on("frame_drop", lambda: self.emit("frame_drop"))
         except OSError as e:
             self.logger.error("Unable to open synchronized camera: '%s'", e)
             if e.strerror:

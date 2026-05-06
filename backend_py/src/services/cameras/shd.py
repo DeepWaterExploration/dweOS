@@ -78,7 +78,7 @@ class SHDDevice(Device):
 
     ASIC_COMMAND_DELAY = 0.001
 
-    def __init__(self, device_info: DeviceInfo, event_bus: EventEmitter) -> None:
+    def __init__(self, device_info: DeviceInfo) -> None:
         # Specifies if SHD device is Stellar Pro
         self.is_pro = True  # self.pid == 0x6369
 
@@ -92,7 +92,7 @@ class SHDDevice(Device):
         )
         self._asic_thread.start()
 
-        super().__init__(device_info, event_bus)
+        super().__init__(device_info)
 
         # Copy MJPEG over to Software H264, since they are the same thing
         mjpg_camera = self.find_camera_with_format("MJPG")

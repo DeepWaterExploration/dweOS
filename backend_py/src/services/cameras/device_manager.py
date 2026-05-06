@@ -71,7 +71,6 @@ class DeviceManager(events.EventEmitter):
         serial: SerialPWMController,
     ) -> None:
         self.devices: list[Device] = []
-        self.event_bus = events.EventEmitter()
         self.sio = sio
         self.settings_manager = settings_manager
         self._is_monitoring = False
@@ -82,12 +81,8 @@ class DeviceManager(events.EventEmitter):
 
         self.logger = logging.getLogger("dwe_os_2.cameras.DeviceManager")
 
-        self.dropped_frames: dict[str, int] = {}
-
         # Captured in start_monitoring
         self._loop: asyncio.AbstractEventLoop | None = None
-
-        # Initialize event bus
 
     def start_monitoring(self) -> None:
         """
@@ -119,11 +114,11 @@ class DeviceManager(events.EventEmitter):
         device = None
         match device_type:
             case DeviceType.EXPLOREHD:
-                device = EHDDevice(device_info, event_bus=self.event_bus)
+                device = EHDDevice(device_info)
             case DeviceType.STELLARHD_LEADER:
-                device = SHDDevice(device_info, event_bus=self.event_bus)
+                device = SHDDevice(device_info)
             case DeviceType.STELLARHD_FOLLOWER:
-                device = SHDDevice(device_info, event_bus=self.event_bus)
+                device = SHDDevice(device_info)
             case _:
                 # Not a DWE device
                 return None

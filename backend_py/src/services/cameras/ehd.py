@@ -22,8 +22,8 @@ class EHDDevice(Device):
     Class for exploreHD devices
     """
 
-    def __init__(self, device_info: DeviceInfo, event_bus: EventEmitter) -> None:
-        super().__init__(device_info, event_bus)
+    def __init__(self, device_info: DeviceInfo) -> None:
+        super().__init__(device_info)
 
         self.add_control_from_option("vbr", False, ControlTypeEnum.BOOLEAN)
 

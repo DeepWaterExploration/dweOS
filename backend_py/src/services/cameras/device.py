@@ -314,10 +314,8 @@ class Option(BaseOption):
 
 
 class Device(events.EventEmitter):
-    def __init__(self, device_info: DeviceInfo, event_bus: events.EventEmitter) -> None:
+    def __init__(self, device_info: DeviceInfo) -> None:
         super().__init__()
-
-        self.event_bus = event_bus
 
         self.cameras: list[Camera] = []
         for device_path in device_info.device_paths:
@@ -533,8 +531,8 @@ class Device(events.EventEmitter):
         self.stream.enabled = True
         self.stream_runner.start()
 
-        self._stream_start_time = time.time_ns()
         self.frame_stats = FrameDropStats(num_drops=0)
+        self.emit("frame_stats", self.frame_stats)
 
     def stop_stream(self) -> None:
         self.stream.enabled = False

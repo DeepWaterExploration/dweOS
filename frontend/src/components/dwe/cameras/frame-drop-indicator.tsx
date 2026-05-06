@@ -59,41 +59,35 @@ export function FrameDropIndicator() {
     };
   }, [device, socket, connected]);
 
-  if (!device) return null;
-
   const total = frameStats?.num_drops ?? 0;
   const hasDrops = total > 0;
 
+  if (!hasDrops) return null;
+
   return (
-    <>
-      {hasDrops ? (
-        <TooltipProvider delayDuration={150}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div
-                className={cn(
-                  "flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-xs font-medium tabular-nums",
-                  hasDrops
-                    ? "border-purple-500/40 bg-purple-500/10 text-purple-600 dark:text-purple-400"
-                    : "border-border bg-muted/40 text-muted-foreground",
-                )}
-                aria-label={`${total} dropped frames this stream`}
-              >
-                <ClockArrowDown className="h-3 w-3 shrink-0" />
-                <span>{total > 9999 ? "9999+" : total}</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="left" className="max-w-xs text-xs">
-              <div className="font-medium">Frame drops</div>
-              <div className="mt-1 flex flex-col gap-0.5 text-muted-foreground">
-                <div>
-                  This stream: <span className="text-foreground">{total}</span>
-                </div>
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      ) : undefined}
-    </>
+    <TooltipProvider delayDuration={150}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div
+            className={cn(
+              "flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-xs font-medium tabular-nums",
+              "border-purple-500/40 bg-purple-500/10 text-purple-600 dark:text-purple-400",
+            )}
+            aria-label={`${total} dropped frames this stream`}
+          >
+            <ClockArrowDown className="h-3 w-3 shrink-0" />
+            <span>{total > 9999 ? "9999+" : total}</span>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="left" className="max-w-xs text-xs">
+          <div className="font-medium">Frame drops</div>
+          <div className="mt-1 flex flex-col gap-0.5 text-muted-foreground">
+            <div>
+              This stream: <span className="text-foreground">{total}</span>
+            </div>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }

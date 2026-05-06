@@ -339,7 +339,7 @@ class Device(events.EventEmitter):
         self.nickname = ""
         self.stream = Stream()
 
-        self.frame_stats = FrameDropStats(num_drops=0, drops_per_second=0)
+        self.frame_stats = FrameDropStats(num_drops=0)
 
         # each device has a streamrunner, but not all of them are used if
         # they are a follower (shd)
@@ -377,14 +377,9 @@ class Device(events.EventEmitter):
 
         self._get_controls()
 
-        self._stream_start_time = 0
-
     def _update_drop_stats(self) -> None:
         self.frame_stats.num_drops += 1
-        self.frame_stats.drops_per_second = self.frame_stats.num_drops / float(
-            time.time_ns() - self._stream_start_time
-        )
-        self.emit("drop_stats")
+        self.emit("frame_stats")
 
     def _on_stream_error(self, err: str) -> None:
         self.logger.error(err)
@@ -539,7 +534,7 @@ class Device(events.EventEmitter):
         self.stream_runner.start()
 
         self._stream_start_time = time.time_ns()
-        self.frame_stats = FrameDropStats(num_drops=0, drops_per_second=0)
+        self.frame_stats = FrameDropStats(num_drops=0)
 
     def stop_stream(self) -> None:
         self.stream.enabled = False

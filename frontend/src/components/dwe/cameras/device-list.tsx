@@ -34,6 +34,7 @@ const DEMO_DEVICE: DeviceModel = {
 
   is_managed: false,
   followers: [],
+  frame_stats: { num_drops: 0 },
   device_info: {
     device_name: "exploreHD Demo",
     bus_info: "demo-device",

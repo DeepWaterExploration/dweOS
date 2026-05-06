@@ -1,0 +1,99 @@
+import { useContext, useEffect, useState } from "react";
+import { ClockArrowDown } from "lucide-react";
+import { useSnapshot } from "valtio";
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import DeviceContext from "@/contexts/DeviceContext";
+import WebsocketContext from "@/contexts/WebsocketContext";
+import { cn } from "@/lib/utils";
+
+/**
+ * The payload sent over the websocket
+ */
+type FrameStatsPayload = {
+  bus_info: string;
+  frame_stats?: { num_drops: number };
+};
+
+/**
+ * Small indicator that lives in the top-right of the camera card showing the
+ * dropped frame count for the device's current stream.
+ *
+ * The count comes from `device.frame_stats.num_drops`, which the backend
+ * resets on every `start_stream`. The proxy is seeded from /api/devices so
+ * the count survives a frontend page reload, and updated in-place from
+ * `device.frame_stats` socket events for live changes.
+ */
+export function FrameDropIndicator() {
+  const device = useContext(DeviceContext);
+  const ws = useContext(WebsocketContext);
+  const socket = ws?.socket;
+  const connected = ws?.connected ?? false;
+
+  const deviceState = useSnapshot(device!);
+
+  const [frameStats, setFrameStats] = useState(deviceState.frame_stats);
+
+  useEffect(() => {
+    if (!device || !connected || !socket) return;
+
+    const onFrameStats = (payload: FrameStatsPayload) => {
+      if (
+        !payload ||
+        payload.bus_info !== device.bus_info ||
+        !payload.frame_stats
+      )
+        return;
+
+      setFrameStats(payload.frame_stats);
+    };
+
+    socket.on("device.frame_stats", onFrameStats);
+    return () => {
+      socket.off("device.frame_stats", onFrameStats);
+    };
+  }, [device, socket, connected]);
+
+  if (!device) return null;
+
+  const total = frameStats?.num_drops ?? 0;
+  const hasDrops = total > 0;
+
+  return (
+    <>
+      {hasDrops ? (
+        <TooltipProvider delayDuration={150}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div
+                className={cn(
+                  "flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-xs font-medium tabular-nums",
+                  hasDrops
+                    ? "border-purple-500/40 bg-purple-500/10 text-purple-600 dark:text-purple-400"
+                    : "border-border bg-muted/40 text-muted-foreground",
+                )}
+                aria-label={`${total} dropped frames this stream`}
+              >
+                <ClockArrowDown className="h-3 w-3 shrink-0" />
+                <span>{total > 9999 ? "9999+" : total}</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="left" className="max-w-xs text-xs">
+              <div className="font-medium">Frame drops</div>
+              <div className="mt-1 flex flex-col gap-0.5 text-muted-foreground">
+                <div>
+                  This stream: <span className="text-foreground">{total}</span>
+                </div>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : undefined}
+    </>
+  );
+}

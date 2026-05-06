@@ -167,7 +167,6 @@ class StreamModel(BaseModel):
 
 class FrameDropStats(BaseModel):
     num_drops: int
-    drops_per_second: float
 
 
 class DeviceModel(BaseModel):
@@ -196,6 +195,9 @@ class DeviceModel(BaseModel):
     followers: list[str] = []
     # True if is a follower and stream is managed by the leader
     is_managed: bool = False
+    # Per-stream drop stats. Resets every time the stream is restarted so
+    # the count is "drops in the current stream", not cumulative.
+    frame_stats: FrameDropStats = FrameDropStats(num_drops=0)
 
     class Config:
         from_attributes = True

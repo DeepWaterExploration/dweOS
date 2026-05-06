@@ -141,9 +141,9 @@ class SynchronizedStreamEngine(BaseStreamEngine):
             self._running = False
 
             if self.capture_thread:
-                self.capture_thread.join(timeout=1000)
+                self.capture_thread.join(timeout=1)
             if self.stream_thread:
-                self.stream_thread.join(timeout=1000)
+                self.stream_thread.join(timeout=1)
         except TimeoutError as e:
             self.logger.error(f"Timeout exceeded while joining capture thread: {e}")
 

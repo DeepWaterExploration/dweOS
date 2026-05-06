@@ -84,6 +84,9 @@ class DeviceManager(events.EventEmitter):
 
         self.dropped_frames: dict[str, int] = {}
 
+        # Captured in start_monitoring
+        self._loop: asyncio.AbstractEventLoop | None = None
+
         # Initialize event bus
 
     def start_monitoring(self) -> None:
@@ -91,6 +94,7 @@ class DeviceManager(events.EventEmitter):
         Begin monitoring for devices in the background
         """
         self._is_monitoring = True
+        self._loop = asyncio.get_running_loop()
         asyncio.create_task(self._monitor())
 
     def stop_monitoring(self) -> None:
@@ -131,9 +135,7 @@ class DeviceManager(events.EventEmitter):
             lambda _: self._append_stream_error(DeviceModel.model_validate(device)),
         )
 
-        device.on(
-            "frame_stats", lambda: asyncio.create_task(self._emit_frame_stats(device))
-        )
+        device.on("frame_stats", lambda: self._schedule_emit_frame_stats(device))
 
         if self.serial:
             device.on("pwm_frequency", lambda fps: self.serial.apply_from_fps(fps))
@@ -288,7 +290,7 @@ class DeviceManager(events.EventEmitter):
         new_devices = list_diff(devices_info, old_devices)
 
         # find the removed devices
-        removed_devices = list_diff(old_devices, devices_info)
+        removed_devices: list[DeviceInfo] = list_diff(old_devices, devices_info)
 
         device_added = False
 
@@ -323,51 +325,49 @@ class DeviceManager(events.EventEmitter):
 
         # remove the old devices
         for device_info in removed_devices:
-            for device in self.devices:
-                if device.device_info == device_info:
-                    device.stream_runner.stop()
+            removed_device = find_device_with_bus_info(
+                self.devices, device_info.bus_info
+            )
 
-                    # What to do when a device is unplugged
-                    # Remove unplugged followers from leaders, and unplugged leaders
-                    # as leaders
-                    if (
-                        device.device_type == DeviceType.STELLARHD_LEADER
-                        or device.device_type == DeviceType.STELLARHD_FOLLOWER
-                    ):
-                        leader_casted = cast(SHDDevice, device)
-                        for follower_bus_info in leader_casted.followers:
-                            # This can be optimized, but it truly does not matter
-                            follower = self._find_device_with_bus_info(
-                                follower_bus_info
-                            )
-                            # Remember, follower might not exist now - never inherent
-                            # truth to its existance
-                            if follower:
-                                follower_casted = cast(SHDDevice, follower)
+            if not removed_device:
+                continue
+
+            removed_device.stream_runner.stop()
+
+            # What to do when a device is unplugged
+            # Remove unplugged followers from leaders, and unplugged leaders
+            # as leaders
+            if (
+                removed_device.device_type == DeviceType.STELLARHD_LEADER
+                or removed_device.device_type == DeviceType.STELLARHD_FOLLOWER
+            ):
+                leader_casted = cast(SHDDevice, removed_device)
+                for follower_bus_info in leader_casted.followers:
+                    # This can be optimized, but it truly does not matter
+                    follower = self._find_device_with_bus_info(follower_bus_info)
+                    # Remember, follower might not exist now - never inherent
+                    # truth to its existance
+                    if follower:
+                        follower_casted = cast(SHDDevice, follower)
+                        leader_casted.remove_follower(follower_casted)
+                        self.settings_manager.save_device(leader_casted)
+            if removed_device.device_type == DeviceType.STELLARHD_FOLLOWER:
+                follower_casted = cast(SHDDevice, removed_device)
+                if follower_casted.is_managed:
+                    for device in self.devices:
+                        if (
+                            device.device_type == DeviceType.STELLARHD_LEADER
+                            or device.device_type == DeviceType.STELLARHD_FOLLOWER
+                        ):
+                            leader_casted = cast(SHDDevice, device)
+                            if follower_casted.bus_info in leader_casted.followers:
                                 leader_casted.remove_follower(follower_casted)
                                 self.settings_manager.save_device(leader_casted)
-                    if device.device_type == DeviceType.STELLARHD_FOLLOWER:
-                        follower_casted = cast(SHDDevice, device)
-                        if follower_casted.is_managed:
-                            # TODO: Fix this
-                            for device in self.devices:
-                                if (
-                                    device.device_type == DeviceType.STELLARHD_LEADER
-                                    or device.device_type
-                                    == DeviceType.STELLARHD_FOLLOWER
-                                ):
-                                    leader_casted = cast(SHDDevice, device)
-                                    if (
-                                        follower_casted.bus_info
-                                        in leader_casted.followers
-                                    ):
-                                        leader_casted.remove_follower(follower_casted)
-                                        self.settings_manager.save_device(leader_casted)
 
-                    self.devices.remove(device)
-                    self.logger.info(f"Device Removed: {device_info.bus_info}")
+            self.devices.remove(removed_device)
+            self.logger.info(f"Device Removed: {device_info.bus_info}")
 
-                    await self.sio.emit("device_removed", device_info.bus_info)
+            await self.sio.emit("device_removed", device_info.bus_info)
 
         if device_added:
             # FIXME: Issue where sometimes frontend updates too quickly before the
@@ -376,14 +376,33 @@ class DeviceManager(events.EventEmitter):
 
         return devices_info
 
+    def _schedule_emit_frame_stats(self, device: Device) -> None:
+        """
+        Schedule a frame_stats emit from any thread onto the main asyncio loop.
+        """
+        loop = self._loop
+        if loop is None or loop.is_closed():
+            return
+        try:
+            asyncio.run_coroutine_threadsafe(self._emit_frame_stats(device), loop)
+        except RuntimeError:
+            return
+
     async def _emit_frame_stats(self, device: Device) -> None:
         """
         Emit frame stats to the frontend via SocketIO
         """
+        frame_stats = device.frame_stats
+
+        frame_stats_payload: Any = frame_stats.model_dump()
+
         # TODO: switch more to use namespace
         await self.sio.emit(
             "device.frame_stats",
-            {"bus_info": device.bus_info, "frame_stats": device.frame_stats},
+            {
+                "bus_info": device.bus_info,
+                "frame_stats": frame_stats_payload,
+            },
         )
 
     async def _monitor(self) -> None:

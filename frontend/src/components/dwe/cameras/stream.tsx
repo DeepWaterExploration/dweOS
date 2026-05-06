@@ -59,6 +59,7 @@ export const SensorControls = () => {
   const isoControl = controlMap.get("ISO");
   const shutterControl = controlMap.get("Shutter Speed");
   const strobeWidthControl = controlMap.get("Strobe Width");
+  const hwBitrateControl = controlMap.get("HW Bitrate");
 
   const [exposureTime, setExposureTime] = useState(shutterControl?.value || 0); // 0x3501
   const [autoExposure, setAutoExposure] = useState<boolean>(
@@ -68,6 +69,7 @@ export const SensorControls = () => {
   const [strobeWidth, setStrobeWidth] = useState(
     strobeWidthControl?.value || 0,
   );
+  const [hwBitrate, setHwBitrate] = useState(hwBitrateControl?.value);
 
   const strobeMax = exposureTime!;
 
@@ -121,6 +123,11 @@ export const SensorControls = () => {
     [gain],
   );
 
+  useDidMountEffect(
+    () => setUVCControl(hwBitrateControl as ControlModel, hwBitrate!),
+    [hwBitrate],
+  );
+
   // Set both at the same time to fix fw bug
   useDidMountEffect(
     () => setUVCControl(strobeWidthControl as ControlModel, strobeWidth),
@@ -129,10 +136,11 @@ export const SensorControls = () => {
 
   useEffect(() => {
     setMatchExposure(localStorage.getItem(device.bus_info) === "matched");
-  }, []);
+  }, [device.bus_info]);
 
   // TODO: replace with is_pro?
-  if (!exposureControl || !isoControl || !shutterControl) return <></>;
+  if (!exposureControl || !isoControl || !shutterControl || !hwBitrateControl)
+    return <></>;
 
   return (
     <Accordion type="single" collapsible>
@@ -167,47 +175,58 @@ export const SensorControls = () => {
           </div>
 
           {/* Manual Controls */}
-          {!autoExposure && (
-            <div className="space-y-5 animate-in slide-in-from-top-2 fade-in duration-300">
-              <div className="space-y-4 border rounded-md p-3 bg-muted/20">
-                <RangeControl
-                  label="Exposure Time"
-                  value={exposureTime}
-                  min={shutterControl.flags.min_value}
-                  max={
-                    registerValueMap[
-                      deviceSnapshot.stream.interval.denominator
-                    ] || 0
-                  }
-                  onChange={(newValue) => {
-                    if (matchExposure) {
-                      setMatchedExposure(newValue);
+          <div className="space-y-5 animate-in slide-in-from-top-2 fade-in duration-300">
+            <div className="space-y-4 border rounded-md p-3 bg-muted/20">
+              {!autoExposure && (
+                <>
+                  <RangeControl
+                    label="Exposure Time"
+                    value={exposureTime}
+                    min={shutterControl.flags.min_value}
+                    max={
+                      registerValueMap[
+                        deviceSnapshot.stream.interval.denominator
+                      ] || 0
                     }
-                    setExposureTime(newValue);
-                  }}
-                />
-                <RangeControl
-                  label="ISO (Gain)"
-                  value={gain}
-                  min={isoControl.flags.min_value}
-                  max={isoControl.flags.max_value}
-                  onChange={(newValue) => {
-                    if (matchExposure) {
-                      setMatchedISO(newValue);
-                    }
-                    setGain(newValue);
-                  }}
-                />
-                <RangeControl
-                  label="Strobe Brightness"
-                  value={strobeWidth}
-                  min={0}
-                  max={strobeMax}
-                  onChange={setStrobeWidth}
-                />
-              </div>
+                    onChange={(newValue) => {
+                      if (matchExposure) {
+                        setMatchedExposure(newValue);
+                      }
+                      setExposureTime(newValue);
+                    }}
+                  />
+                  <RangeControl
+                    label="ISO (Gain)"
+                    value={gain}
+                    min={isoControl.flags.min_value}
+                    max={isoControl.flags.max_value}
+                    onChange={(newValue) => {
+                      if (matchExposure) {
+                        setMatchedISO(newValue);
+                      }
+                      setGain(newValue);
+                    }}
+                  />
+                  <RangeControl
+                    label="Strobe Brightness"
+                    value={strobeWidth}
+                    min={0}
+                    max={strobeMax}
+                    onChange={setStrobeWidth}
+                  />
+                </>
+              )}
+              <RangeControl
+                label="HW Bitrate"
+                value={exposureTime}
+                min={hwBitrateControl.flags.min_value}
+                max={hwBitrateControl.flags.max_value}
+                onChange={(newValue) => {
+                  setHwBitrate(newValue);
+                }}
+              />
             </div>
-          )}
+          </div>
         </AccordionContent>
       </AccordionItem>
     </Accordion>

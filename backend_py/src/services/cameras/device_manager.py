@@ -387,9 +387,11 @@ class DeviceManager(events.EventEmitter):
         """
         Emit frame stats to the frontend via SocketIO
         """
-        frame_stats = device.frame_stats
-
-        frame_stats_payload: Any = frame_stats.model_dump()
+        # Snapshot under the lock so we don't race with the capture thread's
+        # increment or with start_stream's reset.
+        # NOTE: This may cause minor perf issues when dropping a lot of frames
+        with device._frame_stats_lock:
+            frame_stats_payload = device.frame_stats.model_dump()
 
         # TODO: switch more to use namespace
         await self.sio.emit(

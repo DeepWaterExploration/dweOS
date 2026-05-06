@@ -10,6 +10,7 @@ import contextlib
 import fcntl
 import logging
 import struct
+import threading
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable
@@ -337,6 +338,8 @@ class Device(events.EventEmitter):
         self.nickname = ""
         self.stream = Stream()
 
+        # frame stats is touched by both the main thread and the capture thread
+        self._frame_stats_lock = threading.Lock()
         self.frame_stats = FrameDropStats(num_drops=0)
 
         # each device has a streamrunner, but not all of them are used if
@@ -376,7 +379,8 @@ class Device(events.EventEmitter):
         self._get_controls()
 
     def _update_drop_stats(self) -> None:
-        self.frame_stats.num_drops += 1
+        with self._frame_stats_lock:
+            self.frame_stats.num_drops += 1
         self.emit("frame_stats")
 
     def _on_stream_error(self, err: str) -> None:
@@ -531,8 +535,9 @@ class Device(events.EventEmitter):
         self.stream.enabled = True
         self.stream_runner.start()
 
-        self.frame_stats = FrameDropStats(num_drops=0)
-        self.emit("frame_stats", self.frame_stats)
+        with self._frame_stats_lock:
+            self.frame_stats = FrameDropStats(num_drops=0)
+        self.emit("frame_stats")
 
     def stop_stream(self) -> None:
         self.stream.enabled = False

@@ -132,7 +132,7 @@ class SHDDevice(Device):
             )
 
             self.add_control_from_option(
-                "hw_bitrate", 5000, ControlTypeEnum.INTEGER, 65535, 0, 1
+                "hw_bitrate", 5000, ControlTypeEnum.INTEGER, 13000, 0, 1
             )
 
             # self.add_control_from_option(

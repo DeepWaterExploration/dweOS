@@ -48,20 +48,27 @@ class CustomOption(BaseOption):
         name: str,
         setter: Callable[[Any], None],
         getter: Callable[[], int | float | None],
+        default_value: int | float | None = None,
         is_integer_only=True,
     ) -> None:
         BaseOption.__init__(self, name)
         self.setter = setter
         self.is_integer_only = is_integer_only
 
+        self.logger = logging.getLogger("dwe_os_2.CustomOption")
+
         # FIXME: I did this since the getter seems to be unreliable for asic controls,
         # so we just trust the value stored
         self.getter = getter
-        self.value: int | float | None = getter()
-        self.logger = logging.getLogger("CustomOption")
+
+        self.set_value(default_value)
+
+        if default_value is None:
+            default_value = getter()
+
+        self.value: int | float | None = default_value
 
     def set_value(self, value) -> None:
-        self.logger.info(f"{self.name}: {value}")
         if self.is_integer_only:
             value = int(value)
         self.setter(value)
@@ -545,26 +552,40 @@ class SHDDevice(Device):
 
         if self.is_pro:
             options["ae"] = CustomOption(
-                "Auto Exposure (ASIC)", self.set_asic_ae, self.get_asic_ae
+                "Auto Exposure (ASIC)",
+                self.set_asic_ae,
+                self.get_asic_ae,
+                default_value=1,
             )
 
             # UVC shutter speed control
             options["shutter"] = CustomOption(
-                "Shutter Speed", self.set_shutter_speed, self.get_shutter_speed
+                "Shutter Speed",
+                self.set_shutter_speed,
+                self.get_shutter_speed,
+                default_value=10,
             )
 
             # UVC ISO control
-            options["iso"] = CustomOption("ISO", self.set_iso, self.get_iso)
+            options["iso"] = CustomOption(
+                "ISO", self.set_iso, self.get_iso, default_value=0
+            )
 
             # options['strobe_enabled'] = CustomOption(
             #     "Strobe Enabled", self.set_strobe_enabled, self.get_strobe_enabled)
 
             options["strobe_width"] = CustomOption(
-                "Strobe Width", self.set_strobe_width, self.get_strobe_width
+                "Strobe Width",
+                self.set_strobe_width,
+                self.get_strobe_width,
+                default_value=0,
             )
 
             options["hw_bitrate"] = CustomOption(
-                "HW Bitrate", self.set_hw_bitrate, self.get_hw_bitrate
+                "HW Bitrate",
+                self.set_hw_bitrate,
+                self.get_hw_bitrate,
+                default_value=13000,
             )
 
         return options

@@ -61,6 +61,8 @@ export const SensorControls = () => {
   const strobeWidthControl = controlMap.get("Strobe Width");
   const hwBitrateControl = controlMap.get("HW Bitrate");
 
+  console.log(hwBitrateControl);
+
   const [exposureTime, setExposureTime] = useState(shutterControl?.value || 0); // 0x3501
   const [autoExposure, setAutoExposure] = useState<boolean>(
     exposureControl?.value === 1,
@@ -69,7 +71,7 @@ export const SensorControls = () => {
   const [strobeWidth, setStrobeWidth] = useState(
     strobeWidthControl?.value || 0,
   );
-  const [hwBitrate, setHwBitrate] = useState(hwBitrateControl?.value);
+  const [hwBitrate, setHwBitrate] = useState(hwBitrateControl?.value ?? 0);
 
   const strobeMax = exposureTime!;
 
@@ -218,7 +220,7 @@ export const SensorControls = () => {
               )}
               <RangeControl
                 label="HW Bitrate"
-                value={exposureTime}
+                value={hwBitrate}
                 min={hwBitrateControl.flags.min_value}
                 max={hwBitrateControl.flags.max_value}
                 onChange={(newValue) => {

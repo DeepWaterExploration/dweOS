@@ -7,37 +7,40 @@ SCRIPT_DIR = pathlib.Path(__file__).parent.resolve()
 GITHUB_API_URL = "https://api.github.com/repos/DeepWaterExploration/DWE_OS_2/tags"
 VERSION_FILE_PATH = f"{SCRIPT_DIR}/frontend/package.json"
 
+
 def get_latest_tag():
     # Fetch the latest tags from GitHub API
     response = requests.get(GITHUB_API_URL)
-    
+
     if response.status_code == 200:
         tags = response.json()
         if tags:
-            return tags[0]['name']  # The latest tag is the first one
+            return tags[0]["name"]  # The latest tag is the first one
     return None
+
 
 def get_new_tag():
     try:
-        new_tag = input('Enter a new tag name: ')
+        new_tag = input("Enter a new tag name: ")
         if new_tag == "":
             return None
         return new_tag
     except EOFError:
         return None
 
+
 def update_version_json(new_version):
     # Load the current package.json file
-    with open(VERSION_FILE_PATH, 'r') as f:
+    with open(VERSION_FILE_PATH, "r") as f:
         data = json.load(f)
 
     # Update the version string
-    data['version'] = new_version
+    data["version"] = new_version
 
     # Write the new version back to the json file
-    with open(VERSION_FILE_PATH, 'w') as f:
+    with open(VERSION_FILE_PATH, "w") as f:
         # need newline at end of file
-        data_str = json.dumps(data, indent=4) + '\n'
+        data_str = json.dumps(data, indent=4) + "\n"
         f.write(data_str)
 
 

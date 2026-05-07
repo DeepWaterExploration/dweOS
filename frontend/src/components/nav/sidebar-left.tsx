@@ -80,7 +80,7 @@ export function SidebarLeft({
       <SidebarHeader>
         <div className="flex justify-between mt-2 ml-2 items-center gap-2 mb-4 sm:mb-0">
           <div className="flex-shrink-0 flex items-center justify-center w-10">
-            <a href="https://dwe.ai" target="_blank">
+            <a href="/" target="_blank">
               <img
                 src={
                   themeColor === "dark"

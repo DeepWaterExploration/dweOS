@@ -60,6 +60,8 @@ function AppContent() {
         return "Cameras";
       case "/recordings":
         return "Onboard Recordings";
+      case "/network":
+        return "Network";
       case "/preferences":
         return "Preferences";
       case "/log-viewer":

@@ -25,7 +25,6 @@ from .exceptions import DeviceNotFoundException
 from .pwm.serial_pwm_controller import SerialPWMController
 from .pydantic_schemas import (
     DeviceModel,
-    FrameDropStats,
     StreamEncodeTypeEnum,
     StreamInfoModel,
     StreamTypeEnum,
@@ -339,13 +338,16 @@ class DeviceManager(events.EventEmitter):
                 leader_casted = cast(SHDDevice, removed_device)
                 for follower_bus_info in leader_casted.followers:
                     # This can be optimized, but it truly does not matter
-                    follower = self._find_device_with_bus_info(follower_bus_info)
-                    # Remember, follower might not exist now - never inherent
-                    # truth to its existance
-                    if follower:
+                    try:
+                        follower = self._find_device_with_bus_info(follower_bus_info)
+                        # Remember, follower might not exist now - never inherent
+                        # truth to its existence
                         follower_casted = cast(SHDDevice, follower)
                         leader_casted.remove_follower(follower_casted)
                         self.settings_manager.save_device(leader_casted)
+                    except DeviceNotFoundException:
+                        continue
+
             if removed_device.device_type == DeviceType.STELLARHD_FOLLOWER:
                 follower_casted = cast(SHDDevice, removed_device)
                 if follower_casted.is_managed:

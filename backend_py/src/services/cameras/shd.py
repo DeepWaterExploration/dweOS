@@ -622,5 +622,17 @@ class SHDDevice(Device):
 
         super().start_stream()
 
+        self.reapply_sensor_config()
+        for follower in self.follower_devices:
+            follower.reapply_sensor_config()
+
+    def reapply_sensor_config(self) -> None:
+        self.logger.info("Reapplying options after starting stream.")
+
+        # Reapply options after starting stream
+        for option_name in self._options:
+            option = self._options[option_name]
+            option.set_value(option.get_value())
+
     def unconfigure_stream(self) -> None:
         super().unconfigure_stream()

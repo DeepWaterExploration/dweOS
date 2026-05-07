@@ -102,10 +102,10 @@ class MenuItemModel(BaseModel):
 
 
 class ControlFlagsModel(BaseModel):
-    default_value: float
-    max_value: float
-    min_value: float
-    step: float
+    default_value: float | int
+    max_value: float | int
+    min_value: float | int
+    step: float | int
     control_type: ControlTypeEnum = Field(...)
     menu: list[MenuItemModel] = Field(default_factory=list)
 
@@ -117,7 +117,7 @@ class ControlModel(BaseModel):
     flags: ControlFlagsModel
     control_id: int
     name: str
-    value: float
+    value: float | int
 
     class Config:
         from_attributes = True

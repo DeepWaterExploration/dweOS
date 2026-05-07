@@ -29,12 +29,12 @@ def get_val(addr: Enum | int) -> int:
 
 
 class StorageOption(BaseOption, EventEmitter):
-    def __init__(self, name: str, value) -> None:
+    def __init__(self, name: str, value: int | float) -> None:
         BaseOption.__init__(self, name)
         EventEmitter.__init__(self)
         self.value: int | float = value
 
-    def set_value(self, value) -> None:
+    def set_value(self, value: int | float) -> None:
         self.value = value
         self.emit("value_changed")
 

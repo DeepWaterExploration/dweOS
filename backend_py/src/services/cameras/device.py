@@ -498,9 +498,9 @@ class Device(events.EventEmitter):
         option_name: str,
         default_value: Any,
         control_type: ControlTypeEnum,
-        max_value: float = 0,
-        min_value: float = 0,
-        step: float = 0,
+        max_value: float | int = 0,
+        min_value: float | int = 0,
+        step: float | int = 0,
     ) -> None:
         try:
             option = self._options[option_name]

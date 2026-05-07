@@ -9,6 +9,7 @@ import {
   TerminalIcon,
   VideoIcon,
   Unplug,
+  NetworkIcon,
 } from "lucide-react";
 
 import DWELogo from "@/assets/dwe-logo.svg";
@@ -44,6 +45,11 @@ const data = {
       title: "Recordings",
       url: "/recordings",
       icon: VideoIcon,
+    },
+    {
+      title: "Network",
+      url: "/network",
+      icon: NetworkIcon,
     },
     {
       title: "Preferences",

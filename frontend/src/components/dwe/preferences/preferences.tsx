@@ -13,8 +13,6 @@ import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 import { Button } from "@/components/ui/button";
 import { useTour } from "@/components/tour/tour";
 import { SettingsCard } from "./settings-card";
-import WiredConfig from "../network/wired/wired-config";
-import WirelessConfig from "../network/wireless/wireless-config";
 import FeaturesContext from "@/contexts/FeaturesContext";
 import { RangeControl } from "@/components/ui/range-control";
 
@@ -91,6 +89,8 @@ const PreferencesLayout = () => {
     }
   }, [recommendHost, host, port, frequencyOffset, connected]);
 
+  if (!connected) return <NotConnected />;
+
   return (
     <div
       className="flex flex-col gap-4 h-full w-full"
@@ -100,82 +100,77 @@ const PreferencesLayout = () => {
         className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(350px,1fr))]"
         id={TOUR_STEP_IDS.DEFAULT_STREAM_PREFS}
       >
-        {connected ? (
-          <SettingsCard cardTitle="Stream">
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="stream-host">Default Stream Host</Label>
-                <Input
-                  id="stream-host"
-                  disabled={recommendHost}
-                  value={host}
-                  onChange={(e) => setHost(e.target.value)}
-                  placeholder="Enter host IP"
-                  className={cn(
-                    !IP_REGEX.test(host) && "border-red-500",
-                    "bg-background",
-                  )}
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="stream-port">Default Stream Port</Label>
-                <Input
-                  id="stream-port"
-                  type="number"
-                  value={port}
-                  onChange={(e) => setPort(parseInt(e.target.value))}
-                  placeholder="Enter port"
-                  min={1024}
-                  max={65535}
-                  className={cn(
-                    (port < 1024 || port > 65535) && "border-red-500",
-                    "bg-background",
-                  )}
-                />
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="recommend-host"
-                  checked={recommendHost}
-                  onCheckedChange={(checked) => setRecommendHost(!!checked)}
-                />
-                <Label htmlFor="recommend-host">Recommend Default Host</Label>
-              </div>
-
-              <Separator className="mt-5" />
-
-              {/* Frequency Offset Slider */}
-              {features?.serial && (
-                <div className="flex flex-col gap-4">
-                  <div className="flex justify-between items-center">
-                    <Label htmlFor="freq-offset">
-                      Camera Frequency Offset Configuration
-                    </Label>
-                  </div>
-
-                  <RangeControl
-                    label="Frequency Offset (Hz)"
-                    min={-1}
-                    max={1}
-                    step={0.001}
-                    value={frequencyOffset}
-                    onChange={(val) => setFrequencyOffset(val)}
-                    className="py-2"
-                  />
-
-                  <p className="text-xs text-muted-foreground italic">
-                    Adjust the fine-tuning offset for camera clock frequency.
-                    Use if you are experiencing flickering or synchronization
-                    issues.
-                  </p>
-                </div>
-              )}
+        <SettingsCard cardTitle="Stream">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="stream-host">Default Stream Host</Label>
+              <Input
+                id="stream-host"
+                disabled={recommendHost}
+                value={host}
+                onChange={(e) => setHost(e.target.value)}
+                placeholder="Enter host IP"
+                className={cn(
+                  !IP_REGEX.test(host) && "border-red-500",
+                  "bg-background",
+                )}
+              />
             </div>
-          </SettingsCard>
-        ) : (
-          <NotConnected />
-        )}
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="stream-port">Default Stream Port</Label>
+              <Input
+                id="stream-port"
+                type="number"
+                value={port}
+                onChange={(e) => setPort(parseInt(e.target.value))}
+                placeholder="Enter port"
+                min={1024}
+                max={65535}
+                className={cn(
+                  (port < 1024 || port > 65535) && "border-red-500",
+                  "bg-background",
+                )}
+              />
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="recommend-host"
+                checked={recommendHost}
+                onCheckedChange={(checked) => setRecommendHost(!!checked)}
+              />
+              <Label htmlFor="recommend-host">Recommend Default Host</Label>
+            </div>
+
+            <Separator className="mt-5" />
+
+            {/* Frequency Offset Slider */}
+            {features?.serial && (
+              <div className="flex flex-col gap-4">
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="freq-offset">
+                    Camera Frequency Offset Configuration
+                  </Label>
+                </div>
+
+                <RangeControl
+                  label="Frequency Offset (Hz)"
+                  min={-1}
+                  max={1}
+                  step={0.001}
+                  value={frequencyOffset}
+                  onChange={(val) => setFrequencyOffset(val)}
+                  className="py-2"
+                />
+
+                <p className="text-xs text-muted-foreground italic">
+                  Adjust the fine-tuning offset for camera clock frequency. Use
+                  if you are experiencing flickering or synchronization issues.
+                </p>
+              </div>
+            )}
+          </div>
+        </SettingsCard>
       </div>
 
       <Card>
@@ -192,11 +187,6 @@ const PreferencesLayout = () => {
           </div>
         </CardHeader>
       </Card>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>{connected && <WiredConfig />}</div>
-        <div>{connected && <WirelessConfig />}</div>
-      </div>
     </div>
   );
 };

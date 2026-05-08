@@ -41,6 +41,7 @@ class SynchronizedStreamEngine(BaseStreamEngine):
             ]
 
             self.synchronized_camera = SynchronizedCamera(self.cameras)
+            self.synchronized_camera.on("frame_drop", lambda: self.emit("frame_drop"))
         except OSError as e:
             self.logger.error("Unable to open synchronized camera: '%s'", e)
             if e.strerror:
@@ -136,15 +137,12 @@ class SynchronizedStreamEngine(BaseStreamEngine):
         self.stream_thread.start()
 
     def stop(self) -> None:
-        try:
-            self._running = False
+        self._running = False
 
-            if self.capture_thread:
-                self.capture_thread.join(timeout=1000)
-            if self.stream_thread:
-                self.stream_thread.join(timeout=1000)
-        except TimeoutError as e:
-            self.logger.error(f"Timeout exceeded while joining capture thread: {e}")
+        if self.capture_thread:
+            self.capture_thread.join(timeout=1)
+        if self.stream_thread:
+            self.stream_thread.join(timeout=1)
 
     def capture_loop_(self) -> None:
         if not self.synchronized_camera:

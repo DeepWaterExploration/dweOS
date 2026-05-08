@@ -63,6 +63,11 @@ export function CommandPalette() {
                 Recordings
               </CommandItem>
               <CommandItem
+                onSelect={() => runCommand(() => navigate("/network"))}
+              >
+                Network
+              </CommandItem>
+              <CommandItem
                 onSelect={() => runCommand(() => navigate("/log-viewer"))}
               >
                 Logs

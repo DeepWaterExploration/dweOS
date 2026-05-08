@@ -102,10 +102,10 @@ class MenuItemModel(BaseModel):
 
 
 class ControlFlagsModel(BaseModel):
-    default_value: float
-    max_value: float
-    min_value: float
-    step: float
+    default_value: float | int
+    max_value: float | int
+    min_value: float | int
+    step: float | int
     control_type: ControlTypeEnum = Field(...)
     menu: list[MenuItemModel] = Field(default_factory=list)
 
@@ -117,7 +117,7 @@ class ControlModel(BaseModel):
     flags: ControlFlagsModel
     control_id: int
     name: str
-    value: float
+    value: float | int
 
     class Config:
         from_attributes = True
@@ -165,6 +165,10 @@ class StreamModel(BaseModel):
         from_attributes = True
 
 
+class FrameDropStats(BaseModel):
+    num_drops: int
+
+
 class DeviceModel(BaseModel):
     # List of cameras, e.g. /dev/video0, /dev/video2
     cameras: list[CameraModel] | None = None
@@ -191,6 +195,9 @@ class DeviceModel(BaseModel):
     followers: list[str] = []
     # True if is a follower and stream is managed by the leader
     is_managed: bool = False
+    # Per-stream drop stats. Resets every time the stream is restarted so
+    # the count is "drops in the current stream", not cumulative.
+    frame_stats: FrameDropStats = FrameDropStats(num_drops=0)
 
     class Config:
         from_attributes = True

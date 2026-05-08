@@ -46,7 +46,8 @@ class EHDDevice(Device):
             lambda bitrate: int(
                 round(bitrate * 1000000)
             ),  # convert to bps from mpbs (round for float imprecision)
-            lambda bitrate: cast(int, bitrate) / 1000000.0,  # convert to mpbs from bps
+            # convert to mpbs from bps
+            lambda bitrate: cast(int, bitrate) / 1000000.0,
         )
 
         # UVC xu gop control

@@ -8,6 +8,7 @@ import {
 
 import { CameraNickname } from "./nickname";
 import { CameraStream } from "./stream";
+import { FrameDropIndicator } from "./frame-drop-indicator";
 import { proxy, useSnapshot } from "valtio";
 import { useContext } from "react";
 import DeviceContext from "@/contexts/DeviceContext";
@@ -34,12 +35,17 @@ export function CameraCard({
   return (
     <Card className="w-full max-w-sm mx-auto">
       <CardHeader>
-        <CardTitle>{deviceState.device_info?.device_name}</CardTitle>
-        <CardDescription>
-          Manufacturer: {deviceState.manufacturer}
-          <br />
-          USB Port ID: {deviceState.bus_info}
-        </CardDescription>
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <CardTitle>{deviceState.device_info?.device_name}</CardTitle>
+            <CardDescription>
+              Manufacturer: {deviceState.manufacturer}
+              <br />
+              USB Port ID: {deviceState.bus_info}
+            </CardDescription>
+          </div>
+          <FrameDropIndicator />
+        </div>
         <CameraNickname />
       </CardHeader>
       <CardContent>

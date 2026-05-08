@@ -11,6 +11,8 @@ import os
 from collections import deque
 from dataclasses import dataclass
 
+from event_emitter import EventEmitter
+
 from .. import v4l2
 
 
@@ -248,12 +250,15 @@ class V4L2Camera:
         self.close()
 
 
-class SynchronizedCamera:
+class SynchronizedCamera(EventEmitter):
     """
     Synchronized Camera Class
     """
 
     def __init__(self, cameras: list[V4L2Camera], queue_cap: int = 8) -> None:
+        # Initialize EventEmitter
+        super().__init__()
+
         for camera in cameras:
             if camera.critical_error:
                 raise AssertionError(
@@ -333,6 +338,7 @@ class SynchronizedCamera:
                 min_index = timestamps.index(min_ts)
                 self.logger.info(f"Dropping frame of difference: {max_ts - min_ts}")
                 self.queues[min_index].popleft()
+                self.emit("frame_drop")
 
         # Not enough frames anymore to sync
         return None

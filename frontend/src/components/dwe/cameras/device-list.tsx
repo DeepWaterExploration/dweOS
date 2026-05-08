@@ -34,6 +34,7 @@ const DEMO_DEVICE: DeviceModel = {
 
   is_managed: false,
   followers: [],
+  frame_stats: { num_drops: 0 },
   device_info: {
     device_name: "exploreHD Demo",
     bus_info: "demo-device",
@@ -244,6 +245,8 @@ const DeviceListLayout = () => {
   const displayDevices =
     isActive && devices.length === 0 ? [demoDeviceProxy] : devices;
 
+  if (!connected) return <NotConnected />;
+
   return (
     <div className="h-full w-full" id={TOUR_STEP_IDS.CAMERAS}>
       <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(380px,0fr))] ">
@@ -274,8 +277,7 @@ const DeviceListLayout = () => {
               </DeviceContext.Provider>
             </div>
           ))}
-          {displayDevices.length === 0 &&
-            (connected ? <NoDevicesConnected /> : <NotConnected />)}
+          {displayDevices.length === 0 && <NoDevicesConnected />}
         </DevicesContext.Provider>
       </div>
     </div>

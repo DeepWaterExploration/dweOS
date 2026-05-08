@@ -47,7 +47,6 @@ class StreamRunner(events.EventEmitter):
 
     def _on_engine_error(self, error_data) -> None:
         """Callback to bubble up errors from the engine to the runner's listeners."""
-        # TODO: change to general stream error
         self.emit("stream_error", error_data)
         self.stop()
 
@@ -63,6 +62,8 @@ class StreamRunner(events.EventEmitter):
             # We create the engine on start, so the engine can perform initial setup on
             # constructor
             self.engine: BaseStreamEngine = self._select_engine()
+
+            self.engine.on("frame_drop", lambda: self.emit("frame_drop"))
 
             self.started = True
             # We don't need to catch exceptions, maybe remove later

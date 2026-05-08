@@ -21,6 +21,23 @@ def get_recordings(request: Request) -> list[RecordingInfo]:
     return recordings_service.get_recordings()
 
 
+@recordings_router.get("/zip", summary="Download all recordings as a zip file")
+def zip_recordings(request: Request) -> FileResponse:
+    recordings_service: RecordingsService = request.app.state.recordings_service
+
+    zip_file_path = recordings_service.zip_recordings()
+    if not zip_file_path:
+        raise HTTPException(status_code=404, detail="No recordings to zip")
+
+    resp = FileResponse(
+        zip_file_path,
+        media_type="application/zip",
+        filename="recordings.zip",
+        headers={"Content-Disposition": "attachment; filename=recordings.zip"},
+    )
+    return resp
+
+
 @recordings_router.get("/{recording_path}", summary="Get a specific recording")
 def get_recording(request: Request, recording_path: str) -> FileResponse:
 
@@ -65,20 +82,3 @@ def rename_recording(
         )
 
     return response
-
-
-@recordings_router.get("/zip", summary="Download all recordings as a zip file")
-def zip_recordings(request: Request) -> FileResponse:
-    recordings_service: RecordingsService = request.app.state.recordings_service
-
-    zip_file_path = recordings_service.zip_recordings()
-    if not zip_file_path:
-        raise HTTPException(status_code=404, detail="No recordings to zip")
-
-    resp = FileResponse(
-        zip_file_path,
-        media_type="application/zip",
-        filename="recordings.zip",
-        headers={"Content-Disposition": "attachment; filename=recordings.zip"},
-    )
-    return resp

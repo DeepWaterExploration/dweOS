@@ -554,6 +554,10 @@ export interface components {
              * @default false
              */
             is_managed: boolean;
+            /** @default {
+             *       "num_drops": 0
+             *     } */
+            frame_stats: components["schemas"]["FrameDropStats"];
         };
         /** DeviceNicknameModel */
         DeviceNicknameModel: {
@@ -605,6 +609,11 @@ export interface components {
             height: number;
             /** Intervals */
             intervals: components["schemas"]["IntervalModel"][];
+        };
+        /** FrameDropStats */
+        FrameDropStats: {
+            /** Num Drops */
+            num_drops: number;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -864,7 +873,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["SimpleRequestStatusModel"];
                 };
             };
             /** @description Validation Error */
@@ -897,7 +906,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["SimpleRequestStatusModel"];
                 };
             };
             /** @description Validation Error */
@@ -930,7 +939,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["SimpleRequestStatusModel"];
                 };
             };
             /** @description Validation Error */
@@ -1029,7 +1038,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["SimpleRequestStatusModel"];
                 };
             };
             /** @description Validation Error */
@@ -1082,7 +1091,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["SimpleRequestStatusModel"];
                 };
             };
             /** @description Validation Error */
@@ -1133,7 +1142,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["SimpleRequestStatusModel"];
                 };
             };
         };
@@ -1153,7 +1162,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["SimpleRequestStatusModel"];
                 };
             };
         };
@@ -1197,7 +1206,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["SimpleRequestStatusModel"];
                 };
             };
             /** @description Validation Error */
@@ -1299,7 +1308,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["RecordingInfo"][];
                 };
             };
             /** @description Validation Error */
@@ -1331,7 +1340,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["RecordingInfo"][];
                 };
             };
             /** @description Validation Error */
@@ -1426,7 +1435,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Validation Error */
@@ -1458,7 +1469,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Validation Error */

@@ -29,12 +29,12 @@ def get_val(addr: Enum | int) -> int:
 
 
 class StorageOption(BaseOption, EventEmitter):
-    def __init__(self, name: str, value) -> None:
+    def __init__(self, name: str, value: int | float) -> None:
         BaseOption.__init__(self, name)
         EventEmitter.__init__(self)
         self.value: int | float = value
 
-    def set_value(self, value) -> None:
+    def set_value(self, value: int | float) -> None:
         self.value = value
         self.emit("value_changed")
 
@@ -48,20 +48,27 @@ class CustomOption(BaseOption):
         name: str,
         setter: Callable[[Any], None],
         getter: Callable[[], int | float | None],
+        default_value: int | float | None = None,
         is_integer_only=True,
     ) -> None:
         BaseOption.__init__(self, name)
         self.setter = setter
         self.is_integer_only = is_integer_only
 
+        self.logger = logging.getLogger("dwe_os_2.CustomOption")
+
         # FIXME: I did this since the getter seems to be unreliable for asic controls,
         # so we just trust the value stored
         self.getter = getter
-        self.value: int | float | None = getter()
-        self.logger = logging.getLogger("CustomOption")
+
+        self.set_value(default_value)
+
+        if default_value is None:
+            default_value = getter()
+
+        self.value: int | float | None = default_value
 
     def set_value(self, value) -> None:
-        self.logger.info(f"{self.name}: {value}")
         if self.is_integer_only:
             value = int(value)
         self.setter(value)
@@ -132,7 +139,7 @@ class SHDDevice(Device):
             )
 
             self.add_control_from_option(
-                "hw_bitrate", 5000, ControlTypeEnum.INTEGER, 65535, 0, 1
+                "hw_bitrate", 5000, ControlTypeEnum.INTEGER, 13000, 0, 1
             )
 
             # self.add_control_from_option(
@@ -545,26 +552,40 @@ class SHDDevice(Device):
 
         if self.is_pro:
             options["ae"] = CustomOption(
-                "Auto Exposure (ASIC)", self.set_asic_ae, self.get_asic_ae
+                "Auto Exposure (ASIC)",
+                self.set_asic_ae,
+                self.get_asic_ae,
+                default_value=1,
             )
 
             # UVC shutter speed control
             options["shutter"] = CustomOption(
-                "Shutter Speed", self.set_shutter_speed, self.get_shutter_speed
+                "Shutter Speed",
+                self.set_shutter_speed,
+                self.get_shutter_speed,
+                default_value=10,
             )
 
             # UVC ISO control
-            options["iso"] = CustomOption("ISO", self.set_iso, self.get_iso)
+            options["iso"] = CustomOption(
+                "ISO", self.set_iso, self.get_iso, default_value=0
+            )
 
             # options['strobe_enabled'] = CustomOption(
             #     "Strobe Enabled", self.set_strobe_enabled, self.get_strobe_enabled)
 
             options["strobe_width"] = CustomOption(
-                "Strobe Width", self.set_strobe_width, self.get_strobe_width
+                "Strobe Width",
+                self.set_strobe_width,
+                self.get_strobe_width,
+                default_value=0,
             )
 
             options["hw_bitrate"] = CustomOption(
-                "HW Bitrate", self.set_hw_bitrate, self.get_hw_bitrate
+                "HW Bitrate",
+                self.set_hw_bitrate,
+                self.get_hw_bitrate,
+                default_value=13000,
             )
 
         return options
@@ -600,6 +621,18 @@ class SHDDevice(Device):
         self.stream.software_h264_bitrate = int(self.bitrate_option.get_value() * 1000)
 
         super().start_stream()
+
+        self.reapply_sensor_config()
+        for follower in self.follower_devices:
+            follower.reapply_sensor_config()
+
+    def reapply_sensor_config(self) -> None:
+        self.logger.info("Reapplying options after starting stream.")
+
+        # Reapply options after starting stream
+        for option_name in self._options:
+            option = self._options[option_name]
+            option.set_value(option.get_value())
 
     def unconfigure_stream(self) -> None:
         super().unconfigure_stream()

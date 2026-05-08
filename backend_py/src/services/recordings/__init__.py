@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import subprocess
+import threading
 import zipfile
 
 from pydantic import BaseModel
@@ -29,6 +30,7 @@ class RecordingsService:
         self.recordings_path = os.path.join(os.getcwd(), "videos")
         self.recordings: list[RecordingInfo] = []
         self.logger = logging.getLogger("dwe_os_2.RecordingsService")
+        self.recordings_lock = threading.Lock()
 
         self.durations = {}
 
@@ -36,22 +38,24 @@ class RecordingsService:
         if not os.path.exists(self.recordings_path):
             os.makedirs(self.recordings_path)
 
-        self.recordings = []
-        for filename in os.listdir(self.recordings_path):
-            if filename.endswith((".mp4", ".avi")):
-                file_path = os.path.join(self.recordings_path, filename)
-                file_stat = os.stat(file_path)
-                recording_info = RecordingInfo(
-                    path=file_path,
-                    name=filename.split(".")[0],
-                    format=filename.split(".")[-1],
-                    duration=self._get_duration(file_path),
-                    created=self._epoch_to_readable(file_stat.st_ctime),
-                    size=f"{file_stat.st_size / (1024 * 1024):.2f} MB",
-                )
-                self.recordings.append(recording_info)
+        with self.recordings_lock:
+            recordings: list[RecordingInfo] = []
+            for filename in os.listdir(self.recordings_path):
+                if filename.endswith((".mp4", ".avi", ".dwvo")):
+                    file_path = os.path.join(self.recordings_path, filename)
+                    file_stat = os.stat(file_path)
+                    recording_info = RecordingInfo(
+                        path=file_path,
+                        name=filename.split(".")[0],
+                        format=filename.split(".")[-1],
+                        duration=self._get_duration(file_path),
+                        created=self._epoch_to_readable(file_stat.st_ctime),
+                        size=f"{file_stat.st_size / (1024 * 1024):.2f} MB",
+                    )
+                    recordings.append(recording_info)
 
-        return self.recordings
+            self.recordings = recordings
+            return recordings
 
     def _epoch_to_readable(self, epoch: float) -> str:
         from datetime import datetime

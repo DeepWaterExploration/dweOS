@@ -12,7 +12,7 @@ import pathlib
 
 from event_emitter import events
 
-from .pydantic_schemas import SavedPreferencesModel
+from src.models import SavedPreferencesModel
 
 
 class PreferencesManager(events.EventEmitter):

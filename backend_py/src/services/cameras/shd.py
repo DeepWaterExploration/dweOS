@@ -110,7 +110,7 @@ class SHDDevice(Device):
         mjpg_camera.formats["SOFTWARE_H264"] = mjpg_camera.formats["MJPG"]
 
         # List of followers
-        # Zero inherent truth to the existance of these devices
+        # Zero inherent truth to the existence of these devices
         self.followers: list[str] = []
 
         # These exist

@@ -2,12 +2,10 @@ import asyncio
 import logging
 import socket
 import struct
-from enum import Enum
 from typing import Any
 
 import sdbus
 from event_emitter import EventEmitter
-from pydantic import BaseModel
 from sdbus.utils.inspect import inspect_dbus_path
 from sdbus_async.networkmanager import (
     ActiveConnection,
@@ -26,25 +24,7 @@ from sdbus_async.networkmanager import (
     DeviceCapabilities as Capabilities,
 )
 
-
-class IPV4Method(Enum):
-    manual = "manual"
-    auto = "auto"
-    unknown = "unknown"
-
-
-class IPV4Address(BaseModel):
-    address: str
-    prefix: int
-
-
-class IPV4Configuration(BaseModel):
-    ip_addresses: list[IPV4Address] | None = None
-    gateway: str | None = None
-    method: IPV4Method = IPV4Method.unknown
-    dns: list[str] | None = None
-    never_default: bool | None = None
-
+from src.models import IPV4Address, IPV4Configuration, IPV4Method
 
 # ip to integer and reverse: https://stackoverflow.com/a/13294427
 

@@ -4,29 +4,14 @@ import time
 
 import socketio
 from event_emitter import EventEmitter
-from pydantic import BaseModel
+
+from src.models import ConnectionProfileModel, WiredDeviceModel
 
 from .async_network_manager import (
     AsyncNetworkManager,
-    DeviceState,
     IPV4Configuration,
     IPV4Method,
 )
-
-
-class WiredDeviceModel(BaseModel):
-    interface: str
-    state: DeviceState
-    is_active: bool
-    active_profile_id: str | None = None
-    active_ip_configuration: IPV4Configuration | None = None
-    available_profiles: list[str]
-
-
-class ConnectionProfileModel(BaseModel):
-    id: str
-    path: str
-    ipv4_settings: IPV4Configuration
 
 
 class NetworkWrapper(EventEmitter):

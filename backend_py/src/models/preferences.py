@@ -7,7 +7,7 @@ Includes schemas for saved preferences, like default stream endpoints
 
 from pydantic import BaseModel
 
-from ..cameras.pydantic_schemas import StreamEndpointModel
+from .cameras import StreamEndpointModel
 
 
 class SavedPreferencesModel(BaseModel):

@@ -8,7 +8,7 @@ keeping setting across reboots
 
 from pydantic import BaseModel
 
-from .pydantic_schemas import (
+from .cameras import (
     DeviceType,
     IntervalModel,
     StreamEncodeTypeEnum,

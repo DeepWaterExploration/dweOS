@@ -16,10 +16,11 @@ from typing import Any
 
 from event_emitter import EventEmitter
 
+from src.models import SavedDeviceModel
+
 from . import xu_controls as xu
 from .device import BaseOption, ControlTypeEnum, Device, StreamEncodeTypeEnum
 from .enumeration import DeviceInfo
-from .saved_pydantic_schemas import SavedDeviceModel
 
 
 def get_val(addr: Enum | int) -> int:

@@ -16,7 +16,6 @@ from fastapi import FastAPI
 from .logging import LogHandler
 from .routes import (
     camera_router,
-    lights_router,
     logs_router,
     network_router,
     preferences_router,
@@ -26,7 +25,6 @@ from .routes import (
 )
 from .schemas import FeatureSupport
 from .services.cameras import DeviceManager, SerialPWMController, SettingsManager
-from .services.lights import LightManager, create_pwm_controllers
 from .services.network import NetworkWrapper
 from .services.preferences import PreferencesManager
 from .services.recordings import RecordingsService
@@ -92,9 +90,6 @@ class Server:
             settings_manager=self.settings_manager, sio=self.sio, serial=self.serial
         )
 
-        # Lights
-        self.light_manager = LightManager(create_pwm_controllers())
-
         self.server_logger = logging.getLogger("dwe_os_2.Server")
 
         self.network_wrapper = NetworkWrapper(sio)
@@ -117,7 +112,6 @@ class Server:
         # FAST API
         self.app.state.device_manager = self.device_manager
         self.app.state.log_handler = self.log_handler
-        self.app.state.light_manager = self.light_manager
         self.app.state.settings_manager = self.settings_manager
         self.app.state.preferences_manager = self.preferences_manager
         self.app.state.system_manager = self.system_manager
@@ -131,7 +125,6 @@ class Server:
         self.app.include_router(camera_router, prefix="/api/devices")
         self.app.include_router(preferences_router, prefix="/api/preferences")
         self.app.include_router(system_router, prefix="/api/system")
-        self.app.include_router(lights_router, prefix="/api/lights")
         self.app.include_router(logs_router, prefix="/api/logs")
         self.app.include_router(recordings_router, prefix="/api/recordings")
         self.app.include_router(network_router, prefix="/api/network")
@@ -183,7 +176,6 @@ class Server:
     def shutdown(self) -> None:
         self.server_logger.info("Shutting down")
 
-        self.light_manager.cleanup()
         self.device_manager.stop_monitoring()
         self.settings_manager.cleanup()
 

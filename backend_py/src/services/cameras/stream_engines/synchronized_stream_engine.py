@@ -4,7 +4,8 @@ import struct
 import threading
 import time
 
-from ..pydantic_schemas import StreamEndpointModel
+from src.models import StreamEndpointModel
+
 from ..synchronized_camera import CopiedFrame, SynchronizedCamera, V4L2Camera
 from .base_stream_engine import BaseStreamEngine
 

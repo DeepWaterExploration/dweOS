@@ -1,5 +1,5 @@
 """
-pydantic_schemas.py
+cameras.py
 
 Defines Pydantic models and Enums for camera and device configs
 Includes schemas for streams, controls, device info, and API request/response strutures

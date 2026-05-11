@@ -37,7 +37,7 @@ class DWVOHeader:
         pixel_format: int,
         fps: int,
         ext_length: int,
-    ):
+    ) -> None:
         self.version = version
         self.n_cameras = n_cameras
         self.width = width

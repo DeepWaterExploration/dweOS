@@ -10,10 +10,7 @@ from typing import cast
 
 from fastapi import APIRouter, Request
 
-from ..schemas import SimpleRequestStatusModel
-from ..services.cameras import DeviceManager
-from ..services.cameras.exceptions import DeviceNotFoundException
-from ..services.cameras.pydantic_schemas import (
+from src.models import (
     AddFollowerPayload,
     DeviceDescriptorModel,
     DeviceModel,
@@ -22,6 +19,10 @@ from ..services.cameras.pydantic_schemas import (
     StreamInfoModel,
     UVCControlModel,
 )
+
+from ..schemas import SimpleRequestStatusModel
+from ..services.cameras import DeviceManager
+from ..services.cameras.exceptions import DeviceNotFoundException
 from ..services.cameras.shd import SHDDevice
 
 camera_router = APIRouter(tags=["cameras"])

@@ -17,18 +17,19 @@ from typing import Any, cast
 import event_emitter as events
 import socketio
 
+from src.models import (
+    DeviceModel,
+    StreamEncodeTypeEnum,
+    StreamInfoModel,
+    StreamTypeEnum,
+)
+
 from .device import Device, DeviceInfo, DeviceType, lookup_pid_vid
 from .device_utils import find_device_with_bus_info, list_diff
 from .ehd import EHDDevice
 from .enumeration import list_devices
 from .exceptions import DeviceNotFoundException
 from .pwm.serial_pwm_controller import SerialPWMController
-from .pydantic_schemas import (
-    DeviceModel,
-    StreamEncodeTypeEnum,
-    StreamInfoModel,
-    StreamTypeEnum,
-)
 from .settings import SettingsManager
 from .shd import SHDDevice
 

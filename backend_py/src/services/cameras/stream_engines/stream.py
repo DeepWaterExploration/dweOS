@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from ..pydantic_schemas import (
+from src.models import (
     IntervalModel,
     StreamEncodeTypeEnum,
     StreamEndpointModel,

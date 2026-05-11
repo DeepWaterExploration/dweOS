@@ -9,10 +9,11 @@ these features store data
 
 from typing import cast
 
+from src.models import H264Mode
+
 from . import xu_controls as xu
 from .device import BaseOption, ControlTypeEnum, Device, Option
 from .enumeration import DeviceInfo
-from .pydantic_schemas import H264Mode
 
 
 class EHDDevice(Device):

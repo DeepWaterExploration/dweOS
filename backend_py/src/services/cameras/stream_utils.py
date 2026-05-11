@@ -1,4 +1,4 @@
-from .pydantic_schemas import StreamEncodeTypeEnum
+from src.models import StreamEncodeTypeEnum
 
 
 def fourcc2s(fourcc: int) -> str:

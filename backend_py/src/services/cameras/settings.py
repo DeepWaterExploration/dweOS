@@ -12,10 +12,10 @@ import threading
 import time
 from typing import cast
 
+from src.models import DeviceType, SavedDeviceModel, SavedLeaderFollowerPairModel
+
 from .device import Device
 from .device_utils import find_device_with_bus_info
-from .pydantic_schemas import DeviceType
-from .saved_pydantic_schemas import SavedDeviceModel, SavedLeaderFollowerPairModel
 from .shd import SHDDevice
 
 

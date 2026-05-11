@@ -1,5 +1,5 @@
 """
-pydantic_schemas.py
+preferences.py
 
 Defines Pydantic models for persistent server settings
 Includes schemas for saved preferences, like default stream endpoints

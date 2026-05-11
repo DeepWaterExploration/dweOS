@@ -19,11 +19,7 @@ import event_emitter as events
 from linuxpy.video import device
 from pydantic.v1 import NoneBytes
 
-from . import v4l2
-from . import xu_controls as xu
-from .camera_helper.camera_helper_loader import camera_helper
-from .enumeration import DeviceInfo
-from .pydantic_schemas import (
+from src.models import (
     ControlFlagsModel,
     ControlModel,
     ControlTypeEnum,
@@ -32,12 +28,17 @@ from .pydantic_schemas import (
     FrameDropStats,
     IntervalModel,
     MenuItemModel,
+    SavedDeviceModel,
     StreamEncodeTypeEnum,
     StreamEndpointModel,
     StreamTypeEnum,
     V4LControlTypeEnum,
 )
-from .saved_pydantic_schemas import SavedDeviceModel
+
+from . import v4l2
+from . import xu_controls as xu
+from .camera_helper.camera_helper_loader import camera_helper
+from .enumeration import DeviceInfo
 from .stream_runner import Stream, StreamRunner
 from .stream_utils import fourcc2s, string_to_stream_encode_type
 

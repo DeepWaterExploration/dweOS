@@ -25,7 +25,7 @@ class DeviceInfo:
 
 
 def _get_device_attr(device_path, attr) -> str:
-    with open(device_path + "/" + attr) as file_object:
+    with open(device_path + "/" + attr, encoding="utf-8") as file_object:
         return file_object.read().strip()
 
 

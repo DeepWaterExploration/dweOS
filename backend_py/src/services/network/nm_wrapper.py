@@ -25,7 +25,7 @@ class NetworkWrapper(EventEmitter):
 
         self.last_connection_time = time.time()
 
-        @self.sio.on("connect")
+        @self.sio.on("connect")  # type: ignore
         def on_connect(sid, environ) -> None:
             self.logger.info(f"Connection detected: {sid}")
             self.last_connection_time = time.time()

@@ -24,13 +24,13 @@ from src.models import (
     StreamTypeEnum,
 )
 
+from ..preferences import SettingsManager
 from .device import Device, DeviceInfo, DeviceType, lookup_pid_vid
 from .device_utils import find_device_with_bus_info, list_diff
 from .ehd import EHDDevice
 from .enumeration import list_devices
 from .exceptions import DeviceNotFoundException
 from .pwm.serial_pwm_controller import SerialPWMController
-from .settings import SettingsManager
 from .shd import SHDDevice
 
 
@@ -70,6 +70,8 @@ class DeviceManager(events.EventEmitter):
         settings_manager: SettingsManager,
         serial: SerialPWMController,
     ) -> None:
+        super().__init__()
+
         self.devices: list[Device] = []
         self.sio = sio
         self.settings_manager = settings_manager
@@ -133,7 +135,7 @@ class DeviceManager(events.EventEmitter):
         device.on("frame_stats", lambda: self._schedule_emit_frame_stats(device))
 
         if self.serial:
-            device.on("pwm_frequency", lambda fps: self.serial.apply_from_fps(fps))
+            device.on("pwm_frequency", self.serial.apply_from_fps)
 
         return device
 

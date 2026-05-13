@@ -28,6 +28,7 @@ def _get_device_attr(device_path, attr) -> str:
     with open(device_path + "/" + attr, encoding="utf-8") as file_object:
         return file_object.read().strip()
 
+
 def _get_vid_pid(devname) -> tuple[int, int] | None:
     cam_name = devname
     syspath = "/sys/class/video4linux/" + cam_name

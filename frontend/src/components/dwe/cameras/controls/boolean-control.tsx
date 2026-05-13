@@ -3,15 +3,16 @@ import { components } from "@/schemas/dwe_os_2";
 import { useState } from "react";
 import { subscribe } from "valtio";
 
-const numberToBoolean = (val: number, VALUE_TRUE: number) => val === VALUE_TRUE;
+const numberToBoolean = (val: number | boolean, VALUE_TRUE: number | boolean) =>
+  val === VALUE_TRUE;
 
 const BooleanControl = ({
   control,
 }: {
   control: components["schemas"]["ControlModel"];
 }) => {
-  let VALUE_TRUE = 1,
-    VALUE_FALSE = 0;
+  let VALUE_TRUE: boolean | number = true,
+    VALUE_FALSE: boolean | number = false;
 
   if (control.name == "Auto Exposure") {
     VALUE_TRUE = 3;
@@ -19,7 +20,7 @@ const BooleanControl = ({
   }
 
   const [value, setValue] = useState(
-    numberToBoolean(control.value, VALUE_TRUE)
+    numberToBoolean(control.value, VALUE_TRUE),
   );
 
   subscribe(control, () => {

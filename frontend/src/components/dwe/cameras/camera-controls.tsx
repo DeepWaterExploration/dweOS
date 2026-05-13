@@ -55,7 +55,7 @@ const ControlWrapper = ({
 
   const setUVCControl = (
     bus_info: string,
-    value: number,
+    value: number | boolean,
     control_id: number,
   ) => {
     API_CLIENT.POST("/api/devices/set_uvc_control", {

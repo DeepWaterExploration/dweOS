@@ -59,19 +59,29 @@ export const SensorControls = () => {
   const isoControl = controlMap.get("ISO");
   const shutterControl = controlMap.get("Shutter Speed");
   const strobeWidthControl = controlMap.get("Strobe Width");
-  const hwBitrateControl = controlMap.get("HW Bitrate");
+  const hwBitrateControl = controlMap.get("Hardware Bitrate");
 
-  console.log(hwBitrateControl);
+  console.log(
+    exposureControl,
+    isoControl,
+    shutterControl,
+    strobeWidthControl,
+    hwBitrateControl,
+  );
 
-  const [exposureTime, setExposureTime] = useState(shutterControl?.value || 0); // 0x3501
+  const [exposureTime, setExposureTime] = useState<number>(
+    (shutterControl?.value as number) || 0,
+  ); // 0x3501
   const [autoExposure, setAutoExposure] = useState<boolean>(
     exposureControl?.value === 1,
   );
-  const [gain, setGain] = useState(isoControl?.value || 0); // 0x3508
-  const [strobeWidth, setStrobeWidth] = useState(
-    strobeWidthControl?.value || 0,
+  const [gain, setGain] = useState<number>((isoControl?.value as number) || 0); // 0x3508
+  const [strobeWidth, setStrobeWidth] = useState<number>(
+    (strobeWidthControl?.value as number) || 0,
   );
-  const [hwBitrate, setHwBitrate] = useState(hwBitrateControl?.value ?? 0);
+  const [hwBitrate, setHwBitrate] = useState<number>(
+    (hwBitrateControl?.value as number) ?? 0,
+  );
 
   const strobeMax = exposureTime!;
 

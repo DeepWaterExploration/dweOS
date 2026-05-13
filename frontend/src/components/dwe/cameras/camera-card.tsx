@@ -37,7 +37,7 @@ export function CameraCard({
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <CardTitle>{deviceState.device_info?.device_name}</CardTitle>
+            <CardTitle>{deviceState.name}</CardTitle>
             <CardDescription>
               Manufacturer: {deviceState.manufacturer}
               <br />

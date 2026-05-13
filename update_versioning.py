@@ -1,4 +1,4 @@
-import requests
+# import requests
 import json
 import pathlib
 
@@ -8,15 +8,15 @@ GITHUB_API_URL = "https://api.github.com/repos/DeepWaterExploration/DWE_OS_2/tag
 VERSION_FILE_PATH = f"{SCRIPT_DIR}/frontend/package.json"
 
 
-def get_latest_tag():
-    # Fetch the latest tags from GitHub API
-    response = requests.get(GITHUB_API_URL)
+# def get_latest_tag():
+#     # Fetch the latest tags from GitHub API
+#     response = requests.get(GITHUB_API_URL)
 
-    if response.status_code == 200:
-        tags = response.json()
-        if tags:
-            return tags[0]["name"]  # The latest tag is the first one
-    return None
+#     if response.status_code == 200:
+#         tags = response.json()
+#         if tags:
+#             return tags[0]["name"]  # The latest tag is the first one
+#     return None
 
 
 def get_new_tag():

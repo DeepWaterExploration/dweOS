@@ -11,6 +11,7 @@ import logging
 import logging.handlers
 
 import socketio
+from colorlog import ColoredFormatter
 from fastapi import FastAPI
 
 from .logging import LogHandler
@@ -24,9 +25,9 @@ from .routes import (
     system_router,
 )
 from .schemas import FeatureSupport
-from .services.cameras import DeviceManager, SerialPWMController, SettingsManager
+from .services.cameras import DeviceManager, SerialPWMController
 from .services.network import NetworkWrapper
-from .services.preferences import PreferencesManager
+from .services.preferences import PreferencesManager, SettingsManager
 from .services.recordings import RecordingsService
 from .services.system import SystemManager
 from .services.ttyd import TTYDManager
@@ -60,9 +61,25 @@ class Server:
         self.stream_handler = logging.StreamHandler()
         self.root_logger.addHandler(self.stream_handler)
         self.log_handler = LogHandler(self.sio)
-        self.log_formatter = logging.Formatter(
-            "%(asctime)s - %(levelname)s - [%(name)s] - %(filename)s:%(lineno)d - "
-            "%(funcName)s() - %(message)s"
+        self.log_formatter = ColoredFormatter(
+            (
+                "%(log_color)s%(levelname)-8s%(reset)s "  # Level (8 chars wide)
+                "%(blue)s%(asctime)s%(reset)s "
+                "[%(name)s] "
+                "%(thin_white)s%(filename)s:%(lineno)d%(reset)s "
+                "%(white)s%(message)s%(reset)s"
+            ),
+            datefmt="%H:%M:%S",
+            reset=True,
+            log_colors={
+                "DEBUG": "cyan",
+                "INFO": "green",
+                "WARNING": "yellow",
+                "ERROR": "red",
+                "CRITICAL": "red,bg_white",
+            },
+            secondary_log_colors={},
+            style="%",
         )
         self.stream_handler.setFormatter(self.log_formatter)
         self.file_handler = logging.handlers.RotatingFileHandler(

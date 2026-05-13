@@ -9,7 +9,7 @@ and device settings management
 import contextlib
 import logging
 import threading
-from typing import Any, Type
+from typing import Any
 
 import event_emitter as events
 from backend_py.src.models import (

@@ -10,9 +10,9 @@ from .asic_interface import ASICInterface
 from .options import (
     AutoExposureOption,
     GainOption,
+    HardwareBitrateOption,
     ShutterSpeedOption,
     StrobeWidthOption,
-    HardwareBitrateOption,
 )
 
 

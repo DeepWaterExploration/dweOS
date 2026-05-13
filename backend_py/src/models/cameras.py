@@ -102,10 +102,11 @@ class MenuItemModel(BaseModel):
 
 
 class ControlFlagsModel(BaseModel):
+    # TODO: allow booleans, strings, etc.
     default_value: float | int
-    max_value: float | int
-    min_value: float | int
-    step: float | int
+    max_value: float | int = 0
+    min_value: float | int = 0
+    step: float | int = 0
     control_type: ControlTypeEnum = Field(...)
     menu: list[MenuItemModel] = Field(default_factory=list)
 
@@ -117,7 +118,7 @@ class ControlModel(BaseModel):
     flags: ControlFlagsModel
     control_id: int
     name: str
-    value: float | int
+    value: float | int | bool
 
     class Config:
         from_attributes = True
@@ -230,7 +231,7 @@ class StreamInfoModel(BaseModel):
 class UVCControlModel(BaseModel):
     bus_info: str
     control_id: int
-    value: float | int
+    value: float | int | bool
 
     class Config:
         from_attributes = True

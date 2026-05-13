@@ -20,7 +20,8 @@ from .cameras import (
 class SavedControlModel(BaseModel):
     control_id: int
     name: str
-    value: int | float
+    # TODO: This is not enough to allow booleans and might actually cause issues
+    value: int | float | bool
 
     class Config:
         from_attributes = True

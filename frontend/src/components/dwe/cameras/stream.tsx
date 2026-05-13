@@ -83,13 +83,15 @@ export const SensorControls = () => {
 
   // TODO: Streamline this more effectively (We should have a global API class)
   const setUVCControl = (control: ControlModel, value: number) => {
-    API_CLIENT.POST("/api/devices/set_uvc_control", {
-      body: {
-        bus_info: deviceSnapshot.bus_info,
-        control_id: control.control_id,
-        value,
-      },
-    });
+    if (control) {
+      API_CLIENT.POST("/api/devices/set_uvc_control", {
+        body: {
+          bus_info: deviceSnapshot.bus_info,
+          control_id: control.control_id,
+          value,
+        },
+      });
+    }
   };
 
   useEffect(() => {

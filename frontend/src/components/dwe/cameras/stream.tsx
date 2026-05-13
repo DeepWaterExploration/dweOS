@@ -61,14 +61,6 @@ export const SensorControls = () => {
   const strobeWidthControl = controlMap.get("Strobe Width");
   const hwBitrateControl = controlMap.get("Hardware Bitrate");
 
-  console.log(
-    exposureControl,
-    isoControl,
-    shutterControl,
-    strobeWidthControl,
-    hwBitrateControl,
-  );
-
   const [exposureTime, setExposureTime] = useState<number>(
     (shutterControl?.value as number) || 0,
   ); // 0x3501

@@ -20,15 +20,18 @@ const IntegerControl = ({
   const controlId = `control-${control.control_id}-${control.name}`;
   const safeStep = step && step > 0 ? step : 1;
 
+  const controlValue = control.value as number;
+
   // FIXME
   isDisabled = false;
 
   const precision =
     safeStep < 1 ? step.toString().split(".")[1]?.length || 0 : 0;
 
-  const [currentValue, setCurrentValue] = useState(control.value);
+  // TODO: Remove the need to typecast control.value every time it's used
+  const [currentValue, setCurrentValue] = useState<number>(controlValue);
   const [inputValue, setInputValue] = useState(
-    control.value.toFixed(precision).toString(),
+    controlValue.toFixed(precision).toString(),
   );
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -43,8 +46,8 @@ const IntegerControl = ({
   useEffect(() => {
     const unsubscribe = subscribe(control, () => {
       if (control.value !== currentValue) {
-        setCurrentValue(control.value);
-        setInputValue(control.value.toFixed(precision).toString());
+        setCurrentValue(controlValue);
+        setInputValue(controlValue.toFixed(precision).toString());
       }
     });
     return () => unsubscribe();

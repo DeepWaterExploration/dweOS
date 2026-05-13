@@ -5,7 +5,7 @@ import subprocess
 import threading
 from datetime import datetime
 
-from src.models import StreamEncodeTypeEnum, StreamTypeEnum
+from backend_py.src.models import StreamEncodeTypeEnum, StreamTypeEnum
 
 from .base_stream_engine import BaseStreamEngine
 from .stream import Stream
@@ -150,7 +150,7 @@ class GStreamerProcessEngine(BaseStreamEngine):
         with self._lock:
             self.logger.info(
                 "Starting stream for devices: "
-                f"{[stream.device_path for stream in self.streams]}"
+                f"{', '.join([stream.device_path for stream in self.streams])}"
             )
             if self.started:
                 self.stop()

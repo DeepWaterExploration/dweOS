@@ -28,7 +28,6 @@ def _get_device_attr(device_path, attr) -> str:
     with open(device_path + "/" + attr, encoding="utf-8") as file_object:
         return file_object.read().strip()
 
-
 def _get_vid_pid(devname) -> tuple[int, int] | None:
     cam_name = devname
     syspath = "/sys/class/video4linux/" + cam_name
@@ -86,8 +85,7 @@ def list_devices() -> list[DeviceInfo]:
             continue
 
     # flatten the dict
-    for bus_info in devices_map:
-        device_info = devices_map[bus_info]
+    for _, device_info in devices_map.items():
         # sort the device paths in ascending order
         device_info.device_paths = natsorted(device_info.device_paths)
         devices_info.append(device_info)

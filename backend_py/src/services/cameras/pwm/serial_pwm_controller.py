@@ -111,7 +111,6 @@ class SerialPWMController:
         self.frequency = frequency
         self.duty_cycle = duty_cycle
         if not self.found_port:
-            self.logger.info("No connected USB serial PWM controller")
             return
         command = f"{frequency + self.frequency_offset},{duty_cycle}\n"
         self.logger.info(f"Sending command {command.strip()}")

@@ -3,9 +3,8 @@ import logging
 import time
 
 import socketio
+from backend_py.src.models import ConnectionProfileModel, WiredDeviceModel
 from event_emitter import EventEmitter
-
-from src.models import ConnectionProfileModel, WiredDeviceModel
 
 from .async_network_manager import (
     AsyncNetworkManager,
@@ -27,7 +26,7 @@ class NetworkWrapper(EventEmitter):
 
         @self.sio.on("connect")  # type: ignore
         def on_connect(sid, environ) -> None:
-            self.logger.info(f"Connection detected: {sid}")
+            # self.logger.info(f"Connection detected: {sid}")
             self.last_connection_time = time.time()
 
         self.nm.on("profile_updated", lambda profile: self._refresh_ui())

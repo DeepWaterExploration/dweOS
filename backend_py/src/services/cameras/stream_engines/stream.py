@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from src.models import (
+from backend_py.src.models import (
     IntervalModel,
     StreamEncodeTypeEnum,
     StreamEndpointModel,

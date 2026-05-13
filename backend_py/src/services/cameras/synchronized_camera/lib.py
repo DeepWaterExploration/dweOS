@@ -13,7 +13,7 @@ from dataclasses import dataclass
 
 from event_emitter import EventEmitter
 
-from .. import v4l2
+from ..drivers.video4linux import v4l2
 
 
 @dataclass
@@ -336,7 +336,7 @@ class SynchronizedCamera(EventEmitter):
             else:
                 # Drop the earliest frame (smallest timestamp) and try again
                 min_index = timestamps.index(min_ts)
-                self.logger.info(f"Dropping frame of difference: {max_ts - min_ts}")
+                # self.logger.info(f"Dropping frame of difference: {max_ts - min_ts}")
                 self.queues[min_index].popleft()
                 self.emit("frame_drop")
 

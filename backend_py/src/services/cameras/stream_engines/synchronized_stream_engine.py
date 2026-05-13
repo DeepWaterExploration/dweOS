@@ -4,9 +4,13 @@ import struct
 import threading
 import time
 
-from src.models import StreamEndpointModel
+from backend_py.src.models import StreamEndpointModel
+from backend_py.src.services.cameras.synchronized_camera import (
+    CopiedFrame,
+    SynchronizedCamera,
+    V4L2Camera,
+)
 
-from ..synchronized_camera import CopiedFrame, SynchronizedCamera, V4L2Camera
 from .base_stream_engine import BaseStreamEngine
 
 

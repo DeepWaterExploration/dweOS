@@ -11,9 +11,8 @@ import json
 import pathlib
 import threading
 
+from backend_py.src.models import SavedPreferencesModel
 from event_emitter import events
-
-from src.models import SavedPreferencesModel
 
 
 class PreferencesManager(events.EventEmitter):

@@ -11,11 +11,15 @@ import logging
 import threading
 from typing import cast
 
-from src.models import DeviceType, SavedDeviceModel, SavedLeaderFollowerPairModel
+from backend_py.src.models import (
+    DeviceType,
+    SavedDeviceModel,
+    SavedLeaderFollowerPairModel,
+)
 
-from ..cameras.device import Device
 from ..cameras.device_utils import find_device_with_bus_info
-from ..cameras.shd import SHDDevice
+from ..cameras.drivers.device import Device
+from ..cameras.drivers.shd import SHDDevice
 
 
 class SettingsManager:
@@ -56,10 +60,8 @@ class SettingsManager:
             self.file_object.close()
 
     def _load_device(
-            self, 
-            device: Device, 
-            saved_device: SavedDeviceModel, 
-            devices: list[Device]) -> None:
+        self, device: Device, saved_device: SavedDeviceModel, devices: list[Device]
+    ) -> None:
         if device.device_type != saved_device.device_type:
             self.logger.info(
                 f"Device {device.bus_info} with device_type: "
@@ -111,9 +113,7 @@ class SettingsManager:
                 if potential_leader.bus_info == device.bus_info:
                     continue
 
-                saved_leader = self.saved_by_bus_info.get(
-                    potential_leader.bus_info
-                )
+                saved_leader = self.saved_by_bus_info.get(potential_leader.bus_info)
                 if not saved_leader or not saved_leader.followers:
                     continue
 
@@ -121,7 +121,6 @@ class SettingsManager:
                     follower = cast(SHDDevice, device)
                     potential_leader.add_follower(follower)
                     break  # Only follow one leader
-
 
     def load_device(self, device: Device, devices: list[Device]) -> None:
         with self._lock:

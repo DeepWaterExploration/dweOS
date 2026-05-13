@@ -53,7 +53,7 @@ class StreamRunner(events.EventEmitter):
     def start(self) -> None:
         with self._lock:
             self.logger.info(
-                f"Starting streams: {[s.device_path for s in self.streams]}"
+                f"Starting streams: {','.join([s.device_path for s in self.streams])}"
             )
             if self.started:
                 self.stop()

@@ -8,9 +8,7 @@ setting UVC controls, and dealing with Leader/Follower for stereo cameras
 
 from typing import cast
 
-from fastapi import APIRouter, Request
-
-from src.models import (
+from backend_py.src.models import (
     AddFollowerPayload,
     DeviceDescriptorModel,
     DeviceModel,
@@ -19,11 +17,12 @@ from src.models import (
     StreamInfoModel,
     UVCControlModel,
 )
+from fastapi import APIRouter, Request
 
 from ..schemas import SimpleRequestStatusModel
 from ..services.cameras import DeviceManager
+from ..services.cameras.drivers.shd import SHDDevice
 from ..services.cameras.exceptions import DeviceNotFoundException
-from ..services.cameras.shd import SHDDevice
 
 camera_router = APIRouter(tags=["cameras"])
 

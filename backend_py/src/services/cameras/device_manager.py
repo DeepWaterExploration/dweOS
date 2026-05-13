@@ -16,22 +16,23 @@ from typing import Any, cast
 
 import event_emitter as events
 import socketio
-
-from src.models import (
+from backend_py.src.models import (
     DeviceModel,
+    DeviceType,
     StreamEncodeTypeEnum,
     StreamInfoModel,
     StreamTypeEnum,
 )
 
 from ..preferences import SettingsManager
-from .device import Device, DeviceInfo, DeviceType, lookup_pid_vid
 from .device_utils import find_device_with_bus_info, list_diff
-from .ehd import EHDDevice
-from .enumeration import list_devices
+from .drivers.device import Device, DeviceInfo
+from .drivers.ehd import EHDDevice
+from .drivers.registry import lookup_vid_pid
+from .drivers.shd import SHDDevice
+from .drivers.video4linux.enumeration import list_devices
 from .exceptions import DeviceNotFoundException
 from .pwm.serial_pwm_controller import SerialPWMController
-from .shd import SHDDevice
 
 
 def todict(obj, classkey=None) -> Any:
@@ -111,21 +112,23 @@ class DeviceManager(events.EventEmitter):
         """
         Create a new device based on enumerated device info
         """
-        (_, device_type) = lookup_pid_vid(device_info.vid, device_info.pid)
+        device_metadata = lookup_vid_pid(device_info.vid, device_info.pid)
 
-        device = None
-        match device_type:
+        if not device_metadata:
+            return None
+
+        match device_metadata.device_type:
             case DeviceType.EXPLOREHD:
-                device = EHDDevice(device_info)
+                device = EHDDevice(device_info, device_metadata)
             case DeviceType.STELLARHD_LEADER:
-                device = SHDDevice(device_info)
+                device = SHDDevice(device_info, device_metadata)
             case DeviceType.STELLARHD_FOLLOWER:
-                device = SHDDevice(device_info)
+                device = SHDDevice(device_info, device_metadata)
             case _:
                 # Not a DWE device
                 return None
 
-        # we need to broadcast that there was a gst error so that the frontend knows
+        # we need to broadcast that there was a stream error so that the frontend knows
         # there may be a kernel issue
         device.stream_runner.on(
             "stream_error",

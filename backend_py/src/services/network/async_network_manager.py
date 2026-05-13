@@ -5,6 +5,7 @@ import struct
 from typing import Any
 
 import sdbus
+from backend_py.src.models import IPV4Address, IPV4Configuration, IPV4Method
 from event_emitter import EventEmitter
 from sdbus.utils.inspect import inspect_dbus_path
 from sdbus_async.networkmanager import (
@@ -23,8 +24,6 @@ from sdbus_async.networkmanager import (
 from sdbus_async.networkmanager import (
     DeviceCapabilities as Capabilities,
 )
-
-from src.models import IPV4Address, IPV4Configuration, IPV4Method
 
 # ip to integer and reverse: https://stackoverflow.com/a/13294427
 

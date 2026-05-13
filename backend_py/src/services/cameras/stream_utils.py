@@ -1,4 +1,4 @@
-from src.models import StreamEncodeTypeEnum
+from backend_py.src.models import StreamEncodeTypeEnum
 
 
 def fourcc2s(fourcc: int) -> str:

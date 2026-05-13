@@ -9,7 +9,7 @@ cd backend_py
 
 echo "Packaging backend"
 
-./clean.sh
+sudo ./clean.sh
 # Do not run build.sh, so it will be cross platform
 # Everything needed to run build.sh comes with any linux device, and it builds quite fast
 

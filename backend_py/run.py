@@ -4,16 +4,15 @@
 # two is hosted as a uvicorn server, which handles traffic
 
 import asyncio
+import contextlib
 import logging
 from contextlib import asynccontextmanager
 
 import socketio
+from backend_py.src import FeatureSupport, Server
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src import FeatureSupport, Server
-
-# TODO: narrow
 ORIGINS = ["*"]
 
 # Use AsyncServer
@@ -71,4 +70,5 @@ if __name__ == "__main__":
         server = uvicorn.Server(config)
         await server.serve()
 
-    asyncio.run(main())
+    with contextlib.suppress(KeyboardInterrupt):
+        asyncio.run(main())

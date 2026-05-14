@@ -313,6 +313,9 @@ class Device(events.EventEmitter):
                         if self._options[option_name].name == control.name:
                             try:
                                 self.set_option(option_name, value)
+                                self.logger.info(
+                                    f"Setting {control.name} to {control.value}"
+                                )
                             except TypeError as e:
                                 # TODO: return this to caller (API)
                                 self.logger.info(

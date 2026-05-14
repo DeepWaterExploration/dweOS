@@ -3,6 +3,9 @@ line-length = 88
 indent-width = 4
 exclude = ["v4l2.py"] # exclude v4l2.py, since it's included as a lib directly
 
+[tool.ty.environment]
+python = ".venv"
+
 [tool.pylint."messages control"]
 disable = ["R0903"]
 

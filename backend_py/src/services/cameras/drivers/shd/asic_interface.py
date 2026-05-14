@@ -7,9 +7,19 @@ sensor registers.
 
 import struct
 import threading
+from collections.abc import Callable
+
+from pydantic.dataclasses import dataclass
 
 from ..video4linux import Camera
 from ..xu import Selector, StellarRegisterMap, Unit
+
+
+@dataclass
+class ASICCommand:
+    func: Callable
+    args: list
+    key: str
 
 
 class ASICInterface:
@@ -21,6 +31,30 @@ class ASICInterface:
     def __init__(self, camera: Camera) -> None:
         self.camera = camera
         self._lock = threading.RLock()
+
+        # self.is_worker_running = True
+        # self.command_queue: dict[str, ASICCommand] = {}
+        # self._queue_lock = threading.Lock()
+        # self.queue_cond = threading.Condition(self._queue_lock)
+
+        # self.thread = threading.Thread(target=self._sync_asic_writes)
+
+    # def _sync_asic_writes(self) -> None:
+    #     while self.is_worker_running:
+    #         with self.queue_cond:
+    #             self.queue_cond.wait_for(
+    #                 lambda: self.command_queue or not self.is_worker_running
+    #             )
+
+    #             if not self.is_worker_running:
+    #                 break
+
+    #             task = self.command_queue.popleft()
+    #             task.func(*task.args)
+
+    # def queue_command(self, key: str, func: Callable, args: list) -> None:
+    #     pass
+    #     with self.queue_cond:
 
     def asic_write(self, addr: int, data: int, dummy: bool = False) -> int:
         """

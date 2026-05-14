@@ -84,3 +84,7 @@ class StellarSensorMap:
     ISO_LOW = 0x3509
     STROBE_WIDTH_HIGH = 0x3927
     STROBE_WIDTH_LOW = 0x3928
+    VTS_HIGH = 0x380E
+    VTS_LOW = 0x380F
+    HTS_HIGH = 0x380C
+    HTS_LOW = 0x380D

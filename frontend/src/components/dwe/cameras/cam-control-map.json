@@ -21,6 +21,8 @@
     "Power Line Frequency",
     "Bitrate",
     "Group of Pictures",
-    "Variable Bitrate"
+    "Variable Bitrate",
+    "VTS",
+    "HTS"
   ]
 }

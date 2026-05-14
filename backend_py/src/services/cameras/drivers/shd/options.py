@@ -164,6 +164,40 @@ class ShutterSpeedOption(SensorHighLowOption):
         )
 
 
+class VtsOption(SensorHighLowOption):
+    def __init__(self, asic_interface: ASICInterface) -> None:
+        super().__init__(
+            "VTS",
+            ControlFlagsModel(
+                default_value=0,
+                max_value=65535,
+                min_value=0,
+                step=1,
+                control_type=ControlTypeEnum.INTEGER,
+            ),
+            asic_interface,
+            StellarSensorMap.VTS_HIGH,
+            StellarSensorMap.VTS_LOW,
+        )
+
+
+class HtsOption(SensorHighLowOption):
+    def __init__(self, asic_interface: ASICInterface) -> None:
+        super().__init__(
+            "HTS",
+            ControlFlagsModel(
+                default_value=0,
+                max_value=65535,
+                min_value=0,
+                step=1,
+                control_type=ControlTypeEnum.INTEGER,
+            ),
+            asic_interface,
+            StellarSensorMap.HTS_HIGH,
+            StellarSensorMap.HTS_LOW,
+        )
+
+
 class GainOption(SensorHighLowOption):
     def __init__(self, asic_interface: ASICInterface) -> None:
         super().__init__(

@@ -11,8 +11,10 @@ from .options import (
     AutoExposureOption,
     GainOption,
     HardwareBitrateOption,
+    HtsOption,
     ShutterSpeedOption,
     StrobeWidthOption,
+    VtsOption,
 )
 
 
@@ -60,6 +62,8 @@ class SHDDevice(Device):
             "iso": GainOption(self.asic_interface),
             "strobe_width": StrobeWidthOption(self.asic_interface),
             "hw_bitrate": HardwareBitrateOption(self.asic_interface),
+            "vts": VtsOption(self.asic_interface),
+            "hts": HtsOption(self.asic_interface),
         }
 
         self.add_control_from_option("auto_exposure")
@@ -67,6 +71,8 @@ class SHDDevice(Device):
         self.add_control_from_option("iso")
         self.add_control_from_option("strobe_width")
         self.add_control_from_option("hw_bitrate")
+        self.add_control_from_option("vts")
+        self.add_control_from_option("hts")
 
     def add_follower(self, device: "SHDDevice") -> None:
         if device.bus_info in self.followers:

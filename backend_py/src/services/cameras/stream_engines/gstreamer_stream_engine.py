@@ -1,11 +1,12 @@
 import os
 import signal
-import stat
 import subprocess
 import threading
+from collections.abc import Callable
 from datetime import datetime
 
 from backend_py.src.models import StreamEncodeTypeEnum, StreamTypeEnum
+from backend_py.src.services.recordings import RecordingsService
 
 from .base_stream_engine import BaseStreamEngine
 from .stream import Stream
@@ -21,7 +22,7 @@ class GStreamerPipelineBuilder:
         source = cls._build_source(stream)
         caps = GStreamerPipelineBuilder._construct_caps(stream)
         payload = GStreamerPipelineBuilder._build_payload(stream)
-        sink = GStreamerPipelineBuilder._build_sink(stream)
+        sink = GStreamerPipelineBuilder._build_sink(stream, RecordingsService.BASE_PATH)
         return f"{source} ! {caps} ! {payload} ! {sink}"
 
     @staticmethod
@@ -91,7 +92,7 @@ class GStreamerPipelineBuilder:
                 return ""
 
     @staticmethod
-    def _build_sink(stream: Stream) -> str:
+    def _build_sink(stream: Stream, recording_directory: str) -> str:
         match stream.stream_type:
             case StreamTypeEnum.UDP:
                 if len(stream.endpoints) == 0:
@@ -100,18 +101,6 @@ class GStreamerPipelineBuilder:
                 sink += ",".join(f"{e.host}:{e.port}" for e in stream.endpoints)
                 return sink
             case StreamTypeEnum.RECORDING:
-                home_dir = os.getcwd()
-                video_dir = os.path.join(home_dir, "videos")
-                if not os.path.exists(video_dir):
-                    os.makedirs(video_dir)
-                permissions = (
-                    stat.S_IRWXU
-                    | stat.S_IRGRP
-                    | stat.S_IXGRP
-                    | stat.S_IROTH
-                    | stat.S_IXOTH
-                )
-                os.chmod(video_dir, permissions)
                 extension = (
                     "avi" if stream.encode_type == StreamEncodeTypeEnum.MJPG else "mp4"
                 )
@@ -119,14 +108,7 @@ class GStreamerPipelineBuilder:
                 unique_filename = (
                     f"{stream.device_path.split('/')[-1]}_{timestamp}.{extension}"
                 )
-                unique_path = os.path.join(video_dir, unique_filename)
-                if os.path.exists(unique_path):
-                    # TODO: use pathlib
-                    unique_filename = (
-                        f"{stream.device_path.split('/')[-1]}"
-                        f"_{timestamp}_{os.getpid()}.{extension}"
-                    )
-                unique_path = os.path.join(video_dir, unique_filename)
+                unique_path = os.path.join(recording_directory, unique_filename)
                 stream.file_path = unique_path
                 return f"filesink location={unique_path} sync=true"
             case _:
@@ -138,7 +120,9 @@ class GStreamerProcessEngine(BaseStreamEngine):
     GStreamer stream Engine
     """
 
-    def __init__(self, streams, error_callback) -> None:
+    def __init__(
+        self, streams: list[Stream], error_callback: Callable[[str], None]
+    ) -> None:
         super().__init__(streams, error_callback)
 
         self._process: subprocess.Popen | None = None

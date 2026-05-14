@@ -53,6 +53,7 @@ server = Server(
     FeatureSupport(ttyd=True, wifi=True, serial=True),
     sio,
     app,
+    data_dir=".",
     settings_path=".",
     log_level=logging.DEBUG,
     is_dev_mode=True,

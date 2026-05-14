@@ -333,6 +333,6 @@ release.tar.gz
 **/server_preferences.json
 .env
 pi-gen
-videos
+/recordings/
 
 !frontend/src/lib/

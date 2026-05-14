@@ -33,6 +33,7 @@ from .network import (
     WiredDeviceModel,
 )
 from .preferences import SavedPreferencesModel
+from .recordings import RecordingInfo
 from .saved_cameras import (
     SavedControlModel,
     SavedDeviceModel,
@@ -80,4 +81,6 @@ __all__ = [
     "SavedDeviceModel",
     "SavedLeaderFollowerPairModel",
     "SavedStreamModel",
+    # Recordings
+    "RecordingInfo",
 ]

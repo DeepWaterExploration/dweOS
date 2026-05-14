@@ -9,6 +9,7 @@ the background
 import asyncio
 import logging
 import logging.handlers
+import os
 
 import socketio
 from colorlog import ColoredFormatter
@@ -43,7 +44,8 @@ class Server:
         feature_support: FeatureSupport,
         sio: socketio.AsyncServer,
         app: FastAPI,
-        settings_path: str = "/",
+        data_dir: str = "/var/lib/dwe_os",
+        settings_path: str = ".",
         log_level=logging.INFO,
         is_dev_mode=False,
     ) -> None:
@@ -55,6 +57,10 @@ class Server:
 
         # Create the managers
         self.sio = sio
+
+        # /var/lib/dwe_os
+        self.data_dir = data_dir
+        os.makedirs(self.data_dir, exist_ok=True, mode=0o755)
 
         # Create the logging handler
         self.root_logger = logging.getLogger("dwe_os_2")
@@ -118,7 +124,7 @@ class Server:
 
         self.system_manager = SystemManager()
 
-        self.recordings_service = RecordingsService()
+        self.recordings_service = RecordingsService(self.data_dir)
 
         # TTYD
         if self.feature_support.ttyd:

@@ -6,10 +6,11 @@ Handles listing recording metadata, downloading / deleting / renaming recordings
 and downloading all recordings as ZIP
 """
 
+from backend_py.src.models import RecordingInfo
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
 
-from ..services.recordings import RecordingInfo, RecordingsService
+from ..services.recordings import RecordingsService
 
 recordings_router = APIRouter(tags=["recordings"])
 

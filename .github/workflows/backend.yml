@@ -48,4 +48,4 @@ jobs:
         run: bandit -r . -lll
 
       - name: Type checking (ty)
-        run: ty check
+        run: cd .. && ty check backend_py

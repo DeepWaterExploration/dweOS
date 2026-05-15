@@ -31,7 +31,7 @@ class SynchronizedStreamEngine(BaseStreamEngine):
         self.capture_thread: threading.Thread | None = None
         self._running = False
 
-        self.synchronized_camera = None
+        self.synchronized_camera: SynchronizedCamera | None = None
 
         # Always MJPEG
         try:
@@ -142,12 +142,13 @@ class SynchronizedStreamEngine(BaseStreamEngine):
         self.stream_thread.start()
 
     def stop(self) -> None:
+        self.logger.info("Stopping stream engine")
         self._running = False
 
         if self.capture_thread:
-            self.capture_thread.join(timeout=1)
+            self.capture_thread.join(timeout=5)
         if self.stream_thread:
-            self.stream_thread.join(timeout=1)
+            self.stream_thread.join(timeout=5)
 
     def capture_loop_(self) -> None:
         if not self.synchronized_camera:

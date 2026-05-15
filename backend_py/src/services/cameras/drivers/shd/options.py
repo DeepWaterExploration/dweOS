@@ -56,7 +56,7 @@ class AutoExposureOption(ASICOption):
         )
 
     def _write(self, value: int | float | bool) -> None:
-        self._interface.asic_write(StellarRegisterMap.REG_AE, int(value))
+        self._interface.asic_write(self.name, StellarRegisterMap.REG_AE, int(value))
 
     def _read(self) -> bool | None:
         ae, ret = self._interface.asic_read(StellarRegisterMap.REG_AE)
@@ -85,7 +85,7 @@ class ASICHighLowOption(ASICOption):
     def _write(self, value: int | float | bool) -> None:
         # TODO: Require int
         self._interface.asic_write_high_low(
-            self.high_register, self.low_register, int(value)
+            self.name, self.high_register, self.low_register, int(value)
         )
 
     def _read(self) -> int | None:
@@ -101,7 +101,7 @@ class HardwareBitrateOption(ASICHighLowOption):
             "Hardware Bitrate",
             ControlFlagsModel(
                 default_value=13000,
-                max_value=13000,
+                max_value=60000,
                 min_value=100,
                 step=1,
                 control_type=ControlTypeEnum.INTEGER,
@@ -114,8 +114,10 @@ class HardwareBitrateOption(ASICHighLowOption):
     def _write(self, value: int | float | bool) -> None:
         super()._write(value)
 
-        # Trigger the bitrate value
-        self._interface.asic_write(StellarRegisterMap.REG_HW_BITRATE_TRIG, 1)
+        # Trigger the bitrate value (must be a diff key)
+        self._interface.asic_write(
+            self.name + "trig", StellarRegisterMap.REG_HW_BITRATE_TRIG, 1
+        )
 
 
 class SensorHighLowOption(ASICOption):
@@ -138,7 +140,7 @@ class SensorHighLowOption(ASICOption):
 
     def _write(self, value: int | float | bool) -> None:
         self._interface.sensor_write_high_low(
-            self.high_register, self.low_register, int(value)
+            self.name, self.high_register, self.low_register, int(value)
         )
 
     def _read(self) -> int | float | bool | None:
@@ -181,6 +183,26 @@ class VtsOption(SensorHighLowOption):
         )
 
 
+class FakeOption(BaseOption):
+    def __init__(self, name: str) -> None:
+        super().__init__(
+            name,
+            ControlFlagsModel(default_value=0, control_type=ControlTypeEnum.INTEGER),
+        )
+
+    def _write(self, value: int | float | bool) -> None:
+        pass
+
+    def _read(self) -> int | float | bool | None:
+        pass
+
+    def set_value(self, value: int | float | bool) -> None:
+        pass
+
+    def get_value(self) -> int | float | bool:
+        return 0
+
+
 class HtsOption(SensorHighLowOption):
     def __init__(self, asic_interface: ASICInterface) -> None:
         super().__init__(
@@ -210,8 +232,8 @@ class GainOption(SensorHighLowOption):
                 control_type=ControlTypeEnum.INTEGER,
             ),
             asic_interface,
-            StellarSensorMap.SHUTTER_HIGH,
-            StellarSensorMap.SHUTTER_LOW,
+            StellarSensorMap.ISO_HIGH,
+            StellarSensorMap.ISO_LOW,
         )
 
 

@@ -64,6 +64,8 @@ class SHDDevice(Device):
             "hw_bitrate": HardwareBitrateOption(self.asic_interface),
             "vts": VtsOption(self.asic_interface),
             "hts": HtsOption(self.asic_interface),
+            # "vts": FakeOption("VTS"),
+            # "hts": FakeOption("HTS"),
         }
 
         self.add_control_from_option("auto_exposure")
@@ -171,6 +173,10 @@ class SHDDevice(Device):
     def reapply_sensor_config(self) -> None:
         self.logger.info("Reapplying options after starting stream.")
 
+        # FIXME: We only set bitrate rn
+        bitrate_option = self._options["hw_bitrate"]
+        bitrate_option.set_value(bitrate_option.get_value())
         # Reapply options after starting stream
-        for _option_name, option in self._options.items():
-            option.set_value(option.get_value())
+        # for _option_name, option in self._options.items():
+        #     if _option_name.lower() not in ["vts", "hts"]:
+        #         option.set_value(option.get_value())

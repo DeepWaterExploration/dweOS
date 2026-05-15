@@ -9,9 +9,10 @@ import logging
 from contextlib import asynccontextmanager
 
 import socketio
-from backend_py.src import FeatureSupport, Server
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from backend_py.src import FeatureSupport, Server
 
 ORIGINS = ["*"]
 

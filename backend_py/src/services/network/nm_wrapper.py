@@ -3,8 +3,9 @@ import logging
 import time
 
 import socketio
-from backend_py.src.models import ConnectionProfileModel, WiredDeviceModel
 from event_emitter import EventEmitter
+
+from backend_py.src.models import ConnectionProfileModel, WiredDeviceModel
 
 from .async_network_manager import (
     AsyncNetworkManager,

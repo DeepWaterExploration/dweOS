@@ -5,8 +5,9 @@ API endpoints for server perferences
 Handles getting and setting preferences
 """
 
-from backend_py.src.models import SavedPreferencesModel
 from fastapi import APIRouter, Request
+
+from backend_py.src.models import SavedPreferencesModel
 
 from ..schemas import SimpleRequestStatusModel
 from ..services.preferences import PreferencesManager

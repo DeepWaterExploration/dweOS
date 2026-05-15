@@ -16,6 +16,7 @@ from typing import Any, cast
 
 import event_emitter as events
 import socketio
+
 from backend_py.src.models import (
     DeviceModel,
     DeviceType,

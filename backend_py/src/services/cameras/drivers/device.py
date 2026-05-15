@@ -12,6 +12,8 @@ import threading
 from typing import Any
 
 import event_emitter as events
+from linuxpy.video import device
+
 from backend_py.src.models import (
     ControlFlagsModel,
     ControlModel,
@@ -25,7 +27,6 @@ from backend_py.src.models import (
     StreamTypeEnum,
     V4LControlTypeEnum,
 )
-from linuxpy.video import device
 
 from ..stream_runner import Stream, StreamRunner
 from ..stream_utils import string_to_stream_encode_type
@@ -313,9 +314,9 @@ class Device(events.EventEmitter):
                         if self._options[option_name].name == control.name:
                             try:
                                 self.set_option(option_name, value)
-                                self.logger.info(
-                                    f"Setting {control.name} to {control.value}"
-                                )
+                                # self.logger.info(
+                                #     f"Setting {control.name} to {control.value}"
+                                # )
                             except TypeError as e:
                                 # TODO: return this to caller (API)
                                 self.logger.info(

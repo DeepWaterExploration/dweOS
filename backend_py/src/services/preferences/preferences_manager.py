@@ -11,8 +11,9 @@ import json
 import pathlib
 import threading
 
-from backend_py.src.models import SavedPreferencesModel
 from event_emitter import events
+
+from backend_py.src.models import SavedPreferencesModel
 
 
 class PreferencesManager(events.EventEmitter):
@@ -28,6 +29,7 @@ class PreferencesManager(events.EventEmitter):
     def save(self, preferences: SavedPreferencesModel) -> None:
         with self._lock:
             self.settings = preferences
+        self.emit("preferences_updated", preferences)
         self._save_settings()
 
     def get_preferences(self) -> SavedPreferencesModel:

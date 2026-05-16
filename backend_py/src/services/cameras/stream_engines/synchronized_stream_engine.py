@@ -143,12 +143,18 @@ class SynchronizedStreamEngine(BaseStreamEngine):
 
     def stop(self) -> None:
         self.logger.info("Stopping stream engine")
+
+        # NOTE: This causes errors to report because it's still trying to grab
+        if self.synchronized_camera:
+            self.synchronized_camera.stop()
         self._running = False
 
         if self.capture_thread:
             self.capture_thread.join(timeout=5)
         if self.stream_thread:
             self.stream_thread.join(timeout=5)
+
+        self.logger.info("Stopped stream engine")
 
     def capture_loop_(self) -> None:
         if not self.synchronized_camera:
@@ -165,13 +171,14 @@ class SynchronizedStreamEngine(BaseStreamEngine):
                 continue
 
             self.frame_queue.append((frames[0], frames[1]))
-        self.synchronized_camera.stop()
 
     def stream_loop_(self) -> None:
         while self._running:
             try:
                 endpoint = self.streams[0].endpoints[0]
             except IndexError:
+                # FIXME
+                time.sleep(1 / self.streams[0].interval.denominator)
                 continue
             # TODO: do not assume two
             try:

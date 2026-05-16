@@ -9,6 +9,7 @@ and device settings management
 import contextlib
 import logging
 import threading
+from abc import abstractmethod
 from typing import Any
 
 import event_emitter as events
@@ -46,7 +47,9 @@ class Device(events.EventEmitter):
         for device_path in device_info.device_paths:
             self.cameras.append(Camera(device_path))
 
-        self.logger = logging.getLogger("dwe_os_2.cameras.Device")
+        self.logger = logging.getLogger(
+            f"dwe_os_2.cameras.Device.{device_info.bus_info}"
+        )
         self.logger.setLevel(logging.DEBUG)
 
         # If this device has been constructed, we can assume the DeviceManager did
@@ -102,6 +105,14 @@ class Device(events.EventEmitter):
         self._id_counter = 1
 
         self._get_controls()
+
+    @property
+    def can_lead(self) -> bool:
+        return False
+
+    @property
+    def can_follow(self) -> bool:
+        return False
 
     def _update_drop_stats(self) -> None:
         with self._frame_stats_lock:
@@ -184,7 +195,7 @@ class Device(events.EventEmitter):
         if stream_endpoints is None:
             stream_endpoints = []
 
-        self.logger.info(self._fmt_log("Configuring stream"))
+        self.logger.info("Configuring stream")
 
         camera: Camera | None = None
         match encode_type:
@@ -268,7 +279,7 @@ class Device(events.EventEmitter):
         self.v4l2_device.close()
 
     def load_settings(self, saved_device: SavedDeviceModel) -> None:
-        self.logger.info(self._fmt_log("Loading device settings"))
+        self.logger.info("Loading device settings")
 
         for control in saved_device.controls:
             self.set_pu(control.control_id, control.value)
@@ -350,9 +361,13 @@ class Device(events.EventEmitter):
 
     # set an option
     def set_option(self, opt: str, value: Any) -> None:
-        # self.logger.debug(self._fmt_log(f"Setting option - {opt} to {value}"))
+        self.logger.debug(f"Setting option - {opt} to {value}")
         if opt in self._options:
             self._options[opt].set_value(value)
+
+    @abstractmethod
+    def remove_device(self) -> None:
+        pass
 
     def _fmt_log(self, message: str) -> str:
         return f"{self.bus_info} - {message}"

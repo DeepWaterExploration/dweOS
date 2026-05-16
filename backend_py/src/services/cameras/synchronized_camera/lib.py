@@ -58,7 +58,7 @@ class V4L2Camera:
 
         self.critical_error = False
         try:
-            self.fd = os.open(device, os.O_RDWR)
+            self.fd = os.open(device, os.O_RDWR | os.O_NONBLOCK)
         except OSError as e:
             self.critical_error = True
             raise e
@@ -69,6 +69,7 @@ class V4L2Camera:
 
         # This doesn't seem to work
         # self._reset_usb_device()
+        #
 
         self._set_format()
         self._set_fps()
@@ -200,7 +201,7 @@ class V4L2Camera:
     # Public API
 
     def grab_copied_frame(
-        self, blocking: bool = True, timeout_s: float = 5
+        self, blocking: bool = True, timeout_s: float = 0.1
     ) -> CopiedFrame | None:
         """
         Dequeue one buffer, copy its contents into a new bytes object,

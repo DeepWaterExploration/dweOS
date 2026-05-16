@@ -4,6 +4,8 @@ shd.py
 Adds additional features to stellarHD devices
 """
 
+from backend_py.src.models import DeviceType
+
 from ..device import Device, DeviceMetadata
 from ..video4linux import DeviceInfo
 from .asic_interface import ASICInterface
@@ -46,10 +48,15 @@ class SHDDevice(Device):
         self.followers: list[str] = []
 
         # These exist
-        self.follower_devices: list[SHDDevice] = []
+        self.follower_devices: dict[str, SHDDevice] = {}
 
         # Is true if it is managed, false otherwise
         self.is_managed = False
+
+        # Should directly correspond with self.is_managed
+        # I've been hesitant to add this out of fear that it will incorrectly represent
+        # state, but if we keep inline with that requirement, we should be ok
+        self.leader_device: SHDDevice | None = None
 
         # ASIC Interface for low level register read/writes
         self.asic_interface = ASICInterface(self.cameras[0])
@@ -76,8 +83,17 @@ class SHDDevice(Device):
         self.add_control_from_option("vts")
         self.add_control_from_option("hts")
 
+    @property
+    def can_lead(self) -> bool:
+        return True
+
+    @property
+    def can_follow(self) -> bool:
+        return self.device_type == DeviceType.STELLARHD_FOLLOWER
+
     def add_follower(self, device: "SHDDevice") -> None:
-        if device.bus_info in self.followers:
+        # CHANGED: only check if it's in follower devices not the follower list
+        if device.bus_info in self.follower_devices:
             self.logger.info(
                 "Trying to add follower to device that already has this device as a "
                 "follower. Ignoring request."
@@ -93,30 +109,30 @@ class SHDDevice(Device):
         self.logger.info("Adding follower")
 
         # For saving purposes
-        self.followers.append(device.bus_info)
+        if device.bus_info not in self.followers:
+            self.followers.append(device.bus_info)
 
         # This is the real addition
-        self.follower_devices.append(device)
+        self.follower_devices[device.bus_info] = device
 
         # Make the follower managed
-        device.set_is_managed(True)
+        device.set_leader(self)
 
         if self.stream.enabled:
             self.start_stream()
 
-    def remove_follower(self, device: "SHDDevice") -> None:
+    def remove_follower(self, device: "SHDDevice", persist=True) -> None:
         if device.bus_info not in self.followers:
             self.logger.info(
                 "Cannot remove follower from device that does not contain it."
             )
             return
         # Reconstruct the list without the follower
-        self.followers = [dev for dev in self.followers if dev != device.bus_info]
-        self.follower_devices = [
-            dev for dev in self.follower_devices if dev.bus_info != device.bus_info
-        ]
+        if persist:
+            self.followers = [dev for dev in self.followers if dev != device.bus_info]
+        self.follower_devices.pop(device.bus_info)
 
-        device.set_is_managed(False)
+        device.remove_leader()
 
         self.logger.info("Removing follower")
 
@@ -129,12 +145,13 @@ class SHDDevice(Device):
         """
         self.followers.remove(follower_bus_info)
 
-    def set_is_managed(self, is_managed: bool) -> None:
-        self.is_managed = is_managed
+    def set_leader(self, leader: "SHDDevice") -> None:
+        self.is_managed = True
+        self.leader_device = leader
 
-        # Configure stream if needbe
-        if not is_managed and self.stream.enabled:
-            self.start_stream()
+    def remove_leader(self) -> None:
+        self.is_managed = False
+        self.leader_device = None
 
     def start_stream(self) -> None:
         if self.is_managed:
@@ -145,7 +162,7 @@ class SHDDevice(Device):
 
         self.stream_runner.streams = [self.stream]
 
-        for follower_device in self.follower_devices:
+        for follower_device in self.follower_devices.values():
             # A not so hacky fix (very clever :]) to ensure the stream's device_path is
             # set
             follower_device.configure_stream(
@@ -167,8 +184,28 @@ class SHDDevice(Device):
         super().start_stream()
 
         self.reapply_sensor_config()
-        for follower in self.follower_devices:
+        for follower in self.follower_devices.values():
             follower.reapply_sensor_config()
+
+    def remove_device(self) -> None:
+        # Unplugging a device makes it too complicated to handle its follower stream,
+        # so we just remove the follower and revert it to a normal stream
+        for follower in self.follower_devices.values():
+            follower.remove_leader()
+            # self.remove_manual(follower.bus_info)
+            # needs to emit a device change perhaps (frontend can handle
+            # this separately too)
+            # self.emit("save")
+
+        # This requires settings manager and it works without this logic
+        # FIXME: Let's decide whether or not to save followers and leaders when unplug.
+        # I mean, whats the difference between unplugging a device while dwe os is
+        # running and while it's not for example, we need to handle it anyway, so might
+        # as well make it easier to test the bugs
+        # If it's a follower device, we need to remove ourselves from the leader
+        if self.is_managed and self.leader_device:
+            self.leader_device.remove_follower(self, False)
+            # self.leader_device.emit("save")
 
     def reapply_sensor_config(self) -> None:
         self.logger.info("Reapplying options after starting stream.")

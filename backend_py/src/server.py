@@ -75,7 +75,7 @@ class Server:
                 "%(thin_white)s%(filename)s:%(lineno)d%(reset)s "
                 "%(white)s%(message)s%(reset)s"
             ),
-            datefmt="%H:%M:%S",
+            # datefmt="%Y-%m-%dT%H:%M:%S",
             reset=True,
             log_colors={
                 "DEBUG": "cyan",
@@ -87,6 +87,7 @@ class Server:
             secondary_log_colors={},
             style="%",
         )
+        self.log_formatter.default_msec_format = "%s.%03d"
         self.stream_handler.setFormatter(self.log_formatter)
         self.file_handler = logging.handlers.RotatingFileHandler(
             "dwe_os_2.log",

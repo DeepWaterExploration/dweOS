@@ -31,3 +31,6 @@ class EHDDevice(Device):
         self.add_control_from_option("gop")
         self.add_control_from_option("bitrate")
         self.add_control_from_option("vbr")
+
+    def remove_device(self) -> None:
+        pass

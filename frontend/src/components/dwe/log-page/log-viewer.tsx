@@ -96,7 +96,15 @@ export function LogViewer() {
   const formatTimestamp = (timestamp: string) => {
     try {
       const date = new Date(timestamp.replace(",", "."));
-      return date.toLocaleString();
+      return date.toLocaleString("en-US", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        fractionalSecondDigits: 3,
+      });
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
       return timestamp; // Return original if parsing fails
@@ -109,9 +117,7 @@ export function LogViewer() {
 
     // Sort newest first
     filtered = filtered.sort((a, b) => {
-      const dateA = new Date(a.timestamp.replace(",", ".")).getTime();
-      const dateB = new Date(b.timestamp.replace(",", ".")).getTime();
-      return dateB - dateA; // newest first
+      return b.timestamp.localeCompare(a.timestamp);
     });
 
     // Filter by level
@@ -223,10 +229,10 @@ export function LogViewer() {
           <Table className="table-fixed min-w-[900px]" noWrapper>
             <TableHeader className="bg-background sticky top-0 z-10">
               <TableRow>
-                <TableHead className="w-[100px]">Timestamp</TableHead>
-                <TableHead className="w-[90px]">Level</TableHead>
-                <TableHead className="w-[120px]">Logger</TableHead>
-                <TableHead className="w-[120px]">Source</TableHead>
+                <TableHead className="w-[120px]">Timestamp</TableHead>
+                <TableHead className="w-[50px]">Level</TableHead>
+                <TableHead className="w-[140px]">Logger</TableHead>
+                <TableHead className="w-[100px]">Source</TableHead>
                 <TableHead className="w-[250px]">Message</TableHead>
               </TableRow>
             </TableHeader>

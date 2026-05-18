@@ -6,8 +6,6 @@ Handles listing connected devices, updating stream settings (resolution / fps),
 setting UVC controls, and dealing with Leader/Follower for stereo cameras
 """
 
-from typing import cast
-
 from fastapi import APIRouter, Request
 
 from backend_py.src.models import (
@@ -15,14 +13,12 @@ from backend_py.src.models import (
     DeviceDescriptorModel,
     DeviceModel,
     DeviceNicknameModel,
-    DeviceType,
     StreamInfoModel,
     UVCControlModel,
 )
 
 from ..schemas import SimpleRequestStatusModel
 from ..services.cameras import DeviceManager
-from ..services.cameras.drivers.shd import SHDDevice
 from ..services.cameras.exceptions import DeviceNotFoundException
 
 camera_router = APIRouter(tags=["cameras"])
@@ -36,23 +32,12 @@ def get_devices(request: Request) -> list[DeviceModel]:
 
 
 @camera_router.post("/configure_stream", summary="Configure a stream")
-async def configure_stream(
+def configure_stream(
     request: Request, stream_info: StreamInfoModel
 ) -> SimpleRequestStatusModel:
     device_manager: DeviceManager = request.app.state.device_manager
 
     device_manager.configure_device_stream(stream_info)
-
-    for device in device_manager.devices:
-        if device.bus_info == stream_info.bus_info:
-            if device.device_type != DeviceType.STELLARHD_FOLLOWER:
-                return SimpleRequestStatusModel(success=False)
-            break
-    for device in device_manager.devices:
-        if device.device_type == DeviceType.STELLARHD_LEADER:
-            stellarhd_device = cast(SHDDevice, device)
-            if stream_info.bus_info in stellarhd_device.followers:
-                stellarhd_device.start_stream()
 
     return SimpleRequestStatusModel(success=True)
 

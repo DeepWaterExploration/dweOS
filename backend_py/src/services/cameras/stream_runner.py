@@ -4,7 +4,6 @@ stream_runner.py
 
 import logging
 import threading
-import time
 
 import event_emitter as events
 
@@ -57,7 +56,6 @@ class StreamRunner(events.EventEmitter):
             )
             if self.started:
                 self.stop()
-                time.sleep(1)
 
             # We create the engine on start, so the engine can perform initial setup on
             # constructor

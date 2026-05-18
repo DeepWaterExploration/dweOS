@@ -6,6 +6,7 @@
 import asyncio
 import contextlib
 import logging
+import signal
 from contextlib import asynccontextmanager
 
 import socketio
@@ -27,11 +28,8 @@ sio = socketio.AsyncServer(
 async def lifespan(app: FastAPI):  # noqa: ANN201
     await server.serve()
     yield
-    print("Shutting down server...")
-    try:
-        server.shutdown()
-    except Exception as e:
-        print(f"Error during shutdown: {e}")
+
+    # Shutdown should go here, but it isn't always reached
 
 
 # FastAPI application
@@ -69,8 +67,13 @@ if __name__ == "__main__":
 
     async def main() -> None:
         config = uvicorn.Config(app, host="0.0.0.0", port=5000, log_level="warning")
-        server = uvicorn.Server(config)
-        await server.serve()
+        uvicorn_server = uvicorn.Server(config)
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        try:
+            await uvicorn_server.serve()
+        finally:
+            signal.signal(signal.SIGINT, signal.SIG_IGN)
+            server.shutdown()
 
-    with contextlib.suppress(KeyboardInterrupt):
+    with contextlib.suppress(KeyboardInterrupt, asyncio.CancelledError):
         asyncio.run(main())

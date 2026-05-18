@@ -1,4 +1,8 @@
 import collections
+import logging
+import logging.handlers
+import multiprocessing
+import multiprocessing.synchronize
 import socket
 import struct
 import threading
@@ -11,27 +15,38 @@ from backend_py.src.services.cameras.synchronized_camera import (
     V4L2Camera,
 )
 
-from .base_stream_engine import BaseStreamEngine
+from .base_stream_engine import BaseStreamEngine, Stream
 
 
-class SynchronizedStreamEngine(BaseStreamEngine):
-    def __init__(self, streams, error_callback) -> None:
-        super().__init__(streams, error_callback)
+class StreamProcess:
+    def __init__(
+        self,
+        streams: list[Stream],
+        exit: multiprocessing.synchronize.Event,
+        log_queue: multiprocessing.Queue,
+    ) -> None:
+        self.MTU = 1400
+        self.SSRC = 0x445745  # "DWE"
+        self.exit = exit
+
+        self.streams = streams
 
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.frame_queue: collections.deque[tuple[CopiedFrame, CopiedFrame]] = (
             collections.deque(maxlen=2)
         )
 
-        self.MTU = 1400
-        self.SSRC = 0x445745  # "DWE"
-        self.sequence_number = 1
-
-        self.stream_thread: threading.Thread | None = None
-        self.capture_thread: threading.Thread | None = None
-        self._running = False
-
         self.synchronized_camera: SynchronizedCamera | None = None
+
+        root_logger = logging.getLogger("dwe_os_2")
+
+        self.logger = logging.getLogger("dwe_os_2.cameras.SynchronizedStreamEngine")
+
+        # remove handlers so that logs don't print
+        root_logger.handlers = []
+
+        ipc_handler = logging.handlers.QueueHandler(log_queue)
+        root_logger.addHandler(ipc_handler)
 
         # Always MJPEG
         try:
@@ -46,11 +61,14 @@ class SynchronizedStreamEngine(BaseStreamEngine):
             ]
 
             self.synchronized_camera = SynchronizedCamera(self.cameras)
-            self.synchronized_camera.on("frame_drop", lambda: self.emit("frame_drop"))
+
+            # TODO: Add this back as IPC
+            # self.synchronized_camera.on("frame_drop", lambda: self.emit("frame_drop"))
         except OSError as e:
             self.logger.error("Unable to open synchronized camera: '%s'", e)
-            if e.strerror:
-                self.emit_error(e.strerror)
+            # if e.strerror:
+            #     self.emit_error(e.strerror)
+            pass
 
     # <AI-Assisted> Custom RTP improves performance compared to RTP class
     def _send_frame(
@@ -58,11 +76,7 @@ class SynchronizedStreamEngine(BaseStreamEngine):
     ) -> None:
         # TODO: change protocol to handle more than two cameras
         if len(frames) > 2:
-            self.logger.warning(
-                "Only 2 cameras are supported for synchronized streaming. "
-                "This is an in progress feature- please contact us if you "
-                "require it sooner."
-            )
+            pass
 
         left_frame = frames[0]
         right_frame = frames[1]
@@ -114,57 +128,15 @@ class SynchronizedStreamEngine(BaseStreamEngine):
             offset += chunk_size
             sequence_number = (sequence_number + 1) & 0xFFFF
 
-    def start(self) -> None:
-        self.logger.info(
-            "Starting synchronized stream with: "
-            f"{(', '.join([stream.device_path for stream in self.streams]))}"
-        )
-        # self.logger.warning("SynchronizedStreamEngine is not yet implemented")
-        if len(self.streams) != 2:
-            self.logger.error(
-                "SynchronizedStreamEngine cannot support more than 2 streams yet!"
-            )
-            return
-
+    def run(self) -> None:
         if not self.synchronized_camera:
-            self.logger.error(
-                "Synchronized camera does not exist. An error occurred previously in "
-                "construction!"
-            )
             return
 
-        self.capture_thread = threading.Thread(target=self.capture_loop_)
-        self._running = True
-        self.capture_thread.start()
-
-        # We cannot handle more than 2 synchronized streams yet in the protocol
         self.stream_thread = threading.Thread(target=self.stream_loop_)
         self.stream_thread.start()
 
-    def stop(self) -> None:
-        self.logger.info("Stopping stream engine")
-
-        # NOTE: This causes errors to report because it's still trying to grab
-        if self.synchronized_camera:
-            self.synchronized_camera.stop()
-        self._running = False
-
-        if self.capture_thread:
-            self.capture_thread.join(timeout=5)
-        if self.stream_thread:
-            self.stream_thread.join(timeout=5)
-
-        self.logger.info("Stopped stream engine")
-
-    def capture_loop_(self) -> None:
-        if not self.synchronized_camera:
-            self.logger.error(
-                "Cannot run capture loop when synchronized camera is not defined!"
-            )
-            return
-
         # We need to be careful about the blocking aspect of grab
-        while self._running:
+        while not self.exit.is_set():
             frames = self.synchronized_camera.grab()
             if frames is None:
                 time.sleep(1 / self.streams[0].interval.denominator)
@@ -173,7 +145,7 @@ class SynchronizedStreamEngine(BaseStreamEngine):
             self.frame_queue.append((frames[0], frames[1]))
 
     def stream_loop_(self) -> None:
-        while self._running:
+        while not self.exit.is_set():
             try:
                 endpoint = self.streams[0].endpoints[0]
             except IndexError:
@@ -188,3 +160,38 @@ class SynchronizedStreamEngine(BaseStreamEngine):
             except IndexError:
                 time.sleep(1 / self.streams[0].interval.denominator)
                 continue
+
+
+class SynchronizedStreamEngine(BaseStreamEngine):
+    def __init__(self, streams, error_callback) -> None:
+        super().__init__(streams, error_callback)
+
+        self.log_queue = multiprocessing.Queue()
+        root_logger = logging.getLogger("dwe_os_2")
+        self.log_listener = logging.handlers.QueueListener(
+            self.log_queue, *root_logger.handlers, respect_handler_level=True
+        )
+        self.log_listener.start()
+
+        self.exit = multiprocessing.Event()
+        self.process = multiprocessing.Process(
+            target=self._create_process, args=(streams, self.exit, self.log_queue)
+        )
+
+    def start(self) -> None:
+        self.process.start()
+
+    def stop(self) -> None:
+        self.exit.set()
+        if self.process.is_alive():
+            self.process.join()
+        self.logger.info("Successfully stopped SynchronizedStreamEngine process")
+
+    def _create_process(
+        self,
+        streams: list[Stream],
+        exit: multiprocessing.synchronize.Event,
+        log_queue: multiprocessing.Queue,
+    ) -> None:
+        process = StreamProcess(streams, exit, log_queue)
+        process.run()

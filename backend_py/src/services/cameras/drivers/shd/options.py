@@ -128,6 +128,7 @@ class SensorHighLowOption(ASICOption):
         asic_interface: ASICInterface,
         high_register: int,
         low_register: int,
+        write_delay_s: float | None = None,
     ) -> None:
         super().__init__(
             name,
@@ -137,10 +138,15 @@ class SensorHighLowOption(ASICOption):
 
         self.high_register = high_register
         self.low_register = low_register
+        self.write_delay_s = write_delay_s
 
     def _write(self, value: int | float | bool) -> None:
         self._interface.sensor_write_high_low(
-            self.name, self.high_register, self.low_register, int(value)
+            self.name,
+            self.high_register,
+            self.low_register,
+            int(value),
+            self.write_delay_s,
         )
 
     def _read(self) -> int | float | bool | None:
@@ -163,6 +169,7 @@ class ShutterSpeedOption(SensorHighLowOption):
             asic_interface,
             StellarSensorMap.SHUTTER_HIGH,
             StellarSensorMap.SHUTTER_LOW,
+            write_delay_s=0.6,
         )
 
 

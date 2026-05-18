@@ -39,13 +39,11 @@ class ASICInterface:
 
         self.logger = logging.getLogger("dwe_os_2.cameras.shd.ASICInterface")
 
-        self._thread = threading.Thread(target=self._sync_sync_asic_writes)
+        self._thread = threading.Thread(target=self._sync_sync_asic_writes, daemon=True)
         self._thread.start()
 
     def _sync_sync_asic_writes(self) -> None:
         while self._is_worker_running:
-            tasks_to_run = {}
-
             with self._queue_cond:
                 while not self._commands and self._is_worker_running:
                     self._queue_cond.wait()
@@ -53,8 +51,8 @@ class ASICInterface:
                 tasks_to_run = self._commands
                 self._commands = {}
 
-            for key, task in tasks_to_run.items():
-                self.logger.info(f"Running task {key} with {task.args}")
+            for _key, task in tasks_to_run.items():
+                # self.logger.info(f"Running task {key} with {task.args}")
                 task.func(*task.args)
                 time.sleep(0.5)
 
@@ -79,12 +77,17 @@ class ASICInterface:
         self.queue_command(key, self.sync_sensor_write, [addr, data])
 
     def sensor_write_high_low(
-        self, key: str, addr_high: int, addr_low: int, value: int
+        self,
+        key: str,
+        addr_high: int,
+        addr_low: int,
+        value: int,
+        write_delay_s: float | None = None,
     ) -> None:
         self.queue_command(
             key,
             self.sync_sensor_write_high_low,
-            [addr_high, addr_low, value],
+            [addr_high, addr_low, value, write_delay_s],
         )
 
     def sync_asic_write(self, addr: int, data: int, dummy: bool = False) -> int:
@@ -209,7 +212,7 @@ class ASICInterface:
         return ret, val
 
     def sync_sensor_write_high_low(
-        self, reg_high: int, reg_low: int, value: int
+        self, reg_high: int, reg_low: int, value: int, write_delay_s=0.05
     ) -> None:
         """
         Write high byte from value to high register, low byte to low
@@ -217,7 +220,7 @@ class ASICInterface:
         self.sync_sensor_write(reg_high, (value >> 8) & 0xFF)
         # This is extremely scuffed: switch to waiting for
         # trigger register before release (See below)
-        time.sleep(0.6)
+        time.sleep(write_delay_s)
 
         # Maybe: add check for success (0xAA in REG_TRIG)
         # REG_TRIG actually seems to not work properly, so maybe

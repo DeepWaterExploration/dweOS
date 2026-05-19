@@ -61,6 +61,9 @@ class Device(events.EventEmitter):
         self.nickname = ""
         self.stream = Stream()
 
+        # Thread safety
+        self._configuration_lock = threading.Lock()
+
         # Grab the device metadata
         self.manufacturer = device_metadata.manufacturer
         self.name = device_metadata.name
@@ -183,6 +186,10 @@ class Device(events.EventEmitter):
                 return cam
         return None
 
+    def set_nickname(self, nickname: str) -> None:
+        with self._configuration_lock:
+            self.nickname = nickname
+
     def configure_stream(
         self,
         encode_type: StreamEncodeTypeEnum,
@@ -194,8 +201,6 @@ class Device(events.EventEmitter):
     ) -> None:
         if stream_endpoints is None:
             stream_endpoints = []
-
-        self.logger.info("Configuring stream")
 
         camera: Camera | None = None
         match encode_type:
@@ -217,18 +222,19 @@ class Device(events.EventEmitter):
             )
             return
 
-        self.stream.device_path = camera.path
-        self.stream.width = width
-        self.stream.height = height
-        self.stream.interval = interval
-        self.stream.endpoints = stream_endpoints
-        self.stream.encode_type = encode_type
-        self.stream.stream_type = stream_type
+        with self._configuration_lock:
+            self.stream.device_path = camera.path
+            self.stream.width = width
+            self.stream.height = height
+            self.stream.interval = interval
+            self.stream.endpoints = stream_endpoints
+            self.stream.encode_type = encode_type
+            self.stream.stream_type = stream_type
 
-        # Update the pwm frequency with the new fps
-        # TODO: This should be on a command bus or something, not emitted from
-        # the device like this
-        self.emit("pwm_frequency", self.stream.interval.denominator)
+            # Update the pwm frequency with the new fps
+            # TODO: This should be on a command bus or something, not emitted from
+            # the device like this
+            self.emit("pwm_frequency", self.stream.interval.denominator)
 
     def add_control_from_option(self, option_name: str) -> None:
         try:
@@ -254,11 +260,12 @@ class Device(events.EventEmitter):
             self.logger.error("Failed to add option to controls list.")
 
     def start_stream(self) -> None:
-        self.stream.enabled = True
-        self.stream_runner.start()
-
         with self._frame_stats_lock:
             self.frame_stats = FrameDropStats(num_drops=0)
+
+        with self._configuration_lock:
+            self.stream.enabled = True
+            self.stream_runner.start()
 
         # FIXME: What is a better way to do this? An event bus could work,
         # especially since we are propagating this 3 levels up
@@ -266,8 +273,9 @@ class Device(events.EventEmitter):
         self.emit("frame_stats")
 
     def stop_stream(self) -> None:
-        self.stream.enabled = False
-        self.stream_runner.stop()
+        with self._configuration_lock:
+            self.stream.enabled = False
+            self.stream_runner.stop()
 
     def close(self) -> None:
         """
@@ -292,8 +300,11 @@ class Device(events.EventEmitter):
             saved_device.stream.stream_type,
             saved_device.stream.endpoints,
         )
-        self.stream.enabled = saved_device.stream.enabled
-        self.nickname = saved_device.nickname
+
+        with self._configuration_lock:
+            self.stream.enabled = saved_device.stream.enabled
+            self.nickname = saved_device.nickname
+
         if self.stream.enabled:
             self.start_stream()
 
@@ -315,6 +326,10 @@ class Device(events.EventEmitter):
         if not self.v4l2_device.controls:
             self.logger.critical("v4l2_device.controls is None; unable to run set_pu")
             return
+
+        # FIXME:
+        # Take the thread safety ASICControls and implement that logic here instead
+        # This is NOT thread safe
 
         if control_id < 0:
             # DWE control

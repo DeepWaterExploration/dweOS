@@ -212,7 +212,7 @@ class DeviceManager(events.EventEmitter):
 
         self.logger.info(f"Setting nickname of {bus_info} to {nickname}")
 
-        device.nickname = nickname
+        device.set_nickname(nickname)
 
         self.settings_manager.save_device(device)
         return True

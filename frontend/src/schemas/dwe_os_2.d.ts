@@ -252,7 +252,8 @@ export interface paths {
         /** Download all recordings as a zip file */
         get: operations["zip_recordings_api_recordings_zip_get"];
         put?: never;
-        post?: never;
+        /** Download selected recordings as a zip file */
+        post: operations["zip_selected_recordings_api_recordings_zip_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -272,6 +273,23 @@ export interface paths {
         post?: never;
         /** Delete a recording */
         delete: operations["delete_recording_api_recordings__recording_path__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recordings/bulk-delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Delete multiple recordings */
+        post: operations["bulk_delete_recording_api_recordings_bulk_delete_post"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1182,6 +1200,39 @@ export interface operations {
             };
         };
     };
+    zip_selected_recordings_api_recordings_zip_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": string[];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_recording_api_recordings__recording_path__get: {
         parameters: {
             query?: never;
@@ -1223,6 +1274,39 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordingInfo"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    bulk_delete_recording_api_recordings_bulk_delete_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": string[];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

@@ -10,6 +10,7 @@ import logging
 import os
 import subprocess
 import threading
+import uuid
 import zipfile
 
 from backend_py.src.models import RecordingInfo
@@ -27,11 +28,21 @@ class RecordingsService:
 
         self.durations = {}
 
+        self._last_dir_mtime = 0.0
+
         if not os.path.exists(self.recordings_path):
             os.makedirs(self.recordings_path)
 
     def get_recordings(self) -> list[RecordingInfo]:
         with self.recordings_lock:
+            #  check last modified
+            current_mtime = os.stat(self.recordings_path).st_mtime
+
+            # if no modifications, just return cache
+            if self.recordings and current_mtime == self._last_dir_mtime:
+                return self.recordings
+
+            # otherwise run scan
             recordings: list[RecordingInfo] = []
             for filename in os.listdir(self.recordings_path):
                 if filename.endswith((".mp4", ".avi", ".dwvo")):
@@ -48,6 +59,7 @@ class RecordingsService:
                     recordings.append(recording_info)
 
             self.recordings = recordings
+            self._last_dir_mtime = current_mtime
             return recordings
 
     def _epoch_to_readable(self, epoch: float) -> str:
@@ -122,6 +134,18 @@ class RecordingsService:
             return self.recordings
         return None
 
+    def bulk_delete_recordings(self, filenames: list[str]) -> list[RecordingInfo]:
+        with self.recordings_lock:
+            for filename in filenames:
+                if filename in self.durations:
+                    self.durations.pop(filename, None)
+
+                recording_path = os.path.join(self.recordings_path, filename)
+                if os.path.exists(recording_path):
+                    os.remove(recording_path)
+
+        return self.get_recordings()
+
     def rename_recording(
         self, old_name: str, new_name: str
     ) -> list[RecordingInfo] | None:
@@ -138,18 +162,24 @@ class RecordingsService:
             return self.recordings
         return None
 
-    def zip_recordings(self) -> str | None:
-        self.get_recordings()  # Refresh the recordings list
+    def zip_recordings(self, filenames: list[str] | None = None) -> str | None:
+        self.get_recordings()
         if not self.recordings:
             return None
 
-        zip_filename = os.path.join(self.recordings_path, "recordings.zip")
+        unique_id = uuid.uuid4().hex
+        zip_filename = os.path.join(self.recordings_path, f"temp_{unique_id}.zip")
 
         with zipfile.ZipFile(zip_filename, "w") as zipf:
             for recording in self.recordings:
-                zipf.write(
-                    recording.path, arcname=recording.name + "." + recording.format
-                )
+                full_name = f"{recording.name}.{recording.format}"
 
-        # FIXME: Delete zip after download completes
+                if (
+                    filenames is not None
+                    and recording.name not in filenames
+                    and full_name not in filenames
+                ):
+                    continue
+
+                zipf.write(recording.path, arcname=full_name)
         return zip_filename

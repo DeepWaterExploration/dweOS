@@ -7,8 +7,14 @@ import {
 import { toast } from "sonner";
 import { proxy } from "valtio";
 
+interface DiskStats {
+  total: number;
+  used: number;
+  free: number;
+}
 interface RecordingsState {
   recordings: RecordingInfo[];
+  diskStats: DiskStats | null;
   selectedNames: string[];
   loading: boolean;
   zipDownloading: boolean;
@@ -35,6 +41,7 @@ interface RecordingsState {
 
 export const recordingsState = proxy<RecordingsState>({
   recordings: [],
+  diskStats: null,
   selectedNames: [],
   loading: true,
   zipDownloading: false,
@@ -49,9 +56,20 @@ export const recordingsState = proxy<RecordingsState>({
 });
 
 export const recordingsActions = {
+  fetchDiskStats: async () => {
+    try {
+      const { data } = await API_CLIENT.GET("/api/recordings/disk");
+      if (data) recordingsState.diskStats = data as DiskStats;
+    } catch (error) {
+      console.error("Error fetching disk stats:", error);
+    }
+  },
+
   fetchRecordings: async () => {
     recordingsState.loading = true;
     try {
+      recordingsActions.fetchDiskStats();
+
       const { data } = await API_CLIENT.GET("/api/recordings");
       if (data) recordingsState.recordings = data;
     } catch (error) {

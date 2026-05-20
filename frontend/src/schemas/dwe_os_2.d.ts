@@ -242,18 +242,34 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/recordings/zip": {
+    "/api/recordings/zip/prepare": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Download all recordings as a zip file */
-        get: operations["zip_recordings_api_recordings_zip_get"];
+        get?: never;
         put?: never;
-        /** Download selected recordings as a zip file */
-        post: operations["zip_selected_recordings_api_recordings_zip_post"];
+        /** Zip files and generate token */
+        post: operations["prepare_zip_download_api_recordings_zip_prepare_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recordings/zip/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download ZIP using token */
+        get: operations["download_zip_api_recordings_zip_download_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -310,6 +326,23 @@ export interface paths {
         head?: never;
         /** Rename a recording */
         patch: operations["rename_recording_api_recordings__old_name___new_name__patch"];
+        trace?: never;
+    };
+    "/api/recordings/disk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get physical disk usage */
+        get: operations["get_disk_usage_api_recordings_disk_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/network/wired/devices": {
@@ -585,6 +618,15 @@ export interface components {
          * @enum {integer}
          */
         DeviceType: 0 | 1 | 2 | 3 | 4;
+        /** DiskStatsResponse */
+        DiskStatsResponse: {
+            /** Total */
+            total: number;
+            /** Used */
+            used: number;
+            /** Free */
+            free: number;
+        };
         /** FeatureSupport */
         FeatureSupport: {
             /** Ttyd */
@@ -1180,27 +1222,7 @@ export interface operations {
             };
         };
     };
-    zip_recordings_api_recordings_zip_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-        };
-    };
-    zip_selected_recordings_api_recordings_zip_post: {
+    prepare_zip_download_api_recordings_zip_prepare_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -1212,6 +1234,40 @@ export interface operations {
                 "application/json": string[];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_zip_api_recordings_zip_download_get: {
+        parameters: {
+            query: {
+                token: string;
+                filename?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {
@@ -1356,6 +1412,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_disk_usage_api_recordings_disk_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiskStatsResponse"];
                 };
             };
         };

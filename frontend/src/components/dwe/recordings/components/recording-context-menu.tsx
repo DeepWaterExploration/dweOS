@@ -16,11 +16,11 @@ export const RecordingContextMenu = ({ baseUrl }: { baseUrl: string }) => {
   const snap = useSnapshot(recordingsState);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
-  // Local state strictly for the edge-detection math
+  // Edge collision states
   const [adjustedX, setAdjustedX] = useState(0);
   const [adjustedY, setAdjustedY] = useState(0);
 
-  // Handle global click-away / scroll-away
+  // menu open/close
   useEffect(() => {
     const handleInterrupt = (event: Event) => {
       if (event.type === "wheel") {
@@ -44,7 +44,7 @@ export const RecordingContextMenu = ({ baseUrl }: { baseUrl: string }) => {
     };
   }, [snap.contextMenu.isOpen]);
 
-  // Handle screen edge collisions
+  // Handle edge collision
   useLayoutEffect(() => {
     if (snap.contextMenu.isOpen && menuRef.current) {
       const { offsetWidth: menuWidth, offsetHeight: menuHeight } =
@@ -107,7 +107,7 @@ export const RecordingContextMenu = ({ baseUrl }: { baseUrl: string }) => {
       ref={menuRef}
       style={{ left: adjustedX, top: adjustedY }}
       className="fixed min-w-56 max-w-80 bg-popover/30 backdrop-blur border rounded-lg shadow-lg z-50 text-sm p-1 overflow-hidden"
-      onContextMenu={(e) => e.preventDefault()} // Prevent native menu if right-clicking *inside* our menu
+      onContextMenu={(e) => e.preventDefault()}
     >
       <div className="px-3 py-2 truncate text-xs text-muted-foreground font-mono">
         {fullName(target)}

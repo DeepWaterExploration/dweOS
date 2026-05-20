@@ -7,12 +7,13 @@ and downloading all recordings as ZIP
 """
 
 import os
+import shutil
 import time
 import uuid
-import shutil
 
 from fastapi import APIRouter, BackgroundTasks, Body, HTTPException, Request
 from fastapi.responses import FileResponse
+from pydantic import BaseModel
 
 from backend_py.src.models import RecordingInfo
 
@@ -20,7 +21,6 @@ from ..services.recordings import RecordingsService
 
 recordings_router = APIRouter(tags=["recordings"])
 
-from pydantic import BaseModel
 
 class DiskStatsResponse(BaseModel):
     total: int
@@ -58,17 +58,16 @@ def get_recordings(request: Request) -> list[RecordingInfo]:
 
     return recordings_service.get_recordings()
 
-@recordings_router.get("/disk", summary="Get physical disk usage", response_model=DiskStatsResponse)
-def get_disk_usage(request: Request):
+
+@recordings_router.get(
+    "/disk", summary="Get physical disk usage", response_model=DiskStatsResponse
+)
+def get_disk_usage(request: Request) -> DiskStatsResponse:
     recordings_service: RecordingsService = request.app.state.recordings_service
-    
+
     total, used, free = shutil.disk_usage(recordings_service.recordings_path)
-    
-    return {
-        "total": total,
-        "used": used,
-        "free": free
-    }
+
+    return DiskStatsResponse(total=total, used=used, free=free)
 
 
 @recordings_router.post("/zip/prepare", summary="Zip files and generate token")

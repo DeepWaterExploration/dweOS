@@ -146,7 +146,8 @@ class DeviceManager(events.EventEmitter):
 
         # device.on("frame_stats", lambda: self._schedule_emit_frame_stats(device))
 
-        if self.serial:
+        # Only followers will update PWM frequency
+        if self.serial and device.can_follow:
             device.on("pwm_frequency", self.serial.apply_from_fps)
 
         return device
@@ -183,6 +184,8 @@ class DeviceManager(events.EventEmitter):
         Configure a device's stream with the given stream info
         """
         device = self._find_device_with_bus_info(stream_info.bus_info)
+
+        self.logger.info("Configuring stream")
 
         stream_format = stream_info.stream_format
         width: int = stream_format.width

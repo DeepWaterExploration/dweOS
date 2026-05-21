@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/card";
 
 import { CameraNickname } from "./nickname";
-import { CameraStream } from "./stream";
+import { CameraStream } from "./stream/stream";
 import { FrameDropIndicator } from "./frame-drop-indicator";
 import { proxy, useSnapshot } from "valtio";
 import { useContext } from "react";

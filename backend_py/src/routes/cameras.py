@@ -7,6 +7,7 @@ setting UVC controls, and dealing with Leader/Follower for stereo cameras
 """
 
 from fastapi import APIRouter, Request
+from pydantic import RootModel
 
 from backend_py.src.models import (
     AddFollowerPayload,
@@ -31,10 +32,18 @@ def get_devices(request: Request) -> list[DeviceModel]:
     return device_manager.get_devices()
 
 
+@camera_router.get("/map", summary="Get all devices as a map from bus info to device")
+def get_device_map(request: Request) -> RootModel[dict[str, DeviceModel]]:
+    device_manager: DeviceManager = request.app.state.device_manager
+
+    return device_manager.device_dict
+
+
 @camera_router.post("/configure_stream", summary="Configure a stream")
-def configure_stream(
+async def configure_stream(
     request: Request, stream_info: StreamInfoModel
 ) -> SimpleRequestStatusModel:
+    # FIXME: Maybe switch back to sync
     device_manager: DeviceManager = request.app.state.device_manager
 
     device_manager.configure_device_stream(stream_info)

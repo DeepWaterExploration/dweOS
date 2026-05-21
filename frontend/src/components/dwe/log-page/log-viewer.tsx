@@ -230,7 +230,7 @@ export function LogViewer() {
             <TableHeader className="bg-background sticky top-0 z-10">
               <TableRow>
                 <TableHead className="w-[120px]">Timestamp</TableHead>
-                <TableHead className="w-[50px]">Level</TableHead>
+                <TableHead className="w-[80px]">Level</TableHead>
                 <TableHead className="w-[140px]">Logger</TableHead>
                 <TableHead className="w-[100px]">Source</TableHead>
                 <TableHead className="w-[250px]">Message</TableHead>
@@ -279,7 +279,7 @@ export function LogViewer() {
                       </div>
                     </TableCell>
                     <TableCell title={log.message}>
-                      <div className="font-mono text-xs whitespace-normal break-words line-clamp-2 pr-2">
+                      <div className="font-mono text-xs whitespace-normal break-words line-clamp-2 pr-2 max-w-[150px]">
                         {log.message}
                       </div>
                     </TableCell>

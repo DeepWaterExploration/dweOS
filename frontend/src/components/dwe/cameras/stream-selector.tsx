@@ -7,8 +7,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-type StreamOption = { label: string; value: string };
-
 export const StreamSelector = ({
   options,
   placeholder,
@@ -17,7 +15,7 @@ export const StreamSelector = ({
   onChange,
   disabled = false,
 }: {
-  options: StreamOption[];
+  options: string[];
   placeholder: string;
   label: string;
   value?: string;
@@ -39,8 +37,8 @@ export const StreamSelector = ({
         <SelectContent className="">
           <SelectGroup>
             {options.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
+              <SelectItem key={opt} value={opt}>
+                {opt}
               </SelectItem>
             ))}
           </SelectGroup>

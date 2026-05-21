@@ -405,8 +405,7 @@ class DeviceManager(events.EventEmitter):
 
         while self._is_monitoring:
             # do not overload the bus
-            await asyncio.sleep(0.1)
-
+            await asyncio.sleep(1)
             # get the list of devices and update the internal array
             devices_info = await self._get_devices(devices_info)
 

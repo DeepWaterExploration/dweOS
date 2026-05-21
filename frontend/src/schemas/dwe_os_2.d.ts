@@ -21,6 +21,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/devices/map": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get all devices as a map from bus info to device */
+        get: operations["get_device_map_api_devices_map_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/devices/configure_stream": {
         parameters: {
             query?: never;
@@ -805,6 +822,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DeviceModel"][];
+                };
+            };
+        };
+    };
+    get_device_map_api_devices_map_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: components["schemas"]["DeviceModel"];
+                    };
                 };
             };
         };

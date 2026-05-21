@@ -260,8 +260,8 @@ class Device(events.EventEmitter):
             self.logger.error("Failed to add option to controls list.")
 
     def start_stream(self) -> None:
-        with self._frame_stats_lock:
-            self.frame_stats = FrameDropStats(num_drops=0)
+        # with self._frame_stats_lock:
+        #     self.frame_stats = FrameDropStats(num_drops=0)
 
         with self._configuration_lock:
             self.stream.enabled = True
@@ -270,7 +270,7 @@ class Device(events.EventEmitter):
         # FIXME: What is a better way to do this? An event bus could work,
         # especially since we are propagating this 3 levels up
         # For example: self.event_bus.emit("stream_started", self)
-        self.emit("frame_stats")
+        # self.emit("frame_stats")
 
     def stop_stream(self) -> None:
         with self._configuration_lock:

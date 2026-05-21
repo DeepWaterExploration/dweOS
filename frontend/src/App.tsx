@@ -125,7 +125,10 @@ function App() {
   const [connected, setConnected] = useState(false);
 
   const connectWebsocket = () => {
-    if (socket.current) delete socket.current;
+    if (socket.current) {
+      socket.current.close();
+      delete socket.current;
+    }
 
     socket.current = io(
       import.meta.env.DEV

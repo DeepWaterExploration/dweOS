@@ -13,7 +13,6 @@ import { components } from "@/schemas/dwe_os_2";
 
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 import { useDeviceStore } from "@/store/devices";
-import { useShallow } from "zustand/shallow";
 
 const Endpoint = ({
   endpoint,
@@ -105,6 +104,9 @@ const Endpoint = ({
 export const EndpointList = ({ bus_id }: { bus_id: string }) => {
   const configureStream = useDeviceStore((state) => state.configureStream);
   const stream = useDeviceStore((state) => state.devices[bus_id].stream);
+  const isStreamLoading = useDeviceStore(
+    (state) => state.isStreamLoading[bus_id] ?? false,
+  );
 
   const handleDeleteEndpoint = (index: number) => {
     const endpoints = stream.endpoints.filter((_, i) => i !== index);
@@ -130,7 +132,10 @@ export const EndpointList = ({ bus_id }: { bus_id: string }) => {
 
   return (
     <>
-      <div className="relative" id={TOUR_STEP_IDS.DEVICE_ENDPOINTS}>
+      <div
+        className={`relative ${isStreamLoading ? "opacity-50 pointer-events-none" : ""}`}
+        id={TOUR_STEP_IDS.DEVICE_ENDPOINTS}
+      >
         <Card className="overflow-hidden">
           <CardHeader className="bg-background mb-2">
             <span className="text-base -mt-2 font-xs leading-none mx-auto">

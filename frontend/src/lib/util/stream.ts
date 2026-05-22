@@ -10,6 +10,24 @@ export const resolutionToString = (width: number, height: number) => {
   return `${width}x${height}`;
 };
 
+export const getEncoders = (device: components["schemas"]["DeviceModel"]) => {
+  console.log(`Getting encoders for device: ${device.bus_info}`);
+  return new Set(
+    (device.cameras ?? []).flatMap((cam) => Object.keys(cam.formats)),
+  );
+};
+
+export const canLead = (device: components["schemas"]["DeviceModel"]) => {
+  // TODO: switch from magic numbers
+  return (
+    device.device_type == 1 || (device.device_type === 2 && !device.is_managed)
+  );
+};
+
+export const canFollow = (device: components["schemas"]["DeviceModel"]) => {
+  return device.device_type === 2 && !device.is_managed;
+};
+
 export const getAvailableIntervals = (
   device: components["schemas"]["DeviceModel"],
 ) => {

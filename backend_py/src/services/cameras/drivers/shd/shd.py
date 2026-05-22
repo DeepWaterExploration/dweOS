@@ -13,10 +13,8 @@ from .options import (
     AutoExposureOption,
     GainOption,
     HardwareBitrateOption,
-    HtsOption,
     ShutterSpeedOption,
     StrobeWidthOption,
-    VtsOption,
 )
 
 
@@ -69,10 +67,6 @@ class SHDDevice(Device):
             "iso": GainOption(self.asic_interface),
             "strobe_width": StrobeWidthOption(self.asic_interface),
             "hw_bitrate": HardwareBitrateOption(self.asic_interface),
-            "vts": VtsOption(self.asic_interface),
-            "hts": HtsOption(self.asic_interface),
-            # "vts": FakeOption("VTS"),
-            # "hts": FakeOption("HTS"),
         }
 
         self.add_control_from_option("auto_exposure")
@@ -80,8 +74,6 @@ class SHDDevice(Device):
         self.add_control_from_option("iso")
         self.add_control_from_option("strobe_width")
         self.add_control_from_option("hw_bitrate")
-        self.add_control_from_option("vts")
-        self.add_control_from_option("hts")
 
     @property
     def can_lead(self) -> bool:
@@ -117,6 +109,10 @@ class SHDDevice(Device):
 
         # Make the follower managed
         device.set_leader(self)
+
+        # Stop the follower's stream
+        if device.stream.enabled:
+            device.stop_stream()
 
         if self.stream.enabled:
             self.start_stream()

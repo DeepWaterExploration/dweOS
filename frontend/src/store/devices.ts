@@ -3,9 +3,21 @@ import { components } from "@/schemas/dwe_os_2";
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { subscribeWithSelector } from "zustand/middleware";
+import { useCallback, useState } from "react";
+import { getStreamFromStreamInfo } from "@/lib/util/device";
+
+// TODO:
+// I'd like to switch the behavior to one of the following:
+// 1. Return all partial updates on return for every post request. Then we can update the state of all effected devices
+// 2. Return affected bus_ids and add a GET for {bus_id}
+// 3. State update via device updated:
+//    a. Send the updated device
+//    b. Same as 2, just send which devices are stale
 
 export interface DeviceState {
   devices: Record<string, components["schemas"]["DeviceModel"]>;
+
+  isStreamLoading: Record<string, boolean>;
 
   fetchDevices: () => Promise<void>;
   addDevice: (device: components["schemas"]["DeviceModel"]) => void;
@@ -15,8 +27,7 @@ export interface DeviceState {
   configureStream: (
     bus_info: string,
     streamInfo: Partial<components["schemas"]["StreamInfoModel"]>,
-  ) => void;
-  restartStream: (bus_info: string) => void;
+  ) => Promise<boolean>;
   setNickname: (bus_info: string, nickname: string) => void;
   setUVCControl: (
     bus_info: string,
@@ -30,8 +41,9 @@ export interface DeviceState {
 export const useDeviceStore = create<DeviceState>()(
   subscribeWithSelector(
     immer((set, get, store) => ({
+      isStreamLoading: {},
       devices: {},
-      configureStream: (
+      configureStream: async (
         bus_info: string,
         partialStreamInfo: Partial<components["schemas"]["StreamInfoModel"]>,
       ) => {
@@ -53,29 +65,63 @@ export const useDeviceStore = create<DeviceState>()(
           stream_type: partialStreamInfo.stream_type ?? stream.stream_type,
         };
 
-        API_CLIENT.POST("/api/devices/configure_stream", {
-          body: streamInfo,
-          keepalive: false,
-        }).then((result) => {
-          const { data, error } = result;
-          console.log(data);
+        set((state) => {
+          state.isStreamLoading[bus_info] = true;
+        });
 
+        const { data, error } = await API_CLIENT.POST(
+          "/api/devices/configure_stream",
+          {
+            body: streamInfo,
+            keepalive: false,
+          },
+        );
+
+        let success = false;
+
+        if (data) {
           // If successful...
           set((state) => {
             const device = state.devices[bus_info];
 
             // TODO: make it base this off of responseData which is not in the API yet
             if (device && device.stream) {
-              device.stream.enabled = streamInfo.enabled;
-              device.stream.encode_type = streamInfo.encode_type;
-              device.stream.endpoints = streamInfo.endpoints;
-              device.stream.stream_type = streamInfo.stream_type;
-              device.stream.width = streamInfo.stream_format.width;
-              device.stream.height = streamInfo.stream_format.height;
-              device.stream.interval = streamInfo.stream_format.interval;
+              device.stream = getStreamFromStreamInfo(
+                device.stream,
+                streamInfo,
+              );
+            }
+
+            for (const follower_bus_info of device.followers) {
+              const follower = state.devices[follower_bus_info];
+              if (!follower) {
+                console.error(
+                  `Device follower: ${follower_bus_info} does not exist!`,
+                );
+                continue;
+              }
+
+              // FIXME:
+              // This is another example of how we replicate state in the frontend that's created in the backend...
+              follower.stream = {
+                ...device.stream,
+                enabled: false,
+                device_path: follower.stream.device_path,
+              };
             }
           });
+
+          success = data.success;
+        } else {
+          // TODO: return this too
+          console.error(error);
+        }
+
+        set((state) => {
+          state.isStreamLoading[bus_info] = false;
         });
+
+        return success;
       },
       addDevice: (device: components["schemas"]["DeviceModel"]) => {
         set((state) => {
@@ -91,31 +137,120 @@ export const useDeviceStore = create<DeviceState>()(
         set(store.getInitialState());
       },
       fetchDevices: async () => {
-        try {
-          const { data } = await API_CLIENT.GET("/api/devices/map");
-          if (data) {
-            set((state) => {
-              state.devices = data;
-            });
-          } else {
-            console.error("Failed to load device list!");
-          }
-        } catch (e) {
-          console.log(e);
+        const { data, error } = await API_CLIENT.GET("/api/devices/map");
+        if (data) {
+          set((state) => {
+            state.devices = data;
+          });
+        } else {
+          console.error(`Failed to load device list! ${error}`);
         }
       },
-      restartStream: (bus_info: string) => {},
-      setNickname: (bus_info: string, nickname: string) => {},
-      setUVCControl: (
+      setNickname: async (bus_info: string, nickname: string) => {
+        const { data, error } = await API_CLIENT.POST(
+          "/api/devices/set_nickname",
+          { body: { bus_info, nickname } },
+        );
+
+        if (data) console.log(data);
+        else if (error) console.error(error);
+      },
+      setUVCControl: async (
         bus_info: string,
         control_id: number,
         value: number | boolean,
-      ) => {},
-      addFollower: (leader_bus_info: string, follower_bus_info: string) => {},
-      removeFollower: (
+      ) => {
+        const { data, error } = await API_CLIENT.POST(
+          "/api/devices/set_uvc_control",
+          { body: { bus_info, control_id, value } },
+        );
+
+        // TODO: return error to revert if there is any error
+        if (data) console.log(data);
+        else if (error) console.error(error);
+      },
+      addFollower: async (
         leader_bus_info: string,
         follower_bus_info: string,
-      ) => {},
+      ) => {
+        const { data, error } = await API_CLIENT.POST(
+          "/api/devices/add_follower",
+          {
+            body: {
+              leader_bus_info,
+              follower_bus_info,
+            },
+          },
+        );
+
+        if (data) {
+          console.log(data);
+
+          // If successful
+          // TODO: switch to either event updates or response updates
+          set((state) => {
+            state.devices[leader_bus_info].followers.push(follower_bus_info);
+
+            state.devices[follower_bus_info].is_managed = true;
+            state.devices[follower_bus_info].stream.enabled = false;
+          });
+        } else if (error) {
+          console.error(error);
+        }
+      },
+      removeFollower: async (
+        leader_bus_info: string,
+        follower_bus_info: string,
+      ) => {
+        const { data, error } = await API_CLIENT.POST(
+          "/api/devices/remove_follower",
+          {
+            body: {
+              leader_bus_info,
+              follower_bus_info,
+            },
+          },
+        );
+
+        if (data) {
+          console.log(data);
+
+          // If successful
+          // TODO: switch to either event updates or response updates
+          set((state) => {
+            state.devices[leader_bus_info].followers = state.devices[
+              leader_bus_info
+            ].followers.filter((follower) => follower !== follower_bus_info);
+
+            state.devices[follower_bus_info].is_managed = false;
+          });
+        } else if (error) {
+          console.error(error);
+        }
+      },
     })),
   ),
 );
+
+// This function is interesting and may be removed for a better system, but it allows
+// for all function calls for a given api request to have a shared loading state
+// (see stream.tsx)
+export function useDeviceAction<Props extends unknown[]>(
+  action: (...args: Props) => Promise<boolean>,
+) {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const execute = useCallback(
+    async (...args: Props) => {
+      setIsLoading(true);
+
+      // TODO: maybe try catch
+      await action(...args);
+
+      setIsLoading(false);
+    },
+    [action],
+  );
+
+  return { execute, isLoading };
+}

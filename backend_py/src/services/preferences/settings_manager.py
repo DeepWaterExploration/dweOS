@@ -100,20 +100,25 @@ class SettingsManager:
             if not saved_device:
                 continue
 
+            device_should_start = True
+
             if device.can_lead and saved_device.followers:
                 self.logger.info("Adding followers")
+                device_should_start = False
+
                 new_followers = []
                 for follower_bus_info in saved_device.followers:
                     follower = find_device_with_bus_info(device_dict, follower_bus_info)
 
                     # If this follower does not exist, that is ok
-                    # There is no inherent truth to the existance of the followers list
+                    # There is no inherent truth to the existence of the followers list
                     if not follower:
                         self.logger.warning(
                             f"Follower device {follower_bus_info} corresponding to "
                             f"device {device.bus_info} not yet found."
                         )
                         new_followers.append(follower_bus_info)
+                        device_should_start = True
                         continue
 
                     # What is worse than it not existing, however, is it not being a
@@ -132,6 +137,10 @@ class SettingsManager:
                 saved_device.followers = new_followers
 
                 self._update_settings()
+
+            # Either all of its followers are found, or it doesn't have any
+            if device_should_start and device.stream.enabled:
+                device.start_stream()
 
     def _update_settings(self) -> None:
         self.file_object.seek(0)

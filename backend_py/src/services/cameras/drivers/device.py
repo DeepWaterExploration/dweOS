@@ -305,9 +305,6 @@ class Device(events.EventEmitter):
             self.stream.enabled = saved_device.stream.enabled
             self.nickname = saved_device.nickname
 
-        if self.stream.enabled:
-            self.start_stream()
-
     def unconfigure_stream(self) -> None:
         self.stream_runner.stop()
         self.logger.info(self._fmt_log("Stream stopped"))

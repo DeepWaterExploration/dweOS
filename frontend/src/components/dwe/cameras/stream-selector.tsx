@@ -22,12 +22,17 @@ export const StreamSelector = ({
   onChange: (value: string) => void;
   disabled?: boolean;
 }) => {
+  const isValueValid = value && options.includes(value);
+  const selectValue = isValueValid ? value : "";
+
+  console.log(selectValue);
+
   return (
     <div className="space-y-1">
       <label className="text-xs font-medium text-muted-foreground">
         {label}
       </label>
-      <Select value={value} onValueChange={onChange} disabled={disabled}>
+      <Select value={selectValue} onValueChange={onChange} disabled={disabled}>
         <SelectTrigger className="w-full text-sm text-foreground outline-none focus:ring-1 focus:ring-inset focus:ring-primary/50">
           <SelectValue
             placeholder={placeholder}

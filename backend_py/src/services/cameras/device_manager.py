@@ -172,7 +172,11 @@ class DeviceManager(events.EventEmitter):
         """
         Set a device option
         """
-        device = self._find_device_with_bus_info(bus_info)
+        try:
+            device = self._find_device_with_bus_info(bus_info)
+        except DeviceNotFoundException:
+            self.logger.error(f"Could not find device: {bus_info}")
+            return False
 
         device.set_option(option, option_value)
 
@@ -183,7 +187,11 @@ class DeviceManager(events.EventEmitter):
         """
         Configure a device's stream with the given stream info
         """
-        device = self._find_device_with_bus_info(stream_info.bus_info)
+        try:
+            device = self._find_device_with_bus_info(stream_info.bus_info)
+        except DeviceNotFoundException:
+            self.logger.error(f"Could not find device: {stream_info.bus_info}")
+            return False
 
         self.logger.info("Configuring stream")
 
@@ -211,7 +219,11 @@ class DeviceManager(events.EventEmitter):
         """
         Set a device nickname
         """
-        device = self._find_device_with_bus_info(bus_info)
+        try:
+            device = self._find_device_with_bus_info(bus_info)
+        except DeviceNotFoundException:
+            self.logger.error(f"Could not find device: {bus_info}")
+            return False
 
         self.logger.info(f"Setting nickname of {bus_info} to {nickname}")
 
@@ -226,7 +238,11 @@ class DeviceManager(events.EventEmitter):
         """
         Set a device UVC control
         """
-        device = self._find_device_with_bus_info(bus_info)
+        try:
+            device = self._find_device_with_bus_info(bus_info)
+        except DeviceNotFoundException:
+            self.logger.error(f"Could not find device: {bus_info}")
+            return False
 
         device.set_pu(control_id, control_value)
 
@@ -237,8 +253,16 @@ class DeviceManager(events.EventEmitter):
         """
         Add a follower to a leader
         """
-        leader_device = self._find_device_with_bus_info(leader_bus_info)
-        follower_device = self._find_device_with_bus_info(follower_bus_info)
+        try:
+            leader_device = self._find_device_with_bus_info(leader_bus_info)
+        except DeviceNotFoundException:
+            self.logger.error(f"Could not find device: {leader_bus_info}")
+            return False
+        try:
+            follower_device = self._find_device_with_bus_info(follower_bus_info)
+        except DeviceNotFoundException:
+            self.logger.error(f"Could not find device: {follower_bus_info}")
+            return False
 
         if follower_device.device_type != DeviceType.STELLARHD_FOLLOWER:
             self.logger.warning("Attempted to add follower of non-follower type")
@@ -257,21 +281,19 @@ class DeviceManager(events.EventEmitter):
         """
         Remove a follower from a leader
         """
-        leader_device = self._find_device_with_bus_info(leader_bus_info)
+        try:
+            leader_device = self._find_device_with_bus_info(leader_bus_info)
+        except DeviceNotFoundException:
+            self.logger.error(f"Could not find device: {leader_bus_info}")
+            return False
+
+        # FIXME: might cause error if out of date frontend
         leader_device = cast(SHDDevice, leader_device)
         try:
             follower_device = self._find_device_with_bus_info(follower_bus_info)
         except DeviceNotFoundException:
-            # THERE IS NO INHERENT TRUTH TO THE EXISTANCE OF THE FOLLOWER
-            # Expected in the case of an unplugged follower
-            leader_device.remove_manual(follower_bus_info)
+            self.logger.error(f"Could not find device: {follower_bus_info}")
             return False
-
-        # This is allowed
-        # if leader_device.device_type != DeviceType.STELLARHD_LEADER:
-        #     self.logger.warning(
-        #         'Attempted to remove follower from device of non-leader type.')
-        #     return False
 
         if follower_device.device_type != DeviceType.STELLARHD_FOLLOWER:
             self.logger.warning("Attempted to remove follower of non-follower type")

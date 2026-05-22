@@ -141,9 +141,9 @@ class SynchronizedStreamEngine(BaseStreamEngine):
         self._running = False
 
         if self.capture_thread:
-            self.capture_thread.join(timeout=1)
+            self.capture_thread.join()
         if self.stream_thread:
-            self.stream_thread.join(timeout=1)
+            self.stream_thread.join()
 
     def capture_loop_(self) -> None:
         if not self.synchronized_camera:
@@ -167,6 +167,7 @@ class SynchronizedStreamEngine(BaseStreamEngine):
             try:
                 endpoint = self.streams[0].endpoints[0]
             except IndexError:
+                time.sleep(1)
                 continue
             # TODO: do not assume two
             try:

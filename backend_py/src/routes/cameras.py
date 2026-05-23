@@ -19,6 +19,7 @@ from backend_py.src.models import (
 
 from ..schemas import SimpleRequestStatusModel
 from ..services.cameras import DeviceManager
+from ..services.cameras.drivers import Device
 from ..services.cameras.exceptions import DeviceNotFoundException
 
 camera_router = APIRouter(tags=["cameras"])
@@ -31,8 +32,12 @@ def get_devices(request: Request) -> list[DeviceModel]:
     return device_manager.get_devices()
 
 
-@camera_router.get("/map", summary="Get all devices as a map from bus info to device")
-def get_device_map(request: Request) -> dict[str, DeviceModel]:
+@camera_router.get(
+    "/map",
+    summary="Get all devices as a map from bus info to device",
+    response_model=dict[str, DeviceModel],
+)
+def get_device_map(request: Request) -> dict[str, Device]:
     device_manager: DeviceManager = request.app.state.device_manager
 
     return device_manager.device_dict

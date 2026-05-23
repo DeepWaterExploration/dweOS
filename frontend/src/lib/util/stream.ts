@@ -11,7 +11,6 @@ export const resolutionToString = (width: number, height: number) => {
 };
 
 export const getEncoders = (device: components["schemas"]["DeviceModel"]) => {
-  console.log(`Getting encoders for device: ${device.bus_info}`);
   return new Set(
     (device.cameras ?? []).flatMap((cam) => Object.keys(cam.formats)),
   );

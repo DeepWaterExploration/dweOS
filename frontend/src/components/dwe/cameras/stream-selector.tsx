@@ -25,8 +25,6 @@ export const StreamSelector = ({
   const isValueValid = value && options.includes(value);
   const selectValue = isValueValid ? value : "";
 
-  console.log(selectValue);
-
   return (
     <div className="space-y-1">
       <label className="text-xs font-medium text-muted-foreground">

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Check, Edit2, X } from "lucide-react";
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 import { useDeviceStore } from "@/store/devices";
@@ -9,23 +9,41 @@ export const CameraNickname = ({ bus_id }: { bus_id: string }) => {
   const deviceNickname = useDeviceStore(
     (state) => state.devices[bus_id].nickname,
   );
+  const setDeviceNickname = useDeviceStore((state) => state.setNickname);
   const [isEditing, setIsEditing] = useState(false);
-  const [nickname, setNickname] = useState(deviceNickname);
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const saveNickname = useCallback(() => {
+    if (inputRef.current) {
+      setDeviceNickname(bus_id, inputRef.current.value);
+      inputRef.current.blur();
+      setIsEditing(false);
+    }
+  }, [inputRef, setDeviceNickname, bus_id]);
+
+  const startEditing = () => {
+    if (inputRef.current) inputRef.current.focus();
+  };
+
+  const cancelEditing = () => {
+    if (inputRef.current) inputRef.current.blur();
+  };
 
   return (
     <div id={TOUR_STEP_IDS.DEVICE_NAME} className="space-y-2 mb-4">
       <div className="flex justify-between items-center w-full">
         <div className="flex flex-1 items-center space-x-2">
           <Input
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
+            ref={inputRef}
+            onBlur={saveNickname}
+            defaultValue={deviceNickname}
             onFocus={(e) => {
               setIsEditing(true);
               // sets typing cursor to the end of the nickname
               const val = e.target.value;
               e.target.setSelectionRange(val.length, val.length);
             }}
-            // onKeyDown={handleKeyDown}
             placeholder="Enter a nickname"
             className={`h-9 bg-background ${isEditing && "border-accent"}`}
           />
@@ -34,7 +52,7 @@ export const CameraNickname = ({ bus_id }: { bus_id: string }) => {
               <Button
                 variant="outline"
                 size="icon"
-                // onClick={cancelEditing}
+                onClick={cancelEditing}
                 className="h-9 w-9"
               >
                 <X className="h-4 w-4" />
@@ -43,7 +61,7 @@ export const CameraNickname = ({ bus_id }: { bus_id: string }) => {
               <Button
                 variant="default"
                 size="icon"
-                // onClick={saveNickname}
+                onClick={saveNickname}
                 className="h-8 w-8"
               >
                 <Check className="h-4 w-4" />
@@ -54,8 +72,8 @@ export const CameraNickname = ({ bus_id }: { bus_id: string }) => {
             <Button
               variant="ghost"
               size="sm"
-              // onClick={startEditing}
               className="h-8 w-10 p-0"
+              onClick={startEditing}
             >
               <Edit2 />
               <span className="sr-only">Edit nickname</span>

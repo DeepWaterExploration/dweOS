@@ -22,6 +22,7 @@ import {
 import { useEffect, useState } from "react";
 import { components } from "@/schemas/dwe_os_2";
 import { FollowerList } from "./follower-list";
+import { CameraControls } from "../camera-controls";
 
 export const CameraStream = ({ bus_id }: { bus_id: string }) => {
   const device = useDeviceStore((state) => state.devices[bus_id]);
@@ -58,7 +59,7 @@ export const CameraStream = ({ bus_id }: { bus_id: string }) => {
   }, [bus_id, device]);
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col space-y-4 h-full">
       <Accordion
         type="single"
         collapsible
@@ -145,6 +146,7 @@ export const CameraStream = ({ bus_id }: { bus_id: string }) => {
       {canLead(device) && <FollowerList bus_id={bus_id} />}
 
       <div className="flex flex-1 justify-between items-center">
+        <CameraControls bus_id={bus_id} />
         <div
           className="flex items-center gap-2 pl-2"
           id={TOUR_STEP_IDS.DEVICE_STREAM}

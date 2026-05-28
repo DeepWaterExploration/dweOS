@@ -4,17 +4,18 @@ import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { components } from "@/schemas/dwe_os_2";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { subscribe } from "valtio";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { CirclePlus, CircleMinus } from "lucide-react";
 
 const IntegerControl = ({
   control,
-  isDisabled = false,
+  setValue = undefined,
+  disabled = false,
 }: {
   control: components["schemas"]["ControlModel"];
-  isDisabled?: boolean;
+  setValue?: (value: number) => void;
+  disabled?: boolean;
 }) => {
   const { min_value, max_value, step } = control.flags;
   const controlId = `control-${control.control_id}-${control.name}`;
@@ -22,8 +23,7 @@ const IntegerControl = ({
 
   const controlValue = control.value as number;
 
-  // FIXME
-  isDisabled = false;
+  console.log(controlValue);
 
   const precision =
     safeStep < 1 ? step.toString().split(".")[1]?.length || 0 : 0;
@@ -34,6 +34,12 @@ const IntegerControl = ({
     controlValue.toFixed(precision).toString(),
   );
 
+  useEffect(() => {
+    const nextValue = control.value as number;
+    setCurrentValue(nextValue);
+    setInputValue(nextValue.toFixed(precision).toString());
+  }, [control.value, precision]);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -43,19 +49,12 @@ const IntegerControl = ({
     containerWidth: number;
   } | null>(null);
 
-  useEffect(() => {
-    const unsubscribe = subscribe(control, () => {
-      if (control.value !== currentValue) {
-        setCurrentValue(controlValue);
-        setInputValue(controlValue.toFixed(precision).toString());
-      }
-    });
-    return () => unsubscribe();
-  }, [control, currentValue]);
-
-  const clamp = (val: number): number => {
-    return Math.min(max_value, Math.max(min_value, val));
-  };
+  const clamp = useCallback(
+    (val: number): number => {
+      return Math.min(max_value, Math.max(min_value, val));
+    },
+    [max_value, min_value],
+  );
 
   // Logic to snap to the specific step defined in flags
   const snapToStep = useCallback(
@@ -63,7 +62,7 @@ const IntegerControl = ({
       if (!step || step <= 0) return val;
       return Math.round((val - min_value) / safeStep) * safeStep + min_value;
     },
-    [min_value, step],
+    [min_value, step, safeStep],
   );
 
   const commitValue = useCallback(
@@ -72,14 +71,12 @@ const IntegerControl = ({
 
       validatedValue = snapToStep(validatedValue);
 
+      if (setValue) setValue(validatedValue);
+
       setCurrentValue(validatedValue);
       setInputValue(validatedValue.toFixed(precision).toString());
-
-      if (control.value !== validatedValue) {
-        control.value = validatedValue;
-      }
     },
-    [control, min_value, max_value, clamp, snapToStep],
+    [clamp, snapToStep, precision, setValue],
   );
 
   const handlePointerDown = (e: React.PointerEvent) => {
@@ -150,7 +147,7 @@ const IntegerControl = ({
   };
 
   const handleInputStep = (step: string) => {
-    if (isDisabled || !inputRef.current) return;
+    if (disabled || !inputRef.current) return;
 
     try {
       if (step === "up") {
@@ -171,10 +168,7 @@ const IntegerControl = ({
 
   return (
     <div
-      className={cn(
-        "space-y-2",
-        isDisabled && "opacity-50 pointer-events-none",
-      )}
+      className={cn("space-y-2", disabled && "opacity-50 pointer-events-none")}
     >
       <div className="flex items-center gap-3">
         <div className="group relative flex-grow" ref={containerRef}>
@@ -185,7 +179,7 @@ const IntegerControl = ({
             step={1}
             value={[currentValue]}
             className="[&>span]:group-hover:border-white pointer-events-none"
-            disabled={isDisabled}
+            disabled={disabled}
           >
             <span className="text-xs font-bold text-white mix-blend-overlay absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
               {control.name}
@@ -211,7 +205,7 @@ const IntegerControl = ({
             step={step}
             className="w-20 h-8 text-sm border-border hover:border-foreground"
             onWheel={(e) => (e.target as HTMLInputElement).blur()}
-            disabled={isDisabled}
+            disabled={disabled}
             ref={inputRef}
           />
           <div className="flex flex-col gap-[1px]">
@@ -220,7 +214,7 @@ const IntegerControl = ({
               size="icon"
               className="h-4 w-4 text-border hover:text-foreground"
               onClick={() => handleInputStep("up")}
-              disabled={isDisabled || currentValue >= max_value}
+              disabled={disabled || currentValue >= max_value}
               onMouseDown={(e) => e.preventDefault()}
             >
               <CirclePlus className="h-3 w-3 fill-primary/20" />
@@ -230,7 +224,7 @@ const IntegerControl = ({
               size="icon"
               className="h-4 w-4 text-border hover:text-foreground"
               onClick={() => handleInputStep("down")}
-              disabled={isDisabled || currentValue <= min_value}
+              disabled={disabled || currentValue <= min_value}
               onMouseDown={(e) => e.preventDefault()}
             >
               <CircleMinus className="h-3 w-3 fill-primary/20" />

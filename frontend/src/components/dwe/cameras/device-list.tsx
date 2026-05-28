@@ -40,7 +40,9 @@ const DeviceListLayout = () => {
     <div className="h-full w-full" id={TOUR_STEP_IDS.CAMERAS}>
       <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(380px,0fr))]">
         {deviceIds.map((id) => (
-          <DeviceCard bus_id={id} key={`${id}`} />
+          <div key={`${id}`}>
+            <DeviceCard bus_id={id} />
+          </div>
         ))}
       </div>
     </div>

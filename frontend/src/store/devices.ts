@@ -33,7 +33,7 @@ export interface DeviceState {
     bus_info: string,
     control_id: number,
     value: number | boolean,
-  ) => void;
+  ) => Promise<void>;
   addFollower: (leader_bus_info: string, follower_bus_info: string) => void;
   removeFollower: (leader_bus_info: string, follower_bus_info: string) => void;
 }
@@ -165,9 +165,23 @@ export const useDeviceStore = create<DeviceState>()(
           { body: { bus_info, control_id, value } },
         );
 
-        // TODO: return error to revert if there is any error
-        if (data) console.log(data);
-        else if (error) console.error(error);
+        if (data && data.success) {
+          set((state) => {
+            for (let i = 0; i < state.devices[bus_info].controls.length; i++) {
+              if (state.devices[bus_info].controls[i].control_id === control_id)
+                state.devices[bus_info].controls[i].value = value;
+            }
+          });
+        } else {
+          if (data && !data.success) {
+            throw new Error("Unable to set UVC Control!");
+          }
+          if (error) {
+            throw error;
+          }
+
+          throw new Error("Unknown error occurred!");
+        }
       },
       addFollower: async (
         leader_bus_info: string,

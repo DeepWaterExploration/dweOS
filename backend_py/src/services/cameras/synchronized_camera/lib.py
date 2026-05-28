@@ -4,6 +4,7 @@
 
 import contextlib
 import ctypes
+import errno
 import fcntl
 import logging
 import mmap
@@ -84,7 +85,9 @@ class V4L2Camera:
         try:
             return fcntl.ioctl(self.fd, req, arg)
         except OSError as e:
-            self.logger.error(f"IOCTL error: {e.strerror}")
+            # TODO: raise for other events too...
+            if e.errno == errno.ENODEV:
+                self.critical_error = True
             return -1
 
     def _reset_usb_device(self) -> None:
@@ -339,6 +342,8 @@ class SynchronizedCamera(EventEmitter):
         grabbed_frames: list[CopiedFrame] = []
         for cam in self.cameras:
             cf = cam.grab_copied_frame(blocking=True)
+            if cam.critical_error:
+                raise Exception("Camera has critical exception")
             if cf is None:
                 # Failed grab from at least one camera
                 return None

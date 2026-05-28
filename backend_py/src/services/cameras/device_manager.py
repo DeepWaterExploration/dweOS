@@ -332,13 +332,13 @@ class DeviceManager(events.EventEmitter):
 
         # add the new devices
         for device_info in new_devices:
-            device = None
             try:
                 device = self.create_device(device_info)
                 if not device:
                     continue
             except Exception as e:
                 traceback.print_exc()
+                devices_info.remove(device_info)
                 self.logger.warning(e)
                 continue
             # append the device to the device list

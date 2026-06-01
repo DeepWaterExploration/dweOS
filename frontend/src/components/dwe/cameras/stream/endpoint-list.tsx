@@ -13,6 +13,7 @@ import { components } from "@/schemas/dwe_os_2";
 
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 import { useDeviceStore } from "@/store/devices";
+import { usePreferencesStore } from "@/store/preferences";
 
 const Endpoint = ({
   endpoint,
@@ -102,6 +103,7 @@ const Endpoint = ({
 };
 
 export const EndpointList = ({ bus_id }: { bus_id: string }) => {
+  const preferences = usePreferencesStore((state) => state.preferences);
   const configureStream = useDeviceStore((state) => state.configureStream);
   const stream = useDeviceStore((state) => state.devices[bus_id].stream);
   const isStreamLoading = useDeviceStore(
@@ -180,7 +182,10 @@ export const EndpointList = ({ bus_id }: { bus_id: string }) => {
             id={TOUR_STEP_IDS.ADD_ENDPOINTS}
             className="h-8 w-8 p-0 rounded-full shadow-md bg-card flex items-center justify-center hover:bg-accent hover:text-background"
             onClick={() => {
-              handleAddEndpoint({ host: "127.0.0.1", port: 5600 });
+              handleAddEndpoint({
+                host: preferences?.default_stream?.host ?? "192.168.2.1",
+                port: preferences?.default_stream?.port ?? 5600,
+              });
             }}
           >
             <PlusIcon />

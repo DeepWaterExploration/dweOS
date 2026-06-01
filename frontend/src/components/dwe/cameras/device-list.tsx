@@ -4,9 +4,13 @@ import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 import { useDeviceStore } from "@/store/devices";
 import DeviceCard from "./device-card";
 import { useShallow } from "zustand/shallow";
+import { usePreferencesStore } from "@/store/preferences";
 
 const DeviceListLayout = () => {
   const { socket, connected } = useContext(WebsocketContext)!;
+  const fetchPreferences = usePreferencesStore(
+    (state) => state.fetchPreferences,
+  );
 
   // Object.keys avoids rerendering everything when one device changes
   const deviceIds = useDeviceStore(
@@ -22,6 +26,7 @@ const DeviceListLayout = () => {
     }
 
     fetchDevices();
+    fetchPreferences();
 
     socket.on("device_added", () => {
       fetchDevices();
@@ -34,7 +39,7 @@ const DeviceListLayout = () => {
       socket.off("device_added");
       socket.off("device_removed");
     };
-  }, [connected, socket, fetchDevices, resetDevices]);
+  }, [connected, socket, fetchDevices, resetDevices, fetchPreferences]);
 
   return (
     <div className="h-full w-full" id={TOUR_STEP_IDS.CAMERAS}>

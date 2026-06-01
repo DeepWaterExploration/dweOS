@@ -8,9 +8,9 @@ import {
 import { useDeviceStore } from "@/store/devices";
 import { CameraStream } from "./stream/stream";
 import { CameraNickname } from "./nickname";
+import { FrameDropIndicator } from "./frame-drop-indicator";
 
 const DeviceCard = ({ bus_id }: { bus_id: string }) => {
-  const bus_info = useDeviceStore((state) => state.devices[bus_id].bus_info);
   const deviceName = useDeviceStore((state) => state.devices[bus_id].name);
   const deviceManufacturer = useDeviceStore(
     (state) => state.devices[bus_id].manufacturer,
@@ -25,14 +25,15 @@ const DeviceCard = ({ bus_id }: { bus_id: string }) => {
             <CardDescription>
               Manufacturer: {deviceManufacturer}
               <br />
-              USB Port ID: {bus_info}
+              USB Port ID: {bus_id}
             </CardDescription>
           </div>
+          <FrameDropIndicator bus_id={bus_id} />
         </div>
         <CameraNickname bus_id={bus_id} />
       </CardHeader>
       <CardContent>
-        <CameraStream bus_id={bus_info} />
+        <CameraStream bus_id={bus_id} />
       </CardContent>
     </Card>
   );

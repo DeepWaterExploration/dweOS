@@ -85,6 +85,7 @@ export const CameraStream = ({ bus_id }: { bus_id: string }) => {
   return (
     <div className="flex flex-col space-y-4 h-full">
       <CameraControls bus_id={bus_id} isResetting={isResettingControls} />
+
       <Accordion
         type="single"
         collapsible
@@ -173,12 +174,11 @@ export const CameraStream = ({ bus_id }: { bus_id: string }) => {
       <div className="flex items-center justify-between w-full mt-auto pt-4">
         <div id={TOUR_STEP_IDS.DEVICE_SETTINGS}>
           <Button
-            variant="ghost"
+            variant="svg"
             className="h-12 px-4 flex items-center gap-2 z-10"
             disabled={isResettingControls}
             onClick={resetControls}
           >
-            <span className="text-sm font-medium">Reset Controls</span>
             {isResettingControls ? (
               <Loader2 className="animate-spin" />
             ) : (

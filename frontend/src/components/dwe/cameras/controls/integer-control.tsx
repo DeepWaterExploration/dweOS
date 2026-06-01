@@ -23,8 +23,6 @@ const IntegerControl = ({
 
   const controlValue = control.value as number;
 
-  console.log(controlValue);
-
   const precision =
     safeStep < 1 ? step.toString().split(".")[1]?.length || 0 : 0;
 

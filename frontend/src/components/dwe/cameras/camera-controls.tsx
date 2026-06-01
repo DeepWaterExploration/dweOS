@@ -1,33 +1,13 @@
 // src/components/camera-controls.tsx
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useMemo } from "react";
 
-// Import Dialog components
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Aperture,
-  MonitorCog,
-  ImageIcon,
-  RotateCcwIcon,
-  SlidersHorizontal,
-  CircleEllipsis,
-  Loader2,
-} from "lucide-react";
+import { Aperture, MonitorCog, ImageIcon, CircleEllipsis } from "lucide-react";
 
 import IntegerControl from "./controls/integer-control";
 import BooleanControl from "./controls/boolean-control";
 import MenuControl from "./controls/menu-control";
 import { components } from "@/schemas/dwe_os_2";
-import { API_CLIENT } from "@/api";
-import { toast } from "sonner";
 import CameraControlMap from "./cam-control-map.json";
 import {
   Accordion,
@@ -35,9 +15,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 import { useDeviceStore } from "@/store/devices";
-import { cn } from "@/lib/utils";
 import { translateControls, UIControlModel } from "./stream/sensor-controls";
 
 type ControlModel = components["schemas"]["ControlModel"];
@@ -58,14 +36,10 @@ const ControlWrapper = ({
   setValue: (value: number | boolean) => void;
   disabled: boolean;
 }) => {
-  const key = control.control_id;
-
   switch (control.flags.control_type) {
     case "INTEGER":
-      console.log(control);
       return (
         <IntegerControl
-          key={key}
           control={control}
           setValue={setValue}
           disabled={disabled}
@@ -74,7 +48,6 @@ const ControlWrapper = ({
     case "BOOLEAN":
       return (
         <BooleanControl
-          key={key}
           control={control}
           setValue={setValue}
           disabled={disabled}
@@ -83,7 +56,6 @@ const ControlWrapper = ({
     case "MENU":
       return (
         <MenuControl
-          key={key}
           control={control}
           setValue={setValue}
           disabled={disabled}
@@ -144,7 +116,10 @@ export const CameraControls = ({
                 {controlNames.map(
                   (name) =>
                     uiControls[name] && (
-                      <InternalControlWrapper control={uiControls[name]} />
+                      <InternalControlWrapper
+                        key={uiControls[name].control_id}
+                        control={uiControls[name]}
+                      />
                     ),
                 )}
               </div>

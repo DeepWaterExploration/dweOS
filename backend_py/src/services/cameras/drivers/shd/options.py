@@ -2,9 +2,10 @@
 options.py
 """
 
+import logging
 from abc import abstractmethod
 
-from backend_py.src.models import ControlFlagsModel, ControlTypeEnum
+from backend_py.src.models import ControlFlagsModel, ControlTypeEnum, MenuItemModel
 
 from ..options import BaseOption
 from ..xu import StellarRegisterMap, StellarSensorMap
@@ -21,6 +22,10 @@ class ASICOption(BaseOption):
 
         self._cached = control_flags.default_value
         self._interface = interface
+
+        self.logger = logging.getLogger(
+            f"dwe_os_2.cameras.{interface.camera.path}.ASICOption.{name}"
+        )
 
     @abstractmethod
     def _write(self, value: int | float | bool) -> None:
@@ -93,6 +98,8 @@ class ASICHighLowOption(ASICOption):
 
 
 class HardwareBitrateOption(ASICHighLowOption):
+    PRESET_MAP = {0: 5000, 1: 9000, 2: 13000, 3: 20000, 4: 60000}
+
     def __init__(
         self,
         asic_interface: ASICInterface,
@@ -100,11 +107,18 @@ class HardwareBitrateOption(ASICHighLowOption):
         super().__init__(
             "Hardware Bitrate",
             ControlFlagsModel(
-                default_value=13000,
-                max_value=60000,
-                min_value=100,
+                default_value=0,
+                menu=[
+                    MenuItemModel(index=0, name="Lowest"),
+                    MenuItemModel(index=1, name="Low"),
+                    MenuItemModel(index=2, name="Medium"),
+                    MenuItemModel(index=3, name="High"),
+                    MenuItemModel(index=4, name="Highest"),
+                ],
+                min_value=0,
+                max_value=4,
                 step=1,
-                control_type=ControlTypeEnum.INTEGER,
+                control_type=ControlTypeEnum.MENU,
             ),
             asic_interface,
             StellarRegisterMap.REG_HW_BITRATE_HIGH,
@@ -112,7 +126,22 @@ class HardwareBitrateOption(ASICHighLowOption):
         )
 
     def _write(self, value: int | float | bool) -> None:
-        super()._write(value)
+        # value must be an integer
+        if type(value) is not int:
+            self.logger.error(
+                "write() called for bitrate ASIC control with type(value) != int"
+            )
+            return
+
+        try:
+            preset_value = self.PRESET_MAP[value]
+        except KeyError:
+            preset_value = 0
+            self.logger.error(
+                "write() called for bitrate ASIC control with invalid value"
+            )
+
+        super()._write(preset_value or 0)
 
         # Trigger the bitrate value (must be a diff key)
         self._interface.asic_write(
@@ -129,7 +158,7 @@ class SensorHighLowOption(ASICOption):
         high_register: int,
         low_register: int,
         # FIXME: check write delay
-        write_delay_s: float = 0.05,
+        write_delay_s: float = 0.6,
     ) -> None:
         super().__init__(
             name,

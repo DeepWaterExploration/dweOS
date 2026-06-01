@@ -2,7 +2,13 @@
 
 import { useMemo } from "react";
 
-import { Aperture, MonitorCog, ImageIcon, CircleEllipsis } from "lucide-react";
+import {
+  Aperture,
+  MonitorCog,
+  ImageIcon,
+  CircleEllipsis,
+  Cog,
+} from "lucide-react";
 
 import IntegerControl from "./controls/integer-control";
 import BooleanControl from "./controls/boolean-control";
@@ -17,11 +23,12 @@ import {
 } from "@/components/ui/accordion";
 import { useDeviceStore } from "@/store/devices";
 import { translateControls, UIControlModel } from "./stream/sensor-controls";
+import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 
 type ControlModel = components["schemas"]["ControlModel"];
 
 const groupIcons: { [key: string]: React.ReactNode } = {
-  "Sensor Controls": <Aperture className="h-4 w-4" />,
+  "Sensor Controls": <Cog className="h-4 w-4" />,
   "Exposure Controls": <Aperture className="h-4 w-4" />,
   "Image Controls": <ImageIcon className="h-4 w-4" />,
   "System Controls": <MonitorCog className="h-4 w-4" />,
@@ -83,11 +90,17 @@ export const CameraControls = ({
     [controls, device],
   );
 
-  const InternalControlWrapper = ({ control }: { control: UIControlModel }) => (
+  const InternalControlWrapper = ({
+    control,
+    disabled,
+  }: {
+    control: UIControlModel;
+    disabled: boolean;
+  }) => (
     <ControlWrapper
       key={control.control_id}
       control={control}
-      disabled={control.uiFlags.disabled || isResetting}
+      disabled={control.uiFlags.disabled || isResetting || disabled}
       setValue={(value) => {
         setUVCControl(bus_id, control.control_id, value);
       }}
@@ -100,9 +113,18 @@ export const CameraControls = ({
     );
   }, [uiControls]);
 
+  if (visibleCategories.length === 0) return null;
+
   return (
-    <div className="grid gap-4 py-4 overflow-y-auto ">
-      <Accordion type="single" collapsible>
+    <div
+      className="grid gap-4 py-4 overflow-y-auto"
+      id={TOUR_STEP_IDS.DEVICE_SETTINGS}
+    >
+      <Accordion
+        type="single"
+        collapsible
+        defaultValue={visibleCategories[0][0]}
+      >
         {visibleCategories.map(([category, controlNames]) => (
           <AccordionItem value={category} key={category}>
             <AccordionTrigger>
@@ -119,6 +141,7 @@ export const CameraControls = ({
                       <InternalControlWrapper
                         key={uiControls[name].control_id}
                         control={uiControls[name]}
+                        disabled={device.is_managed}
                       />
                     ),
                 )}

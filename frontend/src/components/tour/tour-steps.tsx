@@ -5,7 +5,7 @@ import { components } from "@/schemas/dwe_os_2";
 import Markdown from "react-markdown";
 
 export function getSteps(
-  features: components["schemas"]["FeatureSupport"]
+  features: components["schemas"]["FeatureSupport"],
 ): TourStep[] {
   return [
     {
@@ -25,43 +25,6 @@ export function getSteps(
       position: "bottom",
       onClickWithinArea: () => {},
     },
-    ...(features.wifi
-      ? [
-          {
-            content: (
-              <div>
-                <div>Wifi</div>
-                <Separator />
-                <div className="text-sm text-muted-foreground p-2">
-                  This controls the system's wifi setting (should it exist).
-                  Functionalities includes network selection and toggling.
-                </div>
-              </div>
-            ),
-            selectorId: TOUR_STEP_IDS.WIFI_SWITCH,
-            route: "/",
-            position: "bottom" as const,
-            onClickWithinArea: () => {},
-          },
-          {
-            content: (
-              <div>
-                <div>Wired Network</div>
-                <Separator />
-                <div className="text-sm text-muted-foreground p-2">
-                  This controls the system's wired network configuration. Allows
-                  for customization of options like: IP Address, Gateway,
-                  Netmask etc.
-                </div>
-              </div>
-            ),
-            selectorId: TOUR_STEP_IDS.ETHERNET_SWITCH,
-            route: "/",
-            position: "bottom" as const,
-            onClickWithinArea: () => {},
-          },
-        ]
-      : []),
 
     {
       content: (
@@ -190,23 +153,23 @@ export function getSteps(
       position: "right",
       onClickWithinArea: () => {},
     },
-    {
-      content: (
-        <div>
-          <div>Device Mode</div>
-          <Separator />
-          <div className="text-sm text-muted-foreground p-2">
-            This toggles between Recording and Streaming mode. Streaming will
-            send the live stream to another device, while recording will keep
-            recorded videos in the recordings tab.
-          </div>
-        </div>
-      ),
-      selectorId: TOUR_STEP_IDS.DEVICE_MODE,
-      route: "/cameras",
-      position: "left",
-      onClickWithinArea: () => {},
-    },
+    // {
+    //   content: (
+    //     <div>
+    //       <div>Device Mode</div>
+    //       <Separator />
+    //       <div className="text-sm text-muted-foreground p-2">
+    //         This toggles between Recording and Streaming mode. Streaming will
+    //         send the live stream to another device, while recording will keep
+    //         recorded videos in the recordings tab.
+    //       </div>
+    //     </div>
+    //   ),
+    //   selectorId: TOUR_STEP_IDS.DEVICE_MODE,
+    //   route: "/cameras",
+    //   position: "left",
+    //   onClickWithinArea: () => {},
+    // },
     {
       content: (
         <div>
@@ -227,13 +190,15 @@ export function getSteps(
     {
       content: (
         <div>
-          <div>Stream / Record</div>
+          <div>Stream</div>
           <Separator />
           <div className="text-sm text-muted-foreground p-2">
+            {/* prettier-ignore */}
             <Markdown>
-              This is where you start/stop your stream or recording. For
-              streaming, please ensure your endpoints are correct. The stream
-              will **NOT** automatically start.
+              This is where you start/stop your stream. For streaming, please
+              ensure your endpoints are correct. The stream will **NOT**
+              automatically start. If it's managed, this button will be
+              disabled.
             </Markdown>
           </div>
         </div>

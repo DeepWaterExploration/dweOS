@@ -163,7 +163,7 @@ class ShutterSpeedOption(SensorHighLowOption):
             ControlFlagsModel(
                 default_value=100,
                 max_value=8000,
-                min_value=10,
+                min_value=0,
                 step=1,
                 control_type=ControlTypeEnum.INTEGER,
             ),

@@ -13,6 +13,16 @@ const FPS_TO_MAX_EXPOSURE: Record<number, number> = {
   5: 5884,
 };
 
+const STROBE_MULTIPLIER: Record<number, number> = {
+  60: 1,
+  50: 1,
+  40: 1,
+  30: 2,
+  15: 3.75,
+  10: 3.75,
+  5: 6,
+};
+
 // Typing stuff was AI assisted
 type FlagsLambdaMap = {
   [K in keyof ControlFlags]?: (
@@ -44,9 +54,9 @@ const checkIfValue = (
 const DYNAMIC_RULES: Record<string, RuleConfiguration> = {
   "Strobe Width": {
     flags: {
-      max_value: (controls) =>
-        (controls.find((c) => c.name === "Shutter Speed")?.value as number) ??
-        0,
+      max_value: (controls, device) =>
+        ((controls.find((c) => c.name === "Shutter Speed")?.value as number) ??
+          0) * (STROBE_MULTIPLIER[device.stream.interval.denominator] ?? 0),
     },
     uiFlags: {
       disabled: (controls) => checkIfValue(controls, "Auto Exposure (ASIC)"),

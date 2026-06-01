@@ -55,7 +55,7 @@ const DYNAMIC_RULES: Record<string, RuleConfiguration> = {
   "Strobe Width": {
     flags: {
       max_value: (controls, device) =>
-        ((controls.find((c) => c.name === "Shutter Speed")?.value as number) ??
+        ((controls.find((c) => c.name === "Exposure Time")?.value as number) ??
           0) * (STROBE_MULTIPLIER[device.stream.interval.denominator] ?? 0),
     },
     uiFlags: {
@@ -67,7 +67,7 @@ const DYNAMIC_RULES: Record<string, RuleConfiguration> = {
       disabled: (controls) => checkIfValue(controls, "Auto Exposure (ASIC)"),
     },
   },
-  "Shutter Speed": {
+  "Exposure Time": {
     flags: {
       max_value: (_, device) => {
         const fps = device.stream.interval.denominator;

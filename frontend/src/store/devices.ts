@@ -167,10 +167,16 @@ export const useDeviceStore = create<DeviceState>()(
 
         if (data && data.success) {
           set((state) => {
-            for (let i = 0; i < state.devices[bus_info].controls.length; i++) {
-              if (state.devices[bus_info].controls[i].control_id === control_id)
-                state.devices[bus_info].controls[i].value = value;
+            const device = state.devices[bus_info];
+            // FIXME: slow
+            for (let i = 0; i < device.controls.length; i++) {
+              if (device.controls[i].control_id === control_id)
+                device.controls[i].value = value;
             }
+
+            device.followers.forEach((follower_bus_info) =>
+              state.setUVCControl(follower_bus_info, control_id, value),
+            );
           });
         } else {
           if (data && !data.success) {

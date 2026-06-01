@@ -159,11 +159,11 @@ class SensorHighLowOption(ASICOption):
 class ShutterSpeedOption(SensorHighLowOption):
     def __init__(self, asic_interface: ASICInterface) -> None:
         super().__init__(
-            "Shutter Speed",
+            "Exposure Time",
             ControlFlagsModel(
                 default_value=100,
                 max_value=8000,
-                min_value=0,
+                min_value=1,
                 step=1,
                 control_type=ControlTypeEnum.INTEGER,
             ),

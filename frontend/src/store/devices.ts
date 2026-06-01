@@ -207,6 +207,7 @@ export const useDeviceStore = create<DeviceState>()(
 
             state.devices[follower_bus_info].is_managed = true;
             state.devices[follower_bus_info].stream.enabled = false;
+            state.devices[follower_bus_info].stream.endpoints = [];
           });
         } else if (error) {
           console.error(error);

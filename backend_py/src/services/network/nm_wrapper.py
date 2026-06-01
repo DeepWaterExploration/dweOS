@@ -85,7 +85,7 @@ class NetworkWrapper(EventEmitter):
         return False
 
     async def activate_interface(
-        self, interface: str, profile_path: str, enable_rollback=True
+        self, interface: str, profile_path: str, enable_rollback=False
     ) -> bool:
         profile = self.nm.get_profile(profile_path)
         device = self.nm.get_device_by_iface(interface)

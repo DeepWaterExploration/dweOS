@@ -9,7 +9,6 @@ and device settings management
 import contextlib
 import logging
 import threading
-from abc import abstractmethod
 from typing import Any
 
 import event_emitter as events
@@ -145,7 +144,7 @@ class Device(events.EventEmitter):
             internal_enum = V4LControlTypeEnum(ctrl.type)
             control_type = ControlTypeEnum(internal_enum.name)
 
-            # FIXME: Should not surpress, should instead log this and use it
+            # FIXME: Should not suppress, should instead log this and use it
 
             with contextlib.suppress(BaseException):
                 max_value = ctrl.maximum
@@ -236,9 +235,10 @@ class Device(events.EventEmitter):
             # the device like this
             self.emit("pwm_frequency", self.stream.interval.denominator)
 
-    def add_control_from_option(self, option_name: str) -> None:
-        try:
-            option = self._options[option_name]
+    def add_controls_from_options(self, options: dict[str, BaseOption]) -> None:
+        self._options = options
+        for option_name in options:
+            option = options[option_name]
             value = option.get_value()
             self.controls.insert(
                 0,
@@ -250,14 +250,6 @@ class Device(events.EventEmitter):
                 ),
             )
             self._id_counter += 1
-        except AttributeError:
-            import traceback
-
-            traceback.print_exc()
-            self.logger.error(
-                f"Unknown attribute: {self.__class__.__name__}._options[{option_name}]"
-            )
-            self.logger.error("Failed to add option to controls list.")
 
     def start_stream(self) -> None:
         # with self._frame_stats_lock:
@@ -377,7 +369,6 @@ class Device(events.EventEmitter):
         if opt in self._options:
             self._options[opt].set_value(value)
 
-    @abstractmethod
     def remove_device(self) -> None:
         pass
 

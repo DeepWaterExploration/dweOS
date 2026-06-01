@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { PauseIcon, PlayIcon } from "lucide-react";
+import { Loader2, PauseIcon, PlayIcon, RotateCcw } from "lucide-react";
 
 import {
   Accordion,
@@ -19,17 +19,23 @@ import {
   getResolutions,
   resolutionToString,
 } from "@/lib/util/stream";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { components } from "@/schemas/dwe_os_2";
 import { FollowerList } from "./follower-list";
 import { CameraControls } from "../camera-controls";
+import { toast } from "sonner";
 
 export const CameraStream = ({ bus_id }: { bus_id: string }) => {
   const device = useDeviceStore((state) => state.devices[bus_id]);
+  const setUVCControl = useDeviceStore((state) => state.setUVCControl);
+  const controls = device.controls;
+
   const configureStream = useDeviceStore((state) => state.configureStream);
   const isStreamLoading = useDeviceStore(
     (state) => state.isStreamLoading[bus_id] ?? false,
   );
+
+  const [isResettingControls, setIsResettingControls] = useState(false);
 
   const encoders = getEncoders(device);
 
@@ -58,8 +64,27 @@ export const CameraStream = ({ bus_id }: { bus_id: string }) => {
     return unsubscribe;
   }, [bus_id, device]);
 
+  const resetControls = useCallback(() => {
+    setIsResettingControls(true);
+    Promise.all(
+      controls.map((control) =>
+        setUVCControl(bus_id, control.control_id, control.flags.default_value),
+      ),
+    )
+      .then(() => {
+        toast.info("Successfully reset all controls!");
+      })
+      .catch(() => {
+        toast.error("Unable to reset all controls.");
+      })
+      .finally(() => {
+        setIsResettingControls(false);
+      });
+  }, [controls, setUVCControl, bus_id]);
+
   return (
     <div className="flex flex-col space-y-4 h-full">
+      <CameraControls bus_id={bus_id} isResetting={isResettingControls} />
       <Accordion
         type="single"
         collapsible
@@ -145,15 +170,27 @@ export const CameraStream = ({ bus_id }: { bus_id: string }) => {
 
       {canLead(device) && <FollowerList bus_id={bus_id} />}
 
-      <div className="flex flex-1 justify-between items-center">
-        <CameraControls bus_id={bus_id} />
-        <div
-          className="flex items-center gap-2 pl-2"
-          id={TOUR_STEP_IDS.DEVICE_STREAM}
-        >
+      <div className="flex items-center justify-between w-full mt-auto pt-4">
+        <div id={TOUR_STEP_IDS.DEVICE_SETTINGS}>
           <Button
-            variant={"default"}
-            className="w-12 h-12 rounded-full"
+            variant="ghost"
+            className="h-12 px-4 flex items-center gap-2 z-10"
+            disabled={isResettingControls}
+            onClick={resetControls}
+          >
+            <span className="text-sm font-medium">Reset Controls</span>
+            {isResettingControls ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              <RotateCcw className="s-4" />
+            )}
+          </Button>
+        </div>
+
+        <div id={TOUR_STEP_IDS.DEVICE_STREAM}>
+          <Button
+            variant={"ghost"}
+            className="h-12 px-4 flex items-center gap-2"
             disabled={device.is_managed || isStreamLoading}
             onClick={() => {
               configureStream(device.bus_info, {
@@ -161,6 +198,18 @@ export const CameraStream = ({ bus_id }: { bus_id: string }) => {
               });
             }}
           >
+            <div>
+              <span className="text-sm font-medium">
+                {device.is_managed
+                  ? "Managed"
+                  : device.stream.enabled
+                    ? "Stop"
+                    : "Start"}{" "}
+                {device.stream.stream_type === "RECORDING"
+                  ? "Recording"
+                  : "Stream"}
+              </span>
+            </div>
             {device.stream.enabled ? <PauseIcon /> : <PlayIcon />}
           </Button>
         </div>

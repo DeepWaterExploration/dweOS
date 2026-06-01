@@ -11,6 +11,7 @@ from ..video4linux import DeviceInfo
 from .asic_interface import ASICInterface
 from .options import (
     AutoExposureOption,
+    BaseOption,
     GainOption,
     HardwareBitrateOption,
     ShutterSpeedOption,
@@ -26,11 +27,6 @@ class SHDDevice(Device):
     def __init__(
         self, device_info: DeviceInfo, device_metadata: DeviceMetadata
     ) -> None:
-        # Specifies if SHD device is Stellar Pro
-        # For now, we can just assume this is true.
-        # Warn user to not use settings on incompatible devices?
-        self.is_pro = True
-
         super().__init__(device_info, device_metadata)
 
         # Copy MJPEG over to Software H264, since they are the same thing
@@ -42,26 +38,22 @@ class SHDDevice(Device):
         mjpg_camera.formats["SOFTWARE_H264"] = mjpg_camera.formats["MJPG"]
 
         # List of followers
-        # Zero inherent truth to the existence of these devices
         self.followers: list[str] = []
 
-        # These exist
+        # List of follower devices
         self.follower_devices: dict[str, SHDDevice] = {}
 
         # Is true if it is managed, false otherwise
         self.is_managed = False
 
         # Should directly correspond with self.is_managed
-        # I've been hesitant to add this out of fear that it will incorrectly represent
-        # state, but if we keep inline with that requirement, we should be ok
         self.leader_device: SHDDevice | None = None
 
         # ASIC Interface for low level register read/writes
         self.asic_interface = ASICInterface(self.cameras[0])
 
         # options
-
-        self._options = {
+        options: dict[str, BaseOption] = {
             "auto_exposure": AutoExposureOption(self.asic_interface),
             "shutter": ShutterSpeedOption(self.asic_interface),
             "iso": GainOption(self.asic_interface),
@@ -69,11 +61,7 @@ class SHDDevice(Device):
             "hw_bitrate": HardwareBitrateOption(self.asic_interface),
         }
 
-        self.add_control_from_option("auto_exposure")
-        self.add_control_from_option("shutter")
-        self.add_control_from_option("iso")
-        self.add_control_from_option("strobe_width")
-        self.add_control_from_option("hw_bitrate")
+        self.add_controls_from_options(options)
 
     @property
     def can_lead(self) -> bool:
@@ -113,6 +101,8 @@ class SHDDevice(Device):
         # Stop the follower's stream
         if device.stream.enabled:
             device.stop_stream()
+
+        device.stream.endpoints = []
 
         if self.stream.enabled:
             self.start_stream()
@@ -188,20 +178,10 @@ class SHDDevice(Device):
         # so we just remove the follower and revert it to a normal stream
         for follower in self.follower_devices.values():
             follower.remove_leader()
-            # self.remove_manual(follower.bus_info)
-            # needs to emit a device change perhaps (frontend can handle
-            # this separately too)
-            # self.emit("save")
 
-        # This requires settings manager and it works without this logic
-        # FIXME: Let's decide whether or not to save followers and leaders when unplug.
-        # I mean, whats the difference between unplugging a device while dwe os is
-        # running and while it's not for example, we need to handle it anyway, so might
-        # as well make it easier to test the bugs
         # If it's a follower device, we need to remove ourselves from the leader
         if self.is_managed and self.leader_device:
             self.leader_device.remove_follower(self, False)
-            # self.leader_device.emit("save")
 
     def reapply_sensor_config(self) -> None:
         self.logger.info("Reapplying options after starting stream.")
@@ -209,7 +189,3 @@ class SHDDevice(Device):
         # FIXME: We only set bitrate rn
         bitrate_option = self._options["hw_bitrate"]
         bitrate_option.set_value(bitrate_option.get_value())
-        # Reapply options after starting stream
-        # for _option_name, option in self._options.items():
-        #     if _option_name.lower() not in ["vts", "hts"]:
-        #         option.set_value(option.get_value())

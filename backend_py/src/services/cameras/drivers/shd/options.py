@@ -46,7 +46,7 @@ class AutoExposureOption(ASICOption):
         super().__init__(
             "Auto Exposure (ASIC)",
             ControlFlagsModel(
-                default_value=1,
+                default_value=True,
                 max_value=1,
                 min_value=0,
                 step=1,

@@ -17,7 +17,7 @@ const DeviceCard = ({ bus_id }: { bus_id: string }) => {
   );
 
   return (
-    <Card className="w-full max-w-sm mx-auto">
+    <Card className="w-full max-w-[600px] mx-auto">
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">

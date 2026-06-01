@@ -103,7 +103,7 @@ class MenuItemModel(BaseModel):
 
 class ControlFlagsModel(BaseModel):
     # TODO: allow booleans, strings, etc.
-    default_value: float | int
+    default_value: float | int | bool
     max_value: float | int = 0
     min_value: float | int = 0
     step: float | int = 0

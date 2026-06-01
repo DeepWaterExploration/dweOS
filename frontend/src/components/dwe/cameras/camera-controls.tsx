@@ -1,6 +1,6 @@
 // src/components/camera-controls.tsx
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 // Import Dialog components
@@ -38,21 +38,27 @@ import {
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 import { useDeviceStore } from "@/store/devices";
 import { cn } from "@/lib/utils";
+import { translateControls, UIControlModel } from "./stream/sensor-controls";
 
 type ControlModel = components["schemas"]["ControlModel"];
 
+const groupIcons: { [key: string]: React.ReactNode } = {
+  "Sensor Controls": <Aperture className="h-4 w-4" />,
+  "Exposure Controls": <Aperture className="h-4 w-4" />,
+  "Image Controls": <ImageIcon className="h-4 w-4" />,
+  "System Controls": <MonitorCog className="h-4 w-4" />,
+};
+
 const ControlWrapper = ({
   control,
-  index,
   setValue,
   disabled,
 }: {
   control: ControlModel;
-  index: number;
   setValue: (value: number | boolean) => void;
   disabled: boolean;
 }) => {
-  const key = control.control_id ?? `control-${index}`;
+  const key = control.control_id;
 
   switch (control.flags.control_type) {
     case "INTEGER":
@@ -89,89 +95,63 @@ const ControlWrapper = ({
   }
 };
 
-export const CameraControls = ({ bus_id }: { bus_id: string }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const controls = useDeviceStore((state) => state.devices[bus_id].controls);
+export const CameraControls = ({
+  bus_id,
+  isResetting,
+}: {
+  bus_id: string;
+  isResetting: boolean;
+}) => {
+  const device = useDeviceStore((state) => state.devices[bus_id]);
+  const controls = device.controls;
   const setUVCControl = useDeviceStore((state) => state.setUVCControl);
-  const [isResetting, setIsResetting] = useState(false);
 
-  const resetControls = useCallback(() => {
-    setIsResetting(true);
-    Promise.all(
-      controls.map((control) =>
-        setUVCControl(bus_id, control.control_id, control.flags.default_value),
-      ),
-    )
-      .then(() => {
-        toast.info("Successfully reset all controls!");
-      })
-      .catch(() => {
-        toast.error("Unable to reset all controls.");
-      })
-      .finally(() => {
-        setIsResetting(false);
-      });
-  }, [controls, setUVCControl, bus_id]);
+  const uiControls = useMemo(
+    () => translateControls(controls, device),
+    [controls, device],
+  );
 
-  console.log(controls);
+  const InternalControlWrapper = ({ control }: { control: UIControlModel }) => (
+    <ControlWrapper
+      key={control.control_id}
+      control={control}
+      disabled={control.uiFlags.disabled || isResetting}
+      setValue={(value) => {
+        setUVCControl(bus_id, control.control_id, value);
+      }}
+    />
+  );
+
+  const visibleCategories = useMemo(() => {
+    return Object.entries(CameraControlMap).filter(([, controlNames]) =>
+      controlNames.some((name) => !!uiControls[name]),
+    );
+  }, [uiControls]);
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="svg"
-          className="w-6 h-8 z-10"
-          id={TOUR_STEP_IDS.DEVICE_SETTINGS}
-        >
-          <SlidersHorizontal />
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-xl max-h-[80vh] flex flex-col p-0 overflow-hidden">
-        <DialogHeader className="sticky top-0 z-50 pt-8 px-8">
-          <DialogTitle>
-            <div className="flex items-center gap-2">
-              <SlidersHorizontal className="h-4 w-4" />
-              Camera Controls
-            </div>
-          </DialogTitle>
-          <DialogDescription>
-            Adjust settings for the selected camera. Changes are applied
-            immediately.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4 px-8 overflow-y-auto ">
-          <div className="grid gap-4 mt-1">
-            {controls.map((control, index) => (
-              <ControlWrapper
-                key={control.name + index}
-                control={control}
-                index={index}
-                setValue={(value) => {
-                  setUVCControl(bus_id, control.control_id, value);
-                }}
-                disabled={isResetting}
-              />
-            ))}
-          </div>
-          {controls.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              No adjustable camera controls available for this device.
-            </p>
-          )}
-        </div>
-        <Button
-          className="mx-4 mt-0 mb-4 flex items-center gap-2 sticky bottom-0"
-          variant="destructive"
-          onClick={resetControls}
-        >
-          {isResetting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <RotateCcwIcon className="h-4 w-4" />
-          )}
-          Reset All Controls to Default
-        </Button>
-      </DialogContent>
-    </Dialog>
+    <div className="grid gap-4 py-4 overflow-y-auto ">
+      <Accordion type="single" collapsible>
+        {visibleCategories.map(([category, controlNames]) => (
+          <AccordionItem value={category} key={category}>
+            <AccordionTrigger>
+              <div className="flex items-center gap-2">
+                {groupIcons[category] ?? <CircleEllipsis className="h-4 w-4" />}
+                {category}
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="grid gap-4 mt-1">
+                {controlNames.map(
+                  (name) =>
+                    uiControls[name] && (
+                      <InternalControlWrapper control={uiControls[name]} />
+                    ),
+                )}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+    </div>
   );
 };

@@ -17,6 +17,9 @@ export const FollowerList = ({ bus_id }: { bus_id: string }) => {
   const addFollower = useDeviceStore((state) => state.addFollower);
   const removeFollower = useDeviceStore((state) => state.removeFollower);
   const device = useDeviceStore((state) => state.devices[bus_id]);
+  const isStreamLoading = useDeviceStore(
+    (state) => state.isStreamLoading[bus_id] ?? false,
+  );
 
   const noAvailableFollowers = availableFollowers.length === 0;
 
@@ -69,7 +72,7 @@ export const FollowerList = ({ bus_id }: { bus_id: string }) => {
                     handleAddFollower(selectedFollower);
                   }}
                   className="w-full"
-                  disabled={noAvailableFollowers}
+                  disabled={noAvailableFollowers || isStreamLoading}
                 >
                   Add
                 </Button>
@@ -108,6 +111,7 @@ export const FollowerList = ({ bus_id }: { bus_id: string }) => {
                             <Button
                               variant="ghost"
                               size="sm"
+                              disabled={isStreamLoading}
                               onClick={() => {
                                 handleRemoveFollower(follower);
                               }}

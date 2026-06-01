@@ -128,7 +128,7 @@ class SensorHighLowOption(ASICOption):
         asic_interface: ASICInterface,
         high_register: int,
         low_register: int,
-        write_delay_s: float = 0.05,
+        write_delay_s: float = 0.6,
     ) -> None:
         super().__init__(
             name,

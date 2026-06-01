@@ -12,6 +12,8 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 
+from backend_py.src.services.preferences import PreferencesManager
+
 from ..video4linux import Camera
 from ..xu import Selector, StellarRegisterMap, Unit
 
@@ -28,9 +30,11 @@ class ASICInterface:
     sensor registers.
     """
 
-    def __init__(self, camera: Camera) -> None:
+    def __init__(self, camera: Camera, preferences: PreferencesManager) -> None:
         self.camera = camera
         self._lock = threading.RLock()
+
+        self.preferences = preferences
 
         self._is_worker_running = True
         self._commands: dict[str, ASICCommand] = {}
@@ -82,7 +86,7 @@ class ASICInterface:
         addr_high: int,
         addr_low: int,
         value: int,
-        write_delay_s: float | None = None,
+        write_delay_s: float = 0.05,
     ) -> None:
         self.queue_command(
             key,
@@ -220,7 +224,7 @@ class ASICInterface:
         self.sync_sensor_write(reg_high, (value >> 8) & 0xFF)
         # This is extremely scuffed: switch to waiting for
         # trigger register before release (See below)
-        time.sleep(write_delay_s)
+        time.sleep(self.preferences.get_preferences().sensor_delay_s)
 
         # Maybe: add check for success (0xAA in REG_TRIG)
         # REG_TRIG actually seems to not work properly, so maybe

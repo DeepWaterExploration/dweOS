@@ -37,6 +37,8 @@ const registerValueMap: Record<number, number> = {
   50: 1756,
   40: 2119,
   30: 2436,
+  10: 5884,
+  5: 5884,
   15: 5884,
 } as const;
 
@@ -75,11 +77,7 @@ export const SensorControls = () => {
     (hwBitrateControl?.value as number) ?? 0,
   );
 
-  const strobeMax = exposureTime!;
-
-  useEffect(() => {
-    if (strobeWidth > strobeMax) setStrobeWidth(strobeMax);
-  }, [strobeMax, strobeWidth]);
+  // const strobeMax = exposureTime!;
 
   // TODO: Streamline this more effectively (We should have a global API class)
   const setUVCControl = (control: ControlModel, value: number) => {
@@ -217,7 +215,7 @@ export const SensorControls = () => {
                     label="Strobe Brightness"
                     value={strobeWidth}
                     min={0}
-                    max={strobeMax}
+                    max={2000}
                     onChange={setStrobeWidth}
                   />
                 </>

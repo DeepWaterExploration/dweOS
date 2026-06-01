@@ -16,3 +16,4 @@ class SavedPreferencesModel(BaseModel):
     )
     suggest_host: bool = True
     frequency_offset: float = 0
+    sensor_delay_s: float = 0.6

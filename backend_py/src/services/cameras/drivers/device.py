@@ -9,6 +9,7 @@ and device settings management
 import contextlib
 import logging
 import threading
+import time
 from abc import abstractmethod
 from typing import Any
 
@@ -234,7 +235,8 @@ class Device(events.EventEmitter):
             # Update the pwm frequency with the new fps
             # TODO: This should be on a command bus or something, not emitted from
             # the device like this
-            self.emit("pwm_frequency", self.stream.interval.denominator)
+        # self.emit("pwm_frequency", 0)
+        # time.sleep(1)
 
     def add_control_from_option(self, option_name: str) -> None:
         try:

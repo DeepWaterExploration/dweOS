@@ -201,7 +201,7 @@ class V4L2Camera:
     # Public API
 
     def grab_copied_frame(
-        self, blocking: bool = True, timeout_s: float = 0.1
+        self, blocking: bool = True, timeout_s: float = 5
     ) -> CopiedFrame | None:
         """
         Dequeue one buffer, copy its contents into a new bytes object,

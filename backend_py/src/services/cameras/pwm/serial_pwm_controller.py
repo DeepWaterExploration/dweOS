@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import time
 
 import serial
 from serial.tools import list_ports
@@ -10,7 +11,7 @@ DWE_PWM_USB_PID = 0x5000
 LEG_PWM_USB_VID = 0x0403
 LEG_PWM_USB_PID = 0x6001
 
-frequency_table = {60: 60.0, 50: 50.0, 40: 40.0, 30: 30.0, 15: 15.0}
+frequency_table = {60: 60.0, 50: 50.0, 40: 40.0, 30: 30.0, 10: 10.0, 5: 5.0, 15: 15.0}
 
 MONITOR_INTERVAL_SEC = 0.75
 
@@ -108,18 +109,30 @@ class SerialPWMController:
     def apply(self, frequency: float, duty_cycle: int) -> None:
         # Make sure that even if the serial pwm is not yet connected, it will
         # have the correct clock frequency
+        if frequency == self.frequency and duty_cycle == self.duty_cycle:
+            return
+        #
+        #
         self.frequency = frequency
         self.duty_cycle = duty_cycle
         if not self.found_port:
             return
-        command = f"{frequency + self.frequency_offset},{duty_cycle}\n"
 
         if self.serial:
-            self.logger.info(f"Sending command {command.strip()}")
-            self.serial.write(command.encode("utf-8"))
+            if frequency == 0:
+                reset_comand = f"{1},0\n"
+                self.logger.info(f"Sending reset command {reset_comand.strip()}")
+                self.serial.write(reset_comand.encode("utf-8"))
+            else:
+                command = f"{frequency + self.frequency_offset},{duty_cycle}\n"
+                self.logger.info(f"Sending command {command.strip()}")
+                self.serial.write(command.encode("utf-8"))
 
     def apply_from_fps(self, fps: int) -> None:
-        self.apply(frequency_table[fps], 30)
+        if fps not in frequency_table:
+            self.apply(fps, 30)
+        else:
+            self.apply(frequency_table[fps], 30)
 
     def stop(self) -> None:
         self.apply(0, 0)

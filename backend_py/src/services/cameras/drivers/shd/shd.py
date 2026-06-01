@@ -4,7 +4,10 @@ shd.py
 Adds additional features to stellarHD devices
 """
 
+import time
+
 from backend_py.src.models import DeviceType
+from backend_py.src.services.preferences import PreferencesManager
 
 from ..device import Device, DeviceMetadata
 from ..video4linux import DeviceInfo
@@ -26,12 +29,18 @@ class SHDDevice(Device):
     """
 
     def __init__(
-        self, device_info: DeviceInfo, device_metadata: DeviceMetadata
+        self,
+        device_info: DeviceInfo,
+        device_metadata: DeviceMetadata,
+        preferences: PreferencesManager,
     ) -> None:
         # Specifies if SHD device is Stellar Pro
         # For now, we can just assume this is true.
         # Warn user to not use settings on incompatible devices?
         self.is_pro = True
+
+        # TODO: app context :)
+        self.preferences = preferences
 
         super().__init__(device_info, device_metadata)
 
@@ -59,7 +68,7 @@ class SHDDevice(Device):
         self.leader_device: SHDDevice | None = None
 
         # ASIC Interface for low level register read/writes
-        self.asic_interface = ASICInterface(self.cameras[0])
+        self.asic_interface = ASICInterface(self.cameras[0], preferences)
 
         # options
 
@@ -186,6 +195,9 @@ class SHDDevice(Device):
         self.reapply_sensor_config()
         for follower in self.follower_devices.values():
             follower.reapply_sensor_config()
+
+        time.sleep(1)
+        self.emit("pwm_frequency", self.stream.interval.denominator)
 
     def remove_device(self) -> None:
         # Unplugging a device makes it too complicated to handle its follower stream,

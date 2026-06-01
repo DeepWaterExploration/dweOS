@@ -25,7 +25,7 @@ from backend_py.src.models import (
     StreamTypeEnum,
 )
 
-from ..preferences import SettingsManager
+from ..preferences import PreferencesManager, SettingsManager
 from .device_utils import find_device_with_bus_info, list_diff
 from .drivers.device import Device, DeviceInfo
 from .drivers.ehd import EHDDevice
@@ -70,9 +70,12 @@ class DeviceManager(events.EventEmitter):
         self,
         sio: socketio.AsyncServer,
         settings_manager: SettingsManager,
+        preferences_manager: PreferencesManager,
         serial: SerialPWMController,
     ) -> None:
         super().__init__()
+
+        self.preferences_manager = preferences_manager
 
         self.device_dict: dict[str, Device] = {}
 
@@ -127,9 +130,13 @@ class DeviceManager(events.EventEmitter):
             case DeviceType.EXPLOREHD:
                 device = EHDDevice(device_info, device_metadata)
             case DeviceType.STELLARHD_LEADER:
-                device = SHDDevice(device_info, device_metadata)
+                device = SHDDevice(
+                    device_info, device_metadata, self.preferences_manager
+                )
             case DeviceType.STELLARHD_FOLLOWER:
-                device = SHDDevice(device_info, device_metadata)
+                device = SHDDevice(
+                    device_info, device_metadata, self.preferences_manager
+                )
             case _:
                 # Not a DWE device
                 return None

@@ -683,6 +683,11 @@ export interface components {
              * @default 0
              */
             frequency_offset: number;
+            /**
+             * Sensor Delay S
+             * @default 0.6
+             */
+            sensor_delay_s: number;
         };
         /** SimpleRequestStatusModel */
         SimpleRequestStatusModel: {

@@ -26,6 +26,8 @@ const PreferencesLayout = () => {
   const [host, setHost] = useState("");
   const [port, setPort] = useState(5600);
   const [frequencyOffset, setFrequencyOffset] = useState(0);
+  const [manualFrequency, setManualFrequency] = useState(0);
+  const [sensorDelay, setSensorDelay] = useState(0);
 
   const [recommendHost, setRecommendHost] = useState(false);
   const tour = useTour();
@@ -39,6 +41,14 @@ const PreferencesLayout = () => {
           await API_CLIENT.GET("/api/preferences/get_recommended_host")
         ).data!["host"] as string;
       }
+
+      const { data } = await API_CLIENT.GET("/api/pwm/frequency");
+
+      if (data) {
+        setManualFrequency(data);
+      }
+
+      setSensorDelay(newPreferences.sensor_delay_s);
 
       setRecommendHost(newPreferences.suggest_host);
       setPort(newPreferences.default_stream!.port);
@@ -85,9 +95,10 @@ const PreferencesLayout = () => {
         suggest_host: recommendHost,
         default_stream: { host, port },
         frequency_offset: frequencyOffset,
+        sensor_delay_s: sensorDelay,
       });
     }
-  }, [recommendHost, host, port, frequencyOffset, connected]);
+  }, [recommendHost, host, port, frequencyOffset, connected, sensorDelay]);
 
   if (!connected) return <NotConnected />;
 
@@ -142,32 +153,72 @@ const PreferencesLayout = () => {
               <Label htmlFor="recommend-host">Recommend Default Host</Label>
             </div>
 
+            <div className="flex flex-col gap-4">
+              <div className="flex justify-between items-center">
+                <Label htmlFor="sensor-delay">Sensor Delay Configuration</Label>
+              </div>
+
+              <RangeControl
+                label="Sensor Delay"
+                min={0.01}
+                max={2}
+                step={0.01}
+                value={sensorDelay}
+                onChange={(val) => setSensorDelay(val)}
+                className="py-2"
+              />
+            </div>
+
             <Separator className="mt-5" />
 
             {/* Frequency Offset Slider */}
             {features?.serial && (
-              <div className="flex flex-col gap-4">
-                <div className="flex justify-between items-center">
-                  <Label htmlFor="freq-offset">
-                    Camera Frequency Offset Configuration
-                  </Label>
+              <>
+                <div className="flex flex-col gap-4">
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="freq-offset">
+                      Camera Frequency Offset Configuration
+                    </Label>
+                  </div>
+
+                  <RangeControl
+                    label="Frequency Offset (Hz)"
+                    min={-1}
+                    max={1}
+                    step={0.001}
+                    value={frequencyOffset}
+                    onChange={(val) => setFrequencyOffset(val)}
+                    className="py-2"
+                  />
+
+                  <p className="text-xs text-muted-foreground italic">
+                    Adjust the fine-tuning offset for camera clock frequency.
+                    Use if you are experiencing flickering or synchronization
+                    issues.
+                  </p>
                 </div>
 
-                <RangeControl
-                  label="Frequency Offset (Hz)"
-                  min={-1}
-                  max={1}
-                  step={0.001}
-                  value={frequencyOffset}
-                  onChange={(val) => setFrequencyOffset(val)}
-                  className="py-2"
-                />
+                <div className="flex flex-col gap-4">
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="freq-offset">Manual Camera Frequency</Label>
+                  </div>
 
-                <p className="text-xs text-muted-foreground italic">
-                  Adjust the fine-tuning offset for camera clock frequency. Use
-                  if you are experiencing flickering or synchronization issues.
-                </p>
-              </div>
+                  <RangeControl
+                    label="Manual Frequency"
+                    min={0}
+                    max={70}
+                    step={0.01}
+                    value={manualFrequency}
+                    onChange={(val) => {
+                      setManualFrequency(val);
+                      API_CLIENT.POST("/api/pwm/frequency", {
+                        params: { query: { frequency: val } },
+                      });
+                    }}
+                    className="py-2"
+                  />
+                </div>
+              </>
             )}
           </div>
         </SettingsCard>

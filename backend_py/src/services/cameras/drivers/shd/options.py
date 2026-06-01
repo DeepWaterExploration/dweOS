@@ -128,6 +128,7 @@ class SensorHighLowOption(ASICOption):
         asic_interface: ASICInterface,
         high_register: int,
         low_register: int,
+        # FIXME: check write delay
         write_delay_s: float = 0.05,
     ) -> None:
         super().__init__(

@@ -186,6 +186,8 @@ class SHDDevice(Device):
     def reapply_sensor_config(self) -> None:
         self.logger.info("Reapplying options after starting stream.")
 
-        # FIXME: We only set bitrate rn
-        bitrate_option = self._options["hw_bitrate"]
-        bitrate_option.set_value(bitrate_option.get_value())
+        self._options["strobe_width"].set_value(0)
+
+        for option_name in self._options:
+            option = self._options[option_name]
+            option.set_value(option.get_value())

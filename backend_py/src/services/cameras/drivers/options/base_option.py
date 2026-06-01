@@ -10,9 +10,12 @@ class BaseOption(ABC):
     Each option corresponds to a control that can be get or set on the camera.
     """
 
-    def __init__(self, name: str, control_flags: ControlFlagsModel) -> None:
+    def __init__(
+        self, name: str, control_flags: ControlFlagsModel, load_from_save=True
+    ) -> None:
         self.name = name
         self.control_flags = control_flags
+        self.load_from_save = load_from_save
 
     @abstractmethod
     def get_value(self) -> Any:

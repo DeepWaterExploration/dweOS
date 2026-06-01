@@ -289,3 +289,5 @@ class StrobeWidthOption(SensorHighLowOption):
             StellarSensorMap.STROBE_WIDTH_HIGH,
             StellarSensorMap.STROBE_WIDTH_LOW,
         )
+        # Strobe width should not be set on start
+        self.load_from_save = False

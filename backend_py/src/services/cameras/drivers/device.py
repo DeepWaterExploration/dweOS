@@ -311,7 +311,9 @@ class Device(events.EventEmitter):
         control = self.v4l2_device.controls[control_id]
         return control.value
 
-    def set_pu(self, control_id: int, value: int | float | bool) -> bool | None:
+    def set_pu(
+        self, control_id: int, value: int | float | bool, from_save=False
+    ) -> bool | None:
         if not self.v4l2_device.controls:
             self.logger.critical("v4l2_device.controls is None; unable to run set_pu")
             return
@@ -328,7 +330,7 @@ class Device(events.EventEmitter):
                     for option_name in self._options:
                         if self._options[option_name].name == control.name:
                             try:
-                                self.set_option(option_name, value)
+                                self.set_option(option_name, value, from_save)
                                 # self.logger.info(
                                 #     f"Setting {control.name} to {control.value}"
                                 # )
@@ -364,9 +366,11 @@ class Device(events.EventEmitter):
         return None
 
     # set an option
-    def set_option(self, opt: str, value: Any) -> None:
+    def set_option(self, opt: str, value: Any, from_save=False) -> None:
         self.logger.debug(f"Setting option - {opt} to {value}")
-        if opt in self._options:
+        if opt in self._options and (
+            not from_save or not self._options[opt].load_from_save
+        ):
             self._options[opt].set_value(value)
 
     def remove_device(self) -> None:

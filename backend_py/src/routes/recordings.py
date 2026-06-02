@@ -9,7 +9,9 @@ and downloading all recordings as ZIP
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
 
-from ..services.recordings import RecordingInfo, RecordingsService
+from backend_py.src.models import RecordingInfo
+
+from ..services.recordings import RecordingsService
 
 recordings_router = APIRouter(tags=["recordings"])
 

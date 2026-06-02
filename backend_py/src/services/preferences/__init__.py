@@ -1,4 +1,4 @@
 from .preferences_manager import PreferencesManager
-from .pydantic_schemas import SavedPreferencesModel
+from .settings_manager import SettingsManager
 
-__all__ = ["PreferencesManager", "SavedPreferencesModel"]
+__all__ = ["PreferencesManager", "SettingsManager"]

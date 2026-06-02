@@ -1,284 +1,54 @@
-import { API_CLIENT } from "@/api";
-import { CameraCard } from "./camera-card";
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
-import type { components } from "@/schemas/dwe_os_2";
+import { useContext, useEffect } from "react";
 import WebsocketContext from "@/contexts/WebsocketContext";
-import { proxy, subscribe } from "valtio";
-import DeviceContext from "@/contexts/DeviceContext";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import DevicesContext from "@/contexts/DevicesContext";
-import { getDeviceByBusInfo } from "@/lib/utils";
-import NotConnected from "../not-connected";
-import { toast } from "sonner";
-import { useTour } from "@/components/tour/tour";
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
-
-type DeviceModel = components["schemas"]["DeviceModel"];
-
-const DEMO_DEVICE: DeviceModel = {
-  bus_info: "demo-device",
-  device_type: 0,
-  nickname: "Demo Camera",
-  manufacturer: "DeepWater Exploration",
-  name: "exploreHD",
-
-  vid: 1234,
-  pid: 5678,
-
-  is_managed: false,
-  followers: [],
-  frame_stats: { num_drops: 0 },
-  device_info: {
-    device_name: "exploreHD Demo",
-    bus_info: "demo-device",
-    device_paths: ["/dev/video99"],
-    vid: 1234,
-    pid: 5678,
-  },
-  controls: [],
-  stream: {
-    device_path: "/dev/video99",
-    encode_type: "H264",
-    stream_type: "UDP",
-    endpoints: [{ host: "192.168.1.100", port: 5600 }],
-    width: 1920,
-    height: 1080,
-    interval: { numerator: 1, denominator: 30 },
-    enabled: true,
-  },
-  cameras: [
-    {
-      path: "/dev/video99",
-      formats: {
-        H264: [
-          {
-            width: 1920,
-            height: 1080,
-            intervals: [{ numerator: 1, denominator: 30 }],
-          },
-        ],
-      },
-    },
-  ],
-};
-
-const NoDevicesConnected = () => {
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>No Devices Connected</CardTitle>
-          <CardDescription>
-            Please make sure your devices are plugged in and accessible by DWE
-            OS.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <section className="space-y-4">
-            <h3 className="font-semibold text-lg">Potential Issues</h3>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>
-                <strong>Power:</strong> If you are using a powered USB Hub, you
-                must provide power.
-              </li>
-            </ul>
-          </section>
-        </CardContent>
-        <CardFooter>
-          For more detailed documentation, refer to our docs.
-        </CardFooter>
-      </Card>
-    </div>
-  );
-};
+import { useDeviceStore } from "@/store/devices";
+import DeviceCard from "./device-card";
+import { useShallow } from "zustand/shallow";
+import { usePreferencesStore } from "@/store/preferences";
 
 const DeviceListLayout = () => {
   const { socket, connected } = useContext(WebsocketContext)!;
+  const fetchPreferences = usePreferencesStore(
+    (state) => state.fetchPreferences,
+  );
 
-  const { isActive } = useTour();
-
-  const [devices, setDevices] = useState([] as DeviceModel[]);
-
-  const [matchedExposure, setMatchedExposure] = useState<null | number>(null);
-  const [matchedISO, setMatchedISO] = useState<null | number>(null);
-
-  const [savedPreferences, setSavedPreferences] = useState({
-    default_stream: { port: 5600, host: "192.168.2.1" },
-  } as components["schemas"]["SavedPreferencesModel"]);
-
-  const [nextPort, setNextPort] = useState(5600);
-  const [demoDeviceProxy] = useState(() => proxy(DEMO_DEVICE));
-
-  const deviceMap = useMemo(() => {
-    const map: { [key: string]: DeviceModel } = {};
-    devices.forEach((d) => (map[d.bus_info] = d));
-    return map;
-  }, [devices]);
-
-  const deviceMapRef = useRef(deviceMap);
+  // Object.keys avoids rerendering everything when one device changes
+  const deviceIds = useDeviceStore(
+    useShallow((state) => Object.keys(state.devices)),
+  );
+  const resetDevices = useDeviceStore((state) => state.reset);
+  const fetchDevices = useDeviceStore((state) => state.fetchDevices);
 
   useEffect(() => {
-    deviceMapRef.current = deviceMap;
-  }, [deviceMap]);
-
-  const getNextPort = (devs: DeviceModel[]) => {
-    const allPorts = devs.flatMap((device) =>
-      device.stream.endpoints.map((endpoint) => endpoint.port),
-    );
-    return allPorts.length > 0
-      ? Math.max(...allPorts) + 1
-      : savedPreferences.default_stream!.port;
-  };
-
-  const createDeviceProxy = (device: DeviceModel) => {
-    const proxyDevice = proxy(device);
-
-    subscribe(proxyDevice, () => {
-      setDevices((prevDevices) => {
-        const updatedDevices = prevDevices.map((d) =>
-          d.bus_info === proxyDevice.bus_info ? proxyDevice : d,
-        );
-        setNextPort(getNextPort(updatedDevices));
-        return updatedDevices;
-      });
-    });
-
-    return proxyDevice;
-  };
-
-  const addDevice = (device: DeviceModel) => {
-    setDevices((prevDevices) => {
-      const exists = prevDevices.some((d) => d.bus_info === device.bus_info);
-      if (exists) {
-        const updatedDevices = prevDevices.map((d) =>
-          d.bus_info === device.bus_info ? createDeviceProxy(device) : d,
-        );
-        setNextPort(getNextPort(updatedDevices));
-        return updatedDevices;
-        // return prevDevices;
-      } else {
-        const newDevices = [...prevDevices, createDeviceProxy(device)];
-        setNextPort(getNextPort(newDevices));
-        return newDevices;
-      }
-    });
-  };
-
-  const refreshDevices = async () => {
-    try {
-      const { data } = await API_CLIENT.GET("/api/devices");
-      if (data) {
-        // Wrap all raw devices in new proxies
-        const newProxies = data.map(createDeviceProxy);
-
-        setDevices(newProxies);
-        setNextPort(getNextPort(newProxies));
-      }
-    } catch (e) {
-      console.error("Failed to refresh devices:", e);
+    if (!connected || !socket) {
+      resetDevices();
+      return;
     }
-  };
 
-  useEffect(() => {
-    const getDevices = async () => {
-      const initialDevices = (await API_CLIENT.GET("/api/devices")).data!;
+    fetchDevices();
+    fetchPreferences();
 
-      const newPreferences = (await API_CLIENT.GET("/api/preferences")).data!;
-
-      if (newPreferences.suggest_host) {
-        newPreferences.default_stream!.host = (
-          await API_CLIENT.GET("/api/preferences/get_recommended_host")
-        ).data!["host"] as string;
-      }
-
-      setSavedPreferences(newPreferences);
-
-      // Update existing devices instead of replacing them
-      initialDevices.forEach((device) => {
-        addDevice(device);
-      });
-    };
-
-    const handleStreamError = (data: {
-      errors: string[];
-      bus_info: string;
-    }) => {
-      console.log("Stream Error:", data.errors, data.bus_info);
-      setDevices((currentDevices) => {
-        const device = getDeviceByBusInfo(currentDevices, data.bus_info);
-        console.log(currentDevices.map((d) => d.bus_info));
-        console.log("Device affected by error:", device);
-        if (device) {
-          device.stream.enabled = false;
-        }
-        return [...currentDevices]; // Return a new array to trigger re-render
-      });
-      toast.error("Stream Error", {
-        description: `An error occurred with the device ${data.bus_info}. Please check the logs for more details.`,
-      });
-    };
-
-    if (connected) {
-      socket?.on("stream_error", handleStreamError);
-      socket?.on("device_added", refreshDevices);
-      socket?.on("device_removed", refreshDevices);
-
-      getDevices();
-    } else {
-      setDevices([]);
-    }
+    socket.on("device_added", () => {
+      fetchDevices();
+    });
+    socket.on("device_removed", () => {
+      fetchDevices();
+    });
 
     return () => {
-      socket?.off("device_added", refreshDevices);
-      socket?.off("device_removed", refreshDevices);
-      socket?.off("stream_error", handleStreamError);
+      socket.off("device_added");
+      socket.off("device_removed");
     };
-  }, [socket, connected]);
-
-  const displayDevices =
-    isActive && devices.length === 0 ? [demoDeviceProxy] : devices;
-
-  if (!connected) return <NotConnected />;
+  }, [connected, socket, fetchDevices, resetDevices, fetchPreferences]);
 
   return (
     <div className="h-full w-full" id={TOUR_STEP_IDS.CAMERAS}>
-      <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(380px,0fr))] ">
-        <DevicesContext.Provider
-          value={{
-            devices,
-            followerModels: devices.filter((d) => d.device_type == 2),
-            matchedExposure,
-            setMatchedExposure,
-            matchedISO,
-            setMatchedISO,
-          }}
-        >
-          {displayDevices.map((device, index) => (
-            <div
-              key={`${device.bus_info}-${index}`}
-              id={
-                device.bus_info === "demo-device" || (isActive && index === 0)
-                  ? TOUR_STEP_IDS.DEMO_DEVICE
-                  : undefined
-              }
-            >
-              <DeviceContext.Provider value={device}>
-                <CameraCard
-                  defaultHost={savedPreferences.default_stream!.host}
-                  nextPort={nextPort}
-                />
-              </DeviceContext.Provider>
-            </div>
-          ))}
-          {displayDevices.length === 0 && <NoDevicesConnected />}
-        </DevicesContext.Provider>
+      <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(400px,0fr))]">
+        {deviceIds.map((id) => (
+          <div key={`${id}`}>
+            <DeviceCard bus_id={id} />
+          </div>
+        ))}
       </div>
     </div>
   );

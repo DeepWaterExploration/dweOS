@@ -4,29 +4,14 @@ import time
 
 import socketio
 from event_emitter import EventEmitter
-from pydantic import BaseModel
+
+from backend_py.src.models import ConnectionProfileModel, WiredDeviceModel
 
 from .async_network_manager import (
     AsyncNetworkManager,
-    DeviceState,
     IPV4Configuration,
     IPV4Method,
 )
-
-
-class WiredDeviceModel(BaseModel):
-    interface: str
-    state: DeviceState
-    is_active: bool
-    active_profile_id: str | None = None
-    active_ip_configuration: IPV4Configuration | None = None
-    available_profiles: list[str]
-
-
-class ConnectionProfileModel(BaseModel):
-    id: str
-    path: str
-    ipv4_settings: IPV4Configuration
 
 
 class NetworkWrapper(EventEmitter):
@@ -42,7 +27,7 @@ class NetworkWrapper(EventEmitter):
 
         @self.sio.on("connect")
         def on_connect(sid, environ) -> None:
-            self.logger.info(f"Connection detected: {sid}")
+            # self.logger.info(f"Connection detected: {sid}")
             self.last_connection_time = time.time()
 
         self.nm.on("profile_updated", lambda profile: self._refresh_ui())
@@ -100,7 +85,7 @@ class NetworkWrapper(EventEmitter):
         return False
 
     async def activate_interface(
-        self, interface: str, profile_path: str, enable_rollback=True
+        self, interface: str, profile_path: str, enable_rollback=False
     ) -> bool:
         profile = self.nm.get_profile(profile_path)
         device = self.nm.get_device_by_iface(interface)

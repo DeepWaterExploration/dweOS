@@ -1,57 +1,33 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Check, Edit2, X } from "lucide-react";
-import { useSnapshot } from "valtio";
-import DeviceContext from "@/contexts/DeviceContext";
-import { API_CLIENT } from "@/api";
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
+import { useDeviceStore } from "@/store/devices";
 
-export const CameraNickname = () => {
-  const device = useContext(DeviceContext)!;
-
-  // readonly device state
-  const deviceState = useSnapshot(device!);
-
+export const CameraNickname = ({ bus_id }: { bus_id: string }) => {
+  const deviceNickname = useDeviceStore(
+    (state) => state.devices[bus_id].nickname,
+  );
+  const setDeviceNickname = useDeviceStore((state) => state.setNickname);
   const [isEditing, setIsEditing] = useState(false);
-  const [nickname, setNickname] = useState(deviceState.nickname);
-  const [tempNickname, setTempNickname] = useState(deviceState.nickname);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const saveNickname = useCallback(() => {
+    if (inputRef.current) {
+      setDeviceNickname(bus_id, inputRef.current.value);
+      inputRef.current.blur();
+      setIsEditing(false);
+    }
+  }, [inputRef, setDeviceNickname, bus_id]);
+
   const startEditing = () => {
-    setTempNickname(nickname);
-    setIsEditing(true);
-    setTimeout(() => inputRef.current?.focus(), 0);
+    if (inputRef.current) inputRef.current.focus();
   };
 
   const cancelEditing = () => {
-    setTempNickname(nickname);
-    setIsEditing(false);
-    inputRef.current?.blur();
-  };
-
-  const saveNickname = () => {
-    const trimmedNickname = tempNickname.trim();
-    setNickname(trimmedNickname);
-    setIsEditing(false);
-    inputRef.current?.blur();
-
-    API_CLIENT.POST("/api/devices/set_nickname", {
-      body: { bus_info: device.bus_info, nickname: trimmedNickname },
-    });
-  };
-
-  useEffect(() => {
-    device.nickname = nickname;
-  }, [nickname]);
-
-  const handleKeyDown: React.KeyboardEventHandler<HTMLInputElement> = (e) => {
-    if (e.key === "Enter") {
-      saveNickname();
-    } else if (e.key === "Escape") {
-      cancelEditing();
-    }
+    if (inputRef.current) inputRef.current.blur();
   };
 
   return (
@@ -60,15 +36,14 @@ export const CameraNickname = () => {
         <div className="flex flex-1 items-center space-x-2">
           <Input
             ref={inputRef}
-            value={tempNickname}
-            onChange={(e) => setTempNickname(e.target.value)}
+            onBlur={saveNickname}
+            defaultValue={deviceNickname}
             onFocus={(e) => {
               setIsEditing(true);
               // sets typing cursor to the end of the nickname
               const val = e.target.value;
               e.target.setSelectionRange(val.length, val.length);
             }}
-            onKeyDown={handleKeyDown}
             placeholder="Enter a nickname"
             className={`h-9 bg-background ${isEditing && "border-accent"}`}
           />
@@ -97,8 +72,8 @@ export const CameraNickname = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={startEditing}
               className="h-8 w-10 p-0"
+              onClick={startEditing}
             >
               <Edit2 />
               <span className="sr-only">Edit nickname</span>

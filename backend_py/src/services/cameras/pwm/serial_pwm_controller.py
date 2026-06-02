@@ -111,16 +111,15 @@ class SerialPWMController:
         self.frequency = frequency
         self.duty_cycle = duty_cycle
         if not self.found_port:
-            self.logger.info("No connected USB serial PWM controller")
             return
         command = f"{frequency + self.frequency_offset},{duty_cycle}\n"
-        self.logger.info(f"Sending command {command.strip()}")
 
         if self.serial:
+            self.logger.info(f"Sending command {command.strip()}")
             self.serial.write(command.encode("utf-8"))
 
     def apply_from_fps(self, fps: int) -> None:
-        self.apply(frequency_table[fps], 30)
+        self.apply(fps, 30)
 
     def stop(self) -> None:
         self.apply(0, 0)

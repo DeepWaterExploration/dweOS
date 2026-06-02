@@ -1,0 +1,18 @@
+"""
+preferences.py
+
+Defines Pydantic models for persistent server settings
+Includes schemas for saved preferences, like default stream endpoints
+"""
+
+from pydantic import BaseModel
+
+from .cameras import StreamEndpointModel
+
+
+class SavedPreferencesModel(BaseModel):
+    default_stream: StreamEndpointModel | None = StreamEndpointModel(
+        host="192.168.2.1", port=5600
+    )
+    suggest_host: bool = True
+    frequency_offset: float = 0

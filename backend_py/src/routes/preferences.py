@@ -7,8 +7,10 @@ Handles getting and setting preferences
 
 from fastapi import APIRouter, Request
 
+from backend_py.src.models import SavedPreferencesModel
+
 from ..schemas import SimpleRequestStatusModel
-from ..services.preferences import PreferencesManager, SavedPreferencesModel
+from ..services.preferences import PreferencesManager
 
 preferences_router = APIRouter(tags=["preferences"])
 

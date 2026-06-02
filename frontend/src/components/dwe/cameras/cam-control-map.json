@@ -1,4 +1,17 @@
 {
+  "Sensor Controls": [
+    "Hardware Bitrate",
+    "Strobe Width",
+    "ISO",
+    "Exposure Time",
+    "Auto Exposure (ASIC)"
+  ],
+  "System Controls": [
+    "Software H.264 Bitrate",
+    "Bitrate",
+    "Group of Pictures",
+    "Variable Bitrate"
+  ],
   "Exposure Controls": [
     "Gain",
     "Backlight Compensation",
@@ -14,13 +27,7 @@
     "White Balance, Automatic",
     "Gamma",
     "White Balance Temperature",
-    "Sharpness"
-  ],
-  "System Controls": [
-    "Software H.264 Bitrate",
-    "Power Line Frequency",
-    "Bitrate",
-    "Group of Pictures",
-    "Variable Bitrate"
+    "Sharpness",
+    "Power Line Frequency"
   ]
 }

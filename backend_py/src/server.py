@@ -9,14 +9,15 @@ the background
 import asyncio
 import logging
 import logging.handlers
+import os
 
 import socketio
+from colorlog import ColoredFormatter
 from fastapi import FastAPI
 
 from .logging import LogHandler
 from .routes import (
     camera_router,
-    lights_router,
     logs_router,
     network_router,
     preferences_router,
@@ -25,10 +26,9 @@ from .routes import (
     system_router,
 )
 from .schemas import FeatureSupport
-from .services.cameras import DeviceManager, SerialPWMController, SettingsManager
-from .services.lights import LightManager, create_pwm_controllers
+from .services.cameras import DeviceManager, SerialPWMController
 from .services.network import NetworkWrapper
-from .services.preferences import PreferencesManager
+from .services.preferences import PreferencesManager, SettingsManager
 from .services.recordings import RecordingsService
 from .services.system import SystemManager
 from .services.ttyd import TTYDManager
@@ -44,7 +44,8 @@ class Server:
         feature_support: FeatureSupport,
         sio: socketio.AsyncServer,
         app: FastAPI,
-        settings_path: str = "/",
+        data_dir: str = "/var/lib/dwe_os",
+        settings_path: str = ".",
         log_level=logging.INFO,
         is_dev_mode=False,
     ) -> None:
@@ -57,15 +58,36 @@ class Server:
         # Create the managers
         self.sio = sio
 
+        # /var/lib/dwe_os
+        self.data_dir = data_dir
+        os.makedirs(self.data_dir, exist_ok=True, mode=0o755)
+
         # Create the logging handler
         self.root_logger = logging.getLogger("dwe_os_2")
         self.stream_handler = logging.StreamHandler()
         self.root_logger.addHandler(self.stream_handler)
         self.log_handler = LogHandler(self.sio)
-        self.log_formatter = logging.Formatter(
-            "%(asctime)s - %(levelname)s - [%(name)s] - %(filename)s:%(lineno)d - "
-            "%(funcName)s() - %(message)s"
+        self.log_formatter = ColoredFormatter(
+            (
+                "%(log_color)s%(levelname)-8s%(reset)s "  # Level (8 chars wide)
+                "%(blue)s%(asctime)s%(reset)s "
+                "[%(name)s] "
+                "%(thin_white)s%(filename)s:%(lineno)d%(reset)s "
+                "%(white)s%(message)s%(reset)s"
+            ),
+            # datefmt="%Y-%m-%dT%H:%M:%S",
+            reset=True,
+            log_colors={
+                "DEBUG": "cyan",
+                "INFO": "green",
+                "WARNING": "yellow",
+                "ERROR": "red",
+                "CRITICAL": "red,bg_white",
+            },
+            secondary_log_colors={},
+            style="%",
         )
+        self.log_formatter.default_msec_format = "%s.%03d"
         self.stream_handler.setFormatter(self.log_formatter)
         self.file_handler = logging.handlers.RotatingFileHandler(
             "dwe_os_2.log",
@@ -92,9 +114,6 @@ class Server:
             settings_manager=self.settings_manager, sio=self.sio, serial=self.serial
         )
 
-        # Lights
-        self.light_manager = LightManager(create_pwm_controllers())
-
         self.server_logger = logging.getLogger("dwe_os_2.Server")
 
         self.network_wrapper = NetworkWrapper(sio)
@@ -106,7 +125,7 @@ class Server:
 
         self.system_manager = SystemManager()
 
-        self.recordings_service = RecordingsService()
+        self.recordings_service = RecordingsService(self.data_dir)
 
         # TTYD
         if self.feature_support.ttyd:
@@ -117,7 +136,6 @@ class Server:
         # FAST API
         self.app.state.device_manager = self.device_manager
         self.app.state.log_handler = self.log_handler
-        self.app.state.light_manager = self.light_manager
         self.app.state.settings_manager = self.settings_manager
         self.app.state.preferences_manager = self.preferences_manager
         self.app.state.system_manager = self.system_manager
@@ -131,7 +149,6 @@ class Server:
         self.app.include_router(camera_router, prefix="/api/devices")
         self.app.include_router(preferences_router, prefix="/api/preferences")
         self.app.include_router(system_router, prefix="/api/system")
-        self.app.include_router(lights_router, prefix="/api/lights")
         self.app.include_router(logs_router, prefix="/api/logs")
         self.app.include_router(recordings_router, prefix="/api/recordings")
         self.app.include_router(network_router, prefix="/api/network")
@@ -183,7 +200,6 @@ class Server:
     def shutdown(self) -> None:
         self.server_logger.info("Shutting down")
 
-        self.light_manager.cleanup()
         self.device_manager.stop_monitoring()
         self.settings_manager.cleanup()
 

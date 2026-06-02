@@ -6,23 +6,21 @@ Handles listing connected devices, updating stream settings (resolution / fps),
 setting UVC controls, and dealing with Leader/Follower for stereo cameras
 """
 
-from typing import cast
-
 from fastapi import APIRouter, Request
 
-from ..schemas import SimpleRequestStatusModel
-from ..services.cameras import DeviceManager
-from ..services.cameras.exceptions import DeviceNotFoundException
-from ..services.cameras.pydantic_schemas import (
+from backend_py.src.models import (
     AddFollowerPayload,
     DeviceDescriptorModel,
     DeviceModel,
     DeviceNicknameModel,
-    DeviceType,
     StreamInfoModel,
     UVCControlModel,
 )
-from ..services.cameras.shd import SHDDevice
+
+from ..schemas import SimpleRequestStatusModel
+from ..services.cameras import DeviceManager
+from ..services.cameras.drivers import Device
+from ..services.cameras.exceptions import DeviceNotFoundException
 
 camera_router = APIRouter(tags=["cameras"])
 
@@ -34,24 +32,25 @@ def get_devices(request: Request) -> list[DeviceModel]:
     return device_manager.get_devices()
 
 
+@camera_router.get(
+    "/map",
+    summary="Get all devices as a map from bus info to device",
+    response_model=dict[str, DeviceModel],
+)
+def get_device_map(request: Request) -> dict[str, Device]:
+    device_manager: DeviceManager = request.app.state.device_manager
+
+    return device_manager.device_dict
+
+
 @camera_router.post("/configure_stream", summary="Configure a stream")
 async def configure_stream(
     request: Request, stream_info: StreamInfoModel
 ) -> SimpleRequestStatusModel:
+    # FIXME: Maybe switch back to sync
     device_manager: DeviceManager = request.app.state.device_manager
 
     device_manager.configure_device_stream(stream_info)
-
-    for device in device_manager.devices:
-        if device.bus_info == stream_info.bus_info:
-            if device.device_type != DeviceType.STELLARHD_FOLLOWER:
-                return SimpleRequestStatusModel(success=False)
-            break
-    for device in device_manager.devices:
-        if device.device_type == DeviceType.STELLARHD_LEADER:
-            stellarhd_device = cast(SHDDevice, device)
-            if stream_info.bus_info in stellarhd_device.followers:
-                stellarhd_device.start_stream()
 
     return SimpleRequestStatusModel(success=True)
 

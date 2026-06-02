@@ -5,34 +5,37 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { useState } from "react";
-import { subscribe } from "valtio";
+import { useEffect, useState } from "react";
 import { components } from "@/schemas/dwe_os_2";
 
 const MenuControl = ({
   control,
+  disabled,
+  setValue = undefined,
 }: {
   control: components["schemas"]["ControlModel"];
+  disabled: boolean;
+  setValue?: (val: number) => void;
 }) => {
-  const [value, setValue] = useState(control.value);
+  const [currentValue, setCurrentValue] = useState(control.value);
   const menu = control.flags.menu;
 
+  useEffect(() => {
+    setCurrentValue(control.value);
+  }, [control.value]);
+
   if (!menu) return null;
-
-  subscribe(control, () => {
-    setValue(control.value);
-  });
-
   return (
     <div className="space-y-1">
       <span className="text-sm font-medium">{control.name}</span>
       <Select
-        value={value.toString()}
+        value={currentValue.toString()}
         onValueChange={(val) => {
           const intVal = parseInt(val);
-          control.value = intVal;
-          setValue(intVal);
+          if (setValue) setValue(intVal);
+          setCurrentValue(intVal);
         }}
+        disabled={disabled}
       >
         <SelectTrigger className="w-full">
           <SelectValue />

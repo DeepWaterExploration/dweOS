@@ -5,14 +5,13 @@ Utility functions for device_manager.py, specifically for finding added devices 
  removed devices
 """
 
-from .device import Device
+from .drivers.device import Device
 
 
-def find_device_with_bus_info(devices: list[Device], bus_info: str) -> Device | None:
-    for device in devices:
-        if device.bus_info == bus_info:
-            return device
-    return None
+def find_device_with_bus_info(
+    devices: dict[str, Device], bus_info: str
+) -> Device | None:
+    return devices.get(bus_info)
 
 
 def list_diff(listA: list, listB: list) -> list:

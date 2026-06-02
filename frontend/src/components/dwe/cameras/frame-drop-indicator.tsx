@@ -1,6 +1,5 @@
 import { useContext, useEffect, useState } from "react";
 import { ClockArrowDown } from "lucide-react";
-import { useSnapshot } from "valtio";
 
 import {
   Tooltip,
@@ -8,9 +7,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import DeviceContext from "@/contexts/DeviceContext";
 import WebsocketContext from "@/contexts/WebsocketContext";
 import { cn } from "@/lib/utils";
+import { useDeviceStore } from "@/store/devices";
 
 /**
  * The payload sent over the websocket
@@ -29,15 +28,13 @@ type FrameStatsPayload = {
  * the count survives a frontend page reload, and updated in-place from
  * `device.frame_stats` socket events for live changes.
  */
-export function FrameDropIndicator() {
-  const device = useContext(DeviceContext);
+export function FrameDropIndicator({ bus_id }: { bus_id: string }) {
+  const device = useDeviceStore((state) => state.devices[bus_id]);
   const ws = useContext(WebsocketContext);
   const socket = ws?.socket;
   const connected = ws?.connected ?? false;
 
-  const deviceState = useSnapshot(device!);
-
-  const [frameStats, setFrameStats] = useState(deviceState.frame_stats);
+  const [frameStats, setFrameStats] = useState(device.frame_stats);
 
   useEffect(() => {
     if (!device || !connected || !socket) return;
@@ -60,9 +57,6 @@ export function FrameDropIndicator() {
   }, [device, socket, connected]);
 
   const total = frameStats?.num_drops ?? 0;
-  const hasDrops = total > 0;
-
-  if (!hasDrops) return null;
 
   return (
     <TooltipProvider delayDuration={150}>

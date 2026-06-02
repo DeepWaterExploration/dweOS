@@ -9,10 +9,11 @@ Handles loading saved prefs and updating the json when settings are modified
 
 import json
 import pathlib
+import threading
 
 from event_emitter import events
 
-from .pydantic_schemas import SavedPreferencesModel
+from backend_py.src.models import SavedPreferencesModel
 
 
 class PreferencesManager(events.EventEmitter):
@@ -23,13 +24,15 @@ class PreferencesManager(events.EventEmitter):
         self.settings = SavedPreferencesModel()
         self._load_settings()
 
+        self._lock = threading.Lock()
+
     def save(self, preferences: SavedPreferencesModel) -> None:
-        self.settings = preferences
+        with self._lock:
+            self.settings = preferences
         self.emit("preferences_updated", preferences)
         self._save_settings()
 
     def get_preferences(self) -> SavedPreferencesModel:
-        # FIXME: why
         return self.settings
 
     def serialize_preferences(self) -> SavedPreferencesModel:
@@ -46,6 +49,8 @@ class PreferencesManager(events.EventEmitter):
             self.settings = SavedPreferencesModel()
 
     def _save_settings(self) -> None:
-        # CHECK: is this thread safe?
-        with self.path.open("w", encoding="utf-8") as f:
+        # I changed it to use the with statement and open the file every time we save,
+        # but it might be more performant to keep the file open. This is solves the ruff
+        # check that has issues with not using with
+        with self._lock and self.path.open("w", encoding="utf-8") as f:
             f.write(self.settings.model_dump_json(indent=4))

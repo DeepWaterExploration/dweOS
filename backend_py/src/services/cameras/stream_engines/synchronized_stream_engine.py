@@ -4,7 +4,8 @@ import struct
 import threading
 import time
 
-from ..pydantic_schemas import StreamEndpointModel
+from backend_py.src.models import StreamEndpointModel
+
 from ..synchronized_camera import CopiedFrame, SynchronizedCamera, V4L2Camera
 from .base_stream_engine import BaseStreamEngine
 
@@ -128,6 +129,9 @@ class SynchronizedStreamEngine(BaseStreamEngine):
             )
             return
 
+        self.exit_event = threading.Event()
+        self.exit_msg: str | None = None
+
         self.capture_thread = threading.Thread(target=self.capture_loop_)
         self._running = True
         self.capture_thread.start()
@@ -136,24 +140,40 @@ class SynchronizedStreamEngine(BaseStreamEngine):
         self.stream_thread = threading.Thread(target=self.stream_loop_)
         self.stream_thread.start()
 
+        self.monitor_thread = threading.Thread(target=self.monitor_)
+        self.monitor_thread.start()
+
+    def monitor_(self) -> None:
+        self.exit_event.wait()
+
+        if self.exit_msg:
+            self.logger.error(f"Fatal error detected: {self.exit_msg}")
+            self.emit_error(self.exit_msg)
+
     def stop(self) -> None:
         self._running = False
 
         if self.capture_thread:
-            self.capture_thread.join(timeout=1)
+            self.capture_thread.join()
         if self.stream_thread:
-            self.stream_thread.join(timeout=1)
+            self.stream_thread.join()
 
     def capture_loop_(self) -> None:
         if not self.synchronized_camera:
-            self.logger.error(
+            self.exit_msg = (
                 "Cannot run capture loop when synchronized camera is not defined!"
             )
+            self.exit_event.set()
             return
 
         # We need to be careful about the blocking aspect of grab
         while self._running:
-            frames = self.synchronized_camera.grab()
+            try:
+                frames = self.synchronized_camera.grab()
+            except Exception as e:
+                self.exit_msg = str(e)
+                self.exit_event.set()
+                break
             if frames is None:
                 time.sleep(1 / self.streams[0].interval.denominator)
                 continue
@@ -166,6 +186,7 @@ class SynchronizedStreamEngine(BaseStreamEngine):
             try:
                 endpoint = self.streams[0].endpoints[0]
             except IndexError:
+                time.sleep(1)
                 continue
             # TODO: do not assume two
             try:

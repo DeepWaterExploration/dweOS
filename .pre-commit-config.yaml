@@ -1,0 +1,22 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.15.12
+    hooks:
+      # Run the linter.
+      - id: ruff-check
+        args: [--fix]
+        files: ^backend_py/
+      # Run the formatter.
+      - id: ruff-format
+        files: ^backend_py/
+  # ty
+  - repo: local
+    hooks:
+      - id: ty
+        name: ty check backend_py
+        entry: ./.venv/bin/python3 -m ty check backend_py
+        language: system
+        types: [python]
+        files: ^backend_py/
+        pass_filenames: false

@@ -21,6 +21,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/devices/map": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get all devices as a map from bus info to device */
+        get: operations["get_device_map_api_devices_map_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/devices/configure_stream": {
         parameters: {
             query?: never;
@@ -208,40 +225,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/lights": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Lights */
-        get: operations["get_lights_api_lights_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/lights/set_intensity": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Set Intensity */
-        post: operations["set_intensity_api_lights_set_intensity_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/logs": {
         parameters: {
             query?: never;
@@ -268,6 +251,23 @@ export interface paths {
         };
         /** Get all recordings */
         get: operations["get_recordings_api_recordings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recordings/zip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download all recordings as a zip file */
+        get: operations["zip_recordings_api_recordings_zip_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -309,23 +309,6 @@ export interface paths {
         head?: never;
         /** Rename a recording */
         patch: operations["rename_recording_api_recordings__old_name___new_name__patch"];
-        trace?: never;
-    };
-    "/api/recordings/zip": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Download all recordings as a zip file */
-        get: operations["zip_recordings_api_recordings_zip_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
         trace?: never;
     };
     "/api/network/wired/devices": {
@@ -480,11 +463,20 @@ export interface components {
         ControlFlagsModel: {
             /** Default Value */
             default_value: number;
-            /** Max Value */
+            /**
+             * Max Value
+             * @default 0
+             */
             max_value: number;
-            /** Min Value */
+            /**
+             * Min Value
+             * @default 0
+             */
             min_value: number;
-            /** Step */
+            /**
+             * Step
+             * @default 0
+             */
             step: number;
             control_type: components["schemas"]["ControlTypeEnum"];
             /** Menu */
@@ -498,7 +490,7 @@ export interface components {
             /** Name */
             name: string;
             /** Value */
-            value: number;
+            value: number | boolean;
         };
         /**
          * ControlTypeEnum
@@ -652,19 +644,6 @@ export interface components {
             /** Denominator */
             denominator: number;
         };
-        /** Light */
-        Light: {
-            /** Intensity */
-            intensity: number;
-            /** Pin */
-            pin: number;
-            /** Nickname */
-            nickname: string;
-            /** Controller Index */
-            controller_index: number;
-            /** Controller Name */
-            controller_name: string;
-        };
         /** LogSchema */
         LogSchema: {
             /** Timestamp */
@@ -721,13 +700,6 @@ export interface components {
              * @default 0
              */
             frequency_offset: number;
-        };
-        /** SetLightInfo */
-        SetLightInfo: {
-            /** Index */
-            index: number;
-            /** Intensity */
-            intensity: number;
         };
         /** SimpleRequestStatusModel */
         SimpleRequestStatusModel: {
@@ -797,7 +769,7 @@ export interface components {
             /** Control Id */
             control_id: number;
             /** Value */
-            value: number;
+            value: number | boolean;
         };
         /** ValidationError */
         ValidationError: {
@@ -850,6 +822,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DeviceModel"][];
+                };
+            };
+        };
+    };
+    get_device_map_api_devices_map_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: components["schemas"]["DeviceModel"];
+                    };
                 };
             };
         };
@@ -1167,59 +1161,6 @@ export interface operations {
             };
         };
     };
-    get_lights_api_lights_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Light"][];
-                };
-            };
-        };
-    };
-    set_intensity_api_lights_set_intensity_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SetLightInfo"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SimpleRequestStatusModel"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     get_logs_api_logs_get: {
         parameters: {
             query?: never;
@@ -1256,6 +1197,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RecordingInfo"][];
+                };
+            };
+        };
+    };
+    zip_recordings_api_recordings_zip_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
         };
@@ -1350,26 +1311,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    zip_recordings_api_recordings_zip_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
                 };
             };
         };

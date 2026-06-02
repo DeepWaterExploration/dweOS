@@ -19,10 +19,6 @@ jobs:
   build:
     runs-on: ubuntu-22.04
 
-    defaults:
-      run:
-        working-directory: ./backend_py
-
     steps:
       - uses: actions/checkout@v4
 
@@ -31,21 +27,37 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Restore cached virtualenv
+        id: cache-venv-restore
+        uses: actions/cache/restore@v5
+        with:
+          key: venv-${{ runner.os }}-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('requirements.txt') }}
+          path: .venv
+
       - name: Install dependencies
+        if: steps.cache-venv-restore.outputs.cache-hit != 'true'
         run: | # TODO: switch to using proper dev dependencies
           sudo apt-get install build-essential libdbus-glib-1-dev libdbus-1-dev libpython3-dev -y # For dbus-python
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install ruff bandit ty # dev dependencies
+          ./create_venv.sh
+          source .venv/bin/activate
+          echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
+          echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
+          pip install ruff bandit ty
+
+      - name: Saved cached virtualenv
+        uses: actions/cache/save@v4
+        with:
+          key: ${{ steps.cache-primes-restore.outputs.cache-primary-key }}
+          path: .venv
 
       - name: Ruff linting
-        run: ruff check --output-format=github .
+        run: ruff check --output-format=github backend_py
 
       - name: Ruff formatting
-        run: ruff format --check .
+        run: ruff format --check backend_py
 
       - name: Bandit security check (high severity)
-        run: bandit -r . -lll
+        run: bandit -r backend_py -lll
 
       - name: Type checking (ty)
-        run: ty check
+        run: ty check backend_py

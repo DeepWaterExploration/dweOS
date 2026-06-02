@@ -4,16 +4,17 @@
 # two is hosted as a uvicorn server, which handles traffic
 
 import asyncio
+import contextlib
 import logging
+import signal
 from contextlib import asynccontextmanager
 
 import socketio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src import FeatureSupport, Server
+from backend_py.src import FeatureSupport, Server
 
-# TODO: narrow
 ORIGINS = ["*"]
 
 # Use AsyncServer
@@ -27,11 +28,8 @@ sio = socketio.AsyncServer(
 async def lifespan(app: FastAPI):  # noqa: ANN201
     await server.serve()
     yield
-    print("Shutting down server...")
-    try:
-        server.shutdown()
-    except Exception as e:
-        print(f"Error during shutdown: {e}")
+
+    # Shutdown should go here, but it isn't always reached
 
 
 # FastAPI application
@@ -54,6 +52,7 @@ server = Server(
     FeatureSupport(ttyd=True, wifi=True, serial=True),
     sio,
     app,
+    data_dir=".",
     settings_path=".",
     log_level=logging.DEBUG,
     is_dev_mode=True,
@@ -68,7 +67,13 @@ if __name__ == "__main__":
 
     async def main() -> None:
         config = uvicorn.Config(app, host="0.0.0.0", port=5000, log_level="warning")
-        server = uvicorn.Server(config)
-        await server.serve()
+        uvicorn_server = uvicorn.Server(config)
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        try:
+            await uvicorn_server.serve()
+        finally:
+            signal.signal(signal.SIGINT, signal.SIG_IGN)
+            server.shutdown()
 
-    asyncio.run(main())
+    with contextlib.suppress(KeyboardInterrupt, asyncio.CancelledError):
+        asyncio.run(main())

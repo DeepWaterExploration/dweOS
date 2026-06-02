@@ -4,6 +4,7 @@
 
 import contextlib
 import ctypes
+import errno
 import fcntl
 import logging
 import mmap
@@ -13,7 +14,7 @@ from dataclasses import dataclass
 
 from event_emitter import EventEmitter
 
-from .. import v4l2
+from ..drivers.video4linux import v4l2
 
 
 @dataclass
@@ -49,7 +50,6 @@ class V4L2Camera:
         pixel_format: int = v4l2.V4L2_PIX_FMT_MJPEG,
         buffer_count: int = 4,
     ) -> None:
-
         self.device = device
         self.width = width
         self.height = height
@@ -68,6 +68,10 @@ class V4L2Camera:
 
         self.logger = logging.getLogger("dwe_os_2.cameras.V4L2Camera")
 
+        # This doesn't seem to work
+        # self._reset_usb_device()
+        #
+
         self._set_format()
         self._set_fps()
         self._request_and_map_buffers()
@@ -81,8 +85,36 @@ class V4L2Camera:
         try:
             return fcntl.ioctl(self.fd, req, arg)
         except OSError as e:
-            self.logger.error(f"IOCTL error: {e.strerror}")
+            # TODO: raise for other events too...
+            if e.errno == errno.ENODEV:
+                self.critical_error = True
             return -1
+
+    def _reset_usb_device(self) -> None:
+        """
+        From SDK ResetUSBDevice
+        """
+        self.logger.info(f"Resetting USB Device: {self.device}")
+
+        self._set_format()
+        self._set_fps()
+
+        buf_type = ctypes.c_int(v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE)
+        try:
+            self._ioctl(v4l2.VIDIOC_STREAMOFF, buf_type)
+            self._ioctl(v4l2.VIDIOC_STREAMOFF, buf_type)
+        except Exception:
+            self.logger.warning("Failed to run streamoff")
+            pass
+
+        req = v4l2.v4l2_requestbuffers()
+        req.count = 0
+        req.type = v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE
+        req.memory = v4l2.V4L2_MEMORY_MMAP
+        with contextlib.suppress(OSError):
+            self._ioctl(v4l2.VIDIOC_REQBUFS, req)
+
+        self.logger.info("USB Device reset complete.")
 
     def _set_format(self) -> None:
         fmt = v4l2.v4l2_format()
@@ -172,7 +204,7 @@ class V4L2Camera:
     # Public API
 
     def grab_copied_frame(
-        self, blocking: bool = True, timeout_s: float = 1.0
+        self, blocking: bool = True, timeout_s: float = 2
     ) -> CopiedFrame | None:
         """
         Dequeue one buffer, copy its contents into a new bytes object,
@@ -180,6 +212,10 @@ class V4L2Camera:
 
         If blocking=False, returns None immediately if no frame is ready.
         """
+        if not self.fd:
+            self.logger.error("FD is none!")
+            return None
+
         if blocking:
             import select
 
@@ -306,6 +342,8 @@ class SynchronizedCamera(EventEmitter):
         grabbed_frames: list[CopiedFrame] = []
         for cam in self.cameras:
             cf = cam.grab_copied_frame(blocking=True)
+            if cam.critical_error:
+                raise Exception("Camera has critical exception")
             if cf is None:
                 # Failed grab from at least one camera
                 return None
@@ -336,7 +374,7 @@ class SynchronizedCamera(EventEmitter):
             else:
                 # Drop the earliest frame (smallest timestamp) and try again
                 min_index = timestamps.index(min_ts)
-                self.logger.info(f"Dropping frame of difference: {max_ts - min_ts}")
+                # self.logger.info(f"Dropping frame of difference: {max_ts - min_ts}")
                 self.queues[min_index].popleft()
                 self.emit("frame_drop")
 

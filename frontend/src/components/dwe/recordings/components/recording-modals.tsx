@@ -35,13 +35,6 @@ import {
 export const RecordingModals = ({ baseUrl }: { baseUrl: string }) => {
   const snap = useSnapshot(recordingsState);
 
-  const isBulkDelete = snap.deleteTargets.length > 1;
-  const deleteConfirmMatches = isBulkDelete
-    ? snap.deleteConfirmText.trim() ===
-      "Delete_" + snap.deleteTargets.length.toString() + "_Videos"
-    : snap.deleteTargets.length === 1 &&
-      snap.deleteConfirmText.trim() === snap.deleteTargets[0].name;
-
   const renameDisabled =
     !snap.renameValue.trim() ||
     snap.renameSubmitting ||
@@ -171,45 +164,6 @@ export const RecordingModals = ({ baseUrl }: { baseUrl: string }) => {
               </div>
             </div>
           </AlertDialogHeader>
-          <div className="space-y-3">
-            <div className="space-y-2">
-              <Label htmlFor="delete-confirm">
-                {isBulkDelete ? (
-                  <>
-                    Type{" "}
-                    <span className="text-foreground font-mono">
-                      Delete_{snap.deleteTargets.length}_Videos
-                    </span>{" "}
-                    to confirm
-                  </>
-                ) : (
-                  <>
-                    Type{" "}
-                    <span className="text-foreground font-mono">
-                      {snap.deleteTargets[0]?.name}
-                    </span>{" "}
-                    to confirm
-                  </>
-                )}
-              </Label>
-              <Input
-                id="delete-confirm"
-                value={snap.deleteConfirmText}
-                onChange={(e) =>
-                  recordingsActions.setDeleteConfirmText(e.target.value)
-                }
-                placeholder={
-                  isBulkDelete
-                    ? "Delete_" +
-                      snap.deleteTargets.length.toString() +
-                      "_Videos"
-                    : snap.deleteTargets[0]?.name
-                }
-                autoComplete="off"
-                disabled={snap.deleteSubmitting}
-              />
-            </div>
-          </div>
           <AlertDialogFooter>
             <AlertDialogCancel
               disabled={snap.deleteSubmitting}
@@ -222,7 +176,7 @@ export const RecordingModals = ({ baseUrl }: { baseUrl: string }) => {
                 e.preventDefault();
                 recordingsActions.performDelete();
               }}
-              disabled={!deleteConfirmMatches || snap.deleteSubmitting}
+              disabled={snap.deleteSubmitting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {snap.deleteSubmitting ? "Deleting..." : "Delete"}

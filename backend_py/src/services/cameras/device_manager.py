@@ -297,6 +297,7 @@ class DeviceManager(events.EventEmitter):
                     continue
             except Exception as e:
                 traceback.print_exc()
+                devices_info.remove(device_info)
                 self.logger.warning(e)
                 continue
             # append the device to the device list

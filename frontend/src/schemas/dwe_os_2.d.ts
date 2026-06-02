@@ -259,15 +259,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/recordings/zip": {
+    "/api/recordings/zip/prepare": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Download all recordings as a zip file */
-        get: operations["zip_recordings_api_recordings_zip_get"];
+        get?: never;
+        put?: never;
+        /** Zip files and generate token */
+        post: operations["prepare_zip_download_api_recordings_zip_prepare_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recordings/zip/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download ZIP using token */
+        get: operations["download_zip_api_recordings_zip_download_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -294,6 +311,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/recordings/bulk-delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Delete multiple recordings */
+        post: operations["bulk_delete_recording_api_recordings_bulk_delete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/recordings/{old_name}/{new_name}": {
         parameters: {
             query?: never;
@@ -309,6 +343,23 @@ export interface paths {
         head?: never;
         /** Rename a recording */
         patch: operations["rename_recording_api_recordings__old_name___new_name__patch"];
+        trace?: never;
+    };
+    "/api/recordings/disk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get physical disk usage */
+        get: operations["get_disk_usage_api_recordings_disk_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/network/wired/devices": {
@@ -584,6 +635,15 @@ export interface components {
          * @enum {integer}
          */
         DeviceType: 0 | 1 | 2 | 3 | 4;
+        /** DiskStatsResponse */
+        DiskStatsResponse: {
+            /** Total */
+            total: number;
+            /** Used */
+            used: number;
+            /** Free */
+            free: number;
+        };
         /** FeatureSupport */
         FeatureSupport: {
             /** Ttyd */
@@ -1201,9 +1261,47 @@ export interface operations {
             };
         };
     };
-    zip_recordings_api_recordings_zip_get: {
+    prepare_zip_download_api_recordings_zip_prepare_post: {
         parameters: {
             query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": string[];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_zip_api_recordings_zip_download_get: {
+        parameters: {
+            query: {
+                token: string;
+                filename?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -1217,6 +1315,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -1283,6 +1390,39 @@ export interface operations {
             };
         };
     };
+    bulk_delete_recording_api_recordings_bulk_delete_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": string[];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordingInfo"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     rename_recording_api_recordings__old_name___new_name__patch: {
         parameters: {
             query?: never;
@@ -1311,6 +1451,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_disk_usage_api_recordings_disk_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiskStatsResponse"];
                 };
             };
         };

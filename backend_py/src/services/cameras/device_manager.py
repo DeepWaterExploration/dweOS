@@ -292,8 +292,9 @@ class DeviceManager(events.EventEmitter):
         try:
             follower_device = self._find_device_with_bus_info(follower_bus_info)
         except DeviceNotFoundException:
-            self.logger.error(f"Could not find device: {follower_bus_info}")
-            return False
+            self.logger.warning(f"Could not find device: {follower_bus_info}")
+            leader_device.remove_manual(follower_bus_info)
+            return True
 
         if follower_device.device_type != DeviceType.STELLARHD_FOLLOWER:
             self.logger.warning("Attempted to remove follower of non-follower type")

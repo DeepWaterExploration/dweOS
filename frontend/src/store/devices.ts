@@ -67,6 +67,12 @@ export const useDeviceStore = create<DeviceState>()(
 
         set((state) => {
           state.isStreamLoading[bus_info] = true;
+
+          // FIXME: Very hacky way of getting strobe width to be 0 on stream start
+          const strobeControl = state.devices[bus_info].controls.find(
+            (control) => control.name === "Strobe Width",
+          );
+          if (strobeControl) strobeControl.value = 0;
         });
 
         const { data, error } = await API_CLIENT.POST(
@@ -255,7 +261,8 @@ export const useDeviceStore = create<DeviceState>()(
               leader_bus_info
             ].followers.filter((follower) => follower !== follower_bus_info);
 
-            state.devices[follower_bus_info].is_managed = false;
+            if (state.devices[follower_bus_info])
+              state.devices[follower_bus_info].is_managed = false;
           });
         } else if (error) {
           console.error(error);

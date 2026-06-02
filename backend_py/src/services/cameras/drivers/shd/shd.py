@@ -107,15 +107,16 @@ class SHDDevice(Device):
         if self.stream.enabled:
             self.start_stream()
 
-    def remove_follower(self, device: "SHDDevice", persist=True) -> None:
+    def remove_follower(self, device: "SHDDevice") -> None:
         if device.bus_info not in self.followers:
             self.logger.info(
                 "Cannot remove follower from device that does not contain it."
             )
             return
         # Reconstruct the list without the follower
-        if persist:
-            self.followers = [dev for dev in self.followers if dev != device.bus_info]
+        # if persist:
+        #     self.followers = [dev for dev in self.followers if dev != device.bus_info]
+        self.followers = [dev for dev in self.followers if dev != device.bus_info]
         self.follower_devices.pop(device.bus_info)
 
         device.remove_leader()
@@ -129,7 +130,8 @@ class SHDDevice(Device):
         """
         This should be called in the case the follower no longer exists
         """
-        self.followers.remove(follower_bus_info)
+        if follower_bus_info in self.followers:
+            self.followers.remove(follower_bus_info)
 
     def set_leader(self, leader: "SHDDevice") -> None:
         self.is_managed = True
@@ -181,12 +183,13 @@ class SHDDevice(Device):
 
         # If it's a follower device, we need to remove ourselves from the leader
         if self.is_managed and self.leader_device:
-            self.leader_device.remove_follower(self, False)
+            self.leader_device.remove_follower(self)
 
     def reapply_sensor_config(self) -> None:
         self.logger.info("Reapplying options after starting stream.")
 
-        self._options["strobe_width"].set_value(0)
+        # self._options["strobe_width"].set_value(0)
+        self.set_pu(-4, 0)
 
         for option_name in self._options:
             option = self._options[option_name]

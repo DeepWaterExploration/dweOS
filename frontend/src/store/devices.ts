@@ -170,6 +170,7 @@ export const useDeviceStore = create<DeviceState>()(
             const device = state.devices[bus_info];
             // FIXME: slow
             for (let i = 0; i < device.controls.length; i++) {
+              // FIXME: this is not performant
               if (device.controls[i].control_id === control_id)
                 device.controls[i].value = value;
             }
@@ -214,6 +215,17 @@ export const useDeviceStore = create<DeviceState>()(
             state.devices[follower_bus_info].is_managed = true;
             state.devices[follower_bus_info].stream.enabled = false;
             state.devices[follower_bus_info].stream.endpoints = [];
+
+            // This is O(n^2)...
+            state.devices[follower_bus_info].controls.forEach(
+              (control, index) => {
+                state.setUVCControl(
+                  follower_bus_info,
+                  control.control_id,
+                  state.devices[leader_bus_info].controls[index].value,
+                );
+              },
+            );
           });
         } else if (error) {
           console.error(error);

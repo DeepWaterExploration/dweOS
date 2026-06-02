@@ -144,7 +144,7 @@ class DeviceManager(events.EventEmitter):
         # Hack to allow shd to save follower and leader settings on removal
         device.on("save", lambda: self.settings_manager.save_device(device))
 
-        # device.on("frame_stats", lambda: self._schedule_emit_frame_stats(device))
+        device.on("frame_stats", lambda: self._schedule_emit_frame_stats(device))
 
         # Only followers will update PWM frequency
         if self.serial and device.can_follow:

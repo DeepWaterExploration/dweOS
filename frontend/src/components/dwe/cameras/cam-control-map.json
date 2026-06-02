@@ -1,6 +1,6 @@
 {
-  "Sensor Controls": [
-    "Hardware Bitrate",
+  "Advanced Controls": [
+    "JPEG Image Quality",
     "Strobe Width",
     "ISO",
     "Exposure Time",
@@ -19,7 +19,7 @@
     "Exposure Time, Absolute",
     "Exposure, Dynamic Framerate"
   ],
-  "Image Controls": [
+  "Image Optimization": [
     "Brightness",
     "Contrast",
     "Saturation",

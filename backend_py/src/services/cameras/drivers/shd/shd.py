@@ -188,7 +188,7 @@ class SHDDevice(Device):
     def reapply_sensor_config(self) -> None:
         self.logger.info("Reapplying options after starting stream.")
 
-        # self._options["strobe_width"].set_value(0)
+        # This is bad
         self.set_pu(-4, 0)
 
         for option_name in self._options:

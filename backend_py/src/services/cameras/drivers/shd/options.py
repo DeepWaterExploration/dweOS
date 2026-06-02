@@ -105,9 +105,9 @@ class HardwareBitrateOption(ASICHighLowOption):
         asic_interface: ASICInterface,
     ) -> None:
         super().__init__(
-            "Hardware Bitrate",
+            "JPEG Image Quality",
             ControlFlagsModel(
-                default_value=0,
+                default_value=2,  # default to medium
                 menu=[
                     MenuItemModel(index=0, name="Lowest"),
                     MenuItemModel(index=1, name="Low"),

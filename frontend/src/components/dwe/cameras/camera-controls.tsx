@@ -130,7 +130,10 @@ export const CameraControls = ({
             <AccordionTrigger>
               <div className="flex items-center gap-2">
                 {groupIcons[category] ?? <CircleEllipsis className="h-4 w-4" />}
-                {category}
+                {/* FIXME */}
+                {device.device_type != 0 && category === "Exposure Controls"
+                  ? "Legacy Exposure Controls"
+                  : category}
               </div>
             </AccordionTrigger>
             <AccordionContent>

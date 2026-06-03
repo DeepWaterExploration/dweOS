@@ -30,6 +30,8 @@ export const CameraStream = ({ bus_id }: { bus_id: string }) => {
   const setUVCControl = useDeviceStore((state) => state.setUVCControl);
   const controls = device.controls;
 
+  const isManaged = device.is_managed || device.is_externally_managed;
+
   const configureStream = useDeviceStore((state) => state.configureStream);
   const isStreamLoading = useDeviceStore(
     (state) => state.isStreamLoading[bus_id] ?? false,
@@ -105,7 +107,7 @@ export const CameraStream = ({ bus_id }: { bus_id: string }) => {
                   placeholder="Resolution"
                   label="Resolution"
                   value={resolution}
-                  disabled={device.is_managed || isStreamLoading}
+                  disabled={isManaged || isStreamLoading}
                   onChange={(newResolution) => {
                     const [width, height] = getResolution(newResolution);
                     if (!width || !height) {
@@ -129,7 +131,7 @@ export const CameraStream = ({ bus_id }: { bus_id: string }) => {
                   placeholder="FPS"
                   label="Frame Rate"
                   value={device.stream.interval.denominator.toString()}
-                  disabled={device.is_managed || isStreamLoading}
+                  disabled={isManaged || isStreamLoading}
                   onChange={(newFps) => {
                     configureStream(bus_id, {
                       stream_format: {
@@ -151,7 +153,7 @@ export const CameraStream = ({ bus_id }: { bus_id: string }) => {
                   placeholder="Format"
                   label="Format"
                   value={device.stream.encode_type}
-                  disabled={device.is_managed || isStreamLoading}
+                  disabled={isManaged || isStreamLoading}
                   onChange={(fmt) => {
                     configureStream(bus_id, {
                       encode_type:
@@ -162,14 +164,14 @@ export const CameraStream = ({ bus_id }: { bus_id: string }) => {
               </div>
             </div>
 
-            {!device.is_managed && device.stream.stream_type === "UDP" && (
+            {!isManaged && device.stream.stream_type === "UDP" && (
               <EndpointList bus_id={bus_id} />
             )}
           </AccordionContent>
         </AccordionItem>
       </Accordion>
 
-      {canLead(device) && <FollowerList bus_id={bus_id} />}
+      {canLead(device) && <FollowerList disabled={isManaged} bus_id={bus_id} />}
 
       <div className="flex items-center justify-between w-full mt-auto pt-4">
         <div id={TOUR_STEP_IDS.DEVICE_SETTINGS}>
@@ -191,7 +193,7 @@ export const CameraStream = ({ bus_id }: { bus_id: string }) => {
           <Button
             variant={"ghost"}
             className="h-12 px-4 flex items-center gap-2"
-            disabled={device.is_managed || isStreamLoading}
+            disabled={isManaged || isStreamLoading}
             onClick={() => {
               configureStream(device.bus_info, {
                 enabled: !device.stream.enabled,
@@ -200,7 +202,8 @@ export const CameraStream = ({ bus_id }: { bus_id: string }) => {
           >
             <div>
               <span className="text-sm font-medium">
-                {device.is_managed
+                {device.is_externally_managed && "Externally "}
+                {isManaged
                   ? "Managed"
                   : device.stream.enabled
                     ? "Stop"

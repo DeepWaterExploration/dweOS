@@ -34,10 +34,14 @@ const DeviceListLayout = () => {
     socket.on("device_removed", () => {
       fetchDevices();
     });
+    socket.on("device_updated", () => {
+      fetchDevices();
+    });
 
     return () => {
       socket.off("device_added");
       socket.off("device_removed");
+      socket.off("device_updated");
     };
   }, [connected, socket, fetchDevices, resetDevices, fetchPreferences]);
 

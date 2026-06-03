@@ -200,6 +200,10 @@ class DeviceModel(BaseModel):
     # the count is "drops in the current stream", not cumulative.
     frame_stats: FrameDropStats = FrameDropStats(num_drops=0)
 
+    # Externally managed
+    # This is separate from is_managed (which is purely internal)
+    is_externally_managed: bool = False
+
     class Config:
         from_attributes = True
 
@@ -260,3 +264,14 @@ class DeviceDescriptorModel(BaseModel):
 class AddFollowerPayload(BaseModel):
     leader_bus_info: str
     follower_bus_info: str
+
+
+class ManagedEvent(Enum):
+    DEVICE_MANAGED = "DEVICE_MANAGED"
+    DEVICE_UNMANAGED = "DEVICE_UNMANAGED"
+    STREAM_START = "STREAM_START"
+
+
+class ManagedNotifyModel(BaseModel):
+    bus_info: str
+    event: ManagedEvent

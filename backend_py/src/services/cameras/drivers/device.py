@@ -58,6 +58,7 @@ class Device(events.EventEmitter):
         self.pid = device_info.pid
         self.bus_info = device_info.bus_info
         self.nickname = ""
+        self.is_externally_managed = False
         self.stream = Stream()
 
         # Thread safety
@@ -115,6 +116,20 @@ class Device(events.EventEmitter):
     @property
     def can_follow(self) -> bool:
         return False
+
+    def on_external_stream_started(self) -> None:
+        pass
+
+    def on_external_unmanaged(self) -> None:
+        self.is_externally_managed = False
+        self.emit("updated")  # Trigger UI update
+
+    def on_external_managed(self) -> None:
+        self.is_externally_managed = True
+        self.stop_stream()
+        # Save the fact that the stream is stopped (could be done from updated)
+        self.emit("save")
+        self.emit("updated")  # Trigger UI update
 
     def _update_drop_stats(self) -> None:
         with self._frame_stats_lock:
@@ -252,8 +267,12 @@ class Device(events.EventEmitter):
             self._id_counter += 1
 
     def start_stream(self) -> None:
-        # with self._frame_stats_lock:
-        #     self.frame_stats = FrameDropStats(num_drops=0)
+        if self.is_externally_managed:
+            self.logger.info("Cannot start the stream of an externally managed device")
+            return
+
+        with self._frame_stats_lock:
+            self.frame_stats = FrameDropStats(num_drops=0)
 
         with self._configuration_lock:
             self.stream.enabled = True
@@ -262,7 +281,7 @@ class Device(events.EventEmitter):
         # FIXME: What is a better way to do this? An event bus could work,
         # especially since we are propagating this 3 levels up
         # For example: self.event_bus.emit("stream_started", self)
-        # self.emit("frame_stats")
+        self.emit("frame_stats")
 
     def stop_stream(self) -> None:
         with self._configuration_lock:
@@ -324,6 +343,7 @@ class Device(events.EventEmitter):
 
         if control_id < 0:
             # DWE control
+            # FIXME: CRITICAL: This is very bad performance. It MUST be a dict
             for control in self.controls:
                 if control.control_id == control_id:
                     control.value = value

@@ -13,6 +13,7 @@ from backend_py.src.models import (
     DeviceDescriptorModel,
     DeviceModel,
     DeviceNicknameModel,
+    ManagedNotifyModel,
     StreamInfoModel,
     UVCControlModel,
 )
@@ -124,3 +125,37 @@ def restart_stream(
         return SimpleRequestStatusModel(success=False)
     dev.start_stream()
     return SimpleRequestStatusModel(success=True)
+
+
+# MANAGED ENDPOINTS
+
+
+@camera_router.post(
+    "/external/notify_camera",
+    summary="Notify dweOS that a camera has been configured externally",
+)
+def notify_camera(
+    request: Request, notify: ManagedNotifyModel
+) -> SimpleRequestStatusModel:
+    device_manager: DeviceManager = request.app.state.device_manager
+
+    return SimpleRequestStatusModel(
+        success=device_manager.external_notify(notify.bus_info, notify.event)
+    )
+
+
+@camera_router.post(
+    "/external/add_follower",
+    summary="Add a follower. This endpoint is identical to the standard add_follower"
+    " but it bypasses some restrictions",
+)
+def external_add_follower(
+    request: Request, payload: AddFollowerPayload
+) -> SimpleRequestStatusModel:
+    device_manager: DeviceManager = request.app.state.device_manager
+
+    success = device_manager.add_follower(
+        payload.leader_bus_info, payload.follower_bus_info, external=True
+    )
+
+    return SimpleRequestStatusModel(success=success)

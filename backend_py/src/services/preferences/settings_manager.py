@@ -153,7 +153,7 @@ class SettingsManager:
         self.file_object.flush()
 
     def _save_device(self, saved_device: SavedDeviceModel) -> None:
-        self.logger.debug(f"Saving device: {saved_device.bus_info}")
+        # self.logger.debug(f"Saving device: {saved_device.bus_info}")
 
         with self._lock:
             # Semi scuffed

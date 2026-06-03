@@ -71,20 +71,72 @@ class SHDDevice(Device):
     def can_follow(self) -> bool:
         return self.device_type == DeviceType.STELLARHD_FOLLOWER
 
-    def add_follower(self, device: "SHDDevice") -> None:
+    def on_external_stream_started(self) -> None:
+        # Override method
+        # We reapply assuming the stream has already been started
+        self.reapply_sensor_config()
+
+        # We then want to apply the config from the camera
+        mjpeg_camera = self.find_camera_with_format("MJPG")
+        if mjpeg_camera:
+            current_format = mjpeg_camera.get_current_format()
+            self.logger.info(f"Current format: {current_format}")
+
+            # Updates required so the UI knows the current format
+            self.stream.width = current_format.width
+            self.stream.height = current_format.height
+            self.stream.interval = current_format.interval
+
+            for follower in self.follower_devices.values():
+                follower.stream.width = current_format.width
+                follower.stream.height = current_format.height
+                follower.stream.interval = current_format.interval
+
+                # Bad performance due to the lack of dict
+                for control in self.controls:
+                    # from_save so light stays off
+                    follower.set_pu(control.control_id, control.value, from_save=True)
+
+            self.emit("updated")  # Trigger UI update
+
+    def on_external_managed(self) -> None:
+        # Remove all the followers
+        # The manager will handle adding them
+        for follower in list(self.follower_devices.keys()):
+            self.remove_follower(self.follower_devices[follower])
+
+        # Remove self as follower
+        if self.is_managed and self.leader_device:
+            self.leader_device.remove_follower(self)
+            # We could save (see notes)
+
+        super().on_external_managed()
+
+    def add_follower(self, device: "SHDDevice", external=False) -> bool:
+        # If an external program is controlling it, it's ok
+        if not external and device.is_externally_managed:
+            self.logger.info("Cannot add a follower to an externally managed device")
+            return False
+
+        # This is unrelated to the externally managed changes and should propagate
+        # to main
+        if device.is_managed:
+            self.logger.info("Cannot add a follower to an already managed device")
+            return False
+
         # CHANGED: only check if it's in follower devices not the follower list
         if device.bus_info in self.follower_devices:
             self.logger.info(
                 "Trying to add follower to device that already has this device as a "
                 "follower. Ignoring request."
             )
-            return
+            return False
 
         if device.bus_info == self.bus_info:
             self.logger.info(
                 "Trying to add follower of same bus id as self. This is not allowed."
             )
-            return
+            return False
 
         self.logger.info("Adding follower")
 
@@ -107,12 +159,23 @@ class SHDDevice(Device):
         if self.stream.enabled:
             self.start_stream()
 
-    def remove_follower(self, device: "SHDDevice") -> None:
+        if external:
+            self.emit("updated")
+
+        return True
+
+    def remove_follower(self, device: "SHDDevice") -> bool:
+        if self.is_externally_managed:
+            self.logger.info(
+                "Cannot remove a follower from an externally managed device"
+            )
+            return False
+
         if device.bus_info not in self.followers:
             self.logger.info(
                 "Cannot remove follower from device that does not contain it."
             )
-            return
+            return False
         # Reconstruct the list without the follower
         # if persist:
         #     self.followers = [dev for dev in self.followers if dev != device.bus_info]
@@ -125,6 +188,8 @@ class SHDDevice(Device):
 
         if self.stream.enabled:
             self.start_stream()
+
+        return True
 
     def remove_manual(self, follower_bus_info: str) -> None:
         """

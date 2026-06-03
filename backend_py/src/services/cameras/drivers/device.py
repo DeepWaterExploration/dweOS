@@ -388,8 +388,8 @@ class Device(events.EventEmitter):
     # set an option
     def set_option(self, opt: str, value: Any, from_save=False) -> None:
         self.logger.debug(f"Setting option - {opt} to {value}")
-        if opt in self._options and (
-            not from_save or not self._options[opt].load_from_save
+        if opt in self._options and not (
+            from_save and not self._options[opt].load_from_save
         ):
             self._options[opt].set_value(value)
 

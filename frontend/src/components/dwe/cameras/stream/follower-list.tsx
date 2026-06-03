@@ -117,7 +117,7 @@ export const FollowerList = ({
                             <Button
                               variant="ghost"
                               size="sm"
-                              disabled={isStreamLoading}
+                              disabled={isStreamLoading || disabled}
                               onClick={() => {
                                 handleRemoveFollower(follower);
                               }}

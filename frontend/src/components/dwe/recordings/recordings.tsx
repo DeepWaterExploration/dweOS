@@ -315,10 +315,10 @@ const Recordings = () => {
                     animate-in slide-in-from-bottom-10 fade-in duration-300"
         >
           <div
-            className="flex w-full justify-between item p-4 gap-2 border-b"
+            className="flex w-full justify-between items-center p-2 gap-2 border-b"
             onClick={() => recordingsActions.toggleZipDrawer()}
           >
-            <Button variant="svg" className="p-0 h-auto">
+            <Button variant="svg" className="p-2 h-auto">
               <ChevronDown
                 className={cn(
                   "size-4 transition-transform duration-300",
@@ -331,7 +331,7 @@ const Recordings = () => {
             </span>
             <Button
               variant="svg"
-              className="p-0 h-auto"
+              className="p-2 h-auto"
               onClick={(e) => {
                 e.stopPropagation();
                 recordingsActions.openCancelAllModal();
@@ -347,9 +347,12 @@ const Recordings = () => {
             )}
           >
             <div className="overflow-hidden">
-              <div className="flex flex-col max-h-[40vh] overflow-y-auto p-2">
+              <div className="flex flex-col max-h-[40vh] overflow-y-auto overflow-x-hidden p-2">
                 {snap.zipJobs.map((job) => (
-                  <div key={job.id} className=" p-4 flex flex-col gap-3">
+                  <div
+                    key={job.id}
+                    className=" p-4 flex flex-col gap-3 animate-in slide-in-from-right-10 fade-in duration-300"
+                  >
                     <div className="flex justify-between items-center">
                       <div className="flex flex-col w-full gap-2">
                         <span className="flex items-center gap-2 text-sm font-medium">

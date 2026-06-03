@@ -107,7 +107,7 @@ class HardwareBitrateOption(ASICHighLowOption):
         super().__init__(
             "JPEG Image Quality",
             ControlFlagsModel(
-                default_value=2,  # default to medium
+                default_value=4,  # default to highest
                 menu=[
                     MenuItemModel(index=0, name="Lowest"),
                     MenuItemModel(index=1, name="Low"),

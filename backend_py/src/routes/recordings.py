@@ -28,12 +28,15 @@ class DiskStatsResponse(BaseModel):
     used: int
     free: int
 
+
 active_zip_jobs: dict[str, dict] = {}
+
 
 # Helpers
 def remove_file(path: str) -> None:
     if os.path.exists(path):
         os.remove(path)
+
 
 # for refreshes during downloads
 async def auto_cleanup_job(job_id: str) -> None:
@@ -42,11 +45,16 @@ async def auto_cleanup_job(job_id: str) -> None:
         data = active_zip_jobs.pop(job_id)
         if data.get("path"):
             remove_file(data["path"])
-            
-def background_zip_worker(job_id: str, filenames: list[str], service: RecordingsService):
+
+
+def background_zip_worker(
+    job_id: str, filenames: list[str], service: RecordingsService
+) -> None:
     try:
-        zip_path = service.zip_recordings(filenames, active_jobs=active_zip_jobs, job_id=job_id)
-        
+        zip_path = service.zip_recordings(
+            filenames, active_jobs=active_zip_jobs, job_id=job_id
+        )
+
         if zip_path == "CANCELLED":
             active_zip_jobs.pop(job_id, None)
             return
@@ -54,10 +62,11 @@ def background_zip_worker(job_id: str, filenames: list[str], service: Recordings
         if job_id in active_zip_jobs:
             active_zip_jobs[job_id]["status"] = "ready"
             active_zip_jobs[job_id]["path"] = zip_path
-            
-    except Exception as e:
+
+    except Exception:
         if job_id in active_zip_jobs:
             active_zip_jobs[job_id]["status"] = "error"
+
 
 @recordings_router.get("", summary="Get all recordings")
 def get_recordings(request: Request) -> list[RecordingInfo]:
@@ -81,28 +90,39 @@ def get_disk_usage(request: Request) -> DiskStatsResponse:
 def start_zip_job(
     request: Request,
     background_tasks: BackgroundTasks,
-    filenames: list[str] = Body(...), # noqa: B008
+    filenames: list[str] = Body(...),  # noqa: B008
 ) -> dict:
     job_id = uuid.uuid4().hex
-    active_zip_jobs[job_id] = {"status": "zipping", "cancel": False, "path": None, "created_at": time.time(), "progress": 0}    
+    active_zip_jobs[job_id] = {
+        "status": "zipping",
+        "cancel": False,
+        "path": None,
+        "created_at": time.time(),
+        "progress": 0,
+    }
     recordings_service = request.app.state.recordings_service
-    background_tasks.add_task(background_zip_worker, job_id, filenames, recordings_service)
+    background_tasks.add_task(
+        background_zip_worker, job_id, filenames, recordings_service
+    )
     background_tasks.add_task(auto_cleanup_job, job_id)
 
     return {"job_id": job_id}
 
+
 @recordings_router.get("/zip/status/{job_id}", summary="Check zip job status")
 def check_zip_status(job_id: str) -> dict:
     if job_id not in active_zip_jobs:
-         raise HTTPException(status_code=404, detail="Job not found")
+        raise HTTPException(status_code=404, detail="Job not found")
     job = active_zip_jobs[job_id]
     return {"status": job["status"], "progress": job.get("progress", 0)}
+
 
 @recordings_router.post("/zip/cancel/{job_id}", summary="Cancel a zip job")
 def cancel_zip_job(job_id: str) -> dict:
     if job_id in active_zip_jobs:
         active_zip_jobs[job_id]["cancel"] = True
     return {"message": "Cancellation requested"}
+
 
 @recordings_router.get("/zip/download", summary="Download ZIP using token")
 def download_zip(

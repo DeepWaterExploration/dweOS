@@ -162,7 +162,12 @@ class RecordingsService:
             return self.recordings
         return None
 
-    def zip_recordings(self, filenames: list[str] | None = None, active_jobs: dict | None = None, job_id: str | None = None) -> str | None:
+    def zip_recordings(
+        self,
+        filenames: list[str] | None = None,
+        active_jobs: dict | None = None,
+        job_id: str | None = None,
+    ) -> str | None:
         self.get_recordings()
         if not self.recordings:
             return None
@@ -170,14 +175,18 @@ class RecordingsService:
         targets = []
         for recording in self.recordings:
             full_name = f"{recording.name}.{recording.format}"
-            if filenames is not None and recording.name not in filenames and full_name not in filenames:
+            if (
+                filenames is not None
+                and recording.name not in filenames
+                and full_name not in filenames
+            ):
                 continue
             targets.append((recording, full_name))
 
         total_files = len(targets)
         if total_files == 0:
             return None
-        
+
         unique_id = uuid.uuid4().hex
         zip_filename = os.path.join(self.recordings_path, f"temp_{unique_id}.zip")
 

@@ -52,7 +52,11 @@ class RecordingsService:
                         path=file_path,
                         name=filename.split(".")[0],
                         format=filename.split(".")[-1],
-                        duration=self._get_duration(file_path),
+                        duration=(
+                            self._get_duration(file_path)
+                            if not filename.endswith(".dwvo")
+                            else "00:00:00"
+                        ),
                         created=self._epoch_to_readable(file_stat.st_ctime),
                         size=f"{file_stat.st_size / (1024 * 1024):.2f} MB",
                     )

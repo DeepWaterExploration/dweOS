@@ -6,6 +6,7 @@ Handles listing recording metadata, downloading / deleting / renaming recordings
 and downloading all recordings as ZIP
 """
 
+import asyncio
 import os
 import shutil
 import time
@@ -28,8 +29,7 @@ class DiskStatsResponse(BaseModel):
     free: int
 
 
-# dict of timp file paths
-download_tokens: dict[str, dict] = {}
+active_zip_jobs: dict[str, dict] = {}
 
 
 # Helpers
@@ -38,18 +38,34 @@ def remove_file(path: str) -> None:
         os.remove(path)
 
 
-def clean_orphaned_tokens() -> None:
-    current_time = time.time()
-    expired_tokens = []
+# for refreshes during downloads
+async def auto_cleanup_job(job_id: str) -> None:
+    await asyncio.sleep(600)  # Wait 10 minutes
+    if job_id in active_zip_jobs:
+        data = active_zip_jobs.pop(job_id)
+        if data.get("path"):
+            remove_file(data["path"])
 
-    for token, data in download_tokens.items():
-        if current_time - data["created_at"] > 30:  # GET req not seen for 30 secs
-            expired_tokens.append(token)
 
-    for token in expired_tokens:
-        data = download_tokens.pop(token)
-        # in case local zip file wasn't deleted by background task
-        remove_file(data["path"])
+def background_zip_worker(
+    job_id: str, filenames: list[str], service: RecordingsService
+) -> None:
+    try:
+        zip_path = service.zip_recordings(
+            filenames, active_jobs=active_zip_jobs, job_id=job_id
+        )
+
+        if zip_path == "CANCELLED":
+            active_zip_jobs.pop(job_id, None)
+            return
+
+        if job_id in active_zip_jobs:
+            active_zip_jobs[job_id]["status"] = "ready"
+            active_zip_jobs[job_id]["path"] = zip_path
+
+    except Exception:
+        if job_id in active_zip_jobs:
+            active_zip_jobs[job_id]["status"] = "error"
 
 
 @recordings_router.get("", summary="Get all recordings")
@@ -70,24 +86,42 @@ def get_disk_usage(request: Request) -> DiskStatsResponse:
     return DiskStatsResponse(total=total, used=used, free=free)
 
 
-@recordings_router.post("/zip/prepare", summary="Zip files and generate token")
-def prepare_zip_download(
+@recordings_router.post("/zip/prepare", summary="Start background zip job")
+def start_zip_job(
     request: Request,
+    background_tasks: BackgroundTasks,
     filenames: list[str] = Body(...),  # noqa: B008
 ) -> dict:
-    clean_orphaned_tokens()
+    job_id = uuid.uuid4().hex
+    active_zip_jobs[job_id] = {
+        "status": "zipping",
+        "cancel": False,
+        "path": None,
+        "created_at": time.time(),
+        "progress": 0,
+    }
+    recordings_service = request.app.state.recordings_service
+    background_tasks.add_task(
+        background_zip_worker, job_id, filenames, recordings_service
+    )
+    background_tasks.add_task(auto_cleanup_job, job_id)
 
-    recordings_service: RecordingsService = request.app.state.recordings_service
+    return {"job_id": job_id}
 
-    zip_file_path = recordings_service.zip_recordings(filenames)
 
-    if not zip_file_path or not os.path.exists(zip_file_path):
-        raise HTTPException(status_code=404, detail="No recordings to zip")
+@recordings_router.get("/zip/status/{job_id}", summary="Check zip job status")
+def check_zip_status(job_id: str) -> dict:
+    if job_id not in active_zip_jobs:
+        raise HTTPException(status_code=404, detail="Job not found")
+    job = active_zip_jobs[job_id]
+    return {"status": job["status"], "progress": job.get("progress", 0)}
 
-    token = uuid.uuid4().hex
-    download_tokens[token] = {"path": zip_file_path, "created_at": time.time()}
 
-    return {"token": token}
+@recordings_router.post("/zip/cancel/{job_id}", summary="Cancel a zip job")
+def cancel_zip_job(job_id: str) -> dict:
+    if job_id in active_zip_jobs:
+        active_zip_jobs[job_id]["cancel"] = True
+    return {"message": "Cancellation requested"}
 
 
 @recordings_router.get("/zip/download", summary="Download ZIP using token")
@@ -96,13 +130,13 @@ def download_zip(
     background_tasks: BackgroundTasks,
     filename: str = "selected_recordings.zip",
 ) -> FileResponse:
-    if token not in download_tokens:
+    if token not in active_zip_jobs:
         raise HTTPException(status_code=404, detail="Invalid or expired download token")
 
-    token_data = download_tokens.pop(token)
-    zip_file_path = token_data["path"]
+    job_data = active_zip_jobs.pop(token)
+    zip_file_path = job_data.get("path")
 
-    if not os.path.exists(zip_file_path):
+    if not zip_file_path or not os.path.exists(zip_file_path):
         raise HTTPException(status_code=404, detail="Zip file not found")
 
     background_tasks.add_task(remove_file, zip_file_path)

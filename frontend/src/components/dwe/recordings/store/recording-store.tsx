@@ -12,12 +12,21 @@ interface DiskStats {
   used: number;
   free: number;
 }
+
+interface ZipJob {
+  id: string;
+  progress: number;
+  status: "zipping" | "ready" | "error";
+  totalFiles: number;
+}
 interface RecordingsState {
   recordings: RecordingInfo[];
   diskStats: DiskStats | null;
   selectedNames: string[];
   loading: boolean;
-  zipDownloading: boolean;
+  zipJobs: ZipJob[];
+  isZipDrawerMinimized: boolean;
+  isCancelAllZipModalOpen: boolean;
 
   // Modal Targets
   playTarget: RecordingInfo | null;
@@ -44,7 +53,9 @@ export const recordingsState = proxy<RecordingsState>({
   diskStats: null,
   selectedNames: [],
   loading: true,
-  zipDownloading: false,
+  zipJobs: [],
+  isZipDrawerMinimized: false,
+  isCancelAllZipModalOpen: false,
   playTarget: null,
   renameTarget: null,
   deleteTargets: [],
@@ -93,12 +104,13 @@ export const recordingsActions = {
   },
 
   downloadZip: async (baseUrl: string) => {
-    if (recordingsState.zipDownloading) return;
-    const selected = recordingsState.selectedNames;
+    const selected = [...recordingsState.selectedNames];
     if (recordingsState.recordings.length === 0 || selected.length === 0)
       return;
 
-    recordingsState.zipDownloading = true;
+    recordingsActions.setSelectedNames([]);
+    recordingsState.isZipDrawerMinimized = false;
+
     try {
       const response = await fetch(`${baseUrl}/api/recordings/zip/prepare`, {
         method: "POST",
@@ -106,38 +118,106 @@ export const recordingsActions = {
         body: JSON.stringify(selected),
       });
 
-      if (!response.ok) {
-        let description = `Server responded with ${response.status}.`;
-        try {
-          const data = await response.json();
-          if (data?.detail) description = data.detail;
-        } catch {
-          /* empty */
+      const { job_id } = await response.json();
+      recordingsState.zipJobs.push({
+        id: job_id,
+        progress: 0,
+        status: "zipping",
+        totalFiles: selected.length,
+      });
+
+      // poll every 0.5 seconds for progress
+      const pollInterval = setInterval(async () => {
+        const jobIndex = recordingsState.zipJobs.findIndex(
+          (j) => j.id === job_id,
+        );
+
+        if (jobIndex === -1) {
+          clearInterval(pollInterval);
+          return;
         }
-        toast.error("Failed to download recordings", { description });
-        return;
-      }
 
-      const { token } = await response.json();
+        const statusRes = await fetch(
+          `${baseUrl}/api/recordings/zip/status/${job_id}`,
+        );
+        if (!statusRes.ok) {
+          clearInterval(pollInterval);
+          recordingsState.zipJobs.splice(jobIndex, 1);
+          return;
+        }
 
-      const filename =
-        selected.length === recordingsState.recordings.length
-          ? "all_recordings.zip"
-          : "selected_recordings.zip";
+        const { status, progress } = await statusRes.json();
+        recordingsState.zipJobs[jobIndex].progress = progress || 0;
 
-      const downloadUrl = `${baseUrl}/api/recordings/zip/download?token=${token}&filename=${filename}`;
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (error) {
-      console.error("Error downloading zip:", error);
-      toast.error("Failed to download recordings");
-    } finally {
-      recordingsState.zipDownloading = false;
+        if (status === "ready") {
+          clearInterval(pollInterval);
+          recordingsState.zipJobs[jobIndex].status = "ready";
+          recordingsState.zipJobs[jobIndex].progress = 100;
+
+          const downloadUrl = `${baseUrl}/api/recordings/zip/download?token=${job_id}&filename=selected_recordings.zip`;
+          const link = document.createElement("a");
+          link.href = downloadUrl;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => {
+            const idx = recordingsState.zipJobs.findIndex(
+              (j) => j.id === job_id,
+            );
+            if (idx !== -1) recordingsState.zipJobs.splice(idx, 1);
+          }, 800);
+        } else if (status === "error") {
+          clearInterval(pollInterval);
+          recordingsState.zipJobs.splice(jobIndex, 1);
+          toast.error("Zipping failed on server.");
+        }
+      }, 500);
+    } catch {
+      toast.error("Failed to start download");
     }
+  },
+
+  cancelZip: async (baseUrl: string, jobId: string) => {
+    try {
+      await fetch(`${baseUrl}/api/recordings/zip/cancel/${jobId}`, {
+        method: "POST",
+      });
+      const idx = recordingsState.zipJobs.findIndex((j) => j.id === jobId);
+      if (idx !== -1) recordingsState.zipJobs.splice(idx, 1);
+    } catch (error) {
+      console.error("Error cancelling job:", error);
+    }
+  },
+
+  cancelAllZips: async (baseUrl: string) => {
+    const activeJobs = [...recordingsState.zipJobs];
+
+    recordingsState.zipJobs = [];
+    recordingsState.isZipDrawerMinimized = false;
+    recordingsState.isCancelAllZipModalOpen = false;
+
+    for (const job of activeJobs) {
+      try {
+        await fetch(`${baseUrl}/api/recordings/zip/cancel/${job.id}`, {
+          method: "POST",
+        });
+      } catch (error) {
+        console.error(`Error cancelling job ${job.id}:`, error);
+      }
+    }
+  },
+
+  toggleZipDrawer: () => {
+    recordingsState.isZipDrawerMinimized =
+      !recordingsState.isZipDrawerMinimized;
+  },
+
+  openCancelAllModal: () => {
+    recordingsState.isCancelAllZipModalOpen = true;
+  },
+  closeCancelAllModal: () => {
+    recordingsState.isCancelAllZipModalOpen = false;
   },
 
   // Modal

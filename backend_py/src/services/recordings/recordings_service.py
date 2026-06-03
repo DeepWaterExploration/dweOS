@@ -162,24 +162,36 @@ class RecordingsService:
             return self.recordings
         return None
 
-    def zip_recordings(self, filenames: list[str] | None = None) -> str | None:
+    def zip_recordings(self, filenames: list[str] | None = None, active_jobs: dict | None = None, job_id: str | None = None) -> str | None:
         self.get_recordings()
         if not self.recordings:
             return None
 
+        targets = []
+        for recording in self.recordings:
+            full_name = f"{recording.name}.{recording.format}"
+            if filenames is not None and recording.name not in filenames and full_name not in filenames:
+                continue
+            targets.append((recording, full_name))
+
+        total_files = len(targets)
+        if total_files == 0:
+            return None
+        
         unique_id = uuid.uuid4().hex
         zip_filename = os.path.join(self.recordings_path, f"temp_{unique_id}.zip")
 
         with zipfile.ZipFile(zip_filename, "w") as zipf:
-            for recording in self.recordings:
-                full_name = f"{recording.name}.{recording.format}"
+            for i, (recording, full_name) in enumerate(targets):
+                if active_jobs is not None and job_id is not None:
+                    if active_jobs.get(job_id, {}).get("cancel", False):
+                        zipf.close()
+                        if os.path.exists(zip_filename):
+                            os.remove(zip_filename)
+                        return "CANCELLED"
 
-                if (
-                    filenames is not None
-                    and recording.name not in filenames
-                    and full_name not in filenames
-                ):
-                    continue
+                    progress = int((i / total_files) * 100)
+                    active_jobs[job_id]["progress"] = progress
 
                 zipf.write(recording.path, arcname=full_name)
         return zip_filename

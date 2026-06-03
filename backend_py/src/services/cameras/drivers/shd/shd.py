@@ -52,9 +52,15 @@ class SHDDevice(Device):
         # ASIC Interface for low level register read/writes
         self.asic_interface = ASICInterface(self.cameras[0])
 
+        def on_auto_exposure(value: int | float | bool) -> None:
+            if not value:
+                self.reapply_sensor_config(ignore_list=["auto_exposure"])
+
         # options
         options: dict[str, BaseOption] = {
-            "auto_exposure": AutoExposureOption(self.asic_interface),
+            "auto_exposure": AutoExposureOption(
+                self.asic_interface, callback=on_auto_exposure
+            ),
             "shutter": ShutterSpeedOption(self.asic_interface),
             "iso": GainOption(self.asic_interface),
             "strobe_width": StrobeWidthOption(self.asic_interface),
@@ -243,7 +249,10 @@ class SHDDevice(Device):
 
         self.reapply_sensor_config()
         for follower in self.follower_devices.values():
-            follower.reapply_sensor_config()
+            # Way to set options from the backend on stream start
+            # This doesn't actually update it internally
+            # This is likely not necessary
+            follower.reapply_sensor_config(options=self._options)
 
     def remove_device(self) -> None:
         # Unplugging a device makes it too complicated to handle its follower stream,
@@ -255,12 +264,26 @@ class SHDDevice(Device):
         if self.is_managed and self.leader_device:
             self.leader_device.remove_follower(self)
 
-    def reapply_sensor_config(self) -> None:
+    def reapply_sensor_config(
+        self,
+        options: dict[str, BaseOption] | None = None,
+        ignore_list: list[str] | None = None,
+    ) -> None:
+        if not options:
+            options = {}
+        if not ignore_list:
+            ignore_list = []
+
         self.logger.info("Reapplying options after starting stream.")
 
         # This is bad
         self.set_pu(-4, 0)
 
         for option_name in self._options:
+            if option_name in ignore_list:
+                continue
             option = self._options[option_name]
-            option.set_value(option.get_value())
+            value = option.get_value()
+            if options and option_name in options:
+                value = options[option_name].get_value()
+            option.set_value(value)

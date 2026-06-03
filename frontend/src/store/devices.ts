@@ -174,11 +174,23 @@ export const useDeviceStore = create<DeviceState>()(
         if (data && data.success) {
           set((state) => {
             const device = state.devices[bus_info];
+
             // FIXME: slow
             for (let i = 0; i < device.controls.length; i++) {
               // FIXME: this is not performant
-              if (device.controls[i].control_id === control_id)
+              if (device.controls[i].control_id === control_id) {
                 device.controls[i].value = value;
+                // Another example of O(n^2)
+
+                // FIXME
+                if (device.controls[i].name === "Auto Exposure (ASIC)") {
+                  // we set strobe here:
+                  if (device.controls[i].value)
+                    state.setUVCControl(bus_info, -4, 0);
+                }
+
+                break;
+              }
             }
 
             device.followers.forEach((follower_bus_info) =>

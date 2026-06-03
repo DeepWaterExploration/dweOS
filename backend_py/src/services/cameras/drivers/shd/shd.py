@@ -112,6 +112,11 @@ class SHDDevice(Device):
 
         super().on_external_managed()
 
+    def on_external_unmanaged(self) -> None:
+        self.set_pu(-4, 0)
+
+        super().on_external_unmanaged()
+
     def add_follower(self, device: "SHDDevice", external=False) -> bool:
         # If an external program is controlling it, it's ok
         if not external and device.is_externally_managed:

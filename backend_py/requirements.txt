@@ -1,15 +1,11 @@
-#gevent==22.10.2
 linuxpy==0.13.0
 natsort==8.4.0
 PyEventEmitter==1.0.5
-rpi_hardware_pwm==0.2.2
 fastapi
 pydantic
 python-socketio
-dbus-python==1.2.18
 uvicorn
 sdbus==0.14.0
 sdbus-networkmanager==2.0.0
-rtp==0.0.4
 pyserial
 colorlog==6.10.1

@@ -15,3 +15,4 @@ jobs:
         run: |
           pip install -r backend_py/requirements.txt
           python3 -m backend_py.scripts.export_openapi
+          cat openapi.json

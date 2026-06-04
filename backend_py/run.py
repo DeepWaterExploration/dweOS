@@ -33,12 +33,12 @@ async def lifespan(app: FastAPI):  # noqa: ANN201
 
 
 # FastAPI application
-app = FastAPI(
+fastapi_app = FastAPI(
     lifespan=lifespan, title="DWE OS API", description="API for DWE OS", version="0.1.0"
 )
 
 # CORS
-app.add_middleware(
+fastapi_app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=False,
@@ -51,7 +51,7 @@ app.add_middleware(
 server = Server(
     FeatureSupport(ttyd=True, wifi=True, serial=True),
     sio,
-    app,
+    fastapi_app,
     data_dir=".",
     settings_path=".",
     log_level=logging.DEBUG,
@@ -59,7 +59,7 @@ server = Server(
 )
 
 # Combine FastAPI and Socket.IO ASGI apps
-app = socketio.ASGIApp(sio, other_asgi_app=app)
+app = socketio.ASGIApp(sio, other_asgi_app=fastapi_app)
 
 # Run with Uvicorn
 if __name__ == "__main__":

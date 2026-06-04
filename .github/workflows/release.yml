@@ -24,6 +24,11 @@ jobs:
         with:
           node-version: "22"
 
+      - name: "Create OpenAPI Spec"
+        run: |
+          pip install -r backend_py/requirements.txt
+          python3 -m backend_py.scripts.export_openapi
+
       - name: "Build Project"
         run: |
           ./create_release.sh
@@ -32,7 +37,9 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: release.tar.gz
+          files: |
+            release.tar.gz
+            openapi.json
           generate_release_notes: true
           draft: true
           prerelease: false

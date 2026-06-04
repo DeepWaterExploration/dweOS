@@ -94,7 +94,7 @@ function AddressEdit({
     } else {
       setIsValidPrefix(false);
     }
-  }, [addressState, prefixState, onUpdate, prefix]);
+  }, [addressState, prefixState, onUpdate, prefix, address]);
 
   return (
     <TableRow>
@@ -420,6 +420,8 @@ function WiredDevice({
   profiles: { [key: string]: ConnectionProfileModel };
 }) {
   console.log(profiles);
+
+  if (wired_device.state === 0 || wired_device.state === 10) return null;
 
   return (
     <Accordion

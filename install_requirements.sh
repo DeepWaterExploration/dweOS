@@ -29,7 +29,7 @@ install_ttyd() {
 
     local version="1.6.3"
     local filename="ttyd.x86_64"
-    
+
     # set filename based on architecture
     case $arch in
         x86_64)
@@ -44,7 +44,7 @@ install_ttyd() {
     esac
 
     echo "Downloading ttyd version ${version} for ${arch}..."
-    
+
     # create temporary directory
     local temp_dir=$(mktemp -d)
     cd "$temp_dir"
@@ -71,7 +71,7 @@ install_ttyd() {
     rm -rf "$temp_dir"
 
     echo "Successfully installed ttyd version ${version}"
-    
+
     # verify installation
     if command -v ttyd >/dev/null 2>&1; then
         echo "ttyd is now available at: $(which ttyd)"
@@ -88,8 +88,6 @@ sudo apt-get update -y
 # Install python and gstreamer dependencies
 echo "Installing Python dependencies..."
 sudo apt-get install python3 python3-venv -y
-# For dbus-python
-sudo apt-get install build-essential libdbus-glib-1-dev libdbus-1-dev libpython3-dev -y
 
 echo "Installing GStreamer dependencies..."
 sudo apt-get install -y libglib2.0-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-tools gstreamer1.0-x gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-libav gstreamer1.0-plugins-ugly libimage-exiftool-perl

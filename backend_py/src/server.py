@@ -180,6 +180,8 @@ class Server:
         # loop over and emit the logs to the client
         asyncio.create_task(self.emit_logs())
 
+        self.server_logger.info("Starting dweOS backend server")
+
         if self.feature_support.serial:
             self.serial.start()
 
@@ -191,6 +193,8 @@ class Server:
             self.ttyd_manager.start()
         else:
             self.server_logger.info("Running without TTYD")
+
+        self.server_logger.info("Successfully started dweOS backend server")
 
     def shutdown(self) -> None:
         self.server_logger.info("Shutting down")

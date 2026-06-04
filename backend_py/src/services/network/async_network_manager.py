@@ -544,6 +544,7 @@ class AsyncNetworkManager(EventEmitter):
     async def _listen_devices_updated(self) -> None:
         async def handle_added() -> None:
             async for device_path in self.nm.device_added:
+                self.logger.info(f"{device_path}: New device detected")
                 await self._add_device(device_path)
                 self.all_devices.append(device_path)
 

@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import time
 
 import socketio
 from event_emitter import EventEmitter
@@ -23,22 +22,16 @@ class NetworkWrapper(EventEmitter):
         self.nm = AsyncNetworkManager()
         self.sio = sio
 
-        self.last_connection_time = time.time()
-
-        @self.sio.on("connect")
-        def on_connect(sid, environ) -> None:
-            # self.logger.info(f"Connection detected: {sid}")
-            self.last_connection_time = time.time()
-
         self.nm.on("profile_updated", lambda profile: self._refresh_ui())
         self.nm.on("profiles_changed", lambda: self._refresh_ui())
         self.nm.on("ip_config_changed", lambda device: self._refresh_ui())
         self.nm.on("state_changed", lambda device: self._refresh_ui())
+        self.nm.on("devices_changed", lambda: self._refresh_ui())
 
         self._rollback_timer_task: asyncio.Task | None = None
 
     def _refresh_ui(self) -> None:
-        self.emit("refresh_ui")
+        asyncio.create_task(self.sio.emit("refresh_wired_config"))
 
     async def initialize(self) -> None:
         await self.nm.initialize()
@@ -84,24 +77,13 @@ class NetworkWrapper(EventEmitter):
 
         return False
 
-    async def activate_interface(
-        self, interface: str, profile_path: str, enable_rollback=False
-    ) -> bool:
+    async def activate_interface(self, interface: str, profile_path: str) -> bool:
         profile = self.nm.get_profile(profile_path)
         device = self.nm.get_device_by_iface(interface)
         if not profile or not device:
             return False
 
-        time_of_change = time.time()
-
         await self.nm.activate_ethernet_device(device, profile)
-
-        if enable_rollback:
-            if self._rollback_timer_task:
-                self._rollback_timer_task.cancel()
-            self._rollback_timer_task = asyncio.create_task(
-                self._rollback_timer(interface, profile_path, time_of_change, 30)
-            )
 
         return True
 
@@ -109,16 +91,4 @@ class NetworkWrapper(EventEmitter):
         safe_ip_config = IPV4Configuration(method=IPV4Method.auto, never_default=False)
 
         await self.update_connection_profile(profile_path, safe_ip_config)
-        await self.activate_interface(interface, profile_path, False)
-
-    async def _rollback_timer(
-        self, interface: str, profile_path: str, time_of_change: float, timeout: int
-    ) -> None:
-        await asyncio.sleep(timeout)
-
-        if self.last_connection_time < time_of_change:
-            self.logger.error("Lockout detected! Forcing DHCP")
-
-            await self._force_dhcp(interface, profile_path)
-        else:
-            self.logger.info("Active connection detected, not forcing rollback!")
+        await self.activate_interface(interface, profile_path)

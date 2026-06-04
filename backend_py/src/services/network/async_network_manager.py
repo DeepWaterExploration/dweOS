@@ -30,11 +30,11 @@ from backend_py.src.models import IPV4Address, IPV4Configuration, IPV4Method
 
 
 def _ip_to_integer(addr: str) -> int:
-    return struct.unpack("!I", socket.inet_aton(addr))[0]
+    return struct.unpack("<I", socket.inet_aton(addr))[0]
 
 
 def _integer_to_ip(addr: int) -> str:
-    return socket.inet_ntoa(struct.pack("!I", addr))
+    return socket.inet_ntoa(struct.pack("<I", addr))
 
 
 def _unpack_dbus_value(setting: NetworkManagerSetting | Any, expected_type="") -> Any:
@@ -81,10 +81,16 @@ def _deserialize_ipv4_config(ipv4_settings: dict) -> IPV4Configuration:
         for addr in raw_addresses
     ]
 
+    # If it's an unsupported method (link-local)
+    try:
+        ip_v4_method = IPV4Method(method)
+    except ValueError:
+        ip_v4_method = IPV4Method.unknown
+
     ip_v4_config = IPV4Configuration(
         ip_addresses=ip_addresses,
         gateway=gateway,
-        method=IPV4Method(method),
+        method=ip_v4_method,
         dns=[_integer_to_ip(dns) for dns in dns_servers],
         never_default=never_default,
     )
@@ -328,6 +334,13 @@ class WiredDevice(EventEmitter):
         """
         self.state = new_state
 
+        new_interface_name = await self.nm_device.interface
+        if new_interface_name != self.interface:
+            self.logger.info(
+                f"Interface name changed: {self.interface} -> {new_interface_name}"
+            )
+            self.interface = new_interface_name
+
         # Yes, we can decouple this into two methods, and remove the checking
         # if there is a connection logic, but this is 100% guaranteed to be reliable
         # and there is no tangible performance benefit for the former.
@@ -389,6 +402,7 @@ class AsyncNetworkManager(EventEmitter):
         self.profiles: dict[str, ConnectionProfile] = {}
 
         self._profiles_updated_task: asyncio.Task | None = None
+        self._devices_updated_task: asyncio.Task | None = None
 
     async def _update_profiles(self) -> None:
         all_paths = await self.nm_settings.connections
@@ -527,6 +541,55 @@ class AsyncNetworkManager(EventEmitter):
 
         await asyncio.gather(handle_new(), handle_removed())
 
+    async def _listen_devices_updated(self) -> None:
+        async def handle_added() -> None:
+            async for device_path in self.nm.device_added:
+                await self._add_device(device_path)
+                self.all_devices.append(device_path)
+
+        async def handle_removed() -> None:
+            async for device_path in self.nm.device_removed:
+                self.all_devices.remove(device_path)
+                self.ethernet_devices = [
+                    d for d in self.ethernet_devices if d.get_dbus_path() != device_path
+                ]
+                self.emit("devices_changed")
+
+        await asyncio.gather(handle_added(), handle_removed())
+
+    async def _add_device(self, device_path) -> None:
+        generic = NetworkDeviceGeneric(device_path)
+
+        if await generic.capabilities & Capabilities.IS_SOFTWARE:
+            return
+
+        interface = await generic.interface
+        device_type = DeviceType(await generic.device_type)
+        state = DeviceState(await generic.state)
+
+        self.logger.debug(f"{interface}: {state.name}")
+
+        if device_type == DeviceType.ETHERNET:
+            eth_device = WiredDevice(device_path)
+            await eth_device.initialize()
+            eth_device.on(
+                "request_activation",
+                lambda dev: asyncio.create_task(self.activate_ethernet_device(dev)),
+            )
+            eth_device.on(
+                "ip_config_changed",
+                lambda eth_device=eth_device: self.emit(
+                    "ip_config_changed", eth_device
+                ),
+            )
+            eth_device.on(
+                "state_changed",
+                lambda old_state, new_state, eth_device=eth_device: self.emit(
+                    "state_changed", eth_device
+                ),
+            )
+            self.ethernet_devices.append(eth_device)
+
     async def initialize(self) -> None:
         self.all_devices = await self.nm.devices
 
@@ -535,37 +598,7 @@ class AsyncNetworkManager(EventEmitter):
             self._listen_connection_profiles()
         )
 
+        self._devices_updated_task = asyncio.create_task(self._listen_devices_updated())
+
         for device_path in self.all_devices:
-            generic = NetworkDeviceGeneric(device_path)
-
-            if await generic.capabilities & Capabilities.IS_SOFTWARE:
-                continue
-
-            interface = await generic.interface
-            device_type = DeviceType(await generic.device_type)
-            state = DeviceState(await generic.state)
-
-            self.logger.debug(f"{interface}: {state.name}")
-
-            if device_type == DeviceType.ETHERNET:
-                eth_device = WiredDevice(device_path)
-                await eth_device.initialize()
-                eth_device.on(
-                    "request_activation",
-                    lambda dev: asyncio.create_task(self.activate_ethernet_device(dev)),
-                )
-                eth_device.on(
-                    "ip_config_changed",
-                    lambda eth_device=eth_device: self.emit(
-                        "ip_config_changed", eth_device
-                    ),
-                )
-                eth_device.on(
-                    "state_changed",
-                    lambda old_state, new_state, eth_device=eth_device: self.emit(
-                        "state_changed", eth_device
-                    ),
-                )
-                self.ethernet_devices.append(eth_device)
-
-            # TODO: Wireless
+            await self._add_device(device_path)

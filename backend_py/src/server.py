@@ -118,11 +118,6 @@ class Server:
 
         self.network_wrapper = NetworkWrapper(sio)
 
-        self.network_wrapper.on(
-            "refresh_ui",
-            lambda: asyncio.create_task(self.sio.emit("refresh_wired_config")),
-        )
-
         self.system_manager = SystemManager()
 
         self.recordings_service = RecordingsService(self.data_dir)

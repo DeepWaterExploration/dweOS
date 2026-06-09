@@ -237,6 +237,7 @@ class WiredDevice(EventEmitter):
 
         self._settings_listener_task = None
         self.tasks = []
+        self._ip4_watch: asyncio.Task | None = None
 
         self.manual_autoconnect = False
 
@@ -291,39 +292,39 @@ class WiredDevice(EventEmitter):
         ).connection
 
     async def _update_active_connection_settings(self) -> None:
-        if self.state != DeviceState.ACTIVATED:
-            self.logger.warning(
-                f"{self.interface}: Cannot update IP config of an inactive device"
-            )
-            self.active_ip_configuration = None
-            return
-
         config_path = await self.nm_device.ip4_config
-
         if config_path == "/":
-            self.logger.error(
-                f"{self.interface}: Unable to retrieve IP config despite being active"
-            )
             return
+        await self._read_ip4(config_path)
 
+        # When it's activated, we start a task to check if the current configuration
+        # path is updated. Then we update it. This only happens in the rare case
+        # that the addresses are emitted after activation.
+        if self._ip4_watch:
+            self._ip4_watch.cancel()
+        self._ip4_watch = asyncio.create_task(self._watch_ip4(config_path))
+
+    async def _watch_ip4(self, config_path: str) -> None:
         config = IPv4Config(config_path)
+        async for _i, changed, _inv in config.properties_changed.catch():
+            if self.state != DeviceState.ACTIVATED:
+                return
+            self.logger.info(f"IPv4Changed: {changed.keys()}")
+            if changed.keys():
+                await self._read_ip4(config_path)
 
-        # Initial construction
-        self.active_ip_configuration = IPV4Configuration()
-
-        # Update the active data
-        address_data = _unpack_dbus_value(await config.address_data)
-
-        self.active_ip_configuration.ip_addresses = [
-            IPV4Address(address=addr["address"], prefix=addr["prefix"])
-            for addr in address_data
+    async def _read_ip4(self, config_path: str) -> None:
+        config = IPv4Config(config_path)
+        cfg = IPV4Configuration()
+        cfg.ip_addresses = [
+            IPV4Address(address=a["address"], prefix=a["prefix"])
+            for a in _unpack_dbus_value(await config.address_data)
         ]
-        self.active_ip_configuration.gateway = await config.gateway
-        # Maybe we can do a single unpack
-        self.active_ip_configuration.dns = [
-            data["address"] for data in _unpack_dbus_value(await config.nameserver_data)
+        cfg.gateway = await config.gateway
+        cfg.dns = [
+            d["address"] for d in _unpack_dbus_value(await config.nameserver_data)
         ]
-
+        self.active_ip_configuration = cfg
         self.emit("ip_config_changed")
 
     async def _set_state(
@@ -360,6 +361,8 @@ class WiredDevice(EventEmitter):
             await self._update_active_connection_settings()
         else:
             self.active_ip_configuration = None
+            if self._ip4_watch:
+                self._ip4_watch.cancel()
 
         if (
             self.manual_autoconnect
@@ -410,7 +413,7 @@ class AsyncNetworkManager(EventEmitter):
         for path in all_paths:
             profile = ConnectionProfile(path)
             profile.on(
-                "settings_changed",
+                "settings_updated",
                 lambda profile=profile: self.emit("profile_updated", profile),
             )
             await profile.initialize()

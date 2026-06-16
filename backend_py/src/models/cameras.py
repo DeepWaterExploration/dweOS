@@ -193,6 +193,8 @@ class DeviceModel(BaseModel):
     device_type: DeviceType
     # Only required for stellarHD
     # (remember, followers CAN be leaders in some circumstances)
+    # FIXME: can't put a mutable object here, but it doesn't matter because
+    # ehds dont use it
     followers: list[str] = []
     # True if is a follower and stream is managed by the leader
     is_managed: bool = False
@@ -203,6 +205,7 @@ class DeviceModel(BaseModel):
     # Externally managed
     # This is separate from is_managed (which is purely internal)
     is_externally_managed: bool = False
+    string3: str = ""
 
     class Config:
         from_attributes = True

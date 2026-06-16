@@ -623,6 +623,11 @@ export interface components {
              * @default false
              */
             is_externally_managed: boolean;
+            /**
+             * String3
+             * @default
+             */
+            string3: string;
         };
         /** DeviceNicknameModel */
         DeviceNicknameModel: {

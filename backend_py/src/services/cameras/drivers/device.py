@@ -30,6 +30,7 @@ from backend_py.src.models import (
 
 from ..stream_runner import Stream, StreamRunner
 from ..stream_utils import string_to_stream_encode_type
+from .asic_interface import ASICInterface
 from .options import BaseOption
 from .registry import DeviceMetadata
 from .video4linux import Camera
@@ -60,6 +61,10 @@ class Device(events.EventEmitter):
         self.nickname = ""
         self.is_externally_managed = False
         self.stream = Stream()
+
+        # ASIC Interface for low level register read/writes
+        self.asic_interface = ASICInterface(self.cameras[0])
+        self.string3 = self.asic_interface.read_string3()
 
         # Thread safety
         self._configuration_lock = threading.Lock()

@@ -9,12 +9,18 @@ import { useDeviceStore } from "@/store/devices";
 import { CameraStream } from "./stream/stream";
 import { CameraNickname } from "./nickname";
 import { FrameDropIndicator } from "./frame-drop-indicator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const DeviceCard = ({ bus_id }: { bus_id: string }) => {
   const deviceName = useDeviceStore((state) => state.devices[bus_id].name);
   const deviceManufacturer = useDeviceStore(
     (state) => state.devices[bus_id].manufacturer,
   );
+  const string3 = useDeviceStore((state) => state.devices[bus_id].string3);
 
   return (
     <Card className="w-full max-w-[600px] mx-auto">
@@ -23,14 +29,26 @@ const DeviceCard = ({ bus_id }: { bus_id: string }) => {
           <div className="min-w-0 flex-1">
             <CardTitle>{deviceName}</CardTitle>
             <CardDescription>
-              Manufacturer: {deviceManufacturer}
+              {deviceManufacturer} &#8226; {bus_id}
               <br />
-              USB Port ID: {bus_id}
+              {string3.length > 0 && (
+                <Tooltip>
+                  <TooltipTrigger>Firmware String: {string3}</TooltipTrigger>
+                  <TooltipContent>
+                    The firmware parameter for the device.
+                    <br />
+                    If this is visible, it means your device is running
+                    specialized firmware.
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </CardDescription>
           </div>
           <FrameDropIndicator bus_id={bus_id} />
         </div>
-        <CameraNickname bus_id={bus_id} />
+        <div className="mt-1">
+          <CameraNickname bus_id={bus_id} />
+        </div>
       </CardHeader>
       <CardContent>
         <CameraStream bus_id={bus_id} />

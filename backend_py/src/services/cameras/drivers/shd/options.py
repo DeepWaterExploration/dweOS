@@ -8,9 +8,9 @@ from collections.abc import Callable
 
 from backend_py.src.models import ControlFlagsModel, ControlTypeEnum, MenuItemModel
 
+from ..asic_interface import ASICInterface
 from ..options import BaseOption
 from ..xu import StellarRegisterMap, StellarSensorMap
-from .asic_interface import ASICInterface
 
 
 class ASICOption(BaseOption):

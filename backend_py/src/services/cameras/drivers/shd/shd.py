@@ -8,7 +8,6 @@ from backend_py.src.models import DeviceType
 
 from ..device import Device, DeviceMetadata
 from ..video4linux import DeviceInfo
-from .asic_interface import ASICInterface
 from .options import (
     AutoExposureOption,
     BaseOption,
@@ -48,9 +47,6 @@ class SHDDevice(Device):
 
         # Should directly correspond with self.is_managed
         self.leader_device: SHDDevice | None = None
-
-        # ASIC Interface for low level register read/writes
-        self.asic_interface = ASICInterface(self.cameras[0])
 
         def on_auto_exposure(value: int | float | bool) -> None:
             if not value:

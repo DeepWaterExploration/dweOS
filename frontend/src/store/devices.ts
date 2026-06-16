@@ -49,10 +49,22 @@ export const useDeviceStore = create<DeviceState>()(
       ) => {
         const stream = get().devices[bus_info].stream;
 
+        let shouldEnableStream;
+        if (partialStreamInfo.enabled !== undefined)
+          shouldEnableStream = partialStreamInfo.enabled;
+        else if (
+          partialStreamInfo.endpoints &&
+          partialStreamInfo.endpoints.length === 0
+        )
+          shouldEnableStream = false;
+        else {
+          shouldEnableStream = true;
+        }
+
         // The stream info we are sending in the API request
         const streamInfo: components["schemas"]["StreamInfoModel"] = {
           bus_info: bus_info,
-          enabled: partialStreamInfo.enabled ?? stream.enabled,
+          enabled: shouldEnableStream,
           encode_type: partialStreamInfo.encode_type ?? stream.encode_type,
           endpoints: partialStreamInfo.endpoints ?? stream.endpoints,
           // FIXME: Why did I make the API for the sender different from what we receive...

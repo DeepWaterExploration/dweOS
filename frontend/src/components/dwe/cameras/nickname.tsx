@@ -31,7 +31,7 @@ export const CameraNickname = ({ bus_id }: { bus_id: string }) => {
   };
 
   return (
-    <div id={TOUR_STEP_IDS.DEVICE_NAME} className="space-y-2 mb-4">
+    <div id={TOUR_STEP_IDS.DEVICE_NAME} className="space-y-2 mb-2 mt-2">
       <div className="flex justify-between items-center w-full">
         <div className="flex flex-1 items-center space-x-2">
           <Input

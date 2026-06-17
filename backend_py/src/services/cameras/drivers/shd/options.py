@@ -265,7 +265,7 @@ class GainOption(SensorHighLowOption):
         super().__init__(
             "ISO",
             ControlFlagsModel(
-                default_value=400,
+                default_value=0,
                 max_value=4095,
                 min_value=0,
                 step=1,

@@ -1,6 +1,6 @@
 import { API_CLIENT } from "@/api";
+import { TOUR_STEP_IDS } from "@/components/tour/tour-constants";
 import { useTour } from "@/components/tour/tour-context";
-import { TOUR_STEP_IDS } from "@/components/tour/tour-lib/tour-constants";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";

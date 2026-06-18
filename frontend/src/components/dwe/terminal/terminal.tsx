@@ -1,6 +1,6 @@
 import { TTYD_TOKEN_URL, TTYD_WS } from "@/api";
 import { useTheme } from "@/components/themes/theme-provider";
-import { TOUR_STEP_IDS } from "@/components/tour/tour-lib/tour-constants";
+import { TOUR_STEP_IDS } from "@/components/tour/tour-constants";
 import { Card, CardContent } from "@/components/ui/card";
 import FeaturesContext from "@/contexts/FeaturesContext";
 import WebsocketContext from "@/contexts/WebsocketContext";

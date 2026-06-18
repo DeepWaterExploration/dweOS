@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Loader2, PauseIcon, PlayIcon, RotateCcw } from "lucide-react";
 
-import { TOUR_STEP_IDS } from "@/components/tour/tour-lib/tour-constants";
+import { TOUR_STEP_IDS } from "@/components/tour/tour-constants";
 import {
   Accordion,
   AccordionContent,

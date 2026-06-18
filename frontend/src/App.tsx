@@ -13,9 +13,12 @@ import {
 } from "@/components/ui/sidebar";
 
 import { ThemeProvider } from "@/components/themes/theme-provider";
-import { TourAlertDialog, TourProvider } from "@/components/tour/tour";
-import { useTour } from "@/components/tour/tour-context";
-import { TOUR_STEP_IDS } from "@/components/tour/tour-lib/tour-constants";
+import {
+  TOUR_STEP_IDS,
+  TourDialog,
+  TourProvider,
+  useTour,
+} from "@/components/tour";
 import { Toaster } from "@/components/ui/sonner";
 import { CircleHelpIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -153,7 +156,7 @@ function App() {
       <WebsocketContext.Provider value={{ socket: socket.current, connected }}>
         <TourProvider>
           <AppContent />
-          <TourAlertDialog />
+          <TourDialog />
         </TourProvider>
       </WebsocketContext.Provider>
       <Toaster richColors />

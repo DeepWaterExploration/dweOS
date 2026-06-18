@@ -1,4 +1,4 @@
-import { TOUR_STEP_IDS } from "@/components/tour/tour-lib/tour-constants";
+import { TOUR_STEP_IDS } from "@/components/tour/tour-constants";
 import WebsocketContext from "@/contexts/WebsocketContext";
 import { useContext } from "react";
 import NotConnected from "../not-connected";

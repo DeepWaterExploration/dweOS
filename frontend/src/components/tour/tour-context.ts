@@ -2,21 +2,16 @@ import type React from "react";
 import { createContext, useContext } from "react";
 
 export interface TourStep {
-  id?: string;
   selectorId?: string;
   nextStepId?: string;
   prevStepId?: string;
   content: React.ReactNode;
   route?: string;
-  width?: number;
-  height?: number;
   position?: "top" | "bottom" | "left" | "right";
   highlightPadding?: number;
   popoverWidth?: number;
   disableNext?: boolean;
   disablePrev?: boolean;
-  hideNext?: boolean;
-  hidePrev?: boolean;
   advanceOnClick?: boolean | string[] | string;
   retreatOnClick?: boolean | string[] | string;
   disableScroll?: boolean;
@@ -30,10 +25,12 @@ export interface TourSegment {
 
 export interface TourContextType {
   steps: Record<string, TourStep>;
-  setSteps: (steps: Record<string, TourStep>) => void;
   currentStepId: string | null;
+  activeSegmentPath: string | null;
   isActive: boolean;
   isTourCompleted: boolean;
+  isFirstStep: boolean;
+  isLastStep: boolean;
 
   startTour: (isPageOnly?: boolean) => void;
   completeTour: () => void;

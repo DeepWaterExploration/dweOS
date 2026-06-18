@@ -1,4 +1,4 @@
-import { TOUR_STEP_IDS } from "@/components/tour/tour-lib/tour-constants";
+import { TOUR_STEP_IDS } from "@/components/tour/tour-constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useDeviceStore } from "@/store/devices";

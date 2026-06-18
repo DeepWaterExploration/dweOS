@@ -1,7 +1,7 @@
 import { ClockArrowDown } from "lucide-react";
 import { useContext, useEffect, useState } from "react";
 
-import { TOUR_STEP_IDS } from "@/components/tour/tour-lib/tour-constants";
+import { TOUR_STEP_IDS } from "@/components/tour/tour-constants";
 import {
   Tooltip,
   TooltipContent,

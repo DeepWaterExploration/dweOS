@@ -1,5 +1,5 @@
 import { API_CLIENT } from "@/api";
-import { TOUR_STEP_IDS } from "@/components/tour/tour-lib/tour-constants";
+import { TOUR_STEP_IDS } from "@/components/tour/tour-constants";
 import {
   Accordion,
   AccordionContent,

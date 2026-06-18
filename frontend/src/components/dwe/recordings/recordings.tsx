@@ -5,7 +5,7 @@ import {
   recordingsActions,
   recordingsState,
 } from "@/components/dwe/recordings/store/recording-store";
-import { TOUR_STEP_IDS } from "@/components/tour/tour-lib/tour-constants";
+import { TOUR_STEP_IDS } from "@/components/tour/tour-constants";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Input } from "@/components/ui/input";

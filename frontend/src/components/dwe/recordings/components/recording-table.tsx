@@ -8,7 +8,7 @@ import {
   isPlayable,
   RecordingInfo,
 } from "@/components/dwe/recordings/utils/recording-utils";
-import { TOUR_STEP_IDS } from "@/components/tour/tour-lib/tour-constants";
+import { TOUR_STEP_IDS } from "@/components/tour/tour-constants";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import {

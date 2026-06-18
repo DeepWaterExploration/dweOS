@@ -1,3 +1,4 @@
+import { TOUR_STEP_IDS } from "@/components/tour/tour-lib/tour-constants";
 import {
   Card,
   CardContent,
@@ -5,15 +6,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useDeviceStore } from "@/store/devices";
-import { CameraStream } from "./stream/stream";
-import { CameraNickname } from "./nickname";
-import { FrameDropIndicator } from "./frame-drop-indicator";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useDeviceStore } from "@/store/devices";
+import { FrameDropIndicator } from "./frame-drop-indicator";
+import { CameraNickname } from "./nickname";
+import { CameraStream } from "./stream/stream";
 
 const DeviceCard = ({ bus_id }: { bus_id: string }) => {
   const deviceName = useDeviceStore((state) => state.devices[bus_id].name);
@@ -23,7 +24,10 @@ const DeviceCard = ({ bus_id }: { bus_id: string }) => {
   const string3 = useDeviceStore((state) => state.devices[bus_id].string3);
 
   return (
-    <Card className="w-full max-w-[600px] mx-auto">
+    <Card
+      className="w-full max-w-[600px] mx-auto"
+      data-tour-id={TOUR_STEP_IDS.CAMERA_DEVICE}
+    >
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">

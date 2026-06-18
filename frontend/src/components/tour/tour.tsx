@@ -1,21 +1,12 @@
-"use client";
-
 import {
+  animate,
   AnimatePresence,
   motion,
-  animate,
-  useMotionValue,
   useMotionTemplate,
+  useMotionValue,
 } from "motion/react";
 import type React from "react";
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   AlertDialog,
@@ -27,34 +18,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+import { AnimatedWaves } from "@/assets/animated-waves";
+import { TourContext, TourStep, useTour } from "@/components/tour/tour-context";
+import { useTourSteps } from "@/components/tour/tour-lib/tour-steps";
 import { X } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Separator } from "../ui/separator";
-import { AnimatedWaves } from "@/assets/animated-waves";
-
-export interface TourStep {
-  content: React.ReactNode;
-  selectorId: string;
-  route?: string;
-  width?: number;
-  height?: number;
-  onClickWithinArea?: () => void;
-  position?: "top" | "bottom" | "left" | "right";
-}
-
-interface TourContextType {
-  currentStep: number;
-  totalSteps: number;
-  nextStep: () => void;
-  previousStep: () => void;
-  endTour: () => void;
-  isActive: boolean;
-  startTour: () => void;
-  setSteps: (steps: TourStep[]) => void;
-  steps: TourStep[];
-  isTourCompleted: boolean;
-  setIsTourCompleted: (completed: boolean) => void;
-}
 
 interface TourProviderProps {
   children: React.ReactNode;
@@ -64,27 +33,27 @@ interface TourProviderProps {
   storageKey?: string;
 }
 
-const TourContext = createContext<TourContextType | null>(null);
-
 const PADDING = 16;
 const CONTENT_WIDTH = 300;
 const CONTENT_HEIGHT = 200;
 
-function getElementPosition(id: string) {
-  const element = document.getElementById(id);
+function getElementPosition(id: string, highlightPadding: number = 0) {
+  const element = document.querySelector<HTMLElement>(`[data-tour-id="${id}"]`);
   if (!element) return null;
   const rect = element.getBoundingClientRect();
   return {
-    top: rect.top + window.scrollY,
-    left: rect.left + window.scrollX,
-    width: rect.width,
-    height: rect.height,
+    top: rect.top + window.scrollY - highlightPadding,
+    left: rect.left + window.scrollX - highlightPadding,
+    width: rect.width + highlightPadding * 2,
+    height: rect.height + highlightPadding * 2,
   };
 }
 
 function calculateContentPosition(
   elementPos: { top: number; left: number; width: number; height: number },
-  position: "top" | "bottom" | "left" | "right" = "bottom"
+  position: "top" | "bottom" | "left" | "right" = "bottom",
+  popoverWidth: number = CONTENT_WIDTH,
+  popoverHeight: number = CONTENT_HEIGHT,
 ) {
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
@@ -94,55 +63,77 @@ function calculateContentPosition(
 
   switch (position) {
     case "top":
-      top = elementPos.top - CONTENT_HEIGHT - PADDING;
-      left = elementPos.left + elementPos.width / 2 - CONTENT_WIDTH / 2;
+      top = elementPos.top - popoverHeight - PADDING;
+      left = elementPos.left + elementPos.width / 2 - popoverWidth / 2;
       break;
     case "bottom":
       top = elementPos.top + elementPos.height + PADDING;
-      left = elementPos.left + elementPos.width / 2 - CONTENT_WIDTH / 2;
+      left = elementPos.left + elementPos.width / 2 - popoverWidth / 2;
       break;
     case "left":
-      left = elementPos.left - CONTENT_WIDTH - PADDING;
-      top = elementPos.top + elementPos.height / 2 - CONTENT_HEIGHT / 2;
+      left = elementPos.left - popoverWidth - PADDING;
+      top = elementPos.top + elementPos.height / 2 - popoverHeight / 2;
       break;
     case "right":
       left = elementPos.left + elementPos.width + PADDING;
-      top = elementPos.top + elementPos.height / 2 - CONTENT_HEIGHT / 2;
+      top = elementPos.top + elementPos.height / 2 - popoverHeight / 2;
       break;
   }
 
   return {
     top: Math.max(
       PADDING,
-      Math.min(top, viewportHeight - CONTENT_HEIGHT - PADDING)
+      Math.min(top, viewportHeight - popoverHeight - PADDING),
     ),
     left: Math.max(
       PADDING,
-      Math.min(left, viewportWidth - CONTENT_WIDTH - PADDING)
+      Math.min(left, viewportWidth - popoverWidth - PADDING),
     ),
-    width: CONTENT_WIDTH,
-    height: CONTENT_HEIGHT,
+    width: popoverWidth,
+    height: popoverHeight,
   };
 }
 
 export function TourProvider({
   children,
-  onComplete,
   className,
   isTourCompleted = false,
   storageKey = "tourCompleted",
 }: TourProviderProps) {
-  const [steps, setSteps] = useState<TourStep[]>([]);
-  const [currentStep, setCurrentStep] = useState(-1);
+  const [steps, setSteps] = useState<Record<string, TourStep>>({});
+  const [currentStepId, setCurrentStepId] = useState<string | null>(null);
+  const [activeSegmentPath, setActiveSegmentPath] = useState<string | null>(
+    null,
+  );
   const [elementPosition, setElementPosition] = useState<{
     top: number;
     left: number;
     width: number;
     height: number;
   } | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
+  const dynamicSegments = useTourSteps();
+
+  const allFlattenedSteps = useMemo(() => {
+    const flatPool: Record<string, TourStep> = {};
+    Object.values(dynamicSegments).forEach((segment) => {
+      Object.assign(flatPool, segment.steps);
+    });
+    return flatPool;
+  }, [dynamicSegments]);
+
+  useEffect(() => {
+    setSteps(allFlattenedSteps);
+  }, [allFlattenedSteps]);
+
+  const stepsRef = useRef(steps);
+  useEffect(() => {
+    stepsRef.current = steps;
+  }, [steps]);
+
   const [isCompleted, setIsCompleted] = useState(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem(storageKey);
@@ -152,8 +143,12 @@ export function TourProvider({
     }
     return isTourCompleted;
   });
-  const observerRef = useRef<ResizeObserver | null>(null);
-  const prevStepRef = useRef(currentStep);
+
+  const observerRef = useRef<{
+    disconnect: () => void;
+  } | null>(null);
+  const prevStepRef = useRef<string | null>(currentStepId);
+  const directionRef = useRef<"forward" | "backward">("forward");
 
   // for the highlight box
   const x = useMotionValue(0);
@@ -165,108 +160,272 @@ export function TourProvider({
   const popoverX = useMotionValue(0);
   const popoverY = useMotionValue(0);
 
-  const transitionConfig = {
-    type: "spring",
-    mass: 0.2,
-    stiffness: 100,
-    damping: 15,
-  } as const;
+  const transitionConfig = useMemo(
+    () =>
+      ({
+        type: "spring",
+        mass: 0.2,
+        stiffness: 100,
+        damping: 15,
+      }) as const,
+    [],
+  );
 
-  // Sync MotionValues
-  useEffect(() => {
-    if (elementPosition && currentStep >= 0) {
-      const step = steps[currentStep];
-      const targetWidth = step?.width || elementPosition.width;
-      const targetHeight = step?.height || elementPosition.height;
-      const isStarting = prevStepRef.current === -1;
-
-      const contentPos = calculateContentPosition(
-        { ...elementPosition, width: targetWidth, height: targetHeight },
-        step?.position
-      );
-
-      if (isStarting) {
-        // for highlight box
-        x.set(elementPosition.left);
-        y.set(elementPosition.top);
-        w.set(targetWidth);
-        h.set(targetHeight);
-
-        // for content box
-        popoverX.set(contentPos.left);
-        popoverY.set(contentPos.top);
-      } else {
-        // for highlight box
-        animate(x, elementPosition.left, transitionConfig);
-        animate(y, elementPosition.top, transitionConfig);
-        animate(w, targetWidth, transitionConfig);
-        animate(h, targetHeight, transitionConfig);
-
-        // for content box
-        animate(popoverX, contentPos.left, transitionConfig);
-        animate(popoverY, contentPos.top, transitionConfig);
+  const saveTourState = useCallback(
+    (completed: boolean) => {
+      if (typeof window !== "undefined") {
+        localStorage.setItem(storageKey, String(completed));
       }
+    },
+    [storageKey],
+  );
 
-      prevStepRef.current = currentStep;
+  // ACTIONS
+  const startTour = useCallback(
+    (isPageOnly: boolean = false) => {
+      setIsCompleted(false);
+      saveTourState(false);
+
+      const activeSegment = dynamicSegments[location.pathname];
+      if (activeSegment) {
+        setActiveSegmentPath(isPageOnly ? location.pathname : null);
+        setCurrentStepId(activeSegment.startStepId);
+      } else {
+        setActiveSegmentPath(null);
+      }
+    },
+    [saveTourState, dynamicSegments, location.pathname],
+  );
+
+  const completeTour = useCallback(() => {
+    setIsCompleted(true);
+    saveTourState(true);
+    setCurrentStepId(null);
+  }, [saveTourState]);
+
+  const resetTour = useCallback(() => {
+    setIsCompleted(false);
+    saveTourState(false);
+    setCurrentStepId(null);
+    window.location.href = "/";
+  }, [saveTourState]);
+
+  const cancelTour = useCallback(() => {
+    setCurrentStepId(null);
+  }, []);
+
+  const nextStep = useCallback(() => {
+    if (!currentStepId || !stepsRef.current[currentStepId]) return;
+
+    directionRef.current = "forward";
+    const step = stepsRef.current[currentStepId];
+
+    if (step.nextStepId && stepsRef.current[step.nextStepId]) {
+      if (activeSegmentPath && dynamicSegments[activeSegmentPath]) {
+        const isNextStepInSegment =
+          !!dynamicSegments[activeSegmentPath].steps[step.nextStepId];
+        if (!isNextStepInSegment) {
+          completeTour();
+          return;
+        }
+      }
+      setCurrentStepId(step.nextStepId);
+    } else {
+      completeTour();
     }
-  }, [elementPosition, currentStep, steps]);
+  }, [currentStepId, completeTour, dynamicSegments, activeSegmentPath]);
 
-  // For Overlay Cutout
-  const clipPath = useMotionTemplate`polygon(
-    0% 0%,
-    0% 100%,
-    100% 100%,
-    100% 0%,
-    ${x}px 0%,
-    ${x}px ${y}px,
-    calc(${x}px + ${w}px) ${y}px,
-    calc(${x}px + ${w}px) calc(${y}px + ${h}px),
-    ${x}px calc(${y}px + ${h}px),
-    ${x}px 0%
-  )`;
+  const prevStep = useCallback(() => {
+    if (!currentStepId || !stepsRef.current[currentStepId]) return;
+
+    directionRef.current = "backward";
+    const step = stepsRef.current[currentStepId];
+
+    if (step.prevStepId && stepsRef.current[step.prevStepId]) {
+      setCurrentStepId(step.prevStepId);
+    }
+  }, [currentStepId]);
+
+  const goToStepById = useCallback((id: string) => {
+    if (stepsRef.current[id]) {
+      setCurrentStepId(id);
+    } else {
+      console.warn(`Attempted to go to non-existent step: ${id}`);
+    }
+  }, []);
 
   const updatePosition = useCallback(() => {
-    if (currentStep < 0 || !steps[currentStep]) return;
+    if (!currentStepId || !steps[currentStepId]) return;
+    const step = steps[currentStepId];
+    const targetId = step.selectorId || currentStepId;
+    const pos = getElementPosition(targetId, step.highlightPadding ?? 0);
 
-    const pos = getElementPosition(steps[currentStep].selectorId);
     if (pos) {
+      setIsLocating(false);
       setElementPosition((prev) => {
         if (
           prev &&
-          prev.top === pos.top &&
-          prev.left === pos.left &&
-          prev.width === pos.width &&
-          prev.height === pos.height
+          Math.abs(prev.top - pos.top) < 1 &&
+          Math.abs(prev.left - pos.left) < 1 &&
+          Math.abs(prev.width - pos.width) < 1 &&
+          Math.abs(prev.height - pos.height) < 1
         ) {
           return prev;
         }
         return pos;
       });
+    } else {
+      setIsLocating(true);
+      console.warn(
+        `Tour element [data-tour-id="${targetId}"] removed from DOM. Auto-skipping backward.`,
+      );
+      if (step.prevStepId) {
+        prevStep();
+      } else {
+        cancelTour();
+      }
     }
-  }, [currentStep, steps]);
+  }, [currentStepId, steps, cancelTour, prevStep]);
+
+  // Sync MotionValues
+  useEffect(() => {
+    if (
+      (elementPosition || isLocating) &&
+      currentStepId &&
+      steps[currentStepId]
+    ) {
+      const step = steps[currentStepId];
+      const isStarting = prevStepRef.current === null;
+
+      const popoverEl = document.getElementById("tour-popover");
+      const actualHeight = popoverEl ? popoverEl.offsetHeight : CONTENT_HEIGHT;
+
+      let targetX = window.innerWidth / 2;
+      let targetY = window.innerHeight / 2;
+      let targetW = 0;
+      let targetH = 0;
+
+      let contentLeft =
+        window.innerWidth / 2 - (step.popoverWidth || CONTENT_WIDTH) / 2;
+      let contentTop = window.innerHeight / 2 - actualHeight / 2;
+
+      if (!isLocating && elementPosition) {
+        targetW = step.width || elementPosition.width;
+        targetH = step.height || elementPosition.height;
+        targetX = elementPosition.left;
+        targetY = elementPosition.top;
+
+        const contentPos = calculateContentPosition(
+          { ...elementPosition, width: targetW, height: targetH },
+          step.position,
+          step.popoverWidth,
+          actualHeight,
+        );
+        contentLeft = contentPos.left;
+        contentTop = contentPos.top;
+      }
+
+      if (isStarting) {
+        x.set(targetX);
+        y.set(targetY);
+        w.set(targetW);
+        h.set(targetH);
+        popoverX.set(contentLeft);
+        popoverY.set(contentTop);
+      } else {
+        animate(x, targetX, transitionConfig);
+        animate(y, targetY, transitionConfig);
+        animate(w, targetW, transitionConfig);
+        animate(h, targetH, transitionConfig);
+        animate(popoverX, contentLeft, transitionConfig);
+        animate(popoverY, contentTop, transitionConfig);
+      }
+      prevStepRef.current = currentStepId;
+    }
+  }, [
+    elementPosition,
+    currentStepId,
+    steps,
+    isLocating,
+    h,
+    w,
+    x,
+    y,
+    popoverX,
+    popoverY,
+    transitionConfig,
+  ]);
+
+  const clipPath = useMotionTemplate`polygon(
+    0% 0%, 0% 100%, 100% 100%, 100% 0%,
+    ${x}px 0%, ${x}px ${y}px, calc(${x}px + ${w}px) ${y}px,
+    calc(${x}px + ${w}px) calc(${y}px + ${h}px), ${x}px calc(${y}px + ${h}px), ${x}px 0%
+  )`;
 
   useEffect(() => {
-    if (currentStep >= 0 && currentStep < steps.length) {
-      const step = steps[currentStep];
+    if (currentStepId && steps[currentStepId]) {
+      const step = steps[currentStepId];
+      const targetId = step.selectorId || currentStepId;
 
       if (step.route && location.pathname !== step.route) {
         navigate(step.route);
         return;
       }
 
+      const instantElement = document.querySelector<HTMLElement>(
+        `[data-tour-id="${targetId}"]`,
+      );
+      setIsLocating(!instantElement);
+
       const attachObserver = () => {
-        const element = document.getElementById(step.selectorId);
+        const element = document.querySelector<HTMLElement>(
+          `[data-tour-id="${targetId}"]`,
+        );
         if (observerRef.current) observerRef.current.disconnect();
 
         if (element) {
+          setIsLocating(false);
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
           updatePosition();
-          observerRef.current = new ResizeObserver(() => {
-            requestAnimationFrame(updatePosition);
+
+          const handleShift = () =>
+            window.requestAnimationFrame(updatePosition);
+          const resizeObs = new ResizeObserver(handleShift);
+          const mutationObs = new MutationObserver(handleShift);
+
+          resizeObs.observe(element);
+          resizeObs.observe(document.body);
+          mutationObs.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ["class", "style"],
           });
-          observerRef.current.observe(element);
-          observerRef.current.observe(document.body);
+
+          observerRef.current = {
+            disconnect: () => {
+              resizeObs.disconnect();
+              mutationObs.disconnect();
+            },
+          };
         } else {
-          console.warn(`Tour element #${step.selectorId} not found`);
+          // auto-skip missing elements
+          console.warn(
+            `Tour element #${targetId} not found. Skipping ${directionRef.current}.`,
+          );
+          if (directionRef.current === "forward") {
+            if (step.nextStepId && steps[step.nextStepId]) {
+              setCurrentStepId(step.nextStepId);
+            } else {
+              completeTour();
+            }
+          } else {
+            if (step.prevStepId && steps[step.prevStepId]) {
+              setCurrentStepId(step.prevStepId);
+            } else {
+              cancelTour();
+            }
+          }
         }
       };
 
@@ -278,228 +437,323 @@ export function TourProvider({
     } else {
       setElementPosition(null);
     }
-  }, [currentStep, steps, location.pathname, navigate, updatePosition]);
+  }, [
+    currentStepId,
+    steps,
+    location.pathname,
+    navigate,
+    updatePosition,
+    cancelTour,
+    completeTour,
+  ]);
 
   useEffect(() => {
-    window.addEventListener("resize", updatePosition);
-    window.addEventListener("scroll", updatePosition);
+    let ticking = false;
+    const handleScrollOrResize = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          updatePosition();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    window.addEventListener("resize", handleScrollOrResize);
+    window.addEventListener("scroll", handleScrollOrResize, {
+      passive: true,
+      capture: true,
+    });
     return () => {
-      window.removeEventListener("resize", updatePosition);
-      window.removeEventListener("scroll", updatePosition);
+      window.removeEventListener("resize", handleScrollOrResize);
+      window.removeEventListener("scroll", handleScrollOrResize, {
+        capture: true,
+      });
     };
   }, [updatePosition]);
 
-  const nextStep = useCallback(async () => {
-    setCurrentStep((prev) => {
-      if (prev >= steps.length - 1) return -1;
-      return prev + 1;
-    });
+  // observe for specific clicks to advance/retreat the tour
+  useEffect(() => {
+    if (!currentStepId || !steps[currentStepId]) return;
+    const step = steps[currentStepId];
+    if (!step.advanceOnClick && !step.retreatOnClick) return;
+    const targetId = step.selectorId || currentStepId;
 
-    if (currentStep === steps.length - 1) {
-      setIsTourCompleted(true);
-      onComplete?.();
-    }
-  }, [steps.length, onComplete, currentStep]);
+    const handleTargetClick = (e: MouseEvent) => {
+      if (!e.isTrusted) return;
+      const target = e.target as HTMLElement;
 
-  const previousStep = useCallback(() => {
-    setCurrentStep((prev) => (prev > 0 ? prev - 1 : prev));
-  }, []);
+      // advance
+      if (step.advanceOnClick) {
+        const ids = Array.isArray(step.advanceOnClick)
+          ? step.advanceOnClick
+          : // if string, target is that id, otherwise it's the steps id
+            typeof step.advanceOnClick === "string"
+            ? [step.advanceOnClick]
+            : [targetId];
 
-  const endTour = useCallback(() => setCurrentStep(-1), []);
-
-  const startTour = useCallback(() => {
-    if (isTourCompleted) return;
-    setCurrentStep(0);
-  }, [isTourCompleted]);
-
-  const handleClick = useCallback(
-    (e: MouseEvent) => {
-      if (
-        currentStep >= 0 &&
-        elementPosition &&
-        steps[currentStep]?.onClickWithinArea
-      ) {
-        const clickX = e.clientX + window.scrollX;
-        const clickY = e.clientY + window.scrollY;
-
-        const currentWidth = steps[currentStep]?.width || elementPosition.width;
-        const currentHeight =
-          steps[currentStep]?.height || elementPosition.height;
-
-        const isWithinBounds =
-          clickX >= elementPosition.left &&
-          clickX <= elementPosition.left + currentWidth &&
-          clickY >= elementPosition.top &&
-          clickY <= elementPosition.top + currentHeight;
-
-        if (isWithinBounds) {
-          steps[currentStep].onClickWithinArea?.();
+        // advance if any of these ids are clicked
+        if (ids.some((id) => target.closest(`[data-tour-id="${id}"]`))) {
+          nextStep();
+          return;
         }
       }
-    },
-    [currentStep, elementPosition, steps]
+
+      // retreat
+      if (step.retreatOnClick) {
+        const ids = Array.isArray(step.retreatOnClick)
+          ? step.retreatOnClick
+          : // if string, target is that id, otherwise it's the steps id
+            typeof step.retreatOnClick === "string"
+            ? [step.retreatOnClick]
+            : [targetId];
+
+        // retreat if any of these ids are clicked
+        if (ids.some((id) => target.closest(`[data-tour-id="${id}"]`))) {
+          prevStep();
+        }
+      }
+    };
+
+    window.addEventListener("click", handleTargetClick, true);
+    return () => {
+      window.removeEventListener("click", handleTargetClick, true);
+    };
+  }, [currentStepId, steps, nextStep, prevStep]);
+
+  // for blocking scrolls if needed within border box
+  useEffect(() => {
+    if (!currentStepId || !steps[currentStepId]) return;
+    const step = steps[currentStepId];
+    if (!step.disableScroll) return;
+
+    const preventScroll = (e: Event) => {
+      e.preventDefault();
+    };
+
+    const options = { passive: false, capture: true };
+
+    window.addEventListener("wheel", preventScroll, options);
+    window.addEventListener("touchmove", preventScroll, options);
+
+    return () => {
+      window.removeEventListener("wheel", preventScroll, options);
+      window.removeEventListener("touchmove", preventScroll, options);
+    };
+  }, [currentStepId, steps]);
+
+  const contextValue = useMemo(
+    () => ({
+      steps,
+      setSteps,
+      currentStepId,
+      isActive: currentStepId !== null,
+      isTourCompleted: isCompleted,
+      startTour,
+      completeTour,
+      resetTour,
+      cancelTour,
+      nextStep,
+      prevStep,
+      goToStepById,
+    }),
+    [
+      steps,
+      currentStepId,
+      isCompleted,
+      startTour,
+      completeTour,
+      resetTour,
+      cancelTour,
+      nextStep,
+      prevStep,
+      goToStepById,
+    ],
   );
 
-  useEffect(() => {
-    window.addEventListener("click", handleClick);
-    return () => window.removeEventListener("click", handleClick);
-  }, [handleClick]);
-
-  const setIsTourCompleted = useCallback((completed: boolean) => {
-    setIsCompleted(completed);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(storageKey, String(completed));
-    }
-  }, []);
+  const currentStepData = currentStepId ? steps[currentStepId] : null;
 
   return (
-    <TourContext.Provider
-      value={{
-        currentStep,
-        totalSteps: steps.length,
-        nextStep,
-        previousStep,
-        endTour,
-        isActive: currentStep >= 0,
-        startTour,
-        setSteps,
-        steps,
-        isTourCompleted: isCompleted,
-        setIsTourCompleted,
-      }}
-    >
+    <TourContext.Provider value={contextValue}>
       {children}
       <AnimatePresence>
-        {currentStep >= 0 && elementPosition && (
-          <>
-            {/* Overlay to block mouse events */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="absolute inset-0 z-[90] overflow-hidden"
-              style={{ clipPath }}
-            />
-            {/* Border Box */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.3 }}
-              style={{
-                position: "absolute",
-                top: y,
-                left: x,
-                width: w,
-                height: h,
-              }}
-              className={cn(
-                "z-[100] border-2 border-muted-foreground rounded-sm shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]",
-                className
-              )}
-            />
+        {currentStepId &&
+          currentStepData &&
+          (elementPosition || isLocating) && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="absolute inset-0 z-[40] overflow-hidden"
+                style={{ clipPath }}
+              />
 
-            {/* Content Popover */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ ...transitionConfig, opacity: { duration: 0.2 } }}
-              style={{
-                position: "absolute",
-                top: popoverY,
-                left: popoverX,
-                width: calculateContentPosition(
-                  elementPosition,
-                  steps[currentStep]?.position
-                ).width,
-              }}
-              className="bg-popover/30 backdrop-blur relative z-[100] rounded-lg border p-4 shadow-lg"
-            >
-              <AnimatePresence mode="wait">
-                <div>
+              {/* Border Box */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.3 }}
+                style={{
+                  position: "absolute",
+                  top: y,
+                  left: x,
+                  width: w,
+                  height: h,
+                }}
+                className={cn(
+                  "z-[45] border-2 rounded-sm shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]",
+                  isLocating ? "border-transparent" : "border-muted-foreground",
+                  currentStepData.disableInteraction
+                    ? "pointer-events-auto cursor-not-allowed"
+                    : "pointer-events-none",
+                  className,
+                )}
+                onClick={(e) =>
+                  currentStepData.disableInteraction && e.stopPropagation()
+                }
+                onMouseDown={(e) =>
+                  currentStepData.disableInteraction && e.stopPropagation()
+                }
+                onMouseUp={(e) =>
+                  currentStepData.disableInteraction && e.stopPropagation()
+                }
+              />
+
+              {/* Content Popover */}
+              <motion.div
+                id="tour-popover"
+                layout="size"
+                initial={{ opacity: 0, y: 10, width: CONTENT_WIDTH }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                  width: currentStepData.popoverWidth || CONTENT_WIDTH,
+                }}
+                exit={{ opacity: 0, y: 10 }}
+                transition={{
+                  ...transitionConfig,
+                  opacity: { duration: 0.2 },
+                  layout: transitionConfig,
+                  width: transitionConfig,
+                }}
+                style={{
+                  position: "absolute",
+                  top: popoverY,
+                  left: popoverX,
+                }}
+                className="overflow-hidden bg-popover/30 backdrop-blur relative z-[45] rounded-lg border p-4 shadow-lg select-none"
+              >
+                <motion.div
+                  layout="position"
+                  className="absolute top-4 right-2 z-10"
+                >
                   <Button
                     variant="svg"
-                    className="absolute top-4 right-2 w-5 h-5 z-10 cursor-pointer"
-                    onClick={() => {
-                      setIsTourCompleted(true);
-                      endTour();
-                    }}
+                    className="w-5 h-5 cursor-pointer text-muted-foreground p-0"
+                    onClick={completeTour}
                   >
                     <X className="h-4 w-4" />
                   </Button>
+                </motion.div>
+                <AnimatePresence mode="popLayout">
                   <motion.div
-                    key={`tour-content-${currentStep}`}
+                    key={`tour-content-${currentStepId}`}
+                    layout="position"
                     initial={{ opacity: 0, scale: 0.95, filter: "blur(4px)" }}
-                    animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                    animate={{
+                      opacity: 1,
+                      scale: 1,
+                      filter: isLocating ? "blur(4px)" : "blur(0px)",
+                    }}
                     exit={{ opacity: 0, scale: 0.95, filter: "blur(4px)" }}
                     className="overflow-hidden"
                     transition={{ duration: 0.2 }}
                   >
-                    {steps[currentStep]?.content}
+                    {currentStepData.content}
                   </motion.div>
-                  <div className="mt-4 flex items-center justify-between gap-2">
-                    <div className="text-muted-foreground text-xs">
-                      {currentStep + 1} / {steps.length}
-                    </div>
-                    {currentStep > 0 && (
-                      <>
+                </AnimatePresence>
+
+                <div className="mt-auto pt-4 flex items-center justify-end gap-2 transition-all">
+                  <div className="flex items-center gap-2">
+                    {/* Prev Button */}
+                    {currentStepData.prevStepId &&
+                      !currentStepData.hidePrev && (
                         <button
-                          onClick={previousStep}
-                          disabled={currentStep === 0}
-                          className="text-sm ml-auto text-muted-foreground hover:text-foreground"
+                          onClick={() => {
+                            if (currentStepData.retreatOnClick) {
+                              const ids = Array.isArray(
+                                currentStepData.retreatOnClick,
+                              )
+                                ? currentStepData.retreatOnClick
+                                : typeof currentStepData.retreatOnClick ===
+                                    "string"
+                                  ? [currentStepData.retreatOnClick]
+                                  : [
+                                      currentStepData.selectorId ||
+                                        currentStepId,
+                                    ];
+                              ids.forEach((id, index) => {
+                                if (typeof id === "string") {
+                                  setTimeout(() => {
+                                    document
+                                      .querySelector<HTMLElement>(
+                                        `[data-tour-id="${id}"]`,
+                                      )
+                                      ?.click();
+                                  }, index * 150);
+                                }
+                              });
+                            }
+                            prevStep();
+                          }}
+                          disabled={currentStepData.disablePrev}
+                          className="text-sm text-muted-foreground enabled:hover:text-foreground disabled:opacity-20 disabled:animate-pulse"
                         >
                           Previous
                         </button>
+                      )}
+                    {/* Separator */}
+                    {currentStepData.prevStepId &&
+                      !currentStepData.hideNext &&
+                      !currentStepData.hidePrev && (
                         <Separator
                           orientation="vertical"
                           className="h-auto self-stretch"
                         />
-                      </>
+                      )}
+                    {/* Next Button */}
+                    {!currentStepData.hideNext && (
+                      <button
+                        onClick={nextStep}
+                        disabled={currentStepData.disableNext}
+                        className="text-sm font-medium text-primary enabled:hover:text-accent disabled:opacity-20 disabled:animate-pulse"
+                      >
+                        {currentStepData.nextStepId ? "Next" : "Finish"}
+                      </button>
                     )}
-                    <button
-                      onClick={nextStep}
-                      className="text-sm font-medium text-primary hover:text-accent"
-                    >
-                      {currentStep === steps.length - 1 ? "Finish" : "Next"}
-                    </button>
                   </div>
                 </div>
-              </AnimatePresence>
-            </motion.div>
-          </>
-        )}
+              </motion.div>
+            </>
+          )}
       </AnimatePresence>
     </TourContext.Provider>
   );
 }
 
-export function useTour() {
-  const context = useContext(TourContext);
-  if (!context) {
-    throw new Error("useTour must be used within a TourProvider");
-  }
-  return context;
-}
+export function TourAlertDialog() {
+  const { startTour, completeTour, isTourCompleted, currentStepId } = useTour();
+  const dynamicSegments = useTourSteps();
+  const location = useLocation();
 
-export function TourAlertDialog({
-  isOpen,
-  setIsOpen,
-}: {
-  isOpen: boolean;
-  setIsOpen: (isOpen: boolean) => void;
-}) {
-  const { startTour, steps, isTourCompleted, setIsTourCompleted, currentStep } =
-    useTour();
-
-  if (isTourCompleted || steps.length === 0 || currentStep > -1) {
-    return null;
-  }
-  const handleSkip = async () => {
-    setIsOpen(false);
-    setIsTourCompleted(true);
-  };
+  const activeSegment = dynamicSegments[location.pathname];
+  const isOpen =
+    !isTourCompleted &&
+    currentStepId === null &&
+    !!activeSegment &&
+    Object.keys(activeSegment.steps).length > 0;
 
   return (
     <AlertDialog open={isOpen}>
@@ -511,23 +765,25 @@ export function TourAlertDialog({
           <AlertDialogTitle className="text-center text-xl font-medium">
             Welcome to DWE OS
           </AlertDialogTitle>
-          <AlertDialogDescription className="text-muted-foreground mt-2 text-center text-sm">
-            Take a quick tour to learn about the key features and functionality
-            of DWE OS.
-            <br />
-            <br />
-            <div className="text-foreground">
-              You can restart this tour anytime in{" "}
-              <span className="font-bold text-accent">Preferences</span>
+          <AlertDialogDescription asChild>
+            <div className="text-muted-foreground mt-2 text-center text-sm">
+              Take a quick tour to learn about the key features and
+              functionality of DWE OS.
+              <br />
+              <br />
+              <div className="text-foreground">
+                You can restart this tour anytime in{" "}
+                <span className="font-bold text-accent">Preferences</span>
+              </div>
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="mt-6 space-y-3 flex flex-col">
-          <Button onClick={startTour} className="w-full">
+          <Button onClick={() => startTour(false)} className="w-full">
             Start Tour
           </Button>
           <Button
-            onClick={handleSkip}
+            onClick={completeTour}
             variant="svg"
             className="mx-auto hover:bg-primary/10 hover:text-foreground"
           >

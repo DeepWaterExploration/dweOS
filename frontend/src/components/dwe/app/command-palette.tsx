@@ -1,3 +1,4 @@
+import { TOUR_STEP_IDS } from "@/components/tour/tour-lib/tour-constants";
 import {
   Command,
   CommandDialog,
@@ -7,10 +8,9 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { TOUR_STEP_IDS } from "@/lib/tour-constants";
+import { Info } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Info } from "lucide-react";
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
@@ -22,7 +22,7 @@ export function CommandPalette() {
   };
 
   return (
-    <div id={TOUR_STEP_IDS.HELP_SWITCH}>
+    <div data-tour-id={TOUR_STEP_IDS.HELP_SWITCH}>
       <button
         onClick={() => setOpen(true)}
         className="text-sm text-muted-foreground hover:text-foreground p-2"
@@ -40,8 +40,8 @@ export function CommandPalette() {
                   runCommand(() =>
                     window.open(
                       "https://docs.dwe.ai/software/dwe-os/guides/streaming",
-                      "_blank"
-                    )
+                      "_blank",
+                    ),
                   )
                 }
               >

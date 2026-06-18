@@ -1,11 +1,5 @@
-import { Power, PowerCircle, RefreshCw } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { API_CLIENT } from "@/api";
+import { TOUR_STEP_IDS } from "@/components/tour/tour-lib/tour-constants";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,10 +9,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { toast } from "sonner";
-import { API_CLIENT } from "@/api";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Power, PowerCircle, RefreshCw } from "lucide-react";
 import { useState } from "react";
-import { TOUR_STEP_IDS } from "@/lib/tour-constants";
+import { toast } from "sonner";
 
 export function SystemDropdown() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -52,7 +52,7 @@ export function SystemDropdown() {
   };
 
   return (
-    <div id={TOUR_STEP_IDS.POWER_SWITCH}>
+    <div data-tour-id={TOUR_STEP_IDS.POWER_SWITCH}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="relative">

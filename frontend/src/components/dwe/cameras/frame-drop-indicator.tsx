@@ -1,6 +1,7 @@
-import { useContext, useEffect, useState } from "react";
 import { ClockArrowDown } from "lucide-react";
+import { useContext, useEffect, useState } from "react";
 
+import { TOUR_STEP_IDS } from "@/components/tour/tour-lib/tour-constants";
 import {
   Tooltip,
   TooltipContent,
@@ -63,6 +64,7 @@ export function FrameDropIndicator({ bus_id }: { bus_id: string }) {
       <Tooltip>
         <TooltipTrigger asChild>
           <div
+            data-tour-id={TOUR_STEP_IDS.DROPPED_FRAMES}
             className={cn(
               "flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-xs font-medium tabular-nums",
               "border-purple-500/40 bg-purple-500/10 text-purple-600 dark:text-purple-400",

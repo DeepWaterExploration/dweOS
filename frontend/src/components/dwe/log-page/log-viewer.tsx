@@ -1,25 +1,10 @@
 "use client";
 
-import { useState, useEffect, useContext } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
+import { API_CLIENT } from "@/api";
+import { TOUR_STEP_IDS } from "@/components/tour/tour-lib/tour-constants";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Search, RefreshCw } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import {
   Pagination,
   PaginationContent,
@@ -29,29 +14,30 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import WebsocketContext from "@/contexts/WebsocketContext";
-import { API_CLIENT } from "@/api";
-import { components } from "@/schemas/dwe_os_2";
-import { LogDetailView } from "./log-detail-view";
 import { getLevelColor } from "@/lib/utils";
-import { TOUR_STEP_IDS } from "@/lib/tour-constants";
-import { useTour } from "@/components/tour/tour";
-
-const DEMO_LOG: components["schemas"]["LogSchema"][] = [
-  {
-    timestamp: "2024-03-10 10:15:23,456",
-    level: "INFO",
-    name: "system.core",
-    message: "System initialized successfully",
-    filename: "main.py",
-    lineno: 42,
-    function: "init",
-  },
-];
+import { components } from "@/schemas/dwe_os_2";
+import { RefreshCw, Search } from "lucide-react";
+import { useContext, useEffect, useState } from "react";
+import { LogDetailView } from "./log-detail-view";
 
 export function LogViewer() {
   const { connected, socket } = useContext(WebsocketContext)!;
-  const { isActive } = useTour();
 
   const [logs, setLogs] = useState<components["schemas"]["LogSchema"][]>([]);
   const [filteredLogs, setFilteredLogs] = useState<
@@ -179,12 +165,10 @@ export function LogViewer() {
     updateLogs().then(() => setTimeout(() => setIsLoading(false), 500));
   };
 
-  const displayedLogs = isActive ? DEMO_LOG : currentItems;
-
   return (
     <div
       className="flex flex-col h-[calc(100vh-5.5rem)] gap-4"
-      id={TOUR_STEP_IDS.LOGS_PAGE}
+      data-tour-id={TOUR_STEP_IDS.LOGS_PAGE}
     >
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
         <div className="flex flex-1 items-center space-x-2">
@@ -237,11 +221,11 @@ export function LogViewer() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {displayedLogs.length > 0 ? (
-                displayedLogs.map((log, index) => (
+              {currentItems.length > 0 ? (
+                currentItems.map((log, index) => (
                   <TableRow
                     key={index}
-                    id={TOUR_STEP_IDS.DEMO_LOGS}
+                    data-tour-id={TOUR_STEP_IDS.DEBUG_LOG}
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => {
                       setSelectedLog(log);

@@ -1,14 +1,14 @@
-import { useContext, useEffect, useRef } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { useTheme } from "@/components/themes/theme-provider";
-import { Xterm, ClientOptions } from "./xterm";
-import { ITerminalOptions } from "@xterm/xterm";
-import WebsocketContext from "@/contexts/WebsocketContext";
 import { TTYD_TOKEN_URL, TTYD_WS } from "@/api";
-import { TOUR_STEP_IDS } from "@/lib/tour-constants";
+import { useTheme } from "@/components/themes/theme-provider";
+import { TOUR_STEP_IDS } from "@/components/tour/tour-lib/tour-constants";
+import { Card, CardContent } from "@/components/ui/card";
 import FeaturesContext from "@/contexts/FeaturesContext";
+import WebsocketContext from "@/contexts/WebsocketContext";
+import { ITerminalOptions } from "@xterm/xterm";
+import { useContext, useEffect, useRef } from "react";
 import FeatureNotSupported from "../app/not-supported";
 import { Markdown } from "../markdown";
+import { ClientOptions, Xterm } from "./xterm";
 
 const darkTermColors = {
   background: "#1d1e23",
@@ -166,7 +166,7 @@ export const Terminal = () => {
             <div
               ref={container}
               className="w-full h-full box-border"
-              id={TOUR_STEP_IDS.TERMINAL}
+              data-tour-id={TOUR_STEP_IDS.TERMINAL}
             />
           </div>
         </CardContent>

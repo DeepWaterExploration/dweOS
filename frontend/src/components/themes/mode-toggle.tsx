@@ -3,7 +3,7 @@ import { Moon, Sun, SunMoon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { useTheme } from "@/components/themes/theme-provider";
-import { TOUR_STEP_IDS } from "@/lib/tour-constants";
+import { TOUR_STEP_IDS } from "@/components/tour/tour-lib/tour-constants";
 
 export function ModeToggle() {
   const { setTheme, theme } = useTheme();
@@ -17,7 +17,7 @@ export function ModeToggle() {
 
   return (
     <Button
-      id={TOUR_STEP_IDS.MODE_TOGGLE}
+      data-tour-id={TOUR_STEP_IDS.MODE_TOGGLE}
       variant="ghost"
       size="icon"
       onClick={updateMode}

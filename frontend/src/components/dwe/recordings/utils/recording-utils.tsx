@@ -2,15 +2,6 @@ import { components } from "@/schemas/dwe_os_2";
 
 export type RecordingInfo = components["schemas"]["RecordingInfo"];
 
-export const DEMO_RECORDING: RecordingInfo = {
-  path: "",
-  name: "Demo Recording",
-  format: "mp4",
-  duration: "00:00:00",
-  size: "0",
-  created: new Date().toISOString(),
-};
-
 export const formatFileSize = (sizeInMB: number): string => {
   if (sizeInMB >= 1024 * 1024) {
     return `${(sizeInMB / (1024 * 1024)).toFixed(2)} TB`;

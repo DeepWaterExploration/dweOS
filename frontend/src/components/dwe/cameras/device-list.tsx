@@ -1,10 +1,10 @@
-import { useContext, useEffect } from "react";
+import { TOUR_STEP_IDS } from "@/components/tour/tour-lib/tour-constants";
 import WebsocketContext from "@/contexts/WebsocketContext";
-import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 import { useDeviceStore } from "@/store/devices";
-import DeviceCard from "./device-card";
-import { useShallow } from "zustand/shallow";
 import { usePreferencesStore } from "@/store/preferences";
+import { useContext, useEffect } from "react";
+import { useShallow } from "zustand/shallow";
+import DeviceCard from "./device-card";
 
 const DeviceListLayout = () => {
   const { socket, connected } = useContext(WebsocketContext)!;
@@ -46,7 +46,7 @@ const DeviceListLayout = () => {
   }, [connected, socket, fetchDevices, resetDevices, fetchPreferences]);
 
   return (
-    <div className="h-full w-full" id={TOUR_STEP_IDS.CAMERAS}>
+    <div className="h-full w-full" data-tour-id={TOUR_STEP_IDS.CAMERAS_PAGE}>
       <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(400px,0fr))]">
         {deviceIds.map((id) => (
           <div key={`${id}`}>

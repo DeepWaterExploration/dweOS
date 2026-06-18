@@ -8,6 +8,7 @@ import {
   isPlayable,
   RecordingInfo,
 } from "@/components/dwe/recordings/utils/recording-utils";
+import { TOUR_STEP_IDS } from "@/components/tour/tour-lib/tour-constants";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -23,7 +24,6 @@ import {
   TooltipTrigger,
   TruncatedTooltip,
 } from "@/components/ui/tooltip";
-import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 import { cn } from "@/lib/utils";
 import { Eye, EyeOff, MoreVertical } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -271,7 +271,7 @@ export const RecordingTable = ({
               <TableRow
                 key={recording.name}
                 data-row-name={recording.name}
-                id={TOUR_STEP_IDS.DEMO_RECORDING}
+                data-tour-id={TOUR_STEP_IDS.RECORDING_ITEM}
                 data-state={isSelected ? "selected" : undefined}
                 onMouseDown={(e) => handleRowMouseDown(e, index, recording)}
                 onDoubleClick={() => handlePlay(recording)}

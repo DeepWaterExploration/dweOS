@@ -1,16 +1,14 @@
 import { API_CLIENT } from "@/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { components } from "@/schemas/dwe_os_2";
-import { useContext, useEffect, useState } from "react";
+import { TOUR_STEP_IDS } from "@/components/tour/tour-lib/tour-constants";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Check, PlusIcon, SettingsIcon, Trash2Icon } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -26,7 +25,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -35,8 +33,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
 import WebsocketContext from "@/contexts/WebsocketContext";
+import { cn } from "@/lib/utils";
+import { components } from "@/schemas/dwe_os_2";
+import { Check, PlusIcon, SettingsIcon, Trash2Icon } from "lucide-react";
+import { useContext, useEffect, useState } from "react";
 import { IP_REGEX } from "../../preferences/preferences";
 
 type WiredDeviceModel = components["schemas"]["WiredDeviceModel"];
@@ -367,6 +368,7 @@ function ConnectionProfile({
 
               {/* Edit Button */}
               <Button
+                data-tour-id={TOUR_STEP_IDS.NETWORK_OPTION_SETTINGS}
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 mr-2 text-muted-foreground hover:text-foreground"
@@ -429,7 +431,10 @@ function WiredDevice({
       defaultValue={wired_device.is_active ? "followers" : ""}
       collapsible
     >
-      <AccordionItem value="followers">
+      <AccordionItem
+        value="followers"
+        data-tour-id={TOUR_STEP_IDS.NETWORK_OPTION}
+      >
         <AccordionTrigger className="text-sm font-semibold">
           {wired_device.interface}: {DeviceStateLookup[wired_device.state]}
         </AccordionTrigger>
@@ -501,7 +506,7 @@ export default function WiredConfig() {
   }, []);
 
   return (
-    <Card className="max-w-3xl">
+    <Card className="max-w-3xl" data-tour-id={TOUR_STEP_IDS.WIRED_CONFIG}>
       <CardHeader>
         <CardTitle>Wired Configuration</CardTitle>
       </CardHeader>

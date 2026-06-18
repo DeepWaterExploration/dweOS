@@ -35,10 +35,10 @@ export const TOUR_STEP_IDS = {
 
   PREFS_PAGE: "prefs-page",
   DEFAULT_STREAM_PREFS: "default-stream-prefs",
+  RESET_TOUR: "reset-tour",
 
   LOGS_PAGE: "logs-page",
   DEBUG_LOG: "debug-log",
 
   TERMINAL: "terminal",
-  RESET_TOUR: "reset-tour",
 };

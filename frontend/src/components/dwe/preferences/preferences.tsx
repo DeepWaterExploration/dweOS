@@ -167,7 +167,7 @@ const PreferencesLayout = () => {
         </SettingsCard>
       </div>
 
-      <Card>
+      <Card data-tour-id={TOUR_STEP_IDS.RESET_TOUR}>
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="font-bold pb-2">

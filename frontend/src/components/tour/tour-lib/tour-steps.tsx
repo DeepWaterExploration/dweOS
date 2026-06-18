@@ -752,10 +752,16 @@ export function useTourSteps(): Record<string, TourSegment> {
               <div className="flex flex-col gap-2">
                 <div className="font-semibold">Edit Connection Profile</div>
                 <Separator />
-                <div className="text-sm text-muted-foreground p-2">
-                  Click the settings icon to modify a specific profile. You can
-                  switch between DHCP and Static IP, assign custom DNS servers,
-                  and change default routing preferences.
+                <div className="text-sm text-muted-foreground p-2 flex flex-col gap-2">
+                  <span>
+                    Click the settings icon to modify a specific profile. You
+                    can switch between DHCP and Static IP, assign custom DNS
+                    servers, and change default routing preferences.
+                  </span>
+                  <em>
+                    Note: Remember to click on the profile to apply your
+                    changes.
+                  </em>
                 </div>
               </div>
             ),
@@ -771,9 +777,9 @@ export function useTourSteps(): Record<string, TourSegment> {
                 <div className="font-semibold">Wireless Network</div>
                 <Separator />
                 <div className="text-sm text-muted-foreground p-2">
-                  If your device supports Wi-Fi, you will be able to scan for
-                  networks and manage wireless connections here. Currently, it
-                  indicates if Wi-Fi is unsupported.
+                  Currently, wireless is unsupported. If your device supports
+                  Wi-Fi, you will be able to scan for networks and manage
+                  wireless connections here in future updates.
                 </div>
               </div>
             ),
@@ -793,7 +799,7 @@ export function useTourSteps(): Record<string, TourSegment> {
                 <div className="font-semibold">Preferences</div>
                 <Separator />
                 <div className="text-sm text-muted-foreground p-2">
-                  You'll find application preferences here. Any settings and
+                  All dweOS preferences can be found here. Any settings and
                   configurations of the app (not devices) will be here.
                 </div>
               </div>
@@ -818,6 +824,22 @@ export function useTourSteps(): Record<string, TourSegment> {
               </div>
             ),
             prevStepId: TOUR_STEP_IDS.PREFS_PAGE,
+            nextStepId: TOUR_STEP_IDS.RESET_TOUR,
+          },
+          [TOUR_STEP_IDS.RESET_TOUR]: {
+            route: "/preferences",
+            position: "bottom",
+            content: (
+              <div className="flex flex-col gap-2">
+                <div className="font-semibold">Reset Tour</div>
+                <Separator />
+                <div className="text-sm text-muted-foreground p-2">
+                  You may restart the app-wide tour guide here. Resetting{" "}
+                  <b>WILL REFRESH</b> the application.
+                </div>
+              </div>
+            ),
+            prevStepId: TOUR_STEP_IDS.DEFAULT_STREAM_PREFS,
             nextStepId: TOUR_STEP_IDS.LOGS_PAGE,
           },
         },
@@ -833,14 +855,12 @@ export function useTourSteps(): Record<string, TourSegment> {
                 <div className="font-semibold">Logs</div>
                 <Separator />
                 <div className="text-sm text-muted-foreground p-2">
-                  This page will display anything pertaining to the devices, it
-                  will log occurrences like device adding, device removal,
-                  device setting tweaks, etc. Have these on hand when contacting
-                  support.
+                  The Logs page displays debug logs from across the app. Have
+                  these on hand when contacting support.
                 </div>
               </div>
             ),
-            prevStepId: TOUR_STEP_IDS.DEFAULT_STREAM_PREFS,
+            prevStepId: TOUR_STEP_IDS.RESET_TOUR,
             nextStepId: TOUR_STEP_IDS.DEBUG_LOG,
           },
 
@@ -852,7 +872,9 @@ export function useTourSteps(): Record<string, TourSegment> {
                 <div className="font-semibold">Debug Log</div>
                 <Separator />
                 <div className="text-sm text-muted-foreground p-2">
-                  You can left click into a log for a detailed view.
+                  You can{" "}
+                  <MouseLeft className="inline-block align-middle size-4 text-primary" />
+                  <b>left-click</b> into a log for a detailed view.
                 </div>
               </div>
             ),
@@ -872,7 +894,7 @@ export function useTourSteps(): Record<string, TourSegment> {
                 <div className="font-semibold">Terminal</div>
                 <Separator />
                 <div className="text-sm text-muted-foreground p-2">
-                  Control your system through terminal here.
+                  An instance of your system's terminal is running here.
                 </div>
               </div>
             ),

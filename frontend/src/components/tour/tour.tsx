@@ -242,9 +242,17 @@ export function TourProvider({
     const step = stepsRef.current[currentStepId];
 
     if (step.prevStepId && stepsRef.current[step.prevStepId]) {
+      if (activeSegmentPath && dynamicSegments[activeSegmentPath]) {
+        const isPrevStepInSegment =
+          !!dynamicSegments[activeSegmentPath].steps[step.prevStepId];
+
+        if (!isPrevStepInSegment) {
+          return;
+        }
+      }
       setCurrentStepId(step.prevStepId);
     }
-  }, [currentStepId]);
+  }, [currentStepId, activeSegmentPath, dynamicSegments]);
 
   const goToStepById = useCallback((id: string) => {
     if (stepsRef.current[id]) {
@@ -570,6 +578,40 @@ export function TourProvider({
     ],
   );
 
+  const isFirstStep = useMemo(() => {
+    if (!currentStepId || !steps[currentStepId]) return true;
+    const step = steps[currentStepId];
+
+    // 1. Global check: If there is no previous step at all, we are at the start.
+    if (!step.prevStepId || !steps[step.prevStepId]) return true;
+
+    // 2. Sandbox check: If we are locked to a page, verify the previous step stays on this page.
+    if (activeSegmentPath && dynamicSegments[activeSegmentPath]) {
+      const isPrevStepInSegment =
+        !!dynamicSegments[activeSegmentPath].steps[step.prevStepId];
+      if (!isPrevStepInSegment) return true;
+    }
+
+    return false;
+  }, [currentStepId, steps, activeSegmentPath, dynamicSegments]);
+
+  const isLastStep = useMemo(() => {
+    if (!currentStepId || !steps[currentStepId]) return true;
+    const step = steps[currentStepId];
+
+    // 1. Global check: If there is no next step at all, we are done.
+    if (!step.nextStepId || !steps[step.nextStepId]) return true;
+
+    // 2. Sandbox check: If we are locked to a page, verify the next step stays on this page.
+    if (activeSegmentPath && dynamicSegments[activeSegmentPath]) {
+      const isNextStepInSegment =
+        !!dynamicSegments[activeSegmentPath].steps[step.nextStepId];
+      if (!isNextStepInSegment) return true;
+    }
+
+    return false;
+  }, [currentStepId, steps, activeSegmentPath, dynamicSegments]);
+
   const currentStepData = currentStepId ? steps[currentStepId] : null;
 
   return (
@@ -679,7 +721,8 @@ export function TourProvider({
                   <div className="flex items-center gap-2">
                     {/* Prev Button */}
                     {currentStepData.prevStepId &&
-                      !currentStepData.hidePrev && (
+                      !currentStepData.hidePrev &&
+                      !isFirstStep && (
                         <button
                           onClick={() => {
                             if (currentStepData.retreatOnClick) {
@@ -717,7 +760,8 @@ export function TourProvider({
                     {/* Separator */}
                     {currentStepData.prevStepId &&
                       !currentStepData.hideNext &&
-                      !currentStepData.hidePrev && (
+                      !currentStepData.hidePrev &&
+                      !isFirstStep && (
                         <Separator
                           orientation="vertical"
                           className="h-auto self-stretch"
@@ -730,7 +774,7 @@ export function TourProvider({
                         disabled={currentStepData.disableNext}
                         className="text-sm font-medium text-primary enabled:hover:text-accent disabled:opacity-20 disabled:animate-pulse"
                       >
-                        {currentStepData.nextStepId ? "Next" : "Finish"}
+                        {isLastStep ? "Finish" : "Next"}
                       </button>
                     )}
                   </div>

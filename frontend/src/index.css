@@ -85,6 +85,13 @@
   body {
     @apply bg-background text-foreground;
   }
+  b {
+    color: hsl(var(--primary));
+  }
+  em {
+    color: hsl(var(--primary));
+    padding-right: 2px;
+  }
 
   /* Chrome, Safari, Edge, and Opera */
   ::-webkit-scrollbar {

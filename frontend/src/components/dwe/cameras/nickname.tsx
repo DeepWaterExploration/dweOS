@@ -1,9 +1,9 @@
+import { TOUR_STEP_IDS } from "@/components/tour/tour-constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useCallback, useRef, useState } from "react";
-import { Check, Edit2, X } from "lucide-react";
-import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 import { useDeviceStore } from "@/store/devices";
+import { Check, Edit2, X } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
 
 export const CameraNickname = ({ bus_id }: { bus_id: string }) => {
   const deviceNickname = useDeviceStore(
@@ -31,7 +31,10 @@ export const CameraNickname = ({ bus_id }: { bus_id: string }) => {
   };
 
   return (
-    <div id={TOUR_STEP_IDS.DEVICE_NAME} className="space-y-2 mb-2 mt-2">
+    <div
+      data-tour-id={TOUR_STEP_IDS.DEVICE_NAME}
+      className="space-y-2 mb-2 mt-2"
+    >
       <div className="flex justify-between items-center w-full">
         <div className="flex flex-1 items-center space-x-2">
           <Input

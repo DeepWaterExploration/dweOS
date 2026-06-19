@@ -1,16 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Loader2, PauseIcon, PlayIcon, RotateCcw } from "lucide-react";
 
+import { TOUR_STEP_IDS } from "@/components/tour/tour-constants";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { TOUR_STEP_IDS } from "@/lib/tour-constants";
-import { useDeviceStore } from "@/store/devices";
-import { EndpointList } from "./endpoint-list";
-import { StreamSelector } from "../stream-selector";
 import {
   canLead,
   getAvailableIntervals,
@@ -19,11 +16,14 @@ import {
   getResolutions,
   resolutionToString,
 } from "@/lib/util/stream";
-import { useCallback, useEffect, useState } from "react";
 import { components } from "@/schemas/dwe_os_2";
-import { FollowerList } from "./follower-list";
-import { CameraControls } from "../camera-controls";
+import { useDeviceStore } from "@/store/devices";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { CameraControls } from "../camera-controls";
+import { StreamSelector } from "../stream-selector";
+import { EndpointList } from "./endpoint-list";
+import { FollowerList } from "./follower-list";
 
 export const CameraStream = ({ bus_id }: { bus_id: string }) => {
   const device = useDeviceStore((state) => state.devices[bus_id]);
@@ -92,7 +92,7 @@ export const CameraStream = ({ bus_id }: { bus_id: string }) => {
         type="single"
         collapsible
         defaultValue="stream configuration"
-        id={TOUR_STEP_IDS.DEVICE_STREAM_CONFIG}
+        data-tour-id={TOUR_STEP_IDS.DEVICE_STREAM_CONFIG}
       >
         <AccordionItem value="stream configuration">
           <AccordionTrigger className="text-sm font-semibold">
@@ -174,22 +174,21 @@ export const CameraStream = ({ bus_id }: { bus_id: string }) => {
       {canLead(device) && <FollowerList disabled={isManaged} bus_id={bus_id} />}
 
       <div className="flex items-center justify-between w-full mt-auto pt-4">
-        <div id={TOUR_STEP_IDS.DEVICE_SETTINGS}>
-          <Button
-            variant="svg"
-            className="h-12 px-4 flex items-center gap-2 z-10"
-            disabled={isResettingControls}
-            onClick={resetControls}
-          >
-            {isResettingControls ? (
-              <Loader2 className="animate-spin" />
-            ) : (
-              <RotateCcw className="s-4" />
-            )}
-          </Button>
-        </div>
+        <Button
+          data-tour-id={TOUR_STEP_IDS.DEVICE_RESET}
+          variant="svg"
+          className="h-12 px-4 flex items-center gap-2 z-10"
+          disabled={isResettingControls}
+          onClick={resetControls}
+        >
+          {isResettingControls ? (
+            <Loader2 className="animate-spin" />
+          ) : (
+            <RotateCcw className="s-4" />
+          )}
+        </Button>
 
-        <div id={TOUR_STEP_IDS.DEVICE_STREAM}>
+        <div data-tour-id={TOUR_STEP_IDS.DEVICE_STREAM}>
           <Button
             variant={"ghost"}
             className="h-12 px-4 flex items-center gap-2"

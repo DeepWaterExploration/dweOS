@@ -1,20 +1,20 @@
 import { API_CLIENT } from "@/api";
+import { TOUR_STEP_IDS } from "@/components/tour/tour-constants";
+import { useTour } from "@/components/tour/tour-context";
+import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RangeControl } from "@/components/ui/range-control";
 import { Separator } from "@/components/ui/separator";
+import FeaturesContext from "@/contexts/FeaturesContext";
 import WebsocketContext from "@/contexts/WebsocketContext";
 import { cn } from "@/lib/utils";
 import { components } from "@/schemas/dwe_os_2";
 import { useContext, useEffect, useState } from "react";
 import NotConnected from "../not-connected";
-import { TOUR_STEP_IDS } from "@/lib/tour-constants";
-import { Button } from "@/components/ui/button";
-import { useTour } from "@/components/tour/tour";
 import { SettingsCard } from "./settings-card";
-import FeaturesContext from "@/contexts/FeaturesContext";
-import { RangeControl } from "@/components/ui/range-control";
 
 export const IP_REGEX =
   /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$|^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)+([A-Za-z]|[A-Za-z][A-Za-z0-9-]*[A-Za-z0-9])$/;
@@ -28,7 +28,7 @@ const PreferencesLayout = () => {
   const [frequencyOffset, setFrequencyOffset] = useState(0);
 
   const [recommendHost, setRecommendHost] = useState(false);
-  const tour = useTour();
+  const { resetTour } = useTour();
 
   useEffect(() => {
     const getSavedPreferences = async () => {
@@ -67,12 +67,6 @@ const PreferencesLayout = () => {
     );
   };
 
-  const resetTour = () => {
-    tour.setIsTourCompleted(false);
-    tour.startTour();
-    window.location.href = "/";
-  };
-
   useEffect(() => {
     if (connected && host && port && recommendHost !== undefined) {
       if (!IP_REGEX.test(host) || port < 1024 || port > 65535) {
@@ -94,11 +88,11 @@ const PreferencesLayout = () => {
   return (
     <div
       className="flex flex-col gap-4 h-full w-full"
-      id={TOUR_STEP_IDS.PREFS_PAGE}
+      data-tour-id={TOUR_STEP_IDS.PREFS_PAGE}
     >
       <div
         className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(350px,1fr))]"
-        id={TOUR_STEP_IDS.DEFAULT_STREAM_PREFS}
+        data-tour-id={TOUR_STEP_IDS.DEFAULT_STREAM_PREFS}
       >
         <SettingsCard cardTitle="Stream">
           <div className="flex flex-col gap-4">
@@ -173,7 +167,7 @@ const PreferencesLayout = () => {
         </SettingsCard>
       </div>
 
-      <Card>
+      <Card data-tour-id={TOUR_STEP_IDS.RESET_TOUR}>
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="font-bold pb-2">

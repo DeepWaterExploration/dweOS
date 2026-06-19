@@ -1,25 +1,10 @@
 "use client";
 
-import { useState, useEffect, useContext } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
+import { API_CLIENT } from "@/api";
+import { TOUR_STEP_IDS } from "@/components/tour/tour-constants";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Search, RefreshCw } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import {
   Pagination,
   PaginationContent,
@@ -29,29 +14,31 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import WebsocketContext from "@/contexts/WebsocketContext";
-import { API_CLIENT } from "@/api";
-import { components } from "@/schemas/dwe_os_2";
-import { LogDetailView } from "./log-detail-view";
 import { getLevelColor } from "@/lib/utils";
-import { TOUR_STEP_IDS } from "@/lib/tour-constants";
-import { useTour } from "@/components/tour/tour";
-
-const DEMO_LOG: components["schemas"]["LogSchema"][] = [
-  {
-    timestamp: "2024-03-10 10:15:23,456",
-    level: "INFO",
-    name: "system.core",
-    message: "System initialized successfully",
-    filename: "main.py",
-    lineno: 42,
-    function: "init",
-  },
-];
+import { components } from "@/schemas/dwe_os_2";
+import { FileWarning, RefreshCw, Search } from "lucide-react";
+import { useContext, useEffect, useState } from "react";
+import { LogDetailView } from "./log-detail-view";
 
 export function LogViewer() {
   const { connected, socket } = useContext(WebsocketContext)!;
-  const { isActive } = useTour();
 
   const [logs, setLogs] = useState<components["schemas"]["LogSchema"][]>([]);
   const [filteredLogs, setFilteredLogs] = useState<
@@ -59,7 +46,8 @@ export function LogViewer() {
   >([]);
   const [levelFilter, setLevelFilter] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [hasFetched, setHasFetched] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
   const [selectedLog, setSelectedLog] = useState<
@@ -71,7 +59,10 @@ export function LogViewer() {
   const logLevels = ["ALL", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"];
 
   const updateLogs = async () => {
+    setIsLoading(true);
     setLogs((await API_CLIENT.GET("/api/logs")).data!);
+    setIsLoading(false);
+    setHasFetched(true);
   };
 
   useEffect(() => {
@@ -179,12 +170,10 @@ export function LogViewer() {
     updateLogs().then(() => setTimeout(() => setIsLoading(false), 500));
   };
 
-  const displayedLogs = isActive ? DEMO_LOG : currentItems;
-
   return (
     <div
       className="flex flex-col h-[calc(100vh-5.5rem)] gap-4"
-      id={TOUR_STEP_IDS.LOGS_PAGE}
+      data-tour-id={TOUR_STEP_IDS.LOGS_PAGE}
     >
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
         <div className="flex flex-1 items-center space-x-2">
@@ -225,76 +214,103 @@ export function LogViewer() {
       </div>
 
       <div className="grid grid-cols-1 flex-1 min-h-0">
-        <div className="rounded-md border overflow-auto h-full">
-          <Table className="table-fixed min-w-[900px]" noWrapper>
-            <TableHeader className="bg-background sticky top-0 z-10">
-              <TableRow>
-                <TableHead className="w-[120px]">Timestamp</TableHead>
-                <TableHead className="w-[80px]">Level</TableHead>
-                <TableHead className="w-[140px]">Logger</TableHead>
-                <TableHead className="w-[100px]">Source</TableHead>
-                <TableHead className="w-[250px]">Message</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {displayedLogs.length > 0 ? (
-                displayedLogs.map((log, index) => (
-                  <TableRow
-                    key={index}
-                    id={TOUR_STEP_IDS.DEMO_LOGS}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => {
-                      setSelectedLog(log);
-                      setIsDetailOpen(true);
-                    }}
-                  >
-                    <TableCell className="font-mono text-xs">
-                      {formatTimestamp(log.timestamp)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getLevelColor(log.level)}>
-                        {log.level}
-                      </Badge>
-                    </TableCell>
-                    <TableCell
-                      className="whitespace-normal break-words max-w-[150px]"
-                      title={log.name}
+        {isLoading && !hasFetched ? (
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-4 animate-in fade-in">
+            <Spinner className="size-8" />
+            <p className="text-sm font-medium animate-pulse">
+              Fetching logs...
+            </p>
+          </div>
+        ) : logs.length === 0 ? (
+          <div
+            data-tour-id={TOUR_STEP_IDS.EMPTY_LOGS_STATE}
+            className="flex flex-col items-center justify-center h-full text-muted-foreground gap-4 animate-in fade-in"
+          >
+            <div className="p-4 bg-muted/50 rounded-full">
+              <FileWarning className="h-8 w-8 opacity-80" />
+            </div>
+            <div className="text-center">
+              <p className="text-base font-semibold text-foreground">
+                No Logs Found
+              </p>
+              <p className="text-sm">
+                There are currently no system logs to display.
+              </p>
+              <em className="text-sm animate-pulse">Scanning...</em>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-md border overflow-auto h-full">
+            <Table className="table-fixed min-w-[900px]" noWrapper>
+              <TableHeader className="bg-background sticky top-0 z-10">
+                <TableRow>
+                  <TableHead className="w-[120px]">Timestamp</TableHead>
+                  <TableHead className="w-[80px]">Level</TableHead>
+                  <TableHead className="w-[140px]">Logger</TableHead>
+                  <TableHead className="w-[100px]">Source</TableHead>
+                  <TableHead className="w-[250px]">Message</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {currentItems.length > 0 ? (
+                  currentItems.map((log, index) => (
+                    <TableRow
+                      key={index}
+                      data-tour-id={TOUR_STEP_IDS.DEBUG_LOG}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => {
+                        setSelectedLog(log);
+                        setIsDetailOpen(true);
+                      }}
                     >
-                      {log.name}
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-xs">
-                        <div
-                          className="break-words max-w-[150px]"
-                          title={log.filename}
-                        >
-                          {log.filename}:{log.lineno}
+                      <TableCell className="font-mono text-xs">
+                        {formatTimestamp(log.timestamp)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getLevelColor(log.level)}>
+                          {log.level}
+                        </Badge>
+                      </TableCell>
+                      <TableCell
+                        className="whitespace-normal break-words max-w-[150px]"
+                        title={log.name}
+                      >
+                        {log.name}
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-xs">
+                          <div
+                            className="break-words max-w-[150px]"
+                            title={log.filename}
+                          >
+                            {log.filename}:{log.lineno}
+                          </div>
+                          <div
+                            className="text-gray-500 break-words max-w-[150px]"
+                            title={log.function}
+                          >
+                            {log.function}()
+                          </div>
                         </div>
-                        <div
-                          className="text-gray-500 break-words max-w-[150px]"
-                          title={log.function}
-                        >
-                          {log.function}()
+                      </TableCell>
+                      <TableCell title={log.message}>
+                        <div className="font-mono text-xs whitespace-normal break-words line-clamp-2 pr-2 max-w-[150px]">
+                          {log.message}
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell title={log.message}>
-                      <div className="font-mono text-xs whitespace-normal break-words line-clamp-2 pr-2 max-w-[150px]">
-                        {log.message}
-                      </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                      No logs found matching your filters.
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
-                    No logs found matching your filters.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </div>
       <div className="flex items-center justify-between border-t pt-4">
         <div className="flex items-center space-x-2 text-sm text-muted-foreground">

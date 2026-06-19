@@ -1,5 +1,6 @@
-import { useContext } from "react";
+import { TOUR_STEP_IDS } from "@/components/tour/tour-constants";
 import WebsocketContext from "@/contexts/WebsocketContext";
+import { useContext } from "react";
 import NotConnected from "../not-connected";
 import WiredConfig from "./wired/wired-config";
 import WirelessConfig from "./wireless/wireless-config";
@@ -17,7 +18,10 @@ const NetworkLayout = () => {
 
   return (
     <div className="flex flex-col gap-4 h-full w-full">
-      <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(380px,1fr))] items-start">
+      <div
+        data-tour-id={TOUR_STEP_IDS.NETWORKING_PAGE}
+        className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(380px,1fr))] items-start"
+      >
         <WiredConfig />
         <WirelessConfig />
       </div>

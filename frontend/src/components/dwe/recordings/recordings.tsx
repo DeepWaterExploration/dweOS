@@ -5,17 +5,23 @@ import {
   recordingsActions,
   recordingsState,
 } from "@/components/dwe/recordings/store/recording-store";
-import { DEMO_RECORDING } from "@/components/dwe/recordings/utils/recording-utils";
-import { useTour } from "@/components/tour/tour";
+import { TOUR_STEP_IDS } from "@/components/tour/tour-constants";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
-import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 import { cn } from "@/lib/utils";
 import { components } from "@/schemas/dwe_os_2";
-import { ChevronDown, Circle, Download, Search, Trash2, X } from "lucide-react";
+import {
+  ChevronDown,
+  Circle,
+  Download,
+  Search,
+  Trash2,
+  VideoOff,
+  X,
+} from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSnapshot } from "valtio";
 
@@ -27,7 +33,6 @@ const Recordings = () => {
     import.meta.env.DEV ? hostAddress + ":5000" : window.location.host
   }`;
   const snap = useSnapshot(recordingsState);
-  const { isActive } = useTour();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -83,7 +88,7 @@ const Recordings = () => {
   };
 
   const displayRecordings = useMemo(() => {
-    let data = isActive ? [DEMO_RECORDING] : snap.recordings;
+    let data = snap.recordings;
 
     // searching
     if (searchQuery.trim()) {
@@ -113,7 +118,7 @@ const Recordings = () => {
       if (valA > valB) return sortDirection === "asc" ? 1 : -1;
       return 0;
     });
-  }, [snap.recordings, sortColumn, sortDirection, isActive, searchQuery]);
+  }, [snap.recordings, sortColumn, sortDirection, searchQuery]);
 
   const disk = snap.diskStats;
 
@@ -145,7 +150,7 @@ const Recordings = () => {
     <div
       ref={containerRef}
       className="flex flex-col h-[calc(100vh-5.5rem)] gap-2"
-      id={TOUR_STEP_IDS.REC_PAGE}
+      data-tour-id={TOUR_STEP_IDS.RECORDING_PAGE}
     >
       <div className="relative w-full">
         <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
@@ -160,23 +165,52 @@ const Recordings = () => {
 
       <div className="flex min-h-0 flex-1">
         <div className="flex-1 min-w-0 overflow-x-auto border rounded-md">
-          <RecordingTable
-            recordings={displayRecordings}
-            loading={snap.loading}
-            sortColumn={sortColumn}
-            sortDirection={sortDirection}
-            onSort={handleSort}
-          />
+          {snap.loading && !snap.hasFetched ? (
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-4 animate-in fade-in">
+              <Spinner className="size-8" />
+              <p className="text-sm font-medium animate-pulse">
+                Fetching recordings...
+              </p>
+            </div>
+          ) : snap.recordings.length === 0 ? (
+            <div
+              data-tour-id={TOUR_STEP_IDS.EMPTY_RECORDING_STATE}
+              className="flex flex-col items-center justify-center h-full text-muted-foreground gap-4 animate-in fade-in"
+            >
+              <div className="p-4 bg-muted/50 rounded-full">
+                <VideoOff className="h-8 w-8 opacity-80" />
+              </div>
+              <div className="text-center">
+                <p className="text-base font-semibold text-foreground">
+                  No Recordings Found
+                </p>
+                <p className="text-sm">
+                  There are currently no recordings saved on the system.
+                </p>
+                <em className="text-sm animate-pulse">Scanning...</em>
+              </div>
+            </div>
+          ) : (
+            <RecordingTable
+              recordings={displayRecordings}
+              sortColumn={sortColumn}
+              sortDirection={sortDirection}
+              onSort={handleSort}
+            />
+          )}
         </div>
       </div>
 
       <div
         className="bg-background p-4 mt-auto"
-        id={TOUR_STEP_IDS.RECORDING_FOOTER}
+        data-tour-id={TOUR_STEP_IDS.RECORDING_FOOTER}
       >
         <div className="flex justify-between items-center max-w-full gap-6 p-1">
           {/* BUTTONS */}
-          <div className="shrink-0">
+          <div
+            className="shrink-0"
+            data-tour-id={TOUR_STEP_IDS.RECORDINGS_FUNCTIONS}
+          >
             {snap.selectedNames.length > 0 ? (
               <div className="flex gap-4 items-center">
                 <ButtonGroup>
@@ -255,7 +289,10 @@ const Recordings = () => {
           </div>
 
           {/* STORAGE BAR */}
-          <div className="flex-1 max-w-md flex flex-col gap-2 ml-auto">
+          <div
+            className="flex-1 max-w-md flex flex-col gap-2 ml-auto"
+            data-tour-id={TOUR_STEP_IDS.STORAGE_BAR}
+          >
             <div className="h-2 w-full bg-secondary rounded-full overflow-hidden flex">
               {/* Recordings */}
               <div

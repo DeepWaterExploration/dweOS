@@ -1,10 +1,10 @@
 import { API_CLIENT } from "@/api";
-import { components } from "@/schemas/dwe_os_2";
-import { create } from "zustand";
-import { immer } from "zustand/middleware/immer";
-import { subscribeWithSelector } from "zustand/middleware";
-import { useCallback, useState } from "react";
 import { getStreamFromStreamInfo } from "@/lib/util/device";
+import { components } from "@/schemas/dwe_os_2";
+import { useCallback, useState } from "react";
+import { create } from "zustand";
+import { subscribeWithSelector } from "zustand/middleware";
+import { immer } from "zustand/middleware/immer";
 
 // TODO:
 // I'd like to switch the behavior to one of the following:
@@ -18,6 +18,9 @@ export interface DeviceState {
   devices: Record<string, components["schemas"]["DeviceModel"]>;
 
   isStreamLoading: Record<string, boolean>;
+
+  isFetchingDevices: boolean;
+  hasFetchedDevices: boolean;
 
   fetchDevices: () => Promise<void>;
   addDevice: (device: components["schemas"]["DeviceModel"]) => void;
@@ -43,6 +46,8 @@ export const useDeviceStore = create<DeviceState>()(
     immer((set, get, store) => ({
       isStreamLoading: {},
       devices: {},
+      isFetchingDevices: false,
+      hasFetchedDevices: false,
       configureStream: async (
         bus_info: string,
         partialStreamInfo: Partial<components["schemas"]["StreamInfoModel"]>,
@@ -155,13 +160,24 @@ export const useDeviceStore = create<DeviceState>()(
         set(store.getInitialState());
       },
       fetchDevices: async () => {
+        set((state) => {
+          state.isFetchingDevices = true;
+        });
+
         const { data, error } = await API_CLIENT.GET("/api/devices/map");
+
         if (data) {
           set((state) => {
             state.devices = data;
+            state.isFetchingDevices = false;
+            state.hasFetchedDevices = true;
           });
         } else {
           console.error(`Failed to load device list! ${error}`);
+          set((state) => {
+            state.isFetchingDevices = false;
+            state.hasFetchedDevices = true;
+          });
         }
       },
       setNickname: async (bus_info: string, nickname: string) => {

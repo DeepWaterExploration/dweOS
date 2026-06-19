@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { components } from "@/schemas/dwe_os_2";
 import {
   CameraIcon,
   Check,
@@ -8,10 +9,9 @@ import {
   PlusIcon,
   Trash2Icon,
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { components } from "@/schemas/dwe_os_2";
+import { useState } from "react";
 
-import { TOUR_STEP_IDS } from "@/lib/tour-constants";
+import { TOUR_STEP_IDS } from "@/components/tour/tour-constants";
 import { useDeviceStore } from "@/store/devices";
 import { usePreferencesStore } from "@/store/preferences";
 
@@ -136,7 +136,7 @@ export const EndpointList = ({ bus_id }: { bus_id: string }) => {
     <>
       <div
         className={`relative ${isStreamLoading ? "opacity-50 pointer-events-none" : ""}`}
-        id={TOUR_STEP_IDS.DEVICE_ENDPOINTS}
+        data-tour-id={TOUR_STEP_IDS.DEVICE_ENDPOINTS}
       >
         <Card className="overflow-hidden">
           <CardHeader className="bg-background mb-2">
@@ -179,7 +179,6 @@ export const EndpointList = ({ bus_id }: { bus_id: string }) => {
           {/* Add Button */}
           <Button
             variant="outline"
-            id={TOUR_STEP_IDS.ADD_ENDPOINTS}
             className="h-8 w-8 p-0 rounded-full shadow-md bg-card flex items-center justify-center hover:bg-accent hover:text-background"
             onClick={() => {
               handleAddEndpoint({

@@ -1,16 +1,14 @@
 import { API_CLIENT } from "@/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { components } from "@/schemas/dwe_os_2";
-import { useContext, useEffect, useState } from "react";
+import { TOUR_STEP_IDS } from "@/components/tour/tour-constants";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Check, PlusIcon, SettingsIcon, Trash2Icon } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -26,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Table,
   TableBody,
@@ -35,8 +34,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
 import WebsocketContext from "@/contexts/WebsocketContext";
+import { cn } from "@/lib/utils";
+import { components } from "@/schemas/dwe_os_2";
+import { Check, PlusIcon, SettingsIcon, Trash2Icon } from "lucide-react";
+import { useContext, useEffect, useState } from "react";
 import { IP_REGEX } from "../../preferences/preferences";
 
 type WiredDeviceModel = components["schemas"]["WiredDeviceModel"];
@@ -359,7 +361,7 @@ function ConnectionProfile({
         {/* Text Content */}
         <div className="min-w-0 flex-1 flex items-center justify-between">
           <div className="flex flex-col w-full">
-            <div className="flex items-start items-center justify-between w-full">
+            <div className="flex items-center justify-between w-full">
               <div className="grid grid-cols-2 items-center  space-x-3">
                 <span className="text-sm font-medium">{profile.id}</span>
                 {isActive && <Check className="h-4 w-4" />}
@@ -367,6 +369,7 @@ function ConnectionProfile({
 
               {/* Edit Button */}
               <Button
+                data-tour-id={TOUR_STEP_IDS.NETWORK_OPTION_SETTINGS}
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 mr-2 text-muted-foreground hover:text-foreground"
@@ -429,7 +432,10 @@ function WiredDevice({
       defaultValue={wired_device.is_active ? "followers" : ""}
       collapsible
     >
-      <AccordionItem value="followers">
+      <AccordionItem
+        value="followers"
+        data-tour-id={TOUR_STEP_IDS.NETWORK_OPTION}
+      >
         <AccordionTrigger className="text-sm font-semibold">
           {wired_device.interface}: {DeviceStateLookup[wired_device.state]}
         </AccordionTrigger>
@@ -463,6 +469,8 @@ function WiredDevice({
 
 export default function WiredConfig() {
   const [devices, setDevices] = useState([] as WiredDeviceModel[]);
+  const [isFetching, setIsFetching] = useState(true);
+  const [hasFetched, setHasFetched] = useState(false);
 
   const { connected, socket } = useContext(WebsocketContext)!;
 
@@ -482,6 +490,9 @@ export default function WiredConfig() {
 
         if (profileMap) setProfiles(profileMap);
         setDevices(devicesData);
+
+        setIsFetching(false);
+        setHasFetched(true);
       });
     });
   };
@@ -501,16 +512,44 @@ export default function WiredConfig() {
   }, []);
 
   return (
-    <Card className="max-w-3xl">
+    <Card className="max-w-3xl" data-tour-id={TOUR_STEP_IDS.WIRED_CONFIG}>
       <CardHeader>
         <CardTitle>Wired Configuration</CardTitle>
       </CardHeader>
       <CardContent className="p-3">
-        <div className="space-y-4">
-          {devices.map((dev) => (
-            <WiredDevice wired_device={dev} profiles={profiles} />
-          ))}
-        </div>
+        {isFetching && !hasFetched ? (
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-4 animate-in fade-in">
+            <Spinner className="size-8" />
+            <p className="text-sm font-medium animate-pulse">
+              Scanning interfaces...
+            </p>
+          </div>
+        ) : devices.length === 0 ? (
+          <div
+            data-tour-id={TOUR_STEP_IDS.EMPTY_NETWORK_STATE}
+            className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-4 animate-in fade-in"
+          >
+            <div className="text-center">
+              <p className="text-base font-semibold text-foreground">
+                No Interfaces Found
+              </p>
+              <p className="text-sm">
+                Ensure your device has a valid physical connection.
+              </p>
+              <em className="text-sm animate-pulse">Scanning...</em>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4 animate-in fade-in">
+            {devices.map((dev) => (
+              <WiredDevice
+                key={dev.interface}
+                wired_device={dev}
+                profiles={profiles}
+              />
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

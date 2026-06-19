@@ -4,34 +4,41 @@ import { useMemo } from "react";
 
 import {
   Aperture,
-  MonitorCog,
-  ImageIcon,
   CircleEllipsis,
   Cog,
+  ImageIcon,
+  MonitorCog,
 } from "lucide-react";
 
-import IntegerControl from "./controls/integer-control";
-import BooleanControl from "./controls/boolean-control";
-import MenuControl from "./controls/menu-control";
-import { components } from "@/schemas/dwe_os_2";
-import CameraControlMap from "./cam-control-map.json";
+import { TOUR_STEP_IDS } from "@/components/tour/tour-constants";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { components } from "@/schemas/dwe_os_2";
 import { useDeviceStore } from "@/store/devices";
+import CameraControlMap from "./cam-control-map.json";
+import BooleanControl from "./controls/boolean-control";
+import IntegerControl from "./controls/integer-control";
+import MenuControl from "./controls/menu-control";
 import { translateControls, UIControlModel } from "./stream/sensor-controls";
-import { TOUR_STEP_IDS } from "@/lib/tour-constants";
 
 type ControlModel = components["schemas"]["ControlModel"];
 
 const groupIcons: { [key: string]: React.ReactNode } = {
-  "Sensor Controls": <Cog className="h-4 w-4" />,
-  "Exposure Controls": <Aperture className="h-4 w-4" />,
-  "Image Controls": <ImageIcon className="h-4 w-4" />,
+  "Advanced Controls": <Cog className="h-4 w-4" />,
   "System Controls": <MonitorCog className="h-4 w-4" />,
+  "Exposure Controls": <Aperture className="h-4 w-4" />,
+  "Image Processing": <ImageIcon className="h-4 w-4" />,
+};
+
+const groupIDs: { [key: string]: string } = {
+  "Advanced Controls": TOUR_STEP_IDS.ADVANCED_CONTROLS,
+  "System Controls": TOUR_STEP_IDS.SYSTEM_CONTROLS,
+  "Exposure Controls": TOUR_STEP_IDS.EXPOSURE_CONTROLS,
+  "Image Processing": TOUR_STEP_IDS.IMAGE_PROCESSING,
 };
 
 const ControlWrapper = ({
@@ -117,16 +124,20 @@ export const CameraControls = ({
 
   return (
     <div
-      className="grid gap-4 py-4 overflow-y-auto"
-      id={TOUR_STEP_IDS.DEVICE_SETTINGS}
+      className="grid gap-4overflow-y-auto"
+      data-tour-id={TOUR_STEP_IDS.DEVICE_SETTINGS}
     >
       <Accordion
         type="single"
         collapsible
-        defaultValue={visibleCategories[0][0]}
+        // defaultValue={visibleCategories[0][0]}
       >
         {visibleCategories.map(([category, controlNames]) => (
-          <AccordionItem value={category} key={category}>
+          <AccordionItem
+            value={category}
+            key={category}
+            data-tour-id={groupIDs[category]}
+          >
             <AccordionTrigger>
               <div className="flex items-center gap-2">
                 {groupIcons[category] ?? <CircleEllipsis className="h-4 w-4" />}

@@ -1,3 +1,4 @@
+import { TOUR_STEP_IDS } from "@/components/tour/tour-constants";
 import {
   Card,
   CardContent,
@@ -9,7 +10,7 @@ import { WifiOff } from "lucide-react";
 
 export default function WirelessConfig() {
   return (
-    <Card className="w-full">
+    <Card className="w-full" data-tour-id={TOUR_STEP_IDS.WIRELESS_NETWORK}>
       <CardHeader>
         <CardTitle>Wireless Network</CardTitle>
         <CardDescription>

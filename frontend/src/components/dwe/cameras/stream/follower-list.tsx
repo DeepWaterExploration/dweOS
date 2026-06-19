@@ -1,15 +1,16 @@
+import { TOUR_STEP_IDS } from "@/components/tour/tour-constants";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { StreamSelector } from "../stream-selector";
 import { Button } from "@/components/ui/button";
-import { Trash2Icon } from "lucide-react";
-import { useCallback, useState } from "react";
 import { useDeviceStore } from "@/store/devices";
 import { useAvailableFollowers } from "@/store/selectors/device-selectors";
+import { Trash2Icon } from "lucide-react";
+import { useCallback, useState } from "react";
+import { StreamSelector } from "../stream-selector";
 
 export const FollowerList = ({
   bus_id,
@@ -53,7 +54,10 @@ export const FollowerList = ({
 
   return (
     <Accordion type="single" collapsible>
-      <AccordionItem value="followers">
+      <AccordionItem
+        value="followers"
+        data-tour-id={TOUR_STEP_IDS.DEVICE_FOLLOWERS}
+      >
         <AccordionTrigger className="text-sm font-semibold">
           Followers
         </AccordionTrigger>

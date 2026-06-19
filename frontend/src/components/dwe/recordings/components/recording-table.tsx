@@ -10,7 +10,6 @@ import {
 } from "@/components/dwe/recordings/utils/recording-utils";
 import { TOUR_STEP_IDS } from "@/components/tour/tour-constants";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 import {
   Table,
   TableBody,
@@ -32,7 +31,6 @@ import { useSnapshot } from "valtio";
 
 interface TableProps {
   recordings: readonly RecordingInfo[];
-  loading: boolean;
   sortColumn: keyof RecordingInfo | null;
   sortDirection: "asc" | "desc" | null;
   onSort: (column: keyof RecordingInfo) => void;
@@ -40,7 +38,6 @@ interface TableProps {
 
 export const RecordingTable = ({
   recordings,
-  loading,
   sortColumn,
   sortDirection,
   onSort,
@@ -199,13 +196,6 @@ export const RecordingTable = ({
       window.removeEventListener("pointerup", handlePointerUp);
     };
   }, [selectionBox]);
-
-  if (loading)
-    return (
-      <div className="flex items-center justify-center h-full w-full">
-        <Spinner />
-      </div>
-    );
 
   return (
     <div

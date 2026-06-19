@@ -10,10 +10,6 @@ export interface TourStep {
   position?: "top" | "bottom" | "left" | "right";
   highlightPadding?: number;
   popoverWidth?: number;
-  disableNext?: boolean;
-  disablePrev?: boolean;
-  advanceOnClick?: boolean | string[] | string;
-  retreatOnClick?: boolean | string[] | string;
   disableScroll?: boolean;
   disableInteraction?: boolean;
 }
@@ -21,6 +17,7 @@ export interface TourStep {
 export interface TourSegment {
   startStepId: string;
   steps: Record<string, TourStep>;
+  waitForSelector?: string | string[];
 }
 
 export interface TourContextType {

@@ -94,7 +94,10 @@ export const TOUR_STEPS: Record<string, TourSegment> = {
   },
   "/cameras": {
     startStepId: TOUR_STEP_IDS.CAMERAS_PAGE,
-    waitForSelector: `[data-tour-id="${TOUR_STEP_IDS.CAMERA_DEVICE}"]`,
+    waitForSelector: [
+      `[data-tour-id="${TOUR_STEP_IDS.CAMERA_DEVICE}"]`,
+      `[data-tour-id="${TOUR_STEP_IDS.EMPTY_DEVICE_STATE}"]`,
+    ],
     steps: {
       [TOUR_STEP_IDS.CAMERAS_PAGE]: {
         route: "/cameras",
@@ -191,7 +194,7 @@ export const TOUR_STEPS: Record<string, TourSegment> = {
         position: "right",
         popoverWidth: 400,
         content: (
-          <div className="flex flex-col">
+          <div className="flex flex-col gap-2">
             <div className="font-semibold">System Controls</div>
             <Separator />
             <ul className="text-sm text-muted-foreground p-2 space-y-2">
@@ -564,6 +567,10 @@ export const TOUR_STEPS: Record<string, TourSegment> = {
   },
   "/recordings": {
     startStepId: TOUR_STEP_IDS.RECORDING_PAGE,
+    waitForSelector: [
+      `[data-tour-id="${TOUR_STEP_IDS.RECORDING_ITEM}"]`,
+      `[data-tour-id="${TOUR_STEP_IDS.EMPTY_RECORDING_STATE}"]`,
+    ],
     steps: {
       [TOUR_STEP_IDS.RECORDING_PAGE]: {
         route: "/recordings",
@@ -681,7 +688,10 @@ export const TOUR_STEPS: Record<string, TourSegment> = {
   },
   "/network": {
     startStepId: TOUR_STEP_IDS.NETWORKING_PAGE,
-    waitForSelector: `[data-tour-id="${TOUR_STEP_IDS.NETWORK_OPTION}"]`,
+    waitForSelector: [
+      `[data-tour-id="${TOUR_STEP_IDS.NETWORK_OPTION}"]`,
+      `[data-tour-id="${TOUR_STEP_IDS.EMPTY_NETWORK_STATE}"]`,
+    ],
     steps: {
       [TOUR_STEP_IDS.NETWORKING_PAGE]: {
         route: "/network",
@@ -800,14 +810,24 @@ export const TOUR_STEPS: Record<string, TourSegment> = {
       [TOUR_STEP_IDS.DEFAULT_STREAM_PREFS]: {
         route: "/preferences",
         position: "bottom",
+        popoverWidth: 400,
         content: (
           <div className="flex flex-col gap-2">
             <div className="font-semibold">Default Stream Preferences</div>
             <Separator />
-            <div className="text-sm text-muted-foreground p-2">
-              These fields determine what show up automatically when you add an
-              endpoint. The Default Stream Port will increment automatically as
-              you add new endpoints for the same Stream Host.
+            <div className="text-sm text-muted-foreground p-2 flex flex-col gap-2">
+              <span>
+                These fields determine standard settings for camera streams.
+              </span>
+              <span>
+                The <b>Default Stream Host</b> and <b>Default Stream Port</b>{" "}
+                are the defaults for what show up when adding an{" "}
+                <b>Endpoint.</b>
+              </span>
+              <span>
+                The <b>Default Stream Port</b> will increment automatically as
+                you add new endpoints for the same <b>Stream Host</b>.
+              </span>
             </div>
           </div>
         ),
@@ -834,7 +854,10 @@ export const TOUR_STEPS: Record<string, TourSegment> = {
   },
   "/log-viewer": {
     startStepId: TOUR_STEP_IDS.LOGS_PAGE,
-    waitForSelector: `[data-tour-id="${TOUR_STEP_IDS.DEBUG_LOG}"]`,
+    waitForSelector: [
+      `[data-tour-id="${TOUR_STEP_IDS.DEBUG_LOG}"]`,
+      `[data-tour-id="${TOUR_STEP_IDS.EMPTY_LOGS_STATE}"]`,
+    ],
     steps: {
       [TOUR_STEP_IDS.LOGS_PAGE]: {
         route: "/log-viewer",

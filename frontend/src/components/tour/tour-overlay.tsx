@@ -98,24 +98,32 @@ export default function TourOverlay() {
 
   // segment loaded?
   useEffect(() => {
-    if (!activeSegment || !activeSegment.waitForSelector) {
+    const targetSelectors = activeSegment?.waitForSelector;
+
+    // no element to search for, exit
+    if (!targetSelectors) {
       setIsSegmentLoading(false);
       return;
     }
 
-    if (document.querySelector(activeSegment.waitForSelector)) {
-      setIsSegmentLoading(false);
-      return;
-    }
+    const selectors = Array.isArray(targetSelectors)
+      ? targetSelectors
+      : [targetSelectors];
 
-    setIsSegmentLoading(true);
+    const checkIsLoading = () =>
+      !selectors.some((selector) => {
+        try {
+          return !!document.querySelector(selector);
+        } catch {
+          console.warn("Invalid Tour Selector:", selector);
+          return false;
+        }
+      });
 
-    // mutation observer watches for loaded
+    setIsSegmentLoading(checkIsLoading());
+
     const observer = new MutationObserver(() => {
-      if (document.querySelector(activeSegment.waitForSelector!)) {
-        setIsSegmentLoading(false);
-        observer.disconnect();
-      }
+      setIsSegmentLoading(checkIsLoading());
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
@@ -144,16 +152,8 @@ export default function TourOverlay() {
       });
     } else {
       setIsLocating(true);
-      console.warn(
-        `Tour element [data-tour-id="${targetId}"] removed from DOM. Auto-skipping backward.`,
-      );
-      if (step.prevStepId) {
-        prevStep();
-      } else {
-        cancelTour();
-      }
     }
-  }, [currentStepId, steps, cancelTour, prevStep]);
+  }, [currentStepId, steps]);
 
   // Sync MotionValues
   useEffect(() => {
@@ -258,7 +258,18 @@ export default function TourOverlay() {
           const handleShift = () =>
             window.requestAnimationFrame(updatePosition);
           const resizeObs = new ResizeObserver(handleShift);
-          const mutationObs = new MutationObserver(handleShift);
+          // element disappeared, prev until safe step
+          const mutationObs = new MutationObserver(() => {
+            if (!document.body.contains(element)) {
+              console.warn(
+                `Element #${targetId} destroyed. Auto-skipping backward.`,
+              );
+              if (observerRef.current) observerRef.current.disconnect();
+              handlePrev();
+            } else {
+              handleShift();
+            }
+          });
 
           resizeObs.observe(element);
           resizeObs.observe(document.body);
@@ -336,55 +347,6 @@ export default function TourOverlay() {
     };
   }, [updatePosition]);
 
-  // observe for specific clicks to advance/retreat the tour
-  useEffect(() => {
-    if (!currentStepId || !steps[currentStepId]) return;
-    const step = steps[currentStepId];
-    if (!step.advanceOnClick && !step.retreatOnClick) return;
-    const targetId = step.selectorId || currentStepId;
-
-    const handleTargetClick = (e: MouseEvent) => {
-      if (!e.isTrusted) return;
-      const target = e.target as HTMLElement;
-
-      // advance
-      if (step.advanceOnClick) {
-        const ids = Array.isArray(step.advanceOnClick)
-          ? step.advanceOnClick
-          : // if string, target is that id, otherwise it's the steps id
-            typeof step.advanceOnClick === "string"
-            ? [step.advanceOnClick]
-            : [targetId];
-
-        // advance if any of these ids are clicked
-        if (ids.some((id) => target.closest(`[data-tour-id="${id}"]`))) {
-          nextStep();
-          return;
-        }
-      }
-
-      // retreat
-      if (step.retreatOnClick) {
-        const ids = Array.isArray(step.retreatOnClick)
-          ? step.retreatOnClick
-          : // if string, target is that id, otherwise it's the steps id
-            typeof step.retreatOnClick === "string"
-            ? [step.retreatOnClick]
-            : [targetId];
-
-        // retreat if any of these ids are clicked
-        if (ids.some((id) => target.closest(`[data-tour-id="${id}"]`))) {
-          prevStep();
-        }
-      }
-    };
-
-    window.addEventListener("click", handleTargetClick, true);
-    return () => {
-      window.removeEventListener("click", handleTargetClick, true);
-    };
-  }, [currentStepId, steps, nextStep, prevStep]);
-
   // for blocking scrolls if needed within border box
   useEffect(() => {
     if (!currentStepId || !steps[currentStepId]) return;
@@ -412,6 +374,7 @@ export default function TourOverlay() {
     <AnimatePresence>
       {currentStepId && currentStepData && (elementPosition || isLocating) && (
         <>
+          {/* Overlay to block mouse events */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -421,7 +384,7 @@ export default function TourOverlay() {
             style={{ clipPath }}
           />
 
-          {/* Border Box */}
+          {/* Highlight Box */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -504,14 +467,14 @@ export default function TourOverlay() {
               <>
                 <motion.div
                   layout="position"
-                  className="absolute top-4 right-2 z-10"
+                  className="absolute top-3 right-3 z-10 cursor-pointer text-muted-foreground"
                 >
                   <Button
                     variant="svg"
-                    className="w-5 h-5 cursor-pointer text-muted-foreground p-0"
+                    className="p-0 h-auto"
                     onClick={completeTour}
                   >
-                    <X className="h-4 w-4" />
+                    <X className="size-4" />
                   </Button>
                 </motion.div>
 
@@ -537,30 +500,7 @@ export default function TourOverlay() {
                   <div className="flex items-center gap-2">
                     {currentStepData.prevStepId && !isFirstStep && (
                       <button
-                        onClick={() => {
-                          if (currentStepData.retreatOnClick) {
-                            const ids = Array.isArray(
-                              currentStepData.retreatOnClick,
-                            )
-                              ? currentStepData.retreatOnClick
-                              : typeof currentStepData.retreatOnClick ===
-                                  "string"
-                                ? [currentStepData.retreatOnClick]
-                                : [currentStepData.selectorId || currentStepId];
-                            ids.forEach((id, index) => {
-                              if (typeof id === "string") {
-                                setTimeout(() => {
-                                  document
-                                    .querySelector<HTMLElement>(
-                                      `[data-tour-id="${id}"]`,
-                                    )
-                                    ?.click();
-                                }, index * 150);
-                              }
-                            });
-                          }
-                          handlePrev();
-                        }}
+                        onClick={handlePrev}
                         className="text-sm text-muted-foreground enabled:hover:text-foreground disabled:opacity-20 disabled:animate-pulse"
                       >
                         Previous
@@ -573,7 +513,7 @@ export default function TourOverlay() {
                       />
                     )}
                     <button
-                      onClick={nextStep}
+                      onClick={handleNext}
                       className="text-sm font-medium text-primary enabled:hover:text-accent disabled:opacity-20 disabled:animate-pulse"
                     >
                       {isLastStep ? "Finish" : "Next"}

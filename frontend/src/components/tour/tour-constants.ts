@@ -1,9 +1,11 @@
 export const TOUR_STEP_IDS = {
+  // /
   POWER_SWITCH: "power-switch",
   HELP_SWITCH: "help-switch",
   TOUR_PAGE_BTN: "tour-page-btn",
   MODE_TOGGLE: "mode-toggle",
 
+  // /cameras
   CAMERAS_PAGE: "cameras-page",
   CAMERA_DEVICE: "camera-device",
   DROPPED_FRAMES: "dropped-frames",
@@ -21,24 +23,35 @@ export const TOUR_STEP_IDS = {
   DEVICE_RESET: "device-reset",
   DEVICE_STREAM: "device-stream",
 
+  // /recordings
   RECORDING_PAGE: "recording-page",
   RECORDING_ITEM: "recording-item",
   RECORDING_FOOTER: "recording-footer",
   RECORDINGS_FUNCTIONS: "recordings-functions",
   STORAGE_BAR: "storage-bar",
 
+  // /network
   NETWORKING_PAGE: "networking-page",
   WIRED_CONFIG: "wired-config",
   NETWORK_OPTION: "network-option",
   NETWORK_OPTION_SETTINGS: "network-option-settings",
   WIRELESS_NETWORK: "wireless-network",
 
+  // /preferences
   PREFS_PAGE: "prefs-page",
   DEFAULT_STREAM_PREFS: "default-stream-prefs",
   RESET_TOUR: "reset-tour",
 
+  // /log-viewer
   LOGS_PAGE: "logs-page",
   DEBUG_LOG: "debug-log",
 
+  // /terminal
   TERMINAL: "terminal",
+
+  // MISC
+  EMPTY_DEVICE_STATE: "empty-device-state",
+  EMPTY_RECORDING_STATE: "empty-recording-state",
+  EMPTY_NETWORK_STATE: "empty-network-state",
+  EMPTY_LOGS_STATE: "empty-logs-state",
 };

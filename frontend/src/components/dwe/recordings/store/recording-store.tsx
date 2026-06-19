@@ -24,6 +24,7 @@ interface RecordingsState {
   diskStats: DiskStats | null;
   selectedNames: string[];
   loading: boolean;
+  hasFetched: boolean;
   zipJobs: ZipJob[];
   isZipDrawerMinimized: boolean;
   isCancelAllZipModalOpen: boolean;
@@ -53,6 +54,7 @@ export const recordingsState = proxy<RecordingsState>({
   diskStats: null,
   selectedNames: [],
   loading: true,
+  hasFetched: false,
   zipJobs: [],
   isZipDrawerMinimized: false,
   isCancelAllZipModalOpen: false,
@@ -87,6 +89,7 @@ export const recordingsActions = {
       console.error("Error fetching recordings:", error);
     } finally {
       recordingsState.loading = false;
+      recordingsState.hasFetched = true;
     }
   },
 

@@ -13,7 +13,15 @@ import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { components } from "@/schemas/dwe_os_2";
-import { ChevronDown, Circle, Download, Search, Trash2, X } from "lucide-react";
+import {
+  ChevronDown,
+  Circle,
+  Download,
+  Search,
+  Trash2,
+  VideoOff,
+  X,
+} from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSnapshot } from "valtio";
 
@@ -157,13 +165,39 @@ const Recordings = () => {
 
       <div className="flex min-h-0 flex-1">
         <div className="flex-1 min-w-0 overflow-x-auto border rounded-md">
-          <RecordingTable
-            recordings={displayRecordings}
-            loading={snap.loading}
-            sortColumn={sortColumn}
-            sortDirection={sortDirection}
-            onSort={handleSort}
-          />
+          {snap.loading && !snap.hasFetched ? (
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-4 animate-in fade-in">
+              <Spinner className="size-8" />
+              <p className="text-sm font-medium animate-pulse">
+                Fetching recordings...
+              </p>
+            </div>
+          ) : snap.recordings.length === 0 ? (
+            <div
+              data-tour-id={TOUR_STEP_IDS.EMPTY_RECORDING_STATE}
+              className="flex flex-col items-center justify-center h-full text-muted-foreground gap-4 animate-in fade-in"
+            >
+              <div className="p-4 bg-muted/50 rounded-full">
+                <VideoOff className="h-8 w-8 opacity-80" />
+              </div>
+              <div className="text-center">
+                <p className="text-base font-semibold text-foreground">
+                  No Recordings Found
+                </p>
+                <p className="text-sm">
+                  There are currently no recordings saved on the system.
+                </p>
+                <em className="text-sm animate-pulse">Scanning...</em>
+              </div>
+            </div>
+          ) : (
+            <RecordingTable
+              recordings={displayRecordings}
+              sortColumn={sortColumn}
+              sortDirection={sortDirection}
+              onSort={handleSort}
+            />
+          )}
         </div>
       </div>
 

@@ -2,16 +2,6 @@ import {
   recordingsActions,
   recordingsState,
 } from "@/components/dwe/recordings/store/recording-store";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -146,44 +136,87 @@ export const RecordingModals = ({ baseUrl }: { baseUrl: string }) => {
       </Dialog>
 
       {/* Delete Dialog */}
-      <AlertDialog
+      <Dialog
         open={snap.deleteTargets.length > 0}
         onOpenChange={(open) => !open && recordingsActions.closeDelete()}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
+        <DialogContent>
+          <DialogHeader>
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/15 text-destructive">
                 <AlertTriangle className="h-5 w-5" />
               </div>
-              <div>
-                <AlertDialogTitle>Delete recording?</AlertDialogTitle>
-                <AlertDialogDescription>
+              <div className="text-left">
+                <DialogTitle>Delete recording?</DialogTitle>
+                <DialogDescription>
                   This action cannot be undone.
-                </AlertDialogDescription>
+                </DialogDescription>
               </div>
             </div>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
               disabled={snap.deleteSubmitting}
               onClick={recordingsActions.closeDelete}
             >
               Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={snap.deleteSubmitting}
               onClick={(e) => {
                 e.preventDefault();
                 recordingsActions.performDelete();
               }}
-              disabled={snap.deleteSubmitting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {snap.deleteSubmitting ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cancel All Downloads Dialog */}
+      <Dialog
+        open={snap.isCancelAllZipModalOpen}
+        onOpenChange={(open) =>
+          !open && recordingsActions.closeCancelAllModal()
+        }
+      >
+        <DialogContent>
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/15 text-destructive">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div className="text-left">
+                <DialogTitle>Cancel all downloads?</DialogTitle>
+                <DialogDescription>
+                  This will immediately stop all active zipping tasks.
+                  Incomplete files will be deleted.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={recordingsActions.closeCancelAllModal}
+            >
+              Keep Downloading
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={(e) => {
+                e.preventDefault();
+                recordingsActions.cancelAllZips(baseUrl);
+              }}
+            >
+              Cancel Downloads
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

@@ -118,11 +118,6 @@ class Server:
 
         self.network_wrapper = NetworkWrapper(sio)
 
-        self.network_wrapper.on(
-            "refresh_ui",
-            lambda: asyncio.create_task(self.sio.emit("refresh_wired_config")),
-        )
-
         self.system_manager = SystemManager()
 
         self.recordings_service = RecordingsService(self.data_dir)
@@ -185,6 +180,8 @@ class Server:
         # loop over and emit the logs to the client
         asyncio.create_task(self.emit_logs())
 
+        self.server_logger.info("Starting dweOS backend server")
+
         if self.feature_support.serial:
             self.serial.start()
 
@@ -196,6 +193,8 @@ class Server:
             self.ttyd_manager.start()
         else:
             self.server_logger.info("Running without TTYD")
+
+        self.server_logger.info("Successfully started dweOS backend server")
 
     def shutdown(self) -> None:
         self.server_logger.info("Shutting down")

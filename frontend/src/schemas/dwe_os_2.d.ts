@@ -140,6 +140,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/devices/external/notify_camera": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Notify dweOS that a camera has been configured externally */
+        post: operations["notify_camera_api_devices_external_notify_camera_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/preferences": {
         parameters: {
             query?: never;
@@ -259,6 +276,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/recordings/disk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get physical disk usage */
+        get: operations["get_disk_usage_api_recordings_disk_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/recordings/zip/prepare": {
         parameters: {
             query?: never;
@@ -343,23 +377,6 @@ export interface paths {
         head?: never;
         /** Rename a recording */
         patch: operations["rename_recording_api_recordings__old_name___new_name__patch"];
-        trace?: never;
-    };
-    "/api/recordings/disk": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get physical disk usage */
-        get: operations["get_disk_usage_api_recordings_disk_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
         trace?: never;
     };
     "/api/network/wired/devices": {
@@ -513,7 +530,7 @@ export interface components {
         /** ControlFlagsModel */
         ControlFlagsModel: {
             /** Default Value */
-            default_value: number;
+            default_value: number | boolean;
             /**
              * Max Value
              * @default 0
@@ -601,6 +618,16 @@ export interface components {
              *       "num_drops": 0
              *     } */
             frame_stats: components["schemas"]["FrameDropStats"];
+            /**
+             * Is Externally Managed
+             * @default false
+             */
+            is_externally_managed: boolean;
+            /**
+             * String3
+             * @default
+             */
+            string3: string;
         };
         /** DeviceNicknameModel */
         DeviceNicknameModel: {
@@ -720,6 +747,17 @@ export interface components {
             function: string;
             /** Message */
             message: string;
+        };
+        /**
+         * ManagedEvent
+         * @enum {string}
+         */
+        ManagedEvent: "DEVICE_MANAGED" | "STREAM_START" | "STREAM_STOP";
+        /** ManagedNotifyModel */
+        ManagedNotifyModel: {
+            /** Bus Info */
+            bus_info: string;
+            event: components["schemas"]["ManagedEvent"];
         };
         /** MenuItemModel */
         MenuItemModel: {
@@ -1106,6 +1144,39 @@ export interface operations {
             };
         };
     };
+    notify_camera_api_devices_external_notify_camera_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ManagedNotifyModel"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimpleRequestStatusModel"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_preferences_api_preferences_get: {
         parameters: {
             query?: never;
@@ -1257,6 +1328,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RecordingInfo"][];
+                };
+            };
+        };
+    };
+    get_disk_usage_api_recordings_disk_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiskStatsResponse"];
                 };
             };
         };
@@ -1451,26 +1542,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_disk_usage_api_recordings_disk_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DiskStatsResponse"];
                 };
             };
         };

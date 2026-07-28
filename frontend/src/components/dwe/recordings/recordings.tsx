@@ -10,11 +10,13 @@ import { useTour } from "@/components/tour/tour";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
+import { cn } from "@/lib/utils";
 import { components } from "@/schemas/dwe_os_2";
-import { Circle, Download, Search, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { ChevronDown, Circle, Download, Search, Trash2, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSnapshot } from "valtio";
 
 type RecordingInfo = components["schemas"]["RecordingInfo"];
@@ -27,6 +29,7 @@ const Recordings = () => {
   const snap = useSnapshot(recordingsState);
   const { isActive } = useTour();
 
+  const containerRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortColumn, setSortColumn] = useState<keyof RecordingInfo | null>(
     null,
@@ -38,6 +41,36 @@ const Recordings = () => {
   // initial data fetch
   useEffect(() => {
     recordingsActions.fetchRecordings();
+  }, []);
+
+  // global listener for clicks outside of table
+  useEffect(() => {
+    const handleGlobalPointerDown = (e: PointerEvent) => {
+      if (recordingsState.selectedNames.length === 0) return;
+
+      const target = e.target as HTMLElement;
+
+      if (
+        // ignore clicks inside the table
+        target.closest(
+          'tr, thead, [role="row"], [role="columnheader"], .rt-tr',
+        ) ||
+        // ignore clicks inside context menus/modals
+        target.closest(
+          '[role="menu"], [role="dialog"], [data-radix-popper-content-wrapper]',
+        ) ||
+        // ignore clicks on action buttons inside recordings
+        (target.closest("button, input, a") &&
+          containerRef.current?.contains(target))
+      ) {
+        return;
+      }
+      recordingsActions.setSelectedNames([]);
+    };
+
+    document.addEventListener("pointerdown", handleGlobalPointerDown);
+    return () =>
+      document.removeEventListener("pointerdown", handleGlobalPointerDown);
   }, []);
 
   const handleSort = (column: keyof RecordingInfo) => {
@@ -110,6 +143,7 @@ const Recordings = () => {
 
   return (
     <div
+      ref={containerRef}
       className="flex flex-col h-[calc(100vh-5.5rem)] gap-2"
       id={TOUR_STEP_IDS.REC_PAGE}
     >
@@ -125,7 +159,7 @@ const Recordings = () => {
       </div>
 
       <div className="flex min-h-0 flex-1">
-        <div className="flex-1 min-w-0 overflow-x-auto border rounded-xl">
+        <div className="flex-1 min-w-0 overflow-x-auto border rounded-md">
           <RecordingTable
             recordings={displayRecordings}
             loading={snap.loading}
@@ -144,47 +178,69 @@ const Recordings = () => {
           {/* BUTTONS */}
           <div className="shrink-0">
             {snap.selectedNames.length > 0 ? (
-              <ButtonGroup>
-                <Button
-                  variant="outline"
-                  className="cursor-pointer"
-                  onClick={() => recordingsActions.downloadZip(baseUrl)}
-                  disabled={snap.zipDownloading || snap.recordings.length === 0}
-                >
-                  {snap.zipDownloading ? (
-                    <div className="flex items-center gap-2">
-                      Zipping <Spinner className="size-4" />
-                    </div>
-                  ) : (
+              <div className="flex gap-4 items-center">
+                <ButtonGroup>
+                  <Button
+                    variant="outline"
+                    className="cursor-pointer"
+                    onClick={() => {
+                      if (snap.selectedNames.length > 1) {
+                        recordingsActions.downloadZip(baseUrl);
+                      } else if (snap.selectedNames.length === 1) {
+                        const targetRecording = snap.recordings.find(
+                          (r) => r.name === snap.selectedNames[0],
+                        );
+                        if (targetRecording) {
+                          recordingsActions.downloadRecording(
+                            targetRecording,
+                            baseUrl,
+                          );
+                          recordingsActions.setSelectedNames([]);
+                        }
+                      }
+                    }}
+                  >
                     <Download className="size-4" />
-                  )}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="cursor-pointer hover:bg-destructive"
-                  disabled={
-                    snap.deleteSubmitting || snap.recordings.length === 0
-                  }
-                  onClick={() => {
-                    const selectedRecs = snap.recordings.filter((r) =>
-                      snap.selectedNames.includes(r.name),
-                    );
-                    recordingsActions.openDelete(
-                      (snap.selectedNames.length > 0
-                        ? selectedRecs
-                        : snap.recordings) as RecordingInfo[],
-                    );
-                  }}
-                >
-                  {snap.deleteSubmitting ? (
-                    <div className="flex items-center gap-2">
-                      Trashing <Spinner className="size-4" />
-                    </div>
-                  ) : (
-                    <Trash2 className="size-4" />
-                  )}
-                </Button>
-              </ButtonGroup>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="cursor-pointer hover:bg-destructive"
+                    disabled={
+                      snap.deleteSubmitting || snap.recordings.length === 0
+                    }
+                    onClick={() => {
+                      const selectedRecs = snap.recordings.filter((r) =>
+                        snap.selectedNames.includes(r.name),
+                      );
+                      recordingsActions.openDelete(
+                        (snap.selectedNames.length > 0
+                          ? selectedRecs
+                          : snap.recordings) as RecordingInfo[],
+                      );
+                    }}
+                  >
+                    {snap.deleteSubmitting ? (
+                      <div className="flex items-center gap-2">
+                        Trashing <Spinner className="size-4" />
+                      </div>
+                    ) : (
+                      <Trash2 className="size-4" />
+                    )}
+                  </Button>
+                </ButtonGroup>
+                <div className="flex bg-muted items-center border px-2 gap-2  rounded-md">
+                  <span className="text-sm text-muted-foreground">
+                    {snap.selectedNames.length} selected
+                  </span>
+                  <Button
+                    variant="svg"
+                    className="p-0 h-8"
+                    onClick={() => recordingsActions.setSelectedNames([])}
+                  >
+                    <X className="size-4" />
+                  </Button>
+                </div>
+              </div>
             ) : (
               <Button
                 variant="outline"
@@ -251,6 +307,80 @@ const Recordings = () => {
 
       <RecordingContextMenu baseUrl={baseUrl} />
       <RecordingModals baseUrl={baseUrl} />
+
+      {snap.zipJobs && snap.zipJobs.length > 0 && (
+        <div
+          className="fixed bottom-0 right-6 flex flex-col z-50 w-80 bg-card/50 
+                    backdrop-blur-sm rounded-t-md border-t border-x
+                    animate-in slide-in-from-bottom-10 fade-in duration-300"
+        >
+          <div
+            className="flex w-full justify-between items-center p-2 gap-2 border-b"
+            onClick={() => recordingsActions.toggleZipDrawer()}
+          >
+            <Button variant="svg" className="p-2 h-auto">
+              <ChevronDown
+                className={cn(
+                  "size-4 transition-transform duration-300",
+                  snap.isZipDrawerMinimized ? "rotate-180" : "",
+                )}
+              />
+            </Button>
+            <span className="text-sm font-semibold ml-1">
+              {snap.zipJobs.length} Download{snap.zipJobs.length > 1 ? "s" : ""}
+            </span>
+            <Button
+              variant="svg"
+              className="p-2 h-auto"
+              onClick={(e) => {
+                e.stopPropagation();
+                recordingsActions.openCancelAllModal();
+              }}
+            >
+              <X className="size-4" />
+            </Button>
+          </div>
+          <div
+            className={cn(
+              "grid transition-all duration-300 ease-in-out",
+              snap.isZipDrawerMinimized ? "grid-rows-[0fr]" : "grid-rows-[1fr]",
+            )}
+          >
+            <div className="overflow-hidden">
+              <div className="flex flex-col max-h-[40vh] overflow-y-auto overflow-x-hidden p-2">
+                {snap.zipJobs.map((job) => (
+                  <div
+                    key={job.id}
+                    className=" p-4 flex flex-col gap-3 animate-in slide-in-from-right-10 fade-in duration-300"
+                  >
+                    <div className="flex justify-between items-center">
+                      <div className="flex flex-col w-full gap-2">
+                        <span className="flex items-center gap-2 text-sm font-medium">
+                          <Spinner className="size-4" /> Zipping{" "}
+                          {job.totalFiles} items...
+                        </span>
+                        <Progress
+                          value={job.progress}
+                          className="h-1.5 w-full"
+                        />
+                      </div>
+                      <Button
+                        variant="svg"
+                        onClick={() =>
+                          recordingsActions.cancelZip(baseUrl, job.id)
+                        }
+                        className="text-muted-foreground hover:text-foreground transition-colors py-0 pl-2 pr-0"
+                      >
+                        <X className="size-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

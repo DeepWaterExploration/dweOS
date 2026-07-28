@@ -1,6 +1,6 @@
 import fcntl
 
-from backend_py.src.models import FormatSizeModel, IntervalModel
+from backend_py.src.models import FormatSizeModel, IntervalModel, StreamFormatModel
 
 from ...camera_helper.camera_helper_loader import camera_helper
 from ...stream_utils import fourcc2s
@@ -79,3 +79,22 @@ class Camera:
                             )
                     format_sizes.append(format_size)
             self.formats[fourcc2s(v4l2_fmt.pixelformat)] = format_sizes
+
+    def get_current_format(self) -> StreamFormatModel:
+        """Get the currently active format"""
+        fmt = v4l2.v4l2_format()
+        fmt.type = v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE
+        fcntl.ioctl(self._fd, v4l2.VIDIOC_G_FMT, fmt)
+
+        parm = v4l2.v4l2_streamparm()
+        parm.type = v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE
+        fcntl.ioctl(self._fd, v4l2.VIDIOC_G_PARM, parm)
+
+        return StreamFormatModel(
+            width=fmt.fmt.pix.width,
+            height=fmt.fmt.pix.height,
+            interval=IntervalModel(
+                numerator=parm.parm.capture.timeperframe.numerator,
+                denominator=parm.parm.capture.timeperframe.denominator,
+            ),
+        )

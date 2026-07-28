@@ -193,12 +193,19 @@ class DeviceModel(BaseModel):
     device_type: DeviceType
     # Only required for stellarHD
     # (remember, followers CAN be leaders in some circumstances)
+    # FIXME: can't put a mutable object here, but it doesn't matter because
+    # ehds dont use it
     followers: list[str] = []
     # True if is a follower and stream is managed by the leader
     is_managed: bool = False
     # Per-stream drop stats. Resets every time the stream is restarted so
     # the count is "drops in the current stream", not cumulative.
     frame_stats: FrameDropStats = FrameDropStats(num_drops=0)
+
+    # Externally managed
+    # This is separate from is_managed (which is purely internal)
+    is_externally_managed: bool = False
+    string3: str = ""
 
     class Config:
         from_attributes = True
@@ -260,3 +267,14 @@ class DeviceDescriptorModel(BaseModel):
 class AddFollowerPayload(BaseModel):
     leader_bus_info: str
     follower_bus_info: str
+
+
+class ManagedEvent(Enum):
+    DEVICE_MANAGED = "DEVICE_MANAGED"
+    DEVICE_UNMANAGED = "DEVICE_UNMANAGED"
+    STREAM_START = "STREAM_START"
+
+
+class ManagedNotifyModel(BaseModel):
+    bus_info: str
+    event: ManagedEvent

@@ -11,7 +11,13 @@ import { useCallback, useState } from "react";
 import { useDeviceStore } from "@/store/devices";
 import { useAvailableFollowers } from "@/store/selectors/device-selectors";
 
-export const FollowerList = ({ bus_id }: { bus_id: string }) => {
+export const FollowerList = ({
+  bus_id,
+  disabled,
+}: {
+  bus_id: string;
+  disabled: boolean;
+}) => {
   // Full list of devices
   const availableFollowers = useAvailableFollowers(bus_id);
   const addFollower = useDeviceStore((state) => state.addFollower);
@@ -62,7 +68,7 @@ export const FollowerList = ({ bus_id }: { bus_id: string }) => {
                   label="Add Follower"
                   value={selectedFollower}
                   onChange={setSelectedFollower}
-                  disabled={noAvailableFollowers}
+                  disabled={noAvailableFollowers || disabled}
                 />
               </div>
 
@@ -72,7 +78,7 @@ export const FollowerList = ({ bus_id }: { bus_id: string }) => {
                     handleAddFollower(selectedFollower);
                   }}
                   className="w-full"
-                  disabled={noAvailableFollowers || isStreamLoading}
+                  disabled={noAvailableFollowers || isStreamLoading || disabled}
                 >
                   Add
                 </Button>
@@ -111,7 +117,7 @@ export const FollowerList = ({ bus_id }: { bus_id: string }) => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              disabled={isStreamLoading}
+                              disabled={isStreamLoading || disabled}
                               onClick={() => {
                                 handleRemoveFollower(follower);
                               }}

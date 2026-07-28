@@ -1,14 +1,15 @@
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import JSONResponse, FileResponse
-from fastapi import FastAPI, Request, HTTPException
-
-from backend_py.src import Server, FeatureSupport
-import socketio
-import os
-from fastapi.middleware.cors import CORSMiddleware
-import asyncio
-from contextlib import asynccontextmanager
 import argparse
+import asyncio
+import os
+from contextlib import asynccontextmanager
+
+import socketio
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+
+from backend_py.src import FeatureSupport, Server
 
 # Use AsyncServer
 sio = socketio.AsyncServer(async_mode="asgi", transports=["websocket"])

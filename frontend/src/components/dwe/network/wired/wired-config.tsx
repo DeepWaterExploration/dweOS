@@ -94,7 +94,7 @@ function AddressEdit({
     } else {
       setIsValidPrefix(false);
     }
-  }, [addressState, prefixState, onUpdate, prefix]);
+  }, [addressState, prefixState, onUpdate, prefix, address]);
 
   return (
     <TableRow>
@@ -301,7 +301,13 @@ function EditProfileDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={handleSave}>Apply Changes</Button>
+          <div className="flex flex-col gap-3 w-full">
+            <p className="text-xs text-muted-foreground">
+              Changes are saved to the connection profile. To apply them to the
+              device, select the profile in the network list or reboot.
+            </p>
+            <Button onClick={handleSave}>Apply Changes</Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -414,6 +420,8 @@ function WiredDevice({
   profiles: { [key: string]: ConnectionProfileModel };
 }) {
   console.log(profiles);
+
+  if (wired_device.state === 0 || wired_device.state === 10) return null;
 
   return (
     <Accordion

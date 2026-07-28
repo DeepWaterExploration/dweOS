@@ -30,6 +30,7 @@ from backend_py.src.models import (
 
 from ..stream_runner import Stream, StreamRunner
 from ..stream_utils import string_to_stream_encode_type
+from .asic_interface import ASICInterface
 from .options import BaseOption
 from .registry import DeviceMetadata
 from .video4linux import Camera
@@ -58,7 +59,12 @@ class Device(events.EventEmitter):
         self.pid = device_info.pid
         self.bus_info = device_info.bus_info
         self.nickname = ""
+        self.is_externally_managed = False
         self.stream = Stream()
+
+        # ASIC Interface for low level register read/writes
+        self.asic_interface = ASICInterface(self.cameras[0])
+        self.string3 = self.asic_interface.read_string3()
 
         # Thread safety
         self._configuration_lock = threading.Lock()
@@ -115,6 +121,20 @@ class Device(events.EventEmitter):
     @property
     def can_follow(self) -> bool:
         return False
+
+    def on_external_stream_started(self) -> None:
+        pass
+
+    def on_external_unmanaged(self) -> None:
+        self.is_externally_managed = False
+        self.emit("updated")  # Trigger UI update
+
+    def on_external_managed(self) -> None:
+        self.is_externally_managed = True
+        self.stop_stream()
+        # Save the fact that the stream is stopped (could be done from updated)
+        self.emit("save")
+        self.emit("updated")  # Trigger UI update
 
     def _update_drop_stats(self) -> None:
         with self._frame_stats_lock:
@@ -252,8 +272,12 @@ class Device(events.EventEmitter):
             self._id_counter += 1
 
     def start_stream(self) -> None:
-        # with self._frame_stats_lock:
-        #     self.frame_stats = FrameDropStats(num_drops=0)
+        if self.is_externally_managed:
+            self.logger.info("Cannot start the stream of an externally managed device")
+            return
+
+        with self._frame_stats_lock:
+            self.frame_stats = FrameDropStats(num_drops=0)
 
         with self._configuration_lock:
             self.stream.enabled = True
@@ -262,7 +286,7 @@ class Device(events.EventEmitter):
         # FIXME: What is a better way to do this? An event bus could work,
         # especially since we are propagating this 3 levels up
         # For example: self.event_bus.emit("stream_started", self)
-        # self.emit("frame_stats")
+        self.emit("frame_stats")
 
     def stop_stream(self) -> None:
         with self._configuration_lock:
@@ -324,6 +348,7 @@ class Device(events.EventEmitter):
 
         if control_id < 0:
             # DWE control
+            # FIXME: CRITICAL: This is very bad performance. It MUST be a dict
             for control in self.controls:
                 if control.control_id == control_id:
                     control.value = value
@@ -368,8 +393,8 @@ class Device(events.EventEmitter):
     # set an option
     def set_option(self, opt: str, value: Any, from_save=False) -> None:
         self.logger.debug(f"Setting option - {opt} to {value}")
-        if opt in self._options and (
-            not from_save or not self._options[opt].load_from_save
+        if opt in self._options and not (
+            from_save and not self._options[opt].load_from_save
         ):
             self._options[opt].set_value(value)
 

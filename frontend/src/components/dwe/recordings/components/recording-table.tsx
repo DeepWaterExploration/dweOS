@@ -227,12 +227,12 @@ export const RecordingTable = ({
 
       <Table noWrapper className="table-fixed">
         <TableHeader
-          className="bg-background sticky top-0 z-10 select-none"
+          className="bg-background sticky top-0 z-10 select-none w-full"
           onMouseDown={(e) => e.stopPropagation()}
         >
           <TableRow className="text-left text-gray-500 font-bold">
             <TableCell
-              className="cursor-pointer hover:bg-muted w-auto"
+              className="cursor-pointer hover:bg-muted w-full"
               onClick={() => onSort("name")}
             >
               Name&nbsp;&nbsp;
@@ -261,6 +261,7 @@ export const RecordingTable = ({
               Size&nbsp;&nbsp;
               {sortColumn === "size" && (sortDirection === "asc" ? "▲" : "▼")}
             </TableCell>
+            <TableCell className="cursor-pointer hover:bg-muted w-12" />
           </TableRow>
         </TableHeader>
         <TableBody className="select-none">
@@ -324,18 +325,18 @@ export const RecordingTable = ({
                     />
                   </div>
                 </TableCell>
-                <TableCell className="text-left w-24">
+                <TableCell className="text-left">
                   {formatDate(recording.created)}
                 </TableCell>
-                <TableCell className="text-left w-24">
+                <TableCell className="text-left">
                   {recording.duration}
                 </TableCell>
-                <TableCell className="text-left w-24">
+                <TableCell className="text-left">
                   {formatFileSize(
                     recording.size ? parseFloat(recording.size) : 0,
                   )}
                 </TableCell>
-                <TableCell className="text-right w-16 p-0 pr-2">
+                <TableCell className="text-right p-0 pr-2">
                   <Button
                     variant="ghost"
                     className="h-8 w-8 p-0"

@@ -4,24 +4,30 @@ options.py
 
 import logging
 from abc import abstractmethod
+from collections.abc import Callable
 
 from backend_py.src.models import ControlFlagsModel, ControlTypeEnum, MenuItemModel
 
+from ..asic_interface import ASICInterface
 from ..options import BaseOption
 from ..xu import StellarRegisterMap, StellarSensorMap
-from .asic_interface import ASICInterface
 
 
 class ASICOption(BaseOption):
     """ """
 
     def __init__(
-        self, name: str, control_flags: ControlFlagsModel, interface: ASICInterface
+        self,
+        name: str,
+        control_flags: ControlFlagsModel,
+        interface: ASICInterface,
+        callback: Callable[[int | float | bool], None] | None = None,
     ) -> None:
         super().__init__(name, control_flags)
 
         self._cached = control_flags.default_value
         self._interface = interface
+        self._callback = callback
 
         self.logger = logging.getLogger(
             f"dwe_os_2.cameras.{interface.camera.path}.ASICOption.{name}"
@@ -29,7 +35,6 @@ class ASICOption(BaseOption):
 
     @abstractmethod
     def _write(self, value: int | float | bool) -> None:
-        # TODO: add checks for value type
         pass
 
     @abstractmethod
@@ -41,13 +46,15 @@ class ASICOption(BaseOption):
         value = int(value)
         self._cached = value
         self._write(value)
+        if self._callback:
+            self._callback(value)
 
     def get_value(self) -> int | float | bool:
         return self._cached
 
 
 class AutoExposureOption(ASICOption):
-    def __init__(self, asic_interface: ASICInterface) -> None:
+    def __init__(self, asic_interface: ASICInterface, **kwargs) -> None:
         super().__init__(
             "Auto Exposure (ASIC)",
             ControlFlagsModel(
@@ -58,6 +65,7 @@ class AutoExposureOption(ASICOption):
                 control_type=ControlTypeEnum.BOOLEAN,
             ),
             asic_interface,
+            **kwargs,
         )
 
     def _write(self, value: int | float | bool) -> None:
@@ -77,12 +85,9 @@ class ASICHighLowOption(ASICOption):
         asic_interface: ASICInterface,
         high_register: int,
         low_register: int,
+        **kwargs,
     ) -> None:
-        super().__init__(
-            name,
-            control_flags,
-            asic_interface,
-        )
+        super().__init__(name, control_flags, asic_interface, **kwargs)
 
         self.high_register = high_register
         self.low_register = low_register
@@ -100,14 +105,11 @@ class ASICHighLowOption(ASICOption):
 class HardwareBitrateOption(ASICHighLowOption):
     PRESET_MAP = {0: 5000, 1: 9000, 2: 13000, 3: 20000, 4: 60000}
 
-    def __init__(
-        self,
-        asic_interface: ASICInterface,
-    ) -> None:
+    def __init__(self, asic_interface: ASICInterface, **kwargs) -> None:
         super().__init__(
             "JPEG Image Quality",
             ControlFlagsModel(
-                default_value=2,  # default to medium
+                default_value=4,  # default to highest
                 menu=[
                     MenuItemModel(index=0, name="Lowest"),
                     MenuItemModel(index=1, name="Low"),
@@ -123,6 +125,7 @@ class HardwareBitrateOption(ASICHighLowOption):
             asic_interface,
             StellarRegisterMap.REG_HW_BITRATE_HIGH,
             StellarRegisterMap.REG_HW_BITRATE_LOW,
+            **kwargs,
         )
 
     def _write(self, value: int | float | bool) -> None:
@@ -159,12 +162,9 @@ class SensorHighLowOption(ASICOption):
         low_register: int,
         # FIXME: check write delay
         write_delay_s: float = 0.6,
+        **kwargs,
     ) -> None:
-        super().__init__(
-            name,
-            control_flags,
-            asic_interface,
-        )
+        super().__init__(name, control_flags, asic_interface, **kwargs)
 
         self.high_register = high_register
         self.low_register = low_register
@@ -186,7 +186,7 @@ class SensorHighLowOption(ASICOption):
 
 
 class ShutterSpeedOption(SensorHighLowOption):
-    def __init__(self, asic_interface: ASICInterface) -> None:
+    def __init__(self, asic_interface: ASICInterface, **kwargs) -> None:
         super().__init__(
             "Exposure Time",
             ControlFlagsModel(
@@ -200,11 +200,12 @@ class ShutterSpeedOption(SensorHighLowOption):
             StellarSensorMap.SHUTTER_HIGH,
             StellarSensorMap.SHUTTER_LOW,
             write_delay_s=0.6,
+            **kwargs,
         )
 
 
 class VtsOption(SensorHighLowOption):
-    def __init__(self, asic_interface: ASICInterface) -> None:
+    def __init__(self, asic_interface: ASICInterface, **kwargs) -> None:
         super().__init__(
             "VTS",
             ControlFlagsModel(
@@ -217,6 +218,7 @@ class VtsOption(SensorHighLowOption):
             asic_interface,
             StellarSensorMap.VTS_HIGH,
             StellarSensorMap.VTS_LOW,
+            **kwargs,
         )
 
 
@@ -241,7 +243,7 @@ class FakeOption(BaseOption):
 
 
 class HtsOption(SensorHighLowOption):
-    def __init__(self, asic_interface: ASICInterface) -> None:
+    def __init__(self, asic_interface: ASICInterface, **kwargs) -> None:
         super().__init__(
             "HTS",
             ControlFlagsModel(
@@ -254,15 +256,16 @@ class HtsOption(SensorHighLowOption):
             asic_interface,
             StellarSensorMap.HTS_HIGH,
             StellarSensorMap.HTS_LOW,
+            **kwargs,
         )
 
 
 class GainOption(SensorHighLowOption):
-    def __init__(self, asic_interface: ASICInterface) -> None:
+    def __init__(self, asic_interface: ASICInterface, **kwargs) -> None:
         super().__init__(
             "ISO",
             ControlFlagsModel(
-                default_value=400,
+                default_value=0,
                 max_value=4095,
                 min_value=0,
                 step=1,
@@ -271,11 +274,12 @@ class GainOption(SensorHighLowOption):
             asic_interface,
             StellarSensorMap.ISO_HIGH,
             StellarSensorMap.ISO_LOW,
+            **kwargs,
         )
 
 
 class StrobeWidthOption(SensorHighLowOption):
-    def __init__(self, asic_interface: ASICInterface) -> None:
+    def __init__(self, asic_interface: ASICInterface, **kwargs) -> None:
         super().__init__(
             "Strobe Width",
             ControlFlagsModel(
@@ -288,6 +292,7 @@ class StrobeWidthOption(SensorHighLowOption):
             asic_interface,
             StellarSensorMap.STROBE_WIDTH_HIGH,
             StellarSensorMap.STROBE_WIDTH_LOW,
+            **kwargs,
         )
         # Strobe width should not be set on start
         self.load_from_save = False

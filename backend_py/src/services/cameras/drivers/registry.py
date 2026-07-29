@@ -48,7 +48,7 @@ DEVICE_REGISTRY: dict[tuple[int, int], DeviceMetadata] = {
     (0x3961, 0x1102): DeviceMetadata("stellarHD (F)", DeviceType.STELLARHD_FOLLOWER),
     # explore3D
     (0x3961, 0x3112): DeviceMetadata("explore3D (Left)", DeviceType.STELLARHD_FOLLOWER),
-    (0x3961, 0x3111): DeviceMetadata("explore3D (Right)", DeviceType.STELLARHD_LEADER),
+    (0x3961, 0x3111): DeviceMetadata("explore3D (Right)", DeviceType.STELLARHD_FOLLOWER),
 }
 
 

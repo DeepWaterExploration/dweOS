@@ -10,4 +10,4 @@ USB cameras, when used with Linux often have a nondeterministic issue related to
 
 We have now tuned our firmware to account for this issue and report the bandwidth according to the real data rate, instead of the expected maximum (how most USB cameras report bandwidth).
 
-Please update your firmware to the latest version using our firmware updater for windows: [https://storage.googleapis.com/dwe-firmware/DWEFirmwareLoader_1.0.3_x86-setup.exe](https://storage.googleapis.com/dwe-firmware/DWEFirmwareLoader_1.0.3_x86-setup.exe).
+Please update your firmware to the latest version using our firmware update guide: https://docs.dwe.ai/exploreHD/guides/exploreHD-firmware

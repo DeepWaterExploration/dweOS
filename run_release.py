@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import os
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 import socketio
@@ -17,7 +18,7 @@ sio = socketio.AsyncServer(async_mode="asgi", transports=["websocket"])
 
 # Define events
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     await server.serve()
     yield
     print("Shutting down server...")
@@ -86,7 +87,7 @@ if __name__ == "__main__":
 
     # Register as a BlueOS extension
     @app.get("/register_service")
-    async def register_service():
+    async def register_service() -> JSONResponse:
         return JSONResponse(content=blueos_extension)
 
     # Do API mounting before static mounting
@@ -94,11 +95,11 @@ if __name__ == "__main__":
     app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="static")
 
     @app.exception_handler(404)
-    async def not_found(request: Request, exc: HTTPException):
+    async def not_found(request: Request, exc: HTTPException) -> FileResponse:
         """Serve index.html for any unknown paths (Frontend Routing Support)"""
         return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
 
-    async def main():
+    async def main() -> None:
         config = uvicorn.Config(asgi_app, host="0.0.0.0", port=args.port)
         server = uvicorn.Server(config)
         await server.serve()

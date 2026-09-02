@@ -434,7 +434,7 @@ class AsyncNetworkManager(EventEmitter):
         """
         Get a list of compatible profiles for a given wired device
         """
-        compatible_profiles = []
+        compatible_profiles: list[tuple[ConnectionProfile, int]] = []
 
         for profile in self.profiles.values():
             settings = profile.settings_dict
@@ -451,13 +451,13 @@ class AsyncNetworkManager(EventEmitter):
 
             # TODO: mac filtering
 
-            timestamp = connection_settings.get("timestamp", 0)
+            timestamp: int = connection_settings.get("timestamp", 0)
 
-            compatible_profiles.append({"profile": profile, "timestamp": timestamp})
+            compatible_profiles.append((profile, timestamp))
 
-        compatible_profiles.sort(key=lambda x: x["timestamp"], reverse=True)
+        compatible_profiles.sort(key=lambda x: x[1], reverse=True)
 
-        return [p["profile"] for p in compatible_profiles]
+        return [p[0] for p in compatible_profiles]
 
     def get_profile(self, path: str) -> ConnectionProfile | None:
         """

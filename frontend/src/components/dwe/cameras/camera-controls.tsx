@@ -144,7 +144,9 @@ export const CameraControls = ({
                       <InternalControlWrapper
                         key={uiControls[name].control_id}
                         control={uiControls[name]}
-                        disabled={device.is_managed}
+                        // NOTE: External management behavior is changed after v0.7.3 to account for SDK v1.2.0 changes
+                        // This means versions AFTER v0.7.3 will no longer work as intended with SDK versions before v1.2.0
+                        disabled={device.is_managed || device.is_externally_managed}
                       />
                     ),
                 )}

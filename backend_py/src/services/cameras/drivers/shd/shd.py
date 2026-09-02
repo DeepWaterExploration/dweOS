@@ -76,7 +76,7 @@ class SHDDevice(Device):
     def on_external_stream_started(self) -> None:
         # Override method
         # We reapply assuming the stream has already been started
-        self.reapply_sensor_config()
+        # self.reapply_sensor_config()
 
         # We then want to apply the config from the camera
         mjpeg_camera = self.find_camera_with_format("MJPG")

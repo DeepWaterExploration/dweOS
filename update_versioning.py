@@ -19,7 +19,7 @@ VERSION_FILE_PATH = f"{SCRIPT_DIR}/frontend/package.json"
 #     return None
 
 
-def get_new_tag():
+def get_new_tag() -> str | None:
     try:
         new_tag = input("Enter a new tag name: ")
         if new_tag == "":
@@ -29,9 +29,9 @@ def get_new_tag():
         return None
 
 
-def update_version_json(new_version):
+def update_version_json(new_version) -> None:
     # Load the current package.json file
-    with open(VERSION_FILE_PATH, "r") as f:
+    with open(VERSION_FILE_PATH) as f:
         data = json.load(f)
 
     # Update the version string

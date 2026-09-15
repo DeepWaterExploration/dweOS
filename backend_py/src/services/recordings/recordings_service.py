@@ -5,9 +5,12 @@ Handles locating recordings and extracting metadata from the files
 Allows for the renaming, deletion, and compression of the found recordings
 """
 
+import contextlib
 import json
 import logging
 import os
+import shutil
+import struct
 import subprocess
 import threading
 import uuid
@@ -208,3 +211,71 @@ class RecordingsService:
 
                 zipf.write(recording.path, arcname=full_name)
         return zip_filename
+
+    def ensure_free_space(
+        self, min_free: int, delete_oldest: bool, in_use: set[str | None]
+    ) -> bool:
+        """
+        Check that there are at least min_free bytes available for recordings,
+        deleting the oldest recordings that are not in use if delete_oldest is set
+        """
+        if shutil.disk_usage(self.recordings_path).free >= min_free:
+            return True
+
+        if delete_oldest:
+            with self.recordings_lock:
+                paths = [
+                    os.path.join(self.recordings_path, filename)
+                    for filename in os.listdir(self.recordings_path)
+                    if filename.endswith((".mp4", ".avi", ".dwvo"))
+                ]
+                for path in sorted(paths, key=os.path.getmtime):
+                    if path in in_use:
+                        continue
+                    self.logger.info(f"Deleting oldest recording: {path}")
+                    os.remove(path)
+                    self.durations.pop(path, None)
+                    if shutil.disk_usage(self.recordings_path).free >= min_free:
+                        return True
+
+        self.logger.warning("Not enough free space to record")
+        return False
+
+    def repair_recordings(self) -> None:
+        """
+        Repair AVI recordings that were never finalized (e.g. power loss) in the
+        background. Their frames are intact, but the header and index are missing.
+        """
+        unfinalized = []
+        for filename in os.listdir(self.recordings_path):
+            path = os.path.join(self.recordings_path, filename)
+            if filename.endswith(".avi") and self._is_unfinalized_avi(path):
+                unfinalized.append(path)
+
+        threading.Thread(
+            target=self._repair_avis, args=(unfinalized,), daemon=True
+        ).start()
+
+    def _is_unfinalized_avi(self, path: str) -> bool:
+        # The total frame count in the main AVI header (avih) is only written on EOS
+        with open(path, "rb") as f:
+            header = f.read(64)
+        index = header.find(b"avih")
+        return index != -1 and struct.unpack_from("<I", header, index + 24)[0] == 0
+
+    def _repair_avis(self, paths: list[str]) -> None:
+        for path in paths:
+            self.logger.info(f"Repairing unfinalized recording: {path}")
+            temp_path = f"{path}.repair"
+            try:
+                subprocess.run(
+                    ["ffmpeg", "-v", "error", "-y", "-i", path]
+                    + ["-c", "copy", "-f", "avi", temp_path],
+                    capture_output=True,
+                    check=True,
+                )
+                os.replace(temp_path, path)
+            except (FileNotFoundError, subprocess.CalledProcessError) as e:
+                self.logger.error(f"Failed to repair recording {path}: {e}")
+                with contextlib.suppress(FileNotFoundError):
+                    os.remove(temp_path)

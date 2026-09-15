@@ -12,6 +12,7 @@ Manages the leader follower connections
 import asyncio
 import logging
 import traceback
+from collections.abc import Callable
 from types import CoroutineType
 from typing import Any, cast
 
@@ -73,6 +74,7 @@ class DeviceManager(events.EventEmitter):
         sio: socketio.AsyncServer,
         settings_manager: SettingsManager,
         serial: SerialPWMController,
+        can_record: Callable[[], bool],
     ) -> None:
         super().__init__()
 
@@ -85,6 +87,7 @@ class DeviceManager(events.EventEmitter):
         self.stream_errors: list[str] = []
 
         self.serial = serial
+        self.can_record = can_record
 
         self.logger = logging.getLogger("dwe_os_2.cameras.DeviceManager")
 
@@ -154,6 +157,9 @@ class DeviceManager(events.EventEmitter):
             "frame_stats", lambda: self._schedule_async(self._emit_frame_stats(device))
         )
 
+        # Scheduled recordings check storage before and while recording
+        device.stream_runner.can_record = self.can_record
+
         # Only followers will update PWM frequency
         if self.serial and device.can_follow:
             device.on("pwm_frequency", self.serial.apply_from_fps)
@@ -220,7 +226,14 @@ class DeviceManager(events.EventEmitter):
         endpoints = stream_info.endpoints
 
         device.configure_stream(
-            encode_type, width, height, interval, stream_type, endpoints
+            encode_type,
+            width,
+            height,
+            interval,
+            stream_type,
+            endpoints,
+            record_interval=stream_info.record_interval,
+            record_duration=stream_info.record_duration,
         )
 
         if stream_info.enabled:
@@ -429,6 +442,8 @@ class DeviceManager(events.EventEmitter):
             self.device_dict[device.bus_info] = device
             # load the settings
             self.settings_manager.load_device(device, self.device_dict)
+            if device.stream.enabled:
+                device.start_stream()
 
             # Output device to log (after loading settings)
             self.logger.info(f"Device Added: {device_info.bus_info}")
@@ -436,8 +451,6 @@ class DeviceManager(events.EventEmitter):
             device_added = True
 
         if len(removed_devices) > 0 or len(new_devices) > 0:
-            # make sure to load the leader followers in case there are new ones to check
-            self.settings_manager.link_followers(self.device_dict)
             self._sort_devices()
 
         if device_added:

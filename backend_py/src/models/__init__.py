@@ -34,7 +34,7 @@ from .network import (
     IPV4Method,
     WiredDeviceModel,
 )
-from .preferences import SavedPreferencesModel
+from .preferences import SavedPreferencesModel, StoragePolicyEnum
 from .recordings import RecordingInfo
 from .saved_cameras import (
     SavedControlModel,
@@ -80,6 +80,7 @@ __all__ = [
     "V4LControlTypeEnum",
     # Preferences
     "SavedPreferencesModel",
+    "StoragePolicyEnum",
     # Saved Cameras
     "SavedControlModel",
     "SavedDeviceModel",

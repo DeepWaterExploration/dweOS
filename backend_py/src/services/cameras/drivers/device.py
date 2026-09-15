@@ -60,7 +60,7 @@ class Device(events.EventEmitter):
         self.bus_info = device_info.bus_info
         self.nickname = ""
         self.is_externally_managed = False
-        self.stream = Stream()
+        self.stream = Stream(bus_info=device_info.bus_info)
 
         # ASIC Interface for low level register read/writes
         self.asic_interface = ASICInterface(self.cameras[0])
@@ -217,6 +217,9 @@ class Device(events.EventEmitter):
         interval: IntervalModel,
         stream_type: StreamTypeEnum,
         stream_endpoints: list[StreamEndpointModel] | None = None,
+        *,
+        record_interval: int,
+        record_duration: int,
     ) -> None:
         if stream_endpoints is None:
             stream_endpoints = []
@@ -249,6 +252,8 @@ class Device(events.EventEmitter):
             self.stream.endpoints = stream_endpoints
             self.stream.encode_type = encode_type
             self.stream.stream_type = stream_type
+            self.stream.record_interval = record_interval
+            self.stream.record_duration = record_duration
 
             # Update the pwm frequency with the new fps
             # TODO: This should be on a command bus or something, not emitted from
@@ -315,6 +320,8 @@ class Device(events.EventEmitter):
             saved_device.stream.interval,
             saved_device.stream.stream_type,
             saved_device.stream.endpoints,
+            record_interval=saved_device.stream.record_interval,
+            record_duration=saved_device.stream.record_duration,
         )
 
         with self._configuration_lock:

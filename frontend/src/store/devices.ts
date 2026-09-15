@@ -75,16 +75,14 @@ export const useDeviceStore = create<DeviceState>()(
             interval: stream.interval,
           },
           stream_type: partialStreamInfo.stream_type ?? stream.stream_type,
+          record_interval:
+            partialStreamInfo.record_interval ?? stream.record_interval,
+          record_duration:
+            partialStreamInfo.record_duration ?? stream.record_duration,
         };
 
         set((state) => {
           state.isStreamLoading[bus_info] = true;
-
-          // FIXME: Very hacky way of getting strobe width to be 0 on stream start
-          const strobeControl = state.devices[bus_info].controls.find(
-            (control) => control.name === "Strobe Width",
-          );
-          if (strobeControl) strobeControl.value = 0;
         });
 
         const { data, error } = await API_CLIENT.POST(

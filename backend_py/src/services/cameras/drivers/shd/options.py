@@ -283,8 +283,10 @@ class StrobeWidthOption(SensorHighLowOption):
         super().__init__(
             "Strobe Width",
             ControlFlagsModel(
-                default_value=0,
-                max_value=4095,
+                # A width >= VTS keeps the strobe on for the whole frame, so the
+                # lights stay at full brightness with auto exposure
+                default_value=65535,
+                max_value=65535,
                 min_value=0,
                 step=1,
                 control_type=ControlTypeEnum.INTEGER,
@@ -294,5 +296,3 @@ class StrobeWidthOption(SensorHighLowOption):
             StellarSensorMap.STROBE_WIDTH_LOW,
             **kwargs,
         )
-        # Strobe width should not be set on start
-        self.load_from_save = False

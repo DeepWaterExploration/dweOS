@@ -24,6 +24,11 @@ class Stream:
         default_factory=lambda: IntervalModel(numerator=1, denominator=30)
     )
     enabled: bool = False
+    bus_info: str = ""
+
+    # Record for record_duration seconds every record_interval seconds
+    record_interval: int = 600
+    record_duration: int = 60
 
     # Configuration specific
     software_h264_bitrate: int = 5000

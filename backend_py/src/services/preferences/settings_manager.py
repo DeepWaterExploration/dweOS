@@ -9,15 +9,12 @@ and manages background sync of settings
 import json
 import logging
 import threading
-from typing import cast
 
 from backend_py.src.models import (
     SavedDeviceModel,
 )
 
-from ..cameras.device_utils import find_device_with_bus_info
 from ..cameras.drivers.device import Device
-from ..cameras.drivers.shd import SHDDevice
 
 
 class SettingsManager:
@@ -84,63 +81,6 @@ class SettingsManager:
             if saved_device.bus_info == bus_info:
                 return saved_device
         return None
-
-    def link_followers(self, device_dict: dict[str, Device]) -> None:
-        """
-        Run this when we need to check for new devices
-        """
-
-        devices = device_dict.values()
-
-        for device in devices:
-            if not isinstance(device, SHDDevice):
-                continue
-            saved_device = self.get_saved_device(device.bus_info)
-
-            if not saved_device:
-                continue
-
-            device_should_start = True
-
-            if device.can_lead and saved_device.followers:
-                self.logger.info("Adding followers")
-                device_should_start = False
-
-                new_followers = []
-                for follower_bus_info in saved_device.followers:
-                    follower = find_device_with_bus_info(device_dict, follower_bus_info)
-
-                    # If this follower does not exist, that is ok
-                    # There is no inherent truth to the existence of the followers list
-                    if not follower:
-                        self.logger.warning(
-                            f"Follower device {follower_bus_info} corresponding to "
-                            f"device {device.bus_info} not yet found."
-                        )
-                        new_followers.append(follower_bus_info)
-                        device_should_start = True
-                        continue
-
-                    # What is worse than it not existing, however, is it not being a
-                    # follower. So, we delete
-                    if not follower.can_follow:
-                        self.logger.warning(
-                            f"Follower device {follower.bus_info} is not of follower"
-                            " type, skipping"
-                        )
-                        continue
-
-                    follower = cast(SHDDevice, follower)
-                    device.add_follower(follower)
-                    new_followers.append(follower_bus_info)
-
-                saved_device.followers = new_followers
-
-                self._update_settings()
-
-            # Either all of its followers are found, or it doesn't have any
-            if device_should_start and device.stream.enabled:
-                device.start_stream()
 
     def _update_settings(self) -> None:
         self.file_object.seek(0)

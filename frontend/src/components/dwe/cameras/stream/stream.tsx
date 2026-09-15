@@ -12,7 +12,6 @@ import { useDeviceStore } from "@/store/devices";
 import { EndpointList } from "./endpoint-list";
 import { StreamSelector } from "../stream-selector";
 import {
-  canLead,
   getAvailableIntervals,
   getEncoders,
   getResolution,
@@ -21,9 +20,43 @@ import {
 } from "@/lib/util/stream";
 import { useCallback, useEffect, useState } from "react";
 import { components } from "@/schemas/dwe_os_2";
-import { FollowerList } from "./follower-list";
 import { CameraControls } from "../camera-controls";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+
+const ScheduleInput = ({
+  label,
+  value,
+  min,
+  max,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  disabled: boolean;
+  onChange: (value: number) => void;
+}) => (
+  <div className="space-y-1">
+    <label className="text-xs font-medium text-muted-foreground">{label}</label>
+    <Input
+      key={value}
+      type="number"
+      defaultValue={value}
+      min={min}
+      max={max}
+      disabled={disabled}
+      onBlur={(e) => {
+        const newValue = parseInt(e.target.value);
+        if (newValue >= min && newValue <= max && newValue !== value)
+          onChange(newValue);
+        else e.target.value = value.toString();
+      }}
+    />
+  </div>
+);
 
 export const CameraStream = ({ bus_id }: { bus_id: string }) => {
   const device = useDeviceStore((state) => state.devices[bus_id]);
@@ -164,14 +197,51 @@ export const CameraStream = ({ bus_id }: { bus_id: string }) => {
               </div>
             </div>
 
+            <div className="grid grid-cols-3 gap-3">
+              <StreamSelector
+                options={["UDP", "RECORDING"]}
+                placeholder="Type"
+                label="Stream Type"
+                value={device.stream.stream_type}
+                disabled={isManaged || isStreamLoading}
+                onChange={(type) => {
+                  configureStream(bus_id, {
+                    stream_type: type as components["schemas"]["StreamTypeEnum"],
+                  });
+                }}
+              />
+              {device.stream.stream_type === "RECORDING" && (
+                <>
+                  <ScheduleInput
+                    label="Record Every (s)"
+                    value={device.stream.record_interval}
+                    min={device.stream.record_duration}
+                    max={86400}
+                    disabled={isManaged || isStreamLoading}
+                    onChange={(record_interval) =>
+                      configureStream(bus_id, { record_interval })
+                    }
+                  />
+                  <ScheduleInput
+                    label="Record For (s)"
+                    value={device.stream.record_duration}
+                    min={1}
+                    max={Math.min(3600, device.stream.record_interval)}
+                    disabled={isManaged || isStreamLoading}
+                    onChange={(record_duration) =>
+                      configureStream(bus_id, { record_duration })
+                    }
+                  />
+                </>
+              )}
+            </div>
+
             {!isManaged && device.stream.stream_type === "UDP" && (
               <EndpointList bus_id={bus_id} />
             )}
           </AccordionContent>
         </AccordionItem>
       </Accordion>
-
-      {canLead(device) && <FollowerList disabled={isManaged} bus_id={bus_id} />}
 
       <div className="flex items-center justify-between w-full mt-auto pt-4">
         <div id={TOUR_STEP_IDS.DEVICE_SETTINGS}>

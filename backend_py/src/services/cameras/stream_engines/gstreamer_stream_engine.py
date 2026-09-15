@@ -1,4 +1,5 @@
 import os
+import re
 import signal
 import subprocess
 import threading
@@ -104,10 +105,10 @@ class GStreamerPipelineBuilder:
                 extension = (
                     "avi" if stream.encode_type == StreamEncodeTypeEnum.MJPG else "mp4"
                 )
-                timestamp = datetime.now().strftime("%F-%T")
-                unique_filename = (
-                    f"{stream.device_path.split('/')[-1]}_{timestamp}.{extension}"
-                )
+                timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
+                # bus_info is stable across reboots, unlike the device path
+                bus_info = re.sub(r"[^\w-]", "_", stream.bus_info)
+                unique_filename = f"{bus_info}_{timestamp}.{extension}"
                 unique_path = os.path.join(recording_directory, unique_filename)
                 stream.file_path = unique_path
                 return f"filesink location={unique_path} sync=true"

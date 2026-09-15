@@ -16,6 +16,7 @@ from colorlog import ColoredFormatter
 from fastapi import FastAPI
 
 from .logging import LogHandler
+from .models import StoragePolicyEnum
 from .routes import (
     camera_router,
     logs_router,
@@ -92,7 +93,7 @@ class Server:
         self.file_handler = logging.handlers.RotatingFileHandler(
             "dwe_os_2.log",
             maxBytes=1 * 1024 * 1024,
-            backupCount=1000,  # 1 Gig of logs
+            backupCount=50,  # 50 MB of logs
             encoding="utf-8",
         )
         self.file_handler.setFormatter(self.log_formatter)
@@ -111,7 +112,10 @@ class Server:
 
         # Device Manager
         self.device_manager = DeviceManager(
-            settings_manager=self.settings_manager, sio=self.sio, serial=self.serial
+            settings_manager=self.settings_manager,
+            sio=self.sio,
+            serial=self.serial,
+            can_record=self._can_record,
         )
 
         self.server_logger = logging.getLogger("dwe_os_2.Server")
@@ -169,6 +173,19 @@ class Server:
         # Error handling
         # TODO
 
+    def _can_record(self) -> bool:
+        preferences = self.preferences_manager.get_preferences()
+        in_use = {
+            device.stream.file_path
+            for device in self.device_manager.devices
+            if device.stream_runner.started
+        }
+        return self.recordings_service.ensure_free_space(
+            int(preferences.min_free_space_gb * 1024**3),
+            preferences.storage_policy == StoragePolicyEnum.DELETE_OLDEST,
+            in_use,
+        )
+
     async def emit_logs(self) -> None:
         while True:
             logs = self.log_handler.pop_logs()
@@ -184,6 +201,9 @@ class Server:
 
         if self.feature_support.serial:
             self.serial.start()
+
+        # Before any new recordings are started
+        self.recordings_service.repair_recordings()
 
         self.device_manager.start_monitoring()
 

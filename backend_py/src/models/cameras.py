@@ -7,7 +7,7 @@ Includes schemas for streams, controls, device info, and API request/response st
 
 from enum import Enum, IntEnum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class V4LControlTypeEnum(IntEnum):
@@ -161,6 +161,8 @@ class StreamModel(BaseModel):
     height: int
     interval: IntervalModel
     enabled: bool
+    record_interval: int
+    record_duration: int
 
     class Config:
         from_attributes = True
@@ -230,6 +232,15 @@ class StreamInfoModel(BaseModel):
     encode_type: StreamEncodeTypeEnum
     enabled: bool
     endpoints: list[StreamEndpointModel]
+    # Record for record_duration seconds every record_interval seconds
+    record_interval: int = Field(default=600, ge=1, le=86400)
+    record_duration: int = Field(default=60, ge=1, le=3600)
+
+    @model_validator(mode="after")
+    def check_record_schedule(self) -> "StreamInfoModel":
+        if self.record_interval < self.record_duration:
+            raise ValueError("record_interval must be at least record_duration")
+        return self
 
     class Config:
         from_attributes = True

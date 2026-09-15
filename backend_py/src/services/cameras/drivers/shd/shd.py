@@ -65,6 +65,9 @@ class SHDDevice(Device):
 
         self.add_controls_from_options(options)
 
+        # Sensor options must be reapplied every time the stream (re)starts
+        self.stream_runner.on("started", self.reapply_sensor_config)
+
     @property
     def can_lead(self) -> bool:
         return True
@@ -113,11 +116,6 @@ class SHDDevice(Device):
             # We could save (see notes)
 
         super().on_external_managed()
-
-    def on_external_unmanaged(self) -> None:
-        self.set_pu(-4, 0)
-
-        super().on_external_unmanaged()
 
     def add_follower(self, device: "SHDDevice", external=False) -> bool:
         # If an external program is controlling it, it's ok
@@ -213,43 +211,6 @@ class SHDDevice(Device):
         self.is_managed = False
         self.leader_device = None
 
-    def start_stream(self) -> None:
-        if self.is_managed:
-            self.logger.warning(
-                f"{self.bus_info}: Cannot start stream that is managed."
-            )
-            return
-
-        self.stream_runner.streams = [self.stream]
-
-        for follower_device in self.follower_devices.values():
-            # A not so hacky fix (very clever :]) to ensure the stream's device_path is
-            # set
-            follower_device.configure_stream(
-                self.stream.encode_type,
-                self.stream.width,
-                self.stream.height,
-                self.stream.interval,
-                self.stream.stream_type,
-                [],
-            )
-
-            # Append the new device stream
-            self.stream_runner.streams.append(follower_device.stream)
-
-        # mbps to kbit/sec
-        # self.stream.software_h264_bitrate =
-        # int(self.bitrate_option.get_value() * 1000)
-
-        super().start_stream()
-
-        self.reapply_sensor_config()
-        for follower in self.follower_devices.values():
-            # Way to set options from the backend on stream start
-            # This doesn't actually update it internally
-            # This is likely not necessary
-            follower.reapply_sensor_config(options=self._options)
-
     def remove_device(self) -> None:
         # Unplugging a device makes it too complicated to handle its follower stream,
         # so we just remove the follower and revert it to a normal stream
@@ -271,9 +232,6 @@ class SHDDevice(Device):
             ignore_list = []
 
         self.logger.info("Reapplying options after starting stream.")
-
-        # This is bad
-        self.set_pu(-4, 0)
 
         for option_name in self._options:
             if option_name in ignore_list:

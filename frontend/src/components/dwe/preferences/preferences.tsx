@@ -15,6 +15,13 @@ import { useTour } from "@/components/tour/tour";
 import { SettingsCard } from "./settings-card";
 import FeaturesContext from "@/contexts/FeaturesContext";
 import { RangeControl } from "@/components/ui/range-control";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const IP_REGEX =
   /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$|^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)+([A-Za-z]|[A-Za-z][A-Za-z0-9-]*[A-Za-z0-9])$/;
@@ -26,6 +33,9 @@ const PreferencesLayout = () => {
   const [host, setHost] = useState("");
   const [port, setPort] = useState(5600);
   const [frequencyOffset, setFrequencyOffset] = useState(0);
+  const [storagePolicy, setStoragePolicy] =
+    useState<components["schemas"]["StoragePolicyEnum"]>("STOP");
+  const [minFreeSpaceGb, setMinFreeSpaceGb] = useState(1);
 
   const [recommendHost, setRecommendHost] = useState(false);
   const tour = useTour();
@@ -44,6 +54,8 @@ const PreferencesLayout = () => {
       setPort(newPreferences.default_stream!.port);
       setHost(newPreferences.default_stream!.host);
       setFrequencyOffset(newPreferences.frequency_offset);
+      setStoragePolicy(newPreferences.storage_policy);
+      setMinFreeSpaceGb(newPreferences.min_free_space_gb);
     };
 
     if (connected) {
@@ -75,7 +87,12 @@ const PreferencesLayout = () => {
 
   useEffect(() => {
     if (connected && host && port && recommendHost !== undefined) {
-      if (!IP_REGEX.test(host) || port < 1024 || port > 65535) {
+      if (
+        !IP_REGEX.test(host) ||
+        port < 1024 ||
+        port > 65535 ||
+        !(minFreeSpaceGb >= 0)
+      ) {
         return;
       }
       if (recommendHost) {
@@ -85,9 +102,19 @@ const PreferencesLayout = () => {
         suggest_host: recommendHost,
         default_stream: { host, port },
         frequency_offset: frequencyOffset,
+        storage_policy: storagePolicy,
+        min_free_space_gb: minFreeSpaceGb,
       });
     }
-  }, [recommendHost, host, port, frequencyOffset, connected]);
+  }, [
+    recommendHost,
+    host,
+    port,
+    frequencyOffset,
+    storagePolicy,
+    minFreeSpaceGb,
+    connected,
+  ]);
 
   if (!connected) return <NotConnected />;
 
@@ -169,6 +196,45 @@ const PreferencesLayout = () => {
                 </p>
               </div>
             )}
+          </div>
+        </SettingsCard>
+
+        <SettingsCard cardTitle="Recording Storage">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="storage-policy">When Storage Is Low</Label>
+            <Select
+              value={storagePolicy}
+              onValueChange={(value) =>
+                setStoragePolicy(
+                  value as components["schemas"]["StoragePolicyEnum"],
+                )
+              }
+            >
+              <SelectTrigger id="storage-policy" className="bg-background">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="STOP">Stop recording</SelectItem>
+                <SelectItem value="DELETE_OLDEST">
+                  Delete oldest recordings
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="min-free-space">Minimum Free Space (GB)</Label>
+            <Input
+              id="min-free-space"
+              type="number"
+              min={0}
+              step={0.5}
+              value={minFreeSpaceGb}
+              onChange={(e) => setMinFreeSpaceGb(parseFloat(e.target.value))}
+              className={cn(
+                !(minFreeSpaceGb >= 0) && "border-red-500",
+                "bg-background",
+              )}
+            />
           </div>
         </SettingsCard>
       </div>

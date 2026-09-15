@@ -13,5 +13,7 @@ export function getStreamFromStreamInfo(
     width: streamInfo.stream_format.width,
     height: streamInfo.stream_format.height,
     interval: streamInfo.stream_format.interval,
+    record_interval: streamInfo.record_interval ?? stream.record_interval,
+    record_duration: streamInfo.record_duration ?? stream.record_duration,
   };
 }

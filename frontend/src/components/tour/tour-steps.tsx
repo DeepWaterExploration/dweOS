@@ -153,23 +153,23 @@ export function getSteps(
       position: "right",
       onClickWithinArea: () => {},
     },
-    // {
-    //   content: (
-    //     <div>
-    //       <div>Device Mode</div>
-    //       <Separator />
-    //       <div className="text-sm text-muted-foreground p-2">
-    //         This toggles between Recording and Streaming mode. Streaming will
-    //         send the live stream to another device, while recording will keep
-    //         recorded videos in the recordings tab.
-    //       </div>
-    //     </div>
-    //   ),
-    //   selectorId: TOUR_STEP_IDS.DEVICE_MODE,
-    //   route: "/cameras",
-    //   position: "left",
-    //   onClickWithinArea: () => {},
-    // },
+    {
+      content: (
+        <div>
+          <div>Device Mode</div>
+          <Separator />
+          <div className="text-sm text-muted-foreground p-2">
+            This toggles between Recording and Streaming mode. Streaming will
+            send the live stream to another device, while recording will keep
+            recorded videos in the recordings tab.
+          </div>
+        </div>
+      ),
+      selectorId: TOUR_STEP_IDS.DEVICE_MODE,
+      route: "/cameras",
+      position: "left",
+      onClickWithinArea: () => {},
+    },
     {
       content: (
         <div>

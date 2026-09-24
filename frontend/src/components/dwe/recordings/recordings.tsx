@@ -21,6 +21,8 @@ import { useSnapshot } from "valtio";
 
 type RecordingInfo = components["schemas"]["RecordingInfo"];
 
+const RECORDINGS_REFRESH_MS = 2000;
+
 const Recordings = () => {
   const hostAddress: string = window.location.hostname;
   const baseUrl = `http://${
@@ -38,9 +40,15 @@ const Recordings = () => {
     null,
   );
 
-  // initial data fetch
+  // initial data fetch, then keep sizes of active recordings up to date
   useEffect(() => {
     recordingsActions.fetchRecordings();
+
+    const refreshInterval = setInterval(
+      () => recordingsActions.fetchRecordings(false),
+      RECORDINGS_REFRESH_MS,
+    );
+    return () => clearInterval(refreshInterval);
   }, []);
 
   // global listener for clicks outside of table

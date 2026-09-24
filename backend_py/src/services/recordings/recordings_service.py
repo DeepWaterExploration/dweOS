@@ -38,8 +38,12 @@ class RecordingsService:
             #  check last modified
             current_mtime = os.stat(self.recordings_path).st_mtime
 
-            # if no modifications, just return cache
+            # if no files were added or removed, just return cache
             if self.recordings and current_mtime == self._last_dir_mtime:
+                # A file being written to does not modify the directory, so the
+                # size of an active recording has to be refreshed separately
+                for recording in self.recordings:
+                    recording.size = self._format_size(os.stat(recording.path).st_size)
                 return self.recordings
 
             # otherwise run scan
@@ -58,13 +62,16 @@ class RecordingsService:
                             else "00:00:00"
                         ),
                         created=self._epoch_to_readable(file_stat.st_ctime),
-                        size=f"{file_stat.st_size / (1024 * 1024):.2f} MB",
+                        size=self._format_size(file_stat.st_size),
                     )
                     recordings.append(recording_info)
 
             self.recordings = recordings
             self._last_dir_mtime = current_mtime
             return recordings
+
+    def _format_size(self, size_bytes: int) -> str:
+        return f"{size_bytes / (1024 * 1024):.2f} MB"
 
     def _epoch_to_readable(self, epoch: float) -> str:
         from datetime import datetime

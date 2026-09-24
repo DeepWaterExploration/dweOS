@@ -60,7 +60,7 @@ class Device(events.EventEmitter):
         self.bus_info = device_info.bus_info
         self.nickname = ""
         self.is_externally_managed = False
-        self.stream = Stream()
+        self.stream = Stream(bus_info=self.bus_info)
 
         # ASIC Interface for low level register read/writes
         self.asic_interface = ASICInterface(self.cameras[0])

@@ -116,7 +116,10 @@ class Server:
 
         self.server_logger = logging.getLogger("dwe_os_2.Server")
 
-        self.network_wrapper = NetworkWrapper(sio)
+        # Network management needs the host's system D-Bus, which isn't available
+        # in containers (e.g. BlueOS, which runs with --no-wifi)
+        if self.feature_support.wifi:
+            self.network_wrapper = NetworkWrapper(sio)
 
         self.system_manager = SystemManager()
 
@@ -137,7 +140,9 @@ class Server:
         self.app.state.ttyd_manager = (
             self.ttyd_manager if self.feature_support.ttyd else None
         )
-        self.app.state.network_manager = self.network_wrapper
+        self.app.state.network_manager = (
+            self.network_wrapper if self.feature_support.wifi else None
+        )
         self.app.state.recordings_service = self.recordings_service
         self.app.state.serial = self.serial
 
@@ -146,7 +151,9 @@ class Server:
         self.app.include_router(system_router, prefix="/api/system")
         self.app.include_router(logs_router, prefix="/api/logs")
         self.app.include_router(recordings_router, prefix="/api/recordings")
-        self.app.include_router(network_router, prefix="/api/network")
+
+        if self.feature_support.wifi:
+            self.app.include_router(network_router, prefix="/api/network")
 
         if feature_support.serial:
             self.app.include_router(pwm_router, prefix="/api/pwm")
@@ -187,7 +194,10 @@ class Server:
 
         self.device_manager.start_monitoring()
 
-        await self.network_wrapper.initialize()
+        if self.feature_support.wifi:
+            await self.network_wrapper.initialize()
+        else:
+            self.server_logger.info("Running without network management")
 
         if self.feature_support.ttyd:
             self.ttyd_manager.start()

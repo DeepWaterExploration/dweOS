@@ -9,6 +9,11 @@ on:
       - "backend_py/requirements.txt"
       - ".github/workflows/blueos.yml"
   workflow_dispatch:
+    inputs:
+      test_tag:
+        description: "Push only this tag (e.g. bookworm-test) for manual install testing; leave empty to publish the ref name + latest"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -22,7 +27,27 @@ jobs:
       # Only publish to Docker Hub for tag pushes and manual runs; PRs just build
       PUSH_IMAGE: ${{ github.event_name != 'pull_request' }}
       DOCKER_REPO: deepwaterexploration/dwe_os_2
+      TEST_TAG: ${{ inputs.test_tag }}
     steps:
+      - name: "Compute image tags"
+        id: tags
+        run: |
+          if [ -n "$TEST_TAG" ]; then
+            # Keep test builds out of the Bazaar (which indexes SemVer tags) and off latest
+            if [ "$TEST_TAG" = "latest" ] || echo "$TEST_TAG" | grep -Eq '^v?[0-9]+\.[0-9]+\.[0-9]+'; then
+              echo "::error::test_tag must not be 'latest' or a version number"
+              exit 1
+            fi
+            echo "list=$DOCKER_REPO:$TEST_TAG" >> "$GITHUB_OUTPUT"
+          else
+            {
+              echo "list<<EOF"
+              echo "$DOCKER_REPO:$DOCKER_TAG"
+              echo "$DOCKER_REPO:latest"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          fi
+
       - name: "Checkout code"
         uses: actions/checkout@v6
         with:
@@ -56,8 +81,6 @@ jobs:
           file: docker/Dockerfile
           platforms: linux/arm64,linux/arm/v7
           push: ${{ env.PUSH_IMAGE == 'true' }}
-          tags: |
-            ${{ env.DOCKER_REPO }}:${{ env.DOCKER_TAG }}
-            ${{ env.DOCKER_REPO }}:latest
+          tags: ${{ steps.tags.outputs.list }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

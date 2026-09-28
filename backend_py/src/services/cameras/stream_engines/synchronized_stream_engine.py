@@ -1,22 +1,45 @@
 import collections
+import os
 import socket
 import struct
 import threading
 import time
+from datetime import datetime
+from pathlib import Path
 
-from backend_py.src.models import StreamEndpointModel
+from backend_py.src.models import StreamEndpointModel, StreamTypeEnum
+from backend_py.src.services.recordings import RecordingsService
 
 from ..synchronized_camera import CopiedFrame, SynchronizedCamera, V4L2Camera
+from ..synchronized_camera.dwvo import (
+    DWVOHeader,
+    DWVOTimestampBlock,
+    DWVOVideoFrame,
+    DWVOWriter,
+)
 from .base_stream_engine import BaseStreamEngine
+
+# How much video a recording can buffer while the disk catches up
+RECORDING_BUFFER_SECONDS = 2
 
 
 class SynchronizedStreamEngine(BaseStreamEngine):
     def __init__(self, streams, error_callback) -> None:
         super().__init__(streams, error_callback)
 
+        self.is_recording = streams[0].stream_type == StreamTypeEnum.RECORDING
+
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # A live stream only wants the newest frames, but a recording has to keep
+        # every frame it can
         self.frame_queue: collections.deque[tuple[CopiedFrame, CopiedFrame]] = (
-            collections.deque(maxlen=2)
+            collections.deque(
+                maxlen=(
+                    streams[0].interval.denominator * RECORDING_BUFFER_SECONDS
+                    if self.is_recording
+                    else 2
+                )
+            )
         )
 
         self.MTU = 1400
@@ -137,7 +160,9 @@ class SynchronizedStreamEngine(BaseStreamEngine):
         self.capture_thread.start()
 
         # We cannot handle more than 2 synchronized streams yet in the protocol
-        self.stream_thread = threading.Thread(target=self.stream_loop_)
+        self.stream_thread = threading.Thread(
+            target=self.record_loop_ if self.is_recording else self.stream_loop_
+        )
         self.stream_thread.start()
 
         self.monitor_thread = threading.Thread(target=self.monitor_)
@@ -178,6 +203,9 @@ class SynchronizedStreamEngine(BaseStreamEngine):
                 time.sleep(1 / self.streams[0].interval.denominator)
                 continue
 
+            if self.is_recording and len(self.frame_queue) == self.frame_queue.maxlen:
+                # The writer fell behind, so the oldest unsaved frame is lost
+                self.emit("frame_drop")
             self.frame_queue.append((frames[0], frames[1]))
         self.synchronized_camera.stop()
 
@@ -196,3 +224,53 @@ class SynchronizedStreamEngine(BaseStreamEngine):
             except IndexError:
                 time.sleep(1 / self.streams[0].interval.denominator)
                 continue
+
+    def record_loop_(self) -> None:
+        leader = self.streams[0]
+        timestamp = datetime.now().strftime("%F-%T")
+        file_path = os.path.join(
+            RecordingsService.BASE_PATH,
+            # Recording names end at the first "."
+            f"{leader.bus_info.replace('.', '-')}_{timestamp}.dwvo",
+        )
+        header = DWVOHeader(
+            version=(0, 0, 0),
+            n_cameras=len(self.streams),
+            width=leader.width,
+            height=leader.height,
+            pixel_format=self.cameras[0].pixel_format,
+            fps=leader.interval.denominator,
+            ext_length=0,
+        )
+
+        try:
+            with DWVOWriter(Path(file_path), header) as writer:
+                for stream in self.streams:
+                    stream.file_path = file_path
+                self.logger.info(f"Recording to {file_path}")
+
+                # Capture stops first on shutdown, so keep going until everything
+                # it queued has been written
+                while self._is_capturing() or self.frame_queue:
+                    try:
+                        frames = self.frame_queue.popleft()
+                    except IndexError:
+                        time.sleep(1 / leader.interval.denominator)
+                        continue
+
+                    writer.write_block(
+                        DWVOTimestampBlock(
+                            # Capture time of the synchronized frames in ms
+                            frames[0].timestamp_us // 1000,
+                            [
+                                DWVOVideoFrame(str(i), frame.data)
+                                for i, frame in enumerate(frames)
+                            ],
+                        )
+                    )
+        except OSError as e:
+            self.exit_msg = f"Unable to write recording: {e}"
+            self.exit_event.set()
+
+    def _is_capturing(self) -> bool:
+        return self.capture_thread is not None and self.capture_thread.is_alive()

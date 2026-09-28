@@ -48,10 +48,14 @@ export const useDeviceStore = create<DeviceState>()(
         partialStreamInfo: Partial<components["schemas"]["StreamInfoModel"]>,
       ) => {
         const stream = get().devices[bus_info].stream;
+        const streamType = partialStreamInfo.stream_type ?? stream.stream_type;
 
         let shouldEnableStream;
         if (partialStreamInfo.enabled !== undefined)
           shouldEnableStream = partialStreamInfo.enabled;
+        // Changing a setting should not start a new recording on its own
+        else if (streamType === "RECORDING")
+          shouldEnableStream = stream.enabled;
         else if (
           partialStreamInfo.endpoints &&
           partialStreamInfo.endpoints.length === 0
@@ -74,7 +78,7 @@ export const useDeviceStore = create<DeviceState>()(
             height: stream.height,
             interval: stream.interval,
           },
-          stream_type: partialStreamInfo.stream_type ?? stream.stream_type,
+          stream_type: streamType,
         };
 
         set((state) => {

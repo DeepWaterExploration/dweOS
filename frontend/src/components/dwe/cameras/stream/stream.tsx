@@ -167,6 +167,29 @@ export const CameraStream = ({ bus_id }: { bus_id: string }) => {
             {!isManaged && device.stream.stream_type === "UDP" && (
               <EndpointList bus_id={bus_id} />
             )}
+
+            {!isManaged && (
+              <Button
+                className="w-full"
+                id={TOUR_STEP_IDS.DEVICE_MODE}
+                disabled={isStreamLoading}
+                onClick={() => {
+                  configureStream(bus_id, {
+                    stream_type:
+                      device.stream.stream_type === "RECORDING"
+                        ? "UDP"
+                        : "RECORDING",
+                    enabled: device.stream.enabled,
+                  });
+                }}
+              >
+                Switch to{" "}
+                {device.stream.stream_type === "RECORDING"
+                  ? "Stream"
+                  : "Recording"}{" "}
+                mode
+              </Button>
+            )}
           </AccordionContent>
         </AccordionItem>
       </Accordion>

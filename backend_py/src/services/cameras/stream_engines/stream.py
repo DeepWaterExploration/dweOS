@@ -15,6 +15,8 @@ class Stream:
     """
 
     device_path: str = ""
+    # Bus info of the device this stream belongs to
+    bus_info: str = ""
     encode_type: StreamEncodeTypeEnum = StreamEncodeTypeEnum.NONE
     stream_type: StreamTypeEnum = StreamTypeEnum.UDP
     endpoints: list[StreamEndpointModel] = field(default_factory=list)

@@ -76,8 +76,10 @@ export const recordingsActions = {
     }
   },
 
-  fetchRecordings: async () => {
-    recordingsState.loading = true;
+  // showLoading is false for background refreshes, so the table isn't replaced
+  // by a spinner every time
+  fetchRecordings: async (showLoading = true) => {
+    if (showLoading) recordingsState.loading = true;
     try {
       recordingsActions.fetchDiskStats();
 
@@ -86,7 +88,7 @@ export const recordingsActions = {
     } catch (error) {
       console.error("Error fetching recordings:", error);
     } finally {
-      recordingsState.loading = false;
+      if (showLoading) recordingsState.loading = false;
     }
   },
 

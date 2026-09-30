@@ -39,7 +39,11 @@ echo "Successfully packaged frontend"
 cp run_release.py release
 cp install_requirements.sh release
 cp create_venv.sh release
+cp install-local.sh release
 cp run_release.sh release
 cp -r service release
+
+# Record the version so the installer can report what it just installed
+python3 -c "import json; print(json.load(open('frontend/package.json'))['version'])" > release/VERSION
 
 tar -czvf release.tar.gz release

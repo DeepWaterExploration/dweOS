@@ -10,6 +10,30 @@ To install for any *supported* Linux system, run the following command:
 
 `curl -s https://raw.githubusercontent.com/DeepwaterExploration/DWE_OS_2/main/install.sh | sudo bash -s`
 
+### Installing or updating a device with no internet access
+
+Build a bundle on a machine that has internet, then push it to the device over
+SSH. The device never reaches out to GitHub, PyPI or apt:
+
+```sh
+./deploy-offline.sh pi@192.168.2.2
+```
+
+If the device is not reachable from the machine with internet either, build the
+bundle and carry it across yourself:
+
+```sh
+# on the machine with internet, describing the device
+./package-offline.sh --arch aarch64 --python 3.11 --glibc 2.36
+
+# on the device
+tar -xzf dweos-offline-*.tar.gz
+sudo ./dweos-offline/install-offline.sh
+```
+
+Python packages are updated from the bundle's wheelhouse, so dependency changes
+ship with the update. See [docs/offline-update.md](docs/offline-update.md).
+
 ### Raspberry Pi Hardware PWM
 
 In order to enable hardware PWM on your Raspberry Pi, you need to edit `/boot/firmware/config.txt`. See [Raspberry Pi documentation](https://www.raspberrypi.com/documentation/computers/config_txt.html) for more information.

@@ -31,7 +31,7 @@ const DeviceCard = ({ bus_id }: { bus_id: string }) => {
             <CardDescription>
               {deviceManufacturer} &#8226; {bus_id}
               <br />
-              {string3.length > 0 && (
+              {string3 && string3.length > 0 && (
                 <Tooltip>
                   <TooltipTrigger>Firmware String: {string3}</TooltipTrigger>
                   <TooltipContent>

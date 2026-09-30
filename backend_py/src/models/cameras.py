@@ -205,7 +205,7 @@ class DeviceModel(BaseModel):
     # Externally managed
     # This is separate from is_managed (which is purely internal)
     is_externally_managed: bool = False
-    string3: str = ""
+    string3: str | None = ""
 
     class Config:
         from_attributes = True

@@ -13,7 +13,7 @@ const components: Components = {
   ),
   h4: ({ ...props }) => <h5 className="font-semibold" {...props} />,
   p: ({ ...props }) => <p className="text-muted-foreground" {...props} />,
-  li: ({ ...props }) => <li className="mb-1 pl-1" {...props} />,
+  li: ({ ...props }) => <li className="mb-1 pl-1 text-muted-foreground" {...props} />,
   a: ({ ...props }) => (
     <a
       className="text-blue-500 hover:underline"

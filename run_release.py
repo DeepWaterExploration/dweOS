@@ -5,10 +5,12 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 import socketio
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from backend_py.src import FeatureSupport, Server
 
@@ -95,8 +97,11 @@ if __name__ == "__main__":
     app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="static")
 
     @app.exception_handler(404)
-    async def not_found(request: Request, exc: HTTPException) -> FileResponse:
+    async def not_found(request: Request, exc: StarletteHTTPException) -> Response:
         """Serve index.html for any unknown paths (Frontend Routing Support)"""
+        # API 404s keep their JSON error, so the frontend can tell they failed
+        if request.url.path.startswith("/api/"):
+            return await http_exception_handler(request, exc)
         return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
 
     async def main() -> None:

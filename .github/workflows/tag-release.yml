@@ -1,0 +1,73 @@
+name: Tag Release
+
+# When a release/vX.Y.Z PR (created by bump_version.sh) is merged into main,
+# tag the merge commit and start the release build.
+on:
+  pull_request:
+    types: [closed]
+    branches: ["main"]
+
+permissions:
+  contents: write # Push the tag
+  actions: write # Dispatch release.yml
+
+jobs:
+  tag:
+    if: >-
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.head.ref, 'release/v') &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-22.04
+    env:
+      HEAD_REF: ${{ github.event.pull_request.head.ref }}
+      MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: "Checkout merge commit"
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+
+      - name: "Determine version"
+        id: version
+        run: |
+          VERSION="${HEAD_REF#release/}"
+          # Keep in sync with bump_version.sh and cliff.toml
+          if ! echo "$VERSION" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)(\.?[0-9]+)?)?$'; then
+            echo "::error::Branch '$HEAD_REF' does not name a valid version (expected release/vX.Y.Z)"
+            exit 1
+          fi
+
+          PACKAGE_VERSION="$(node -p "require('./frontend/package.json').version")"
+          if [ "$PACKAGE_VERSION" != "$VERSION" ]; then
+            echo "::error::frontend/package.json version ($PACKAGE_VERSION) does not match $VERSION; was the release bumped with bump_version.sh?"
+            exit 1
+          fi
+
+          if git ls-remote --exit-code --tags origin "refs/tags/$VERSION" >/dev/null; then
+            echo "::error::Tag $VERSION already exists"
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: "Create and push tag"
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git tag "$VERSION" "$MERGE_SHA"
+          git push origin "refs/tags/$VERSION"
+
+      # Tags pushed with GITHUB_TOKEN do not trigger other workflows, so
+      # start the release build on the new tag explicitly.
+      - name: "Dispatch release build"
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh workflow run release.yml --repo "$GITHUB_REPOSITORY" --ref "$VERSION"
+          {
+            echo "Tagged \`$MERGE_SHA\` as \`$VERSION\` and dispatched the release build."
+            echo
+            echo "Publish the draft release when the build finishes: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases"
+          } >> "$GITHUB_STEP_SUMMARY"

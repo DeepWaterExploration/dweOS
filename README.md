@@ -49,3 +49,18 @@ sudo ./build.sh -c config
 ```
 
 The image will be found in the deploy folder. The latest release from github will be used for building the image.
+
+## Creating a Release
+
+Releases are versioned from `frontend/package.json` and use [conventional commits](https://www.conventionalcommits.org) to generate `CHANGELOG.md`. You need [git-cliff](https://git-cliff.org), `npm`, and the [GitHub CLI](https://cli.github.com) (`gh`).
+
+1. Run `./bump_version.sh X.Y.Z` from a clean working tree. The script:
+    - creates `release/vX.Y.Z` from the latest `origin/main`
+    - sets the version in `frontend/package.json` and `package-lock.json`
+    - prepends the release notes to `CHANGELOG.md` with git-cliff
+    - commits `chore(release): vX.Y.Z`, then pushes the branch and opens a PR after you confirm
+
+   Use `--no-push` to stop after the local commit, or `-y` to skip the confirmation.
+2. Wait for Backend CI and Frontend CI to pass on the PR, then merge it.
+3. The [Tag Release](.github/workflows/tag-release.yml) workflow tags the merge commit as `vX.Y.Z` and starts [Build Release](.github/workflows/release.yml). That workflow creates a draft GitHub release.
+4. Publish the draft release in the GitHub UI.

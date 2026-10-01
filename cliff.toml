@@ -85,7 +85,7 @@ fail_on_unmatched_commit = false
 link_parsers = []
 # Only treat release tags as versions (ignores the *-blueos image tags).
 # Keep in sync with bump_version.sh and .github/workflows/tag-release.yml
-tag_pattern = "^v[0-9]+\\.[0-9]+\\.[0-9]+(-(alpha|beta|rc)(\\.?[0-9]+)?)?$"
+tag_pattern = "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
 # Include only the tags that belong to the current branch.
 use_branch_tags = false
 # Order releases topologically instead of chronologically.

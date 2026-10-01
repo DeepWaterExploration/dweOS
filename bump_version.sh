@@ -7,7 +7,7 @@
 set -euo pipefail
 
 # Keep in sync with .github/workflows/tag-release.yml and cliff.toml
-VERSION_REGEX='^v[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)(\.?[0-9]+)?)?$'
+VERSION_REGEX='^v[0-9]+\.[0-9]+\.[0-9]+$'
 REMOTE=origin
 BASE_BRANCH=main
 
@@ -15,7 +15,7 @@ usage() {
     cat <<EOF
 Usage: $0 [-y] [--no-push] <version>
 
-  <version>   X.Y.Z or vX.Y.Z (optionally with an -alpha/-beta/-rc suffix)
+  <version>   X.Y.Z or vX.Y.Z
   -y, --yes   Push and open the PR without asking for confirmation
   --no-push   Stop after creating the local release commit
 EOF

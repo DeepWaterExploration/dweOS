@@ -21,8 +21,6 @@ echo "Successfully packaged backend"
 
 echo "Packaging frontend"
 
-# Update the version string for packaging
-python3 update_versioning.py
 cd frontend
 # update the package-lock.json
 npm i

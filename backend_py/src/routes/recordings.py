@@ -172,7 +172,7 @@ def delete_recording(request: Request, recording_path: str) -> list[RecordingInf
     recordings_service: RecordingsService = request.app.state.recordings_service
 
     response = recordings_service.delete_recording(recording_path)
-    if not response:
+    if response is None:
         raise HTTPException(
             status_code=404, detail="Recording not found or could not be deleted"
         )
@@ -187,13 +187,7 @@ def bulk_delete_recording(
 ) -> list[RecordingInfo]:
     recordings_service: RecordingsService = request.app.state.recordings_service
 
-    response = recordings_service.bulk_delete_recordings(filenames)
-    if not response:
-        raise HTTPException(
-            status_code=404, detail="Recordings not found or could not be deleted"
-        )
-
-    return response
+    return recordings_service.bulk_delete_recordings(filenames)
 
 
 @recordings_router.patch("/{old_name}/{new_name}", summary="Rename a recording")

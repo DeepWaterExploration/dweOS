@@ -305,16 +305,20 @@ export const recordingsActions = {
         body: targetNames,
       });
 
-      if (result.data) {
-        recordingsState.recordings = result.data;
-        recordingsActions.setSelectedNames([]);
-
-        toast.success(
-          deleteTargets.length > 1
-            ? `Deleted ${deleteTargets.length} recordings`
-            : `Recording deleted: ${deleteTargets[0].name}`,
-        );
+      if (result.error || !result.data) {
+        console.error(result.error);
+        toast.error("Failed to delete recording");
+        return;
       }
+
+      recordingsState.recordings = result.data;
+      recordingsActions.setSelectedNames([]);
+
+      toast.success(
+        deleteTargets.length > 1
+          ? `Deleted ${deleteTargets.length} recordings`
+          : `Recording deleted: ${deleteTargets[0].name}`,
+      );
     } catch (error) {
       console.error(error);
       toast.error("Failed to delete recording");

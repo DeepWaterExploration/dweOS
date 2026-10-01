@@ -1,8 +1,14 @@
 # git-cliff ~ configuration file
 # https://git-cliff.org/docs/configuration
+#
+# v0.7.3 is the changelog baseline: commits up to and including it predate
+# conventional commits, so v0.7.4 is the first release in the changelog.
+# Always generate from the baseline (bump_version.sh does this):
+#   git cliff v0.7.3..HEAD -o CHANGELOG.md
 
 
 [changelog]
+header = "# Changelog\n"
 # A Tera template to be rendered for each release in the changelog.
 # See https://keats.github.io/tera/docs/#introduction
 body = """
@@ -28,8 +34,8 @@ render_always = true
 postprocessors = [
     # Replace the placeholder <REPO> with a URL.
     #{ pattern = '<REPO>', replace = "https://github.com/orhun/git-cliff" },
-    # Separate releases with a blank line, including when prepending to CHANGELOG.md.
-    { pattern = '\n*\z', replace = "\n\n" },
+    # Separate each release from the header and the previous release with a blank line.
+    { pattern = '\A\n*## ', replace = "\n## " },
 ]
 # render body even when there are no releases to process
 # render_always = true

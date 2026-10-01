@@ -57,10 +57,18 @@ Releases are versioned from `frontend/package.json` and use [conventional commit
 1. Run `./bump_version.sh X.Y.Z` from a clean working tree. The script:
     - creates `release/vX.Y.Z` from the latest `origin/main`
     - sets the version in `frontend/package.json` and `package-lock.json`
-    - prepends the release notes to `CHANGELOG.md` with git-cliff
+    - regenerates `CHANGELOG.md` with git-cliff, which adds the new release
     - commits `chore(release): vX.Y.Z`, then pushes the branch and opens a PR after you confirm
 
    Use `--no-push` to stop after the local commit, or `-y` to skip the confirmation.
 2. Wait for Backend CI and Frontend CI to pass on the PR, then merge it.
 3. The [Tag Release](.github/workflows/tag-release.yml) workflow tags the merge commit as `vX.Y.Z` and starts [Build Release](.github/workflows/release.yml). That workflow creates a draft GitHub release.
 4. Publish the draft release in the GitHub UI.
+
+The changelog starts at v0.7.4. Commits up to and including v0.7.3 predate conventional commits, so v0.7.3 is the baseline. To regenerate the changelog by hand, start from that tag:
+
+```sh
+git cliff v0.7.3..HEAD -o CHANGELOG.md
+```
+
+A plain `git cliff` without the range also picks up older commits whose messages happen to look like `word: text`, such as `TODO: fix wifi`.

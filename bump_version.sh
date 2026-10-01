@@ -1,6 +1,6 @@
 #!/bin/bash
-# Prepare a release: branch off main, bump the frontend version, prepend the
-# changelog, commit, push, and open a PR. Merging the PR into main triggers
+# Prepare a release: branch off main, bump the frontend version, regenerate
+# the changelog, commit, push, and open a PR. Merging the PR into main triggers
 # .github/workflows/tag-release.yml, which tags the merge commit and builds
 # the draft release.
 
@@ -10,6 +10,9 @@ set -euo pipefail
 VERSION_REGEX='^v[0-9]+\.[0-9]+\.[0-9]+$'
 REMOTE=origin
 BASE_BRANCH=main
+# Commits up to and including this tag predate conventional commits, so the
+# changelog starts after it. Keep in sync with cliff.toml
+CHANGELOG_BASE=v0.7.3
 
 usage() {
     cat <<EOF
@@ -101,7 +104,7 @@ trap rollback EXIT
 NOTES="$(git-cliff --unreleased --tag "$VERSION" --strip all)"
 grep -q '^- ' <<<"$NOTES" || die "No conventional commits since the last release; nothing to release"
 
-# Step 2: bump the version and prepend the changelog
+# Step 2: bump the version and regenerate the changelog
 echo "Bumping frontend version $CURRENT_VERSION -> $VERSION"
 (
     cd frontend
@@ -109,8 +112,8 @@ echo "Bumping frontend version $CURRENT_VERSION -> $VERSION"
     npm install --package-lock-only --ignore-scripts --no-audit --no-fund >/dev/null
 )
 
-echo "Prepending CHANGELOG.md"
-git-cliff --unreleased --tag "$VERSION" --prepend CHANGELOG.md
+echo "Regenerating CHANGELOG.md from $CHANGELOG_BASE"
+git-cliff --tag "$VERSION" --output CHANGELOG.md "$CHANGELOG_BASE..HEAD"
 
 git add frontend/package.json frontend/package-lock.json CHANGELOG.md
 git commit -q -m "chore(release): $VERSION"

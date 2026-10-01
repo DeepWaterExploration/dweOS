@@ -132,28 +132,29 @@ class RecordingsService:
                 return recording
         return None
 
-    def delete_recording(self, filename: str) -> list[RecordingInfo] | None:
-        if filename in self.durations:
-            self.durations.pop(filename, None)
-
+    def _remove_recording_file(self, filename: str) -> bool:
+        # Caller must hold recordings_lock
         recording_path = os.path.join(self.recordings_path, filename)
-        if os.path.exists(recording_path):
-            os.remove(recording_path)
-            self.recordings = [
-                rec for rec in self.recordings if rec.path != recording_path
-            ]
-            return self.recordings
-        return None
+        self.durations.pop(recording_path, None)
+
+        if not os.path.exists(recording_path):
+            return False
+
+        os.remove(recording_path)
+        self.recordings = [rec for rec in self.recordings if rec.path != recording_path]
+        return True
+
+    def delete_recording(self, filename: str) -> list[RecordingInfo] | None:
+        with self.recordings_lock:
+            if not self._remove_recording_file(filename):
+                return None
+
+        return self.get_recordings()
 
     def bulk_delete_recordings(self, filenames: list[str]) -> list[RecordingInfo]:
         with self.recordings_lock:
             for filename in filenames:
-                if filename in self.durations:
-                    self.durations.pop(filename, None)
-
-                recording_path = os.path.join(self.recordings_path, filename)
-                if os.path.exists(recording_path):
-                    os.remove(recording_path)
+                self._remove_recording_file(filename)
 
         return self.get_recordings()
 

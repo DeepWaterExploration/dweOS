@@ -1,20 +1,22 @@
 // pages/index.tsx
+import changelog from "../../../../CHANGELOG.md?raw";
 import { Markdown } from "./markdown";
 
+// Drop the changelog's own title and nest its headings under "## Changelog"
+const changelogBody = changelog
+  .replace(/^# Changelog\s*/, "")
+  .replace(/^(#{1,5}) /gm, "#$1 ");
+
 const markdown = `
-# DWE OS Overview
+# dweOS Overview
 
-DWE OS is an optional software designed to run on underwater systems, extending the functionality of DeepWater Exploration cameras.
+dweOS is an optional software designed to run on underwater systems, extending the functionality of DeepWater Exploration cameras.
 
-## Key Features
+For more detailed documentation, refer to the official project docs at [docs.dwe.ai](https://docs.dwe.ai/dwe-os/overview).
 
-- **Bus ID Camera Enumeration:** Ensures cameras retain their settings even after a reboot, eliminating port confusion.
-- **StellarHD Leader/Follower Support:** Enables PrecisionSync™ to work seamlessly out of the box with DWE OS.
-- **WiFi Configuration Interface:** Allows easy system updates directly from DWE OS.
-- **Light Control Integration:** Provides control over the on/off state and brightness of lights.
-- **Built-in Terminal:** Facilitates access to advanced features without the need for SSH.
+## Changelog
 
-For more detailed documentation, refer to the official project docs at [docs.dwe.ai](https://docs.dwe.ai/software/dwe-os/dwe-os-2).
+${changelogBody}
 `;
 
 export default function OverviewMarkdown() {

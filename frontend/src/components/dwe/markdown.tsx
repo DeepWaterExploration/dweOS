@@ -8,6 +8,10 @@ const components: Components = {
   h2: ({ ...props }) => (
     <h3 className="text-lg font-semibold mt-4" {...props} />
   ),
+  h3: ({ ...props }) => (
+    <h4 className="text-base font-semibold mt-4" {...props} />
+  ),
+  h4: ({ ...props }) => <h5 className="font-semibold" {...props} />,
   p: ({ ...props }) => <p className="text-muted-foreground" {...props} />,
   li: ({ ...props }) => <li className="mb-1 pl-1" {...props} />,
   a: ({ ...props }) => (

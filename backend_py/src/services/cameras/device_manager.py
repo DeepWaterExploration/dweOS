@@ -222,7 +222,14 @@ class DeviceManager(events.EventEmitter):
         recording_length = stream_info.recording_length
 
         device.configure_stream(
-            encode_type, width, height, interval, stream_type, recording_interval, recording_length, endpoints
+            encode_type,
+            width,
+            height,
+            interval,
+            stream_type,
+            recording_interval,
+            recording_length,
+            endpoints,
         )
 
         if stream_info.enabled:

@@ -318,7 +318,7 @@ class Device(events.EventEmitter):
             saved_device.stream.stream_type,
             saved_device.stream.recording_interval,
             saved_device.stream.recording_length,
-            saved_device.stream.endpoints
+            saved_device.stream.endpoints,
         )
 
         with self._configuration_lock:

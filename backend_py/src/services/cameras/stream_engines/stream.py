@@ -26,6 +26,8 @@ class Stream:
         default_factory=lambda: IntervalModel(numerator=1, denominator=30)
     )
     enabled: bool = False
+    recording_interval: int = 0
+    recording_length: int = 0
 
     # Configuration specific
     software_h264_bitrate: int = 5000

@@ -79,6 +79,8 @@ export const useDeviceStore = create<DeviceState>()(
             interval: stream.interval,
           },
           stream_type: streamType,
+          recording_interval: stream.recording_interval || 0,
+          recording_length: stream.recording_length || 0,
         };
 
         set((state) => {

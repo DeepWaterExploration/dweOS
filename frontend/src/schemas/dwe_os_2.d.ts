@@ -157,6 +157,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/devices/external/add_follower": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a follower. This endpoint is identical to the standard add_follower but it bypasses some restrictions */
+        post: operations["external_add_follower_api_devices_external_add_follower_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/preferences": {
         parameters: {
             query?: never;
@@ -302,8 +319,42 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Zip files and generate token */
-        post: operations["prepare_zip_download_api_recordings_zip_prepare_post"];
+        /** Start background zip job */
+        post: operations["start_zip_job_api_recordings_zip_prepare_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recordings/zip/status/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Check zip job status */
+        get: operations["check_zip_status_api_recordings_zip_status__job_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recordings/zip/cancel/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a zip job */
+        post: operations["cancel_zip_job_api_recordings_zip_cancel__job_id__post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -627,7 +678,7 @@ export interface components {
              * String3
              * @default
              */
-            string3: string;
+            string3: string | null;
         };
         /** DeviceNicknameModel */
         DeviceNicknameModel: {
@@ -752,7 +803,7 @@ export interface components {
          * ManagedEvent
          * @enum {string}
          */
-        ManagedEvent: "DEVICE_MANAGED" | "STREAM_START" | "STREAM_STOP";
+        ManagedEvent: "DEVICE_MANAGED" | "DEVICE_UNMANAGED" | "STREAM_START";
         /** ManagedNotifyModel */
         ManagedNotifyModel: {
             /** Bus Info */
@@ -838,6 +889,10 @@ export interface components {
             enabled: boolean;
             /** Endpoints */
             endpoints: components["schemas"]["StreamEndpointModel"][];
+            /** Recording Interval */
+            recording_interval: number;
+            /** Recording Length */
+            recording_length: number;
         };
         /** StreamModel */
         StreamModel: {
@@ -854,6 +909,10 @@ export interface components {
             interval: components["schemas"]["IntervalModel"];
             /** Enabled */
             enabled: boolean;
+            /** Recording Interval */
+            recording_interval: number;
+            /** Recording Length */
+            recording_length: number;
         };
         /**
          * StreamTypeEnum
@@ -1177,6 +1236,39 @@ export interface operations {
             };
         };
     };
+    external_add_follower_api_devices_external_add_follower_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddFollowerPayload"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimpleRequestStatusModel"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_preferences_api_preferences_get: {
         parameters: {
             query?: never;
@@ -1352,7 +1444,7 @@ export interface operations {
             };
         };
     };
-    prepare_zip_download_api_recordings_zip_prepare_post: {
+    start_zip_job_api_recordings_zip_prepare_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -1364,6 +1456,72 @@ export interface operations {
                 "application/json": string[];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    check_zip_status_api_recordings_zip_status__job_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_zip_job_api_recordings_zip_cancel__job_id__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {

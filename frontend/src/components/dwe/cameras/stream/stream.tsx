@@ -22,6 +22,7 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import { components } from "@/schemas/dwe_os_2";
 import { FollowerList } from "./follower-list";
+import { IntervalRecording } from "./interval-recording";
 import { CameraControls } from "../camera-controls";
 import { toast } from "sonner";
 
@@ -138,10 +139,12 @@ export const CameraStream = ({ bus_id }: { bus_id: string }) => {
                         width: device.stream.width,
                         height: device.stream.height,
                         interval: {
-                          numerator: 1,
+                        numerator: 1,
                           denominator: parseInt(newFps),
                         },
                       },
+                      recording_interval: 0,
+                      recording_length: 0
                     });
                   }}
                 />
@@ -195,6 +198,14 @@ export const CameraStream = ({ bus_id }: { bus_id: string }) => {
       </Accordion>
 
       {canLead(device) && <FollowerList disabled={isManaged} bus_id={bus_id} />}
+
+      {device.stream.stream_type === "RECORDING" && (
+        <IntervalRecording disabled={isManaged} bus_id={bus_id} onChange={(recording_interval, recording_length) => {
+          configureStream(device.bus_info, {
+            recording_interval, recording_length
+          });
+        }} />
+      )}
 
       <div className="flex items-center justify-between w-full mt-auto pt-4">
         <div id={TOUR_STEP_IDS.DEVICE_SETTINGS}>

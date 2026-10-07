@@ -218,9 +218,11 @@ class DeviceManager(events.EventEmitter):
         encode_type: StreamEncodeTypeEnum = stream_info.encode_type
         stream_type: StreamTypeEnum = stream_info.stream_type
         endpoints = stream_info.endpoints
+        recording_interval = stream_info.recording_interval
+        recording_length = stream_info.recording_length
 
         device.configure_stream(
-            encode_type, width, height, interval, stream_type, endpoints
+            encode_type, width, height, interval, stream_type, recording_interval, recording_length, endpoints
         )
 
         if stream_info.enabled:

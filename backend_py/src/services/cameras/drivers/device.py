@@ -251,6 +251,8 @@ class Device(events.EventEmitter):
             self.stream.endpoints = stream_endpoints
             self.stream.encode_type = encode_type
             self.stream.stream_type = stream_type
+            self.stream.recording_interval = recording_interval
+            self.stream.recording_length = recording_length
 
             # Update the pwm frequency with the new fps
             # TODO: This should be on a command bus or something, not emitted from

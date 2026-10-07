@@ -143,8 +143,6 @@ export const CameraStream = ({ bus_id }: { bus_id: string }) => {
                           denominator: parseInt(newFps),
                         },
                       },
-                      recording_interval: 0,
-                      recording_length: 0
                     });
                   }}
                 />

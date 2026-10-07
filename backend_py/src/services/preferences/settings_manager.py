@@ -77,7 +77,8 @@ class SettingsManager:
             for saved_device in self.settings:
                 if saved_device.bus_info == device.bus_info:
                     self._load_device(device, saved_device, devices)
-                    return
+                    if not isinstance(device, SHDDevice) and device.stream.enabled:
+                        device.start_stream()
 
     def get_saved_device(self, bus_info: str) -> SavedDeviceModel | None:
         for saved_device in self.settings:

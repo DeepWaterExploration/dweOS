@@ -24,16 +24,16 @@ export const IntervalRecording = ({
   );
 
   const [enabled, setEnabled] = useState(true);
-  const [intervalMinutes, setIntervalMinutes] = useState(10);
-  const [durationMinutes, setDurationMinutes] = useState(1);
+  const [intervalSeconds, setIntervalSeconds] = useState(10);
+  const [durationSeconds, setDurationSeconds] = useState(1);
 
   const isDisabled = disabled || isStreamLoading;
   const isValid =
-    intervalMinutes > 0 &&
-    durationMinutes > 0 &&
-    durationMinutes < intervalMinutes;
+    intervalSeconds > 0 &&
+    durationSeconds > 0 &&
+    durationSeconds < intervalSeconds;
 
-  const parseMinutes = (value: string) => Math.max(0, parseInt(value) || 0);
+  const parseSeconds = (value: string) => Math.max(0, parseInt(value) || 0);
 
   return (
     <Accordion type="single" collapsible>
@@ -61,42 +61,42 @@ export const IntervalRecording = ({
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <label className="text-xs font-medium text-muted-foreground">
-                  Every (minutes)
+                  Every (seconds)
                 </label>
                 <Input
                   type="number"
                   min={1}
-                  value={intervalMinutes}
+                  value={intervalSeconds}
                   disabled={isDisabled || !enabled}
                   onChange={(e) =>
-                    setIntervalMinutes(parseMinutes(e.target.value))
+                    setIntervalSeconds(parseSeconds(e.target.value))
                   }
-                  onBlur={() => onChange(intervalMinutes, durationMinutes)}
+                  onBlur={() => onChange(intervalSeconds, durationSeconds)}
                 />
               </div>
 
               <div className="space-y-1">
                 <label className="text-xs font-medium text-muted-foreground">
-                  Record for (minutes)
+                  Record for (seconds)
                 </label>
                 <Input
                   type="number"
                   min={1}
-                  value={durationMinutes}
+                  value={durationSeconds}
                   disabled={isDisabled || !enabled}
                   onChange={(e) =>
-                    setDurationMinutes(parseMinutes(e.target.value))
+                    setDurationSeconds(parseSeconds(e.target.value))
                   }
-                  onBlur={() => onChange(intervalMinutes, durationMinutes)}
+                  onBlur={() => onChange(intervalSeconds, durationSeconds)}
                 />
               </div>
             </div>
 
             {isValid ? (
               <div className="text-sm text-muted-foreground p-4 rounded-md bg-muted/50">
-                Records for {durationMinutes} minute
-                {durationMinutes === 1 ? "" : "s"} every {intervalMinutes}{" "}
-                minute{intervalMinutes === 1 ? "" : "s"}.
+                Records for {durationSeconds} second
+                {durationSeconds === 1 ? "" : "s"} every {intervalSeconds}{" "}
+                second{intervalSeconds === 1 ? "" : "s"}.
               </div>
             ) : (
               <div className="text-sm text-destructive p-4 rounded-md bg-destructive/10">

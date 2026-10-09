@@ -231,6 +231,8 @@ class SHDDevice(Device):
                 self.stream.height,
                 self.stream.interval,
                 self.stream.stream_type,
+                self.stream.recording_interval,
+                self.stream.recording_length,
                 [],
             )
 

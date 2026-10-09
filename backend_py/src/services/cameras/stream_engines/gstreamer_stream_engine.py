@@ -173,6 +173,7 @@ class GStreamerProcessEngine(BaseStreamEngine):
             and self.recording_length != 0
         ):
             while True:
+                self.emit("stream_active")
                 self.logger.info("Starting recording interval!")
 
                 self._run_pipeline()
@@ -180,6 +181,7 @@ class GStreamerProcessEngine(BaseStreamEngine):
                 if self._stop_flag.wait(self.recording_length):
                     break
 
+                self.emit("stream_inactive")
                 self.logger.info("Stopping recording interval!")
                 self._terminate_process()
 

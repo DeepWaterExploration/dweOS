@@ -111,7 +111,10 @@ class Server:
 
         # Device Manager
         self.device_manager = DeviceManager(
-            settings_manager=self.settings_manager, sio=self.sio, serial=self.serial
+            settings_manager=self.settings_manager,
+            sio=self.sio,
+            serial=self.serial,
+            serial_mode_fps=False,  # Spelunky
         )
 
         self.server_logger = logging.getLogger("dwe_os_2.Server")

@@ -63,6 +63,10 @@ class StreamRunner(events.EventEmitter):
 
             self.engine.on("frame_drop", lambda: self.emit("frame_drop"))
 
+            # Forward over the interval emissions
+            self.engine.on("stream_active", lambda: self.emit("stream_active"))
+            self.engine.on("stream_inactive", lambda: self.emit("stream_inactive"))
+
             self.started = True
             # We don't need to catch exceptions, maybe remove later
             try:

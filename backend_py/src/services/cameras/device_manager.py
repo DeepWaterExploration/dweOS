@@ -37,6 +37,8 @@ from .drivers.video4linux.enumeration import list_devices
 from .exceptions import DeviceNotFoundException
 from .pwm.serial_pwm_controller import SerialPWMController
 
+LIGHT_PWM_FREQ = 60
+
 
 def todict(obj, classkey=None) -> Any:
     if isinstance(obj, dict):
@@ -73,6 +75,9 @@ class DeviceManager(events.EventEmitter):
         sio: socketio.AsyncServer,
         settings_manager: SettingsManager,
         serial: SerialPWMController,
+        # Defines whether or not the serial communication is
+        # used to set the FPS or just duty cycle
+        serial_mode_fps=True,
     ) -> None:
         super().__init__()
 
@@ -85,6 +90,7 @@ class DeviceManager(events.EventEmitter):
         self.stream_errors: list[str] = []
 
         self.serial = serial
+        self.serial_mode_fps = serial_mode_fps
 
         self.logger = logging.getLogger("dwe_os_2.cameras.DeviceManager")
 
@@ -143,6 +149,11 @@ class DeviceManager(events.EventEmitter):
             lambda _: self._append_stream_error(DeviceModel.model_validate(device)),
         )
 
+        if not self.serial_mode_fps:
+            device.stream_runner.on("stream_active", lambda: self._set_light(True))
+
+            device.stream_runner.on("stream_inactive", lambda: self._set_light(False))
+
         # Hack to allow shd to save follower and leader settings on removal
         device.on("save", lambda: self.settings_manager.save_device(device))
 
@@ -155,10 +166,20 @@ class DeviceManager(events.EventEmitter):
         )
 
         # Only followers will update PWM frequency
-        if self.serial and device.can_follow:
+        if self.serial and device.can_follow and self.serial_mode_fps:
             device.on("pwm_frequency", self.serial.apply_from_fps)
 
         return device
+
+    def _set_light(self, enabled: bool) -> None:
+        """
+        Sends a signal to the PWM controller assuming it is connected to a light
+        """
+
+        self.logger.info(f"Applying value to light: {enabled}")
+
+        if self.serial:
+            self.serial.apply(LIGHT_PWM_FREQ, 100 if enabled else 0)
 
     def _append_stream_error(self, device: DeviceModel) -> None:
         """

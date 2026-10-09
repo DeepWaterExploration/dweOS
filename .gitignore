@@ -319,6 +319,9 @@ pyrightconfig.json
 # Custom
 release
 release.tar.gz
+
+# Offline install bundles
+dweos-offline*.tar.gz
 **/device_settings.json
 **/server_preferences.json
 .env

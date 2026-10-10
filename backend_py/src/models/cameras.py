@@ -161,6 +161,8 @@ class StreamModel(BaseModel):
     height: int
     interval: IntervalModel
     enabled: bool
+    recording_interval: int
+    recording_length: int
 
     class Config:
         from_attributes = True
@@ -230,6 +232,8 @@ class StreamInfoModel(BaseModel):
     encode_type: StreamEncodeTypeEnum
     enabled: bool
     endpoints: list[StreamEndpointModel]
+    recording_interval: int
+    recording_length: int
 
     class Config:
         from_attributes = True

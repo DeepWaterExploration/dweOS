@@ -80,7 +80,7 @@ class RecordingsService:
 
     def _get_duration(self, file_path: str) -> str:
         if file_path in self.durations:
-            self.logger.info(f"Found cached duration: {file_path}")
+            # self.logger.info(f"Found cached duration: {file_path}")
             return self.durations[file_path]
 
         # FIXME: We need to change this function to use a better metadata library
@@ -120,8 +120,8 @@ class RecordingsService:
             self.logger.error(f"exiftool was not found: {e}")
         except json.JSONDecodeError as e:
             self.logger.error(f"Error decoding output from exiftool: {e}")
-        except Exception as e:
-            self.logger.error(f"exiftool had an unknown system error: {e}")
+        except subprocess.CalledProcessError as e:
+            self.logger.warning(f"exiftool had an unknown system error: {e}")
         return "Unknown"
 
     def get_recording(self, filename: str) -> RecordingInfo | None:

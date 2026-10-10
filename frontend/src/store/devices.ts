@@ -79,6 +79,8 @@ export const useDeviceStore = create<DeviceState>()(
             interval: stream.interval,
           },
           stream_type: streamType,
+          recording_interval: partialStreamInfo.recording_interval ?? stream.recording_interval,
+          recording_length: partialStreamInfo.recording_length ?? stream.recording_length
         };
 
         set((state) => {

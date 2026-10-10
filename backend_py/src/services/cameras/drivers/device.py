@@ -216,6 +216,8 @@ class Device(events.EventEmitter):
         height: int,
         interval: IntervalModel,
         stream_type: StreamTypeEnum,
+        recording_interval: int,
+        recording_length: int,
         stream_endpoints: list[StreamEndpointModel] | None = None,
     ) -> None:
         if stream_endpoints is None:
@@ -249,6 +251,8 @@ class Device(events.EventEmitter):
             self.stream.endpoints = stream_endpoints
             self.stream.encode_type = encode_type
             self.stream.stream_type = stream_type
+            self.stream.recording_interval = recording_interval
+            self.stream.recording_length = recording_length
 
             # Update the pwm frequency with the new fps
             # TODO: This should be on a command bus or something, not emitted from
@@ -314,6 +318,8 @@ class Device(events.EventEmitter):
             saved_device.stream.height,
             saved_device.stream.interval,
             saved_device.stream.stream_type,
+            saved_device.stream.recording_interval,
+            saved_device.stream.recording_length,
             saved_device.stream.endpoints,
         )
 

@@ -130,43 +130,99 @@ class GStreamerProcessEngine(BaseStreamEngine):
         self._lock = threading.RLock()
         self.started = False
 
+        # Interval recording
+        self.recording_length = streams[0].recording_length
+        self.recording_interval = streams[0].recording_interval
+
+        if self.recording_interval <= self.recording_length:
+            self.emit_error(
+                "Recording interval must be greater than the recording length"
+            )
+
+        self._scheduler: threading.Thread | None = None
+
+        self.has_recording_stream = any(
+            stream.stream_type == StreamTypeEnum.RECORDING for stream in self.streams
+        )
+
+        # Behavior:
+        # - Thread waits until stop thread is set
+        # - If it is set, we stop the recording prematurely
+        # - If it is not set, we continue with the interval
+        # Not relevant for non recording streams
+        self._stop_flag = threading.Event()
+
     def start(self) -> None:
+        self.stop()
+
         with self._lock:
             self.logger.info(
                 "Starting stream for devices: "
                 f"{', '.join([stream.device_path for stream in self.streams])}"
             )
-            if self.started:
-                self.stop()
             self.started = True
+
+            self._stop_flag.clear()
+            self._scheduler = threading.Thread(target=self._schedule_loop, daemon=True)
+            self._scheduler.start()
+
+    def _schedule_loop(self) -> None:
+        if (
+            self.has_recording_stream
+            and self.recording_interval != 0
+            and self.recording_length != 0
+        ):
+            while True:
+                self.emit("stream_active")
+                self.logger.info("Starting recording interval!")
+
+                self._run_pipeline()
+
+                if self._stop_flag.wait(self.recording_length):
+                    break
+
+                self.emit("stream_inactive")
+                self.logger.info("Stopping recording interval!")
+                self._terminate_process()
+
+                if self._stop_flag.wait(
+                    self.recording_interval - self.recording_length
+                ):
+                    break
+            self._terminate_process()
+        else:
+            # Simply run it
             self._run_pipeline()
 
     def _run_pipeline(self) -> None:
-        pipeline_str = self._construct_pipeline()
-        self.logger.info(pipeline_str)
-        has_recording_stream = any(
-            stream.stream_type == StreamTypeEnum.RECORDING for stream in self.streams
-        )
-        self._process = subprocess.Popen(
-            [
-                "gst-launch-1.0",
-                f"{'-e' if has_recording_stream else ''}",  # EOS on shutdown
-                *pipeline_str.split(" "),
-            ],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
-        self._error_thread = threading.Thread(target=self._monitor_stderr)
-        self._error_thread.start()
-
-    def stop(self) -> None:
         with self._lock:
-            if not self.started or not self._process:
+            if self._stop_flag.is_set():
                 return
 
-            self.logger.info("Stopping stream")
-            self.started = False
+            pipeline_str = self._construct_pipeline()
+            self.logger.info(pipeline_str)
+            has_recording_stream = any(
+                stream.stream_type == StreamTypeEnum.RECORDING
+                for stream in self.streams
+            )
+            self._process = subprocess.Popen(
+                [
+                    "gst-launch-1.0",
+                    f"{'-e' if has_recording_stream else ''}",  # EOS on shutdown
+                    *pipeline_str.split(" "),
+                ],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            self._error_thread = threading.Thread(target=self._monitor_stderr)
+            self._error_thread.start()
+
+    def _terminate_process(self) -> None:
+        self.logger.info("Trying to stop process")
+        with self._lock:
+            if not self._process:
+                return
 
             # For recording streams, send EOS to properly finalize the file
             has_recording_stream = any(
@@ -181,10 +237,6 @@ class GStreamerProcessEngine(BaseStreamEngine):
                 else:
                     self._process.terminate()
                     self._process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                self.logger.warning("Shutdown timed out, force killing...")
-                self._process.kill()
-                self._process.wait()
             except Exception as e:
                 self.logger.error(f"Error during stop: {e}")
                 self._process.kill()
@@ -193,48 +245,56 @@ class GStreamerProcessEngine(BaseStreamEngine):
                     self._process.stderr.close()
                 self._process = None
 
+    def stop(self) -> None:
+        with self._lock:
+            if not self.started or not self._process:
+                return
+
+            self.logger.info("Stopping stream")
+            self.started = False
+
+            self._stop_flag.set()
+
+            self._terminate_process()
+
+            scheduler, self._scheduler = self._scheduler, None
+
+        if scheduler and scheduler is not threading.current_thread():
+            scheduler.join()
+
     def _construct_pipeline(self) -> str:
         parts = [GStreamerPipelineBuilder.build(s) for s in self.streams]
         return " ".join(parts)
 
     def _monitor_stderr(self) -> None:
-        error_block = []
-
-        if not self._process or not self._process.stderr:
+        process = self._process
+        if not process or not process.stderr:
             self.logger.error(
-                "Unable to monitor stderr for process. "
-                "Is the GStreamer process running?"
+                "Unable to monitor stderr. Is the GStreamer process running?"
             )
             return
 
-        for stderr_line in iter(self._process.stderr.readline, ""):
-            line_stripped = stderr_line.strip()
-
-            # Log all stderr output but only stop on actual errors
+        error_block = []
+        for line in iter(process.stderr.readline, ""):
+            stripped = line.strip()
             if any(
-                error_keyword in line_stripped.lower()
-                for error_keyword in ["error", "failed", "warning", "critical"]
+                k in stripped.lower()
+                for k in ("error", "failed", "warning", "critical")
             ):
-                error_block.append(line_stripped)
+                error_block.append(stripped)
 
-        if self._process:
-            self._process.wait()
-            return_code = self._process.returncode
+        return_code = process.wait()
 
-            if self.started and return_code != 0:
-                self.logger.error(
-                    f"GStreamer process crashed with return code: {return_code}"
-                )
+        with self._lock:
+            # If _terminate_process() already cleared/replaced it, we stopped it
+            intentional = self._process is not process
+            if intentional or not self.started or return_code == 0:
+                return
+            self.started = False
+            self._process = None
+            self._stop_flag.set()
 
-                for error in error_block:
-                    self.logger.error(error)
-
-                # Construct error message
-                error_msg = f"Process exited with code {return_code}."
-
-                self.emit_error(error_msg)
-
-                # Reset state
-                with self._lock:
-                    self.started = False
-                    self._process = None
+        self.logger.error(f"GStreamer process crashed with return code: {return_code}")
+        for error in error_block:
+            self.logger.error(error)
+        self.emit_error(f"Process exited with code {return_code}.")

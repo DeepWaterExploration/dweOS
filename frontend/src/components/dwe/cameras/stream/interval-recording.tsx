@@ -5,10 +5,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { useDeviceStore } from "@/store/devices";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export const IntervalRecording = ({
   bus_id,

@@ -40,6 +40,10 @@ echo "Successfully packaged frontend"
 
 cp run_release.py release
 cp install_requirements.sh release
+
+# Create offline wheels
+python3 -m pip wheel -q -r backend_py/requirements.txt -w "release/wheels"
+
 cp create_venv.sh release
 cp run_release.sh release
 cp -r service release

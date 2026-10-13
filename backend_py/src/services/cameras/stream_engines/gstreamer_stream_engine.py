@@ -105,15 +105,14 @@ class GStreamerPipelineBuilder:
                     "avi" if stream.encode_type == StreamEncodeTypeEnum.MJPG else "mp4"
                 )
                 timestamp = datetime.now().strftime("%F-%T")
-                unique_filename = (
-                    f"{stream.device_path.split('/')[-1]}_{timestamp}_%02d.{extension}"
-                )
+                fixed_bus_info = stream.bus_info.replace(".", "_")
+                unique_filename = f"{fixed_bus_info}__{timestamp}_%02d.{extension}"
                 unique_path = os.path.join(recording_directory, unique_filename)
                 stream.file_path = unique_path
                 muxer = "avimux" if extension == "avi" else "mp4mux"
                 # Split recordings into 5 minute segments
                 return (
-                    f"splitmuxsink location={unique_path} muxer={muxer} "
+                    f'splitmuxsink location="{unique_path}" muxer={muxer} '
                     "max-size-time=300000000000"
                     # "max-size-time=3000000000"
                 )

@@ -121,7 +121,8 @@ class RecordingsService:
         except json.JSONDecodeError as e:
             self.logger.error(f"Error decoding output from exiftool: {e}")
         except Exception as e:
-            self.logger.error(f"exiftool had an unknown system error: {e}")
+            # self.logger.error(f"exiftool had an unknown system error: {e}")
+            pass
         return "Unknown"
 
     def get_recording(self, filename: str) -> RecordingInfo | None:

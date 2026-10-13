@@ -8,7 +8,6 @@ and downloading all recordings as ZIP
 
 import asyncio
 import os
-import shutil
 import time
 import uuid
 
@@ -81,7 +80,7 @@ def get_recordings(request: Request) -> list[RecordingInfo]:
 def get_disk_usage(request: Request) -> DiskStatsResponse:
     recordings_service: RecordingsService = request.app.state.recordings_service
 
-    total, used, free = shutil.disk_usage(recordings_service.recordings_path)
+    total, used, free = recordings_service.get_disk_stats()
 
     return DiskStatsResponse(total=total, used=used, free=free)
 

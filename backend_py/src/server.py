@@ -109,9 +109,14 @@ class Server:
             frequency_offset=self.preferences_manager.get_preferences().frequency_offset
         )
 
+        self.recordings_service = RecordingsService(self.data_dir)
+
         # Device Manager
         self.device_manager = DeviceManager(
-            settings_manager=self.settings_manager, sio=self.sio, serial=self.serial
+            settings_manager=self.settings_manager,
+            sio=self.sio,
+            serial=self.serial,
+            recordings_service=self.recordings_service,
         )
 
         self.server_logger = logging.getLogger("dwe_os_2.Server")
@@ -122,8 +127,6 @@ class Server:
             self.network_wrapper = NetworkWrapper(sio)
 
         self.system_manager = SystemManager()
-
-        self.recordings_service = RecordingsService(self.data_dir)
 
         # TTYD
         if self.feature_support.ttyd:

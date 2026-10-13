@@ -26,6 +26,7 @@ from backend_py.src.models import (
     StreamInfoModel,
     StreamTypeEnum,
 )
+from backend_py.src.services.recordings.recordings_service import RecordingsService
 
 from ..preferences import SettingsManager
 from .device_utils import find_device_with_bus_info, is_process_alive, list_diff
@@ -68,11 +69,15 @@ class DeviceManager(events.EventEmitter):
     Class for interfacing with and monitoring devices
     """
 
+    # Recordings are stopped (and cannot be started) below this much free space
+    MIN_RECORDING_FREE_BYTES = 2 * 1024**3
+
     def __init__(
         self,
         sio: socketio.AsyncServer,
         settings_manager: SettingsManager,
         serial: SerialPWMController,
+        recordings_service: RecordingsService,
     ) -> None:
         super().__init__()
 
@@ -83,6 +88,8 @@ class DeviceManager(events.EventEmitter):
         self._is_monitoring = False
         # List of devices with stream errors
         self.stream_errors: list[str] = []
+
+        self.recordings_service = recordings_service
 
         self.serial = serial
 
@@ -102,6 +109,7 @@ class DeviceManager(events.EventEmitter):
         self._is_monitoring = True
         self._loop = asyncio.get_running_loop()
         asyncio.create_task(self._monitor())
+        asyncio.create_task(self._monitor_disk_usage())
 
     def stop_monitoring(self) -> None:
         """
@@ -223,13 +231,28 @@ class DeviceManager(events.EventEmitter):
             encode_type, width, height, interval, stream_type, endpoints
         )
 
-        if stream_info.enabled:
+        should_start = stream_info.enabled
+        if (
+            should_start
+            and stream_type == StreamTypeEnum.RECORDING
+            and not self._can_record()
+        ):
+            self.logger.error(
+                "Cannot start recording with less than "
+                f"{int(self.MIN_RECORDING_FREE_BYTES / (1024**3))} "
+                "GB of disk space remaining"
+            )
+            should_start = False
+            # The frontend assumes the stream started, so make it refetch
+            device.emit("updated")
+
+        if should_start:
             device.start_stream()
         else:
             device.stop_stream()
 
         self.settings_manager.save_device(device)
-        return True
+        return should_start == stream_info.enabled
 
     def set_device_nickname(self, bus_info: str, nickname: str) -> bool:
         """
@@ -512,6 +535,42 @@ class DeviceManager(events.EventEmitter):
             # get the list of devices and update the internal array
             devices_info = await self._get_devices(devices_info)
             self._release_orphaned_devices()
+
+    def _can_record(self) -> bool:
+        """
+        Check if there is enough free disk space to record
+        """
+        free = self.recordings_service.get_disk_stats().free
+        return free > self.MIN_RECORDING_FREE_BYTES
+
+    async def _monitor_disk_usage(self) -> None:
+        """
+        Internal code to stop recordings when the disk is almost full
+        """
+        while self._is_monitoring:
+            await asyncio.sleep(5)
+
+            recording_devices = [
+                device
+                for device in self.devices
+                if device.stream.enabled
+                and device.stream.stream_type == StreamTypeEnum.RECORDING
+            ]
+
+            if not recording_devices or self._can_record():
+                continue
+
+            # Logged as an error so the frontend shows it as a toast
+            self.logger.error(
+                "Less than 2 GB of disk space remaining, stopping all recordings"
+            )
+
+            for device in recording_devices:
+                device.stop_stream()
+                # Save so the recording does not resume on restart
+                self.settings_manager.save_device(device)
+
+            await self.sio.emit("device_updated")
 
     async def _emit_stream_error(self, device: str, errors: list | str) -> None:
         """

@@ -8,11 +8,13 @@ Allows for the renaming, deletion, and compression of the found recordings
 import json
 import logging
 import os
+import shutil
 import subprocess
 import threading
 import uuid
 import zipfile
 from dataclasses import dataclass
+from datetime import datetime
 
 from backend_py.src.models import RecordingInfo
 
@@ -20,7 +22,7 @@ from backend_py.src.models import RecordingInfo
 @dataclass
 class Duration:
     duration_value: str
-    size: int  # determine uniqeuness
+    size: int  # determine uniqueness
 
 
 class RecordingsService:
@@ -34,11 +36,15 @@ class RecordingsService:
         self.recordings_lock = threading.Lock()
 
         self.durations: dict[str, Duration] = {}
+        self.active_recordings: dict[str, str] = {}
 
         self._last_dir_mtime = 0.0
 
         if not os.path.exists(self.recordings_path):
             os.makedirs(self.recordings_path)
+
+    def get_disk_stats(self) -> shutil._ntuple_diskusage:
+        return shutil.disk_usage(self.recordings_path)
 
     def get_recordings(self) -> list[RecordingInfo]:
         with self.recordings_lock:
@@ -63,7 +69,21 @@ class RecordingsService:
 
                         if duration == "Unknown":
                             # Make the assumption this means that it's active
-                            duration = self._elapsed_since(recording.created)
+                            if recording.path not in self.active_recordings:
+                                self.active_recordings[recording.path] = (
+                                    recording.created
+                                )
+
+                            duration = self._elapsed_since(
+                                self.active_recordings[recording.path]
+                            )
+
+                            recording.created = datetime.now().strftime(
+                                "%Y-%m-%d %H:%M:%S"
+                            )
+                        else:
+                            if recording.path in self.active_recordings:
+                                self.active_recordings.pop(recording.path)
 
                         recording.duration = duration
 
@@ -79,8 +99,9 @@ class RecordingsService:
                     file_stat = os.stat(file_path)
                     recording_info = RecordingInfo(
                         path=file_path,
-                        name=filename.split(".")[0],
-                        format=filename.split(".")[-1],
+                        # Bus IDs in filenames can contain dots, so split on the last
+                        name=os.path.splitext(filename)[0],
+                        format=os.path.splitext(filename)[1][1:],
                         duration=(
                             self._get_duration(file_path)
                             if not filename.endswith(".dwvo")
@@ -96,8 +117,6 @@ class RecordingsService:
             return recordings
 
     def _elapsed_since(self, created: str) -> str:
-        from datetime import datetime
-
         start = datetime.strptime(created, "%Y-%m-%d %H:%M:%S")
         secs = max(int((datetime.now() - start).total_seconds()), 0)
         return f"{secs // 3600:02}:{secs % 3600 // 60:02}:{secs % 60:02}"
@@ -211,9 +230,9 @@ class RecordingsService:
             os.rename(old_path, new_path)
             for recording in self.recordings:
                 if recording.path == old_path:
-                    recording.name = new_name.split(".")[0]
+                    recording.name = os.path.splitext(new_name)[0]
                     recording.path = new_path
-                    recording.format = new_name.split(".")[-1]
+                    recording.format = os.path.splitext(new_name)[1][1:]
             return self.recordings
         return None
 

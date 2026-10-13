@@ -120,7 +120,7 @@ class RecordingsService:
             self.logger.error(f"exiftool was not found: {e}")
         except json.JSONDecodeError as e:
             self.logger.error(f"Error decoding output from exiftool: {e}")
-        except Exception as e:
+        except Exception:
             # self.logger.error(f"exiftool had an unknown system error: {e}")
             pass
         return "Unknown"

@@ -65,10 +65,13 @@ def _find_pwm_device_path() -> str | None:
 
 
 class SerialPWMController:
-    def __init__(self, baudrate: int = 9600, frequency_offset: float = 0) -> None:
+    def __init__(
+        self, baudrate: int = 9600, frequency_offset: float = 0, pwm_light_mode=False
+    ) -> None:
         self.found_port = False
         self.has_printed_error = False
         self.frequency_offset = frequency_offset
+        self.pwm_light_mode = pwm_light_mode
 
         self.logger = logging.getLogger("dwe_os_2.pwm.SerialPWMController")
         self.baudrate = baudrate
@@ -81,9 +84,14 @@ class SerialPWMController:
         self.owner_enabled = False
         self._last_owner_check = 0.0
 
+        # Apply 100% brightness on start
+        if pwm_light_mode:
+            self.apply(60, 100)
+
     def set_frequency_offset(self, frequency_offset: float) -> None:
-        self.frequency_offset = frequency_offset
-        self.apply(self.frequency, self.duty_cycle)
+        if not self.pwm_light_mode:
+            self.frequency_offset = frequency_offset
+            self.apply(self.frequency, self.duty_cycle)
 
     def _disconnect_serial(self) -> None:
         self.found_port = False
@@ -133,6 +141,10 @@ class SerialPWMController:
                             self.found_port = True
                             self.has_printed_error = False
                             self.logger.info("PWM USB serial connected at %s", path)
+
+                            # Wait until serial connects
+                            await asyncio.sleep(4)
+
                             # Perform initial apply
                             self.apply(self.frequency, self.duty_cycle)
                         except serial.SerialException as e:
@@ -173,6 +185,12 @@ class SerialPWMController:
             self.serial.write(command.encode("utf-8"))
 
     def apply_from_fps(self, fps: int) -> None:
+        if self.pwm_light_mode:
+            self.logger.info(
+                "apply_from_fps was called, but PWM controller is being used for "
+                "lighting. Ignoring request."
+            )
+            return
         self.apply(fps, 30)
 
     def stop(self) -> None:

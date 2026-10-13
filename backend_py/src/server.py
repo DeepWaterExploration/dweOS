@@ -48,6 +48,7 @@ class Server:
         settings_path: str = ".",
         log_level=logging.INFO,
         is_dev_mode=False,
+        pwm_light_mode=False,
     ) -> None:
         # initialize the app
         self.app = app
@@ -106,7 +107,8 @@ class Server:
 
         # Serial
         self.serial = SerialPWMController(
-            frequency_offset=self.preferences_manager.get_preferences().frequency_offset
+            frequency_offset=self.preferences_manager.get_preferences().frequency_offset,
+            pwm_light_mode=pwm_light_mode,
         )
 
         self.recordings_service = RecordingsService(self.data_dir)

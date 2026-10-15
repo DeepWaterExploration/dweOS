@@ -16,6 +16,7 @@ import uuid
 import zipfile
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
 
 from backend_py.src.models import RecordingInfo
 
@@ -30,6 +31,9 @@ class RecordingsService:
     BASE_PATH = ""
     # a file modified within this window is assumed to still be recording
     ACTIVE_MTIME_THRESHOLD_S = 5.0
+    DURATION_CACHE_INTERVAL_S = 300
+
+    DURATION_PATH = "recording_durations.json"
 
     def __init__(self, data_dir: str) -> None:
         self.recordings_path = os.path.join(data_dir, "recordings")
@@ -38,16 +42,82 @@ class RecordingsService:
         self.logger = logging.getLogger("dwe_os_2.RecordingsService")
         self.recordings_lock = threading.Lock()
 
-        self.durations: dict[str, Duration] = {}
+        self._load_durations()
+
         self.active_recordings: dict[str, str] = {}
 
         self._last_dir_mtime = 0.0
+        self._stop_event = threading.Event()
+        self._cache_thread: threading.Thread | None = None
 
         if not os.path.exists(self.recordings_path):
             os.makedirs(self.recordings_path)
 
+    def _load_durations(self) -> None:
+        self.durations: dict[str, Duration] = {}
+        path = Path(self.DURATION_PATH)
+
+        try:
+            with path.open(encoding="utf-8") as f:
+                raw = json.load(f)
+        except FileNotFoundError:
+            return
+        except (json.JSONDecodeError, UnicodeDecodeError) as e:
+            self.logger.warning("Duration cache is corrupt (%s); ignoring it.", e)
+            return
+        except OSError as e:
+            self.logger.warning("Could not read duration cache: %s", e)
+            return
+
+        if not isinstance(raw, dict):
+            self.logger.warning("Duration cache has unexpected format; ignoring it.")
+            return
+
+        for file_path, data in raw.items():
+            try:
+                self.durations[file_path] = Duration(**data)
+            except (TypeError, ValueError) as e:
+                self.logger.warning("Skipping bad cache entry %r: %s", file_path, e)
+
+    def start(self) -> None:
+        """Starts the background thread that keeps the durations cache warm"""
+        if self._cache_thread is not None and self._cache_thread.is_alive():
+            return
+        self._stop_event.clear()
+        # Daemon so a scan in progress does not keep the process alive
+        self._cache_thread = threading.Thread(
+            target=self._cache_durations_loop, daemon=True
+        )
+        self._cache_thread.start()
+
+    def stop(self) -> None:
+        # Also aborts a scan in progress, so it releases recordings_lock
+        self._stop_event.set()
+        self._cache_thread = None
+
+    def _cache_durations_loop(self) -> None:
+        while not self._stop_event.is_set():
+            try:
+                self.logger.info("Updating recordings cache.")
+                # get_recordings refreshes the durations cache
+                self.get_recordings()
+            except Exception as e:
+                self.logger.error(f"Failed to cache recording durations: {e}")
+            self._stop_event.wait(self.DURATION_CACHE_INTERVAL_S)
+
     def get_disk_stats(self) -> shutil._ntuple_diskusage:
         return shutil.disk_usage(self.recordings_path)
+
+    def save_durations(self) -> None:
+        with open(self.DURATION_PATH, "w") as f:
+            f.write(
+                json.dumps(
+                    {
+                        file_path: self.durations[file_path].__dict__
+                        for file_path in self.durations
+                    }
+                )
+            )
 
     def get_recordings(self) -> list[RecordingInfo]:
         with self.recordings_lock:
@@ -59,6 +129,8 @@ class RecordingsService:
                 # A file being written to does not modify the directory, so the
                 # size of an active recording has to be refreshed separately
                 for recording in self.recordings:
+                    if self._stop_event.is_set():
+                        break
                     try:
                         file_stat = os.stat(recording.path)
                     except FileNotFoundError:
@@ -81,7 +153,11 @@ class RecordingsService:
             # otherwise run scan
             recordings: list[RecordingInfo] = []
             for filename in os.listdir(self.recordings_path):
-                if filename.endswith((".mp4", ".avi", ".dwvo")):
+                # Each file can take a while with exiftool, so bail out on
+                # shutdown instead of holding recordings_lock until the end
+                if self._stop_event.is_set():
+                    return self.recordings
+                if filename.endswith((".mp4", ".avi", ".mkv", ".dwvo")):
                     file_path = os.path.join(self.recordings_path, filename)
                     file_stat = os.stat(file_path)
                     recording_info = RecordingInfo(
@@ -101,7 +177,10 @@ class RecordingsService:
 
             self.recordings = recordings
             self._last_dir_mtime = current_mtime
-            return recordings
+
+            self.save_durations()
+
+        return recordings
 
     def _is_recently_modified(self, file_stat: os.stat_result) -> bool:
         return time.time() - file_stat.st_mtime < self.ACTIVE_MTIME_THRESHOLD_S
@@ -158,9 +237,9 @@ class RecordingsService:
 
                 size = os.path.getsize(file_path)
 
-                if file_path.endswith(".mp4"):
+                if file_path.endswith((".mp4", ".mkv")):
                     duration = data[0].get("Duration", None)
-                    if not duration:
+                    if not duration or float(data.get("Duration") or 0) <= 0:
                         return "Unknown"
                     if "s" in duration:
                         duration = (

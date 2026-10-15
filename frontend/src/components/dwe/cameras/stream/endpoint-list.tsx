@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { components } from "@/schemas/dwe_os_2";
 
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
+import { getNextAvailablePort } from "@/lib/util/device";
 import { useDeviceStore } from "@/store/devices";
 import { usePreferencesStore } from "@/store/preferences";
 
@@ -105,10 +106,12 @@ const Endpoint = ({
 export const EndpointList = ({ bus_id }: { bus_id: string }) => {
   const preferences = usePreferencesStore((state) => state.preferences);
   const configureStream = useDeviceStore((state) => state.configureStream);
+  const fetchDevices = useDeviceStore((state) => state.fetchDevices);
   const stream = useDeviceStore((state) => state.devices[bus_id].stream);
   const isStreamLoading = useDeviceStore(
     (state) => state.isStreamLoading[bus_id] ?? false,
   );
+  const [isAddingEndpoint, setIsAddingEndpoint] = useState(false);
 
   const handleDeleteEndpoint = (index: number) => {
     const endpoints = stream.endpoints.filter((_, i) => i !== index);
@@ -125,11 +128,28 @@ export const EndpointList = ({ bus_id }: { bus_id: string }) => {
     configureStream(bus_id, { endpoints });
   };
 
-  const handleAddEndpoint = (
-    endpoint: components["schemas"]["StreamEndpointModel"],
-  ) => {
-    const endpoints = [...stream.endpoints, endpoint];
-    configureStream(bus_id, { endpoints });
+  const handleAddEndpoint = async () => {
+    setIsAddingEndpoint(true);
+    try {
+      // Refresh from the backend first, so ports used by streams this tab
+      // hasn't heard about yet still count as taken
+      await fetchDevices();
+      const devices = useDeviceStore.getState().devices;
+      if (!devices[bus_id]) return; // Unplugged in the meantime
+
+      const endpoint = {
+        host: preferences?.default_stream?.host ?? "192.168.2.1",
+        port: getNextAvailablePort(
+          devices,
+          preferences?.default_stream?.port ?? 5600,
+        ),
+      };
+      await configureStream(bus_id, {
+        endpoints: [...devices[bus_id].stream.endpoints, endpoint],
+      });
+    } finally {
+      setIsAddingEndpoint(false);
+    }
   };
 
   return (
@@ -181,12 +201,8 @@ export const EndpointList = ({ bus_id }: { bus_id: string }) => {
             variant="outline"
             id={TOUR_STEP_IDS.ADD_ENDPOINTS}
             className="h-8 w-8 p-0 rounded-full shadow-md bg-card flex items-center justify-center hover:bg-accent hover:text-background"
-            onClick={() => {
-              handleAddEndpoint({
-                host: preferences?.default_stream?.host ?? "192.168.2.1",
-                port: preferences?.default_stream?.port ?? 5600,
-              });
-            }}
+            disabled={isAddingEndpoint}
+            onClick={handleAddEndpoint}
           >
             <PlusIcon />
           </Button>

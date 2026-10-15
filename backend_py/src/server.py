@@ -198,6 +198,7 @@ class Server:
             self.serial.start()
 
         self.device_manager.start_monitoring()
+        self.recordings_service.start()
 
         if self.feature_support.wifi:
             await self.network_wrapper.initialize()
@@ -215,6 +216,7 @@ class Server:
         self.server_logger.info("Shutting down")
 
         self.device_manager.stop_monitoring()
+        self.recordings_service.stop()
         self.settings_manager.cleanup()
 
         if self.feature_support.ttyd:

@@ -324,6 +324,7 @@ release.tar.gz
 .env
 pi-gen
 /recordings/
+/recording_durations.json
 
 !frontend/src/lib/
 

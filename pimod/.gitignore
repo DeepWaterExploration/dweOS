@@ -1,0 +1,4 @@
+# Build inputs and outputs (see dweOS-static.Pifile)
+*.img
+*.img.xz
+.cache/

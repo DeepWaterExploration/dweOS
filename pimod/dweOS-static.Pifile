@@ -1,0 +1,133 @@
+# Minimal Raspberry Pi OS Lite image with DWE OS preinstalled, static IP variant.
+# The DHCP variant is dweOS-dhcp.Pifile; keep the two in sync.
+#
+#   - user dwe / password deepwater (sudo)
+#   - hostname dweos (dweos.local), SSH enabled
+#   - locale en_US.UTF-8, US keyboard, Wi-Fi country US
+#   - static IP 192.168.2.2/24 (255.255.255.0) on eth0, gateway + DNS 192.168.2.1
+#   - hardware PWM (pwm-2chan overlay)
+#   - DWE OS from release.tar.gz (next to this file) installed and enabled at boot
+#
+# CI (.github/workflows/pi-image.yml) builds this for every published release.
+# Local build, from this directory:
+#   gh release download v0.7.7 -p release.tar.gz
+#   docker run --rm --privileged -v "$PWD":/work -w /work nature40/pimod pimod.sh dweOS-static.Pifile
+#   ->  dweOS-static.img
+
+# The Pifile is sourced by pimod, so resolve paths relative to it rather than
+# to wherever pimod was started.
+PIFILE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ ! -f "${PIFILE_DIR}/release.tar.gz" ]]; then
+    echo "### Error: ${PIFILE_DIR}/release.tar.gz is missing (gh release download <tag> -p release.tar.gz)" >&2
+    false
+fi
+
+TO "${PIFILE_DIR}/dweOS-static.img"
+FROM https://downloads.raspberrypi.org/raspios_lite_arm64/images/raspios_lite_arm64-2026-10-06/2026-10-06-raspios-trixie-arm64-lite.img.xz
+
+# Room for GStreamer and the Python venv; reclaimed again by SHRINK below.
+PUMP 2G
+
+# --- User: dwe / deepwater -------------------------------------------------
+RUN bash -c '
+set -e
+groups=""
+for g in adm dialout cdrom sudo audio video plugdev games users input render netdev gpio i2c spi; do
+    getent group "$g" >/dev/null && groups="${groups:+$groups,}$g"
+done
+# The image ships a placeholder "pi" user (shell: nologin). Rename it with
+# Raspberry Pi'"'"'s own userconf tool, which also sets bash as the shell and
+# cancels the first-boot rename wizard.
+if [ -x /usr/lib/userconf-pi/userconf ] && id pi >/dev/null 2>&1; then
+    /usr/lib/userconf-pi/userconf pi dwe ""
+elif ! id dwe >/dev/null 2>&1; then
+    useradd -m -s /bin/bash dwe
+fi
+usermod -s /bin/bash -a -G "$groups" dwe
+echo "dwe:deepwater" | chpasswd
+
+# Skip the first-boot user wizard and cloud-init, which would otherwise
+# prompt for / override the user and network configuration.
+systemctl disable userconfig.service 2>/dev/null || true
+systemctl enable getty@tty1.service
+rm -f /etc/ssh/sshd_config.d/rename_user.conf /etc/sudoers.d/010_pi-nopasswd
+if [ -d /etc/cloud ]; then touch /etc/cloud/cloud-init.disabled; fi
+'
+
+# --- Hostname: dweos (reachable as dweos.local via avahi) -------------------
+RUN bash -c '
+echo dweos > /etc/hostname
+sed -i "s/^127\.0\.1\.1.*/127.0.1.1\tdweos/" /etc/hosts
+grep -q "^127\.0\.1\.1" /etc/hosts || printf "127.0.1.1\tdweos\n" >> /etc/hosts
+'
+
+# --- Locale en_US.UTF-8, US keyboard, Wi-Fi country US ----------------------
+RUN raspi-config nonint do_change_locale en_US.UTF-8
+# raspi-config's keyboard helper also reloads the live console, so only do
+# the part that matters for the image.
+RUN bash -c '
+sed -i "s/^XKBLAYOUT=.*/XKBLAYOUT=\"us\"/" /etc/default/keyboard
+DEBIAN_FRONTEND=noninteractive dpkg-reconfigure -f noninteractive keyboard-configuration
+'
+# Adds cfg80211.ieee80211_regdom=US to cmdline.txt.
+RUN raspi-config nonint do_wifi_country US
+
+# --- SSH -------------------------------------------------------------------
+RUN systemctl enable ssh
+
+# --- Static IP 192.168.2.2/24, gateway/DNS 192.168.2.1 (NetworkManager) ---
+RUN tee /etc/NetworkManager/system-connections/eth0-static.nmconnection <<EOF
+[connection]
+id=eth0-static
+type=ethernet
+interface-name=eth0
+autoconnect=true
+
+[ethernet]
+
+[ipv4]
+method=manual
+address1=192.168.2.2/24,192.168.2.1
+dns=192.168.2.1;
+
+[ipv6]
+method=disabled
+EOF
+RUN chmod 600 /etc/NetworkManager/system-connections/eth0-static.nmconnection
+
+# --- Hardware PWM ------------------------------------------------------------
+RUN bash -c 'printf "\n[all]\ndtoverlay=pwm-2chan\n" >> /boot/firmware/config.txt'
+
+# --- Slim down ---------------------------------------------------------------
+# Keep dpkg from installing docs, man pages and non-English locales (applies
+# to the DWE OS dependencies below), then drop the ones already present.
+RUN tee /etc/dpkg/dpkg.cfg.d/01-nodoc <<EOF
+path-exclude=/usr/share/doc/*
+path-include=/usr/share/doc/*/copyright
+path-exclude=/usr/share/man/*
+path-exclude=/usr/share/info/*
+path-exclude=/usr/share/groff/*
+path-exclude=/usr/share/lintian/*
+path-exclude=/usr/share/locale/*
+path-include=/usr/share/locale/en*
+EOF
+RUN bash -c '
+find /usr/share/doc -mindepth 1 -not -name copyright -not -type d -delete
+find /usr/share/doc -mindepth 1 -type d -empty -delete
+rm -rf /usr/share/man/* /usr/share/info/* /usr/share/groff/* /usr/share/lintian/*
+find /usr/share/locale -mindepth 1 -maxdepth 1 -not -name "en*" -exec rm -rf {} +
+'
+
+# --- DWE OS ------------------------------------------------------------------
+# Installs the exact release.tar.gz given to the build; the service starts on
+# first boot.
+INSTALL "${PIFILE_DIR}/release.tar.gz" /tmp/release.tar.gz
+INSTALL 755 "${PIFILE_DIR}/image_install_script.sh" /tmp/image_install_script.sh
+RUN /tmp/image_install_script.sh /tmp/release.tar.gz
+RUN rm -f /tmp/release.tar.gz /tmp/image_install_script.sh
+RUN bash -c 'apt-get clean && rm -rf /var/lib/apt/lists/* /root/.cache/pip /var/log/*.log /var/log/apt/*'
+
+# Zero free space so the leftover build room compresses away, then shrink.
+# Distributed as dweOS-staticIP-RPi-image-<tag>.img.xz (xz -T0 -9).
+ZERO
+SHRINK

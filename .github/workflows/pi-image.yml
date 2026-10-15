@@ -1,0 +1,75 @@
+name: Build Raspberry Pi Image
+on:
+  release:
+    types: [published]
+  # Check Pifile changes against the latest release (artifact only)
+  pull_request:
+    paths:
+      - "pimod/**"
+      - ".github/workflows/pi-image.yml"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to build the image for (e.g. v0.7.7)"
+        required: true
+      upload_to_release:
+        description: "Attach the image to the release (otherwise it's only kept as a workflow artifact)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write # Required to upload release assets
+
+jobs:
+  build_static_ip_image:
+    # Preview builds are published as prereleases, and -blueos tags are Docker-only;
+    # only real releases get an image
+    if: >-
+      github.event_name != 'release' ||
+      (!github.event.release.prerelease && !endsWith(github.event.release.tag_name, '-blueos'))
+    # Native arm64, so the arm64 image's chroot doesn't run under QEMU emulation
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 180
+    env:
+      # Empty for pull requests, which use the latest release
+      TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.tag }}
+      UPLOAD: ${{ github.event_name == 'release' || inputs.upload_to_release == true }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      # Releases build from their own tag; manual runs and PRs use the Pifile from
+      # the selected branch, so images can be made for releases that predate it
+      - name: "Checkout code"
+        uses: actions/checkout@v6
+
+      - name: "Download release files"
+        run: |
+          if [ -z "$TAG" ]; then
+            TAG=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)
+            echo "TAG=$TAG" >> "$GITHUB_ENV"
+          fi
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern release.tar.gz --dir pimod
+          echo "IMAGE_NAME=dweOS-staticIP-RPi-image-$TAG.img.xz" >> "$GITHUB_ENV"
+
+      - name: "Build image"
+        uses: Nature40/pimod@v0.9.3
+        with:
+          pifile: pimod/dweOS-static.Pifile
+
+      - name: "Compress image"
+        run: |
+          sudo chown "$USER" pimod/dweOS-static.img
+          xz -T0 -9 --stdout pimod/dweOS-static.img > "$IMAGE_NAME"
+          ls -lh "$IMAGE_NAME"
+
+      - name: "Upload image to release"
+        if: env.UPLOAD == 'true'
+        run: gh release upload "$TAG" "$IMAGE_NAME" --repo "$GITHUB_REPOSITORY" --clobber
+
+      - name: "Upload image as workflow artifact"
+        if: env.UPLOAD != 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.IMAGE_NAME }}
+          path: ${{ env.IMAGE_NAME }}
+          compression-level: 0 # Already xz-compressed
+          retention-days: 7

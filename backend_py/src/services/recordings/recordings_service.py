@@ -11,6 +11,7 @@ import os
 import shutil
 import subprocess
 import threading
+import time
 import uuid
 import zipfile
 from dataclasses import dataclass
@@ -27,6 +28,8 @@ class Duration:
 
 class RecordingsService:
     BASE_PATH = ""
+    # a file modified within this window is assumed to still be recording
+    ACTIVE_MTIME_THRESHOLD_S = 5.0
 
     def __init__(self, data_dir: str) -> None:
         self.recordings_path = os.path.join(data_dir, "recordings")
@@ -57,35 +60,19 @@ class RecordingsService:
                 # size of an active recording has to be refreshed separately
                 for recording in self.recordings:
                     try:
-                        size_bytes = os.stat(recording.path).st_size
+                        file_stat = os.stat(recording.path)
                     except FileNotFoundError:
                         continue
 
-                    new_size = self._format_size(size_bytes)
-                    if new_size != recording.size and not recording.path.endswith(
-                        ".dwvo"
-                    ):
-                        duration = self._get_duration(recording.path)
-
-                        if duration == "Unknown":
-                            # Make the assumption this means that it's active
-                            if recording.path not in self.active_recordings:
-                                self.active_recordings[recording.path] = (
-                                    recording.created
-                                )
-
-                            duration = self._elapsed_since(
-                                self.active_recordings[recording.path]
-                            )
-
-                            recording.created = datetime.now().strftime(
-                                "%Y-%m-%d %H:%M:%S"
-                            )
-                        else:
-                            if recording.path in self.active_recordings:
-                                self.active_recordings.pop(recording.path)
-
-                        recording.duration = duration
+                    new_size = self._format_size(file_stat.st_size)
+                    if not recording.path.endswith(".dwvo"):
+                        recently_modified = self._is_recently_modified(file_stat)
+                        if (
+                            recently_modified
+                            or new_size != recording.size
+                            or recording.path in self.active_recordings
+                        ):
+                            self._refresh_duration(recording, recently_modified)
 
                     recording.size = new_size
 
@@ -102,19 +89,40 @@ class RecordingsService:
                         # Bus IDs in filenames can contain dots, so split on the last
                         name=os.path.splitext(filename)[0],
                         format=os.path.splitext(filename)[1][1:],
-                        duration=(
-                            self._get_duration(file_path)
-                            if not filename.endswith(".dwvo")
-                            else "00:00:00"
-                        ),
+                        duration="00:00:00",
                         created=self._epoch_to_readable(file_stat.st_ctime),
                         size=self._format_size(file_stat.st_size),
                     )
+                    if not filename.endswith(".dwvo"):
+                        self._refresh_duration(
+                            recording_info, self._is_recently_modified(file_stat)
+                        )
                     recordings.append(recording_info)
 
             self.recordings = recordings
             self._last_dir_mtime = current_mtime
             return recordings
+
+    def _is_recently_modified(self, file_stat: os.stat_result) -> bool:
+        return time.time() - file_stat.st_mtime < self.ACTIVE_MTIME_THRESHOLD_S
+
+    def _refresh_duration(
+        self, recording: RecordingInfo, recently_modified: bool
+    ) -> None:
+        # Caller must hold recordings_lock
+        duration = self._get_duration(recording.path)
+
+        # A file with a valid duration has been finalized, even if it was just
+        # written to, so only an unreadable recent file is considered active
+        if recently_modified and duration == "Unknown":
+            # The file is incomplete, so show the time elapsed since it started
+            start = self.active_recordings.setdefault(recording.path, recording.created)
+            recording.duration = self._elapsed_since(start)
+            recording.created = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            return
+
+        self.active_recordings.pop(recording.path, None)
+        recording.duration = duration
 
     def _elapsed_since(self, created: str) -> str:
         start = datetime.strptime(created, "%Y-%m-%d %H:%M:%S")
@@ -198,6 +206,7 @@ class RecordingsService:
         # Caller must hold recordings_lock
         recording_path = os.path.join(self.recordings_path, filename)
         self.durations.pop(recording_path, None)
+        self.active_recordings.pop(recording_path, None)
 
         if not os.path.exists(recording_path):
             return False

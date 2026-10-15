@@ -312,7 +312,7 @@ export function getSteps(
           <div>Sample Log</div>
           <Separator />
           <div className="text-sm text-muted-foreground p-2">
-            You can left click into a log for a detailed view.
+            Click a log to copy it. Hover over a long message to see all of it.
           </div>
         </div>
       ),

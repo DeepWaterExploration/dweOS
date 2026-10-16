@@ -57,13 +57,13 @@ class GStreamerPipelineBuilder:
                         f"h264parse ! video/x-h264,width={stream.width},"
                         f"height={stream.height},"
                         f"framerate={stream.interval.denominator}/"
-                        f"{stream.interval.numerator} ! queue ! mp4mux"
+                        f"{stream.interval.numerator} ! queue"
                     )
                 else:
                     return "h264parse ! queue ! rtph264pay config-interval=10 pt=96"
             case StreamEncodeTypeEnum.MJPG:
                 if stream.stream_type == StreamTypeEnum.RECORDING:
-                    return "queue ! avimux"
+                    return "queue"
                 else:
                     return "rtpjpegpay"
             case StreamEncodeTypeEnum.SOFTWARE_H264:
@@ -79,7 +79,7 @@ class GStreamerPipelineBuilder:
                         "h264parse ! video/x-h264,"
                         f"width={stream.width},height={stream.height},"
                         f"framerate={stream.interval.denominator}"
-                        f"/{stream.interval.numerator} ! queue ! mp4mux"
+                        f"/{stream.interval.numerator} ! queue"
                     )
                 else:
                     return (
@@ -101,16 +101,18 @@ class GStreamerPipelineBuilder:
                 sink += ",".join(f"{e.host}:{e.port}" for e in stream.endpoints)
                 return sink
             case StreamTypeEnum.RECORDING:
-                extension = (
-                    "avi" if stream.encode_type == StreamEncodeTypeEnum.MJPG else "mp4"
-                )
+                extension = "mkv"
                 timestamp = datetime.now().strftime("%F-%T")
-                unique_filename = (
-                    f"{stream.device_path.split('/')[-1]}_{timestamp}.{extension}"
-                )
+                fixed_bus_info = stream.bus_info.replace(".", "_")
+                unique_filename = f"{fixed_bus_info}__{timestamp}_%02d.{extension}"
                 unique_path = os.path.join(recording_directory, unique_filename)
                 stream.file_path = unique_path
-                return f"filesink location={unique_path} sync=true"
+                return (
+                    f'splitmuxsink location="{unique_path}" '
+                    "muxer-factory=matroskamux "
+                    'muxer-properties="properties,streamable=true" '
+                    "max-size-time=300000000000"
+                )
             case _:
                 return ""
 

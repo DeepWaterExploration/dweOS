@@ -48,6 +48,7 @@ class Server:
         settings_path: str = ".",
         log_level=logging.INFO,
         is_dev_mode=False,
+        pwm_light_mode=False,
     ) -> None:
         # initialize the app
         self.app = app
@@ -106,12 +107,18 @@ class Server:
 
         # Serial
         self.serial = SerialPWMController(
-            frequency_offset=self.preferences_manager.get_preferences().frequency_offset
+            frequency_offset=self.preferences_manager.get_preferences().frequency_offset,
+            pwm_light_mode=pwm_light_mode,
         )
+
+        self.recordings_service = RecordingsService(self.data_dir)
 
         # Device Manager
         self.device_manager = DeviceManager(
-            settings_manager=self.settings_manager, sio=self.sio, serial=self.serial
+            settings_manager=self.settings_manager,
+            sio=self.sio,
+            serial=self.serial,
+            recordings_service=self.recordings_service,
         )
 
         self.server_logger = logging.getLogger("dwe_os_2.Server")
@@ -122,8 +129,6 @@ class Server:
             self.network_wrapper = NetworkWrapper(sio)
 
         self.system_manager = SystemManager()
-
-        self.recordings_service = RecordingsService(self.data_dir)
 
         # TTYD
         if self.feature_support.ttyd:
@@ -193,6 +198,7 @@ class Server:
             self.serial.start()
 
         self.device_manager.start_monitoring()
+        self.recordings_service.start()
 
         if self.feature_support.wifi:
             await self.network_wrapper.initialize()
@@ -210,6 +216,7 @@ class Server:
         self.server_logger.info("Shutting down")
 
         self.device_manager.stop_monitoring()
+        self.recordings_service.stop()
         self.settings_manager.cleanup()
 
         if self.feature_support.ttyd:

@@ -8,16 +8,32 @@ Allows for the renaming, deletion, and compression of the found recordings
 import json
 import logging
 import os
+import shutil
 import subprocess
 import threading
+import time
 import uuid
 import zipfile
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
 
 from backend_py.src.models import RecordingInfo
 
 
+@dataclass
+class Duration:
+    duration_value: str
+    size: int  # determine uniqueness
+
+
 class RecordingsService:
     BASE_PATH = ""
+    # a file modified within this window is assumed to still be recording
+    ACTIVE_MTIME_THRESHOLD_S = 5.0
+    DURATION_CACHE_INTERVAL_S = 300
+
+    DURATION_PATH = "recording_durations.json"
 
     def __init__(self, data_dir: str) -> None:
         self.recordings_path = os.path.join(data_dir, "recordings")
@@ -26,12 +42,82 @@ class RecordingsService:
         self.logger = logging.getLogger("dwe_os_2.RecordingsService")
         self.recordings_lock = threading.Lock()
 
-        self.durations = {}
+        self._load_durations()
+
+        self.active_recordings: dict[str, str] = {}
 
         self._last_dir_mtime = 0.0
+        self._stop_event = threading.Event()
+        self._cache_thread: threading.Thread | None = None
 
         if not os.path.exists(self.recordings_path):
             os.makedirs(self.recordings_path)
+
+    def _load_durations(self) -> None:
+        self.durations: dict[str, Duration] = {}
+        path = Path(self.DURATION_PATH)
+
+        try:
+            with path.open(encoding="utf-8") as f:
+                raw = json.load(f)
+        except FileNotFoundError:
+            return
+        except (json.JSONDecodeError, UnicodeDecodeError) as e:
+            self.logger.warning("Duration cache is corrupt (%s); ignoring it.", e)
+            return
+        except OSError as e:
+            self.logger.warning("Could not read duration cache: %s", e)
+            return
+
+        if not isinstance(raw, dict):
+            self.logger.warning("Duration cache has unexpected format; ignoring it.")
+            return
+
+        for file_path, data in raw.items():
+            try:
+                self.durations[file_path] = Duration(**data)
+            except (TypeError, ValueError) as e:
+                self.logger.warning("Skipping bad cache entry %r: %s", file_path, e)
+
+    def start(self) -> None:
+        """Starts the background thread that keeps the durations cache warm"""
+        if self._cache_thread is not None and self._cache_thread.is_alive():
+            return
+        self._stop_event.clear()
+        # Daemon so a scan in progress does not keep the process alive
+        self._cache_thread = threading.Thread(
+            target=self._cache_durations_loop, daemon=True
+        )
+        self._cache_thread.start()
+
+    def stop(self) -> None:
+        # Also aborts a scan in progress, so it releases recordings_lock
+        self._stop_event.set()
+        self._cache_thread = None
+
+    def _cache_durations_loop(self) -> None:
+        while not self._stop_event.is_set():
+            try:
+                self.logger.info("Updating recordings cache.")
+                # get_recordings refreshes the durations cache
+                self.get_recordings()
+            except Exception as e:
+                self.logger.error(f"Failed to cache recording durations: {e}")
+            self._stop_event.wait(self.DURATION_CACHE_INTERVAL_S)
+
+    def get_disk_stats(self) -> shutil._ntuple_diskusage:
+        return shutil.disk_usage(self.recordings_path)
+
+    def save_durations(self) -> None:
+        with open(self.DURATION_PATH, "w") as f:
+            f.write(
+                json.dumps(
+                    {
+                        file_path: self.durations[file_path].__dict__
+                        for file_path in self.durations
+                    }
+                )
+            )
 
     def get_recordings(self) -> list[RecordingInfo]:
         with self.recordings_lock:
@@ -43,32 +129,84 @@ class RecordingsService:
                 # A file being written to does not modify the directory, so the
                 # size of an active recording has to be refreshed separately
                 for recording in self.recordings:
-                    recording.size = self._format_size(os.stat(recording.path).st_size)
+                    if self._stop_event.is_set():
+                        break
+                    try:
+                        file_stat = os.stat(recording.path)
+                    except FileNotFoundError:
+                        continue
+
+                    new_size = self._format_size(file_stat.st_size)
+                    if not recording.path.endswith(".dwvo"):
+                        recently_modified = self._is_recently_modified(file_stat)
+                        if (
+                            recently_modified
+                            or new_size != recording.size
+                            or recording.path in self.active_recordings
+                        ):
+                            self._refresh_duration(recording, recently_modified)
+
+                    recording.size = new_size
+
                 return self.recordings
 
             # otherwise run scan
             recordings: list[RecordingInfo] = []
             for filename in os.listdir(self.recordings_path):
-                if filename.endswith((".mp4", ".avi", ".dwvo")):
+                # Each file can take a while with exiftool, so bail out on
+                # shutdown instead of holding recordings_lock until the end
+                if self._stop_event.is_set():
+                    return self.recordings
+                if filename.endswith((".mp4", ".avi", ".mkv", ".dwvo")):
                     file_path = os.path.join(self.recordings_path, filename)
                     file_stat = os.stat(file_path)
                     recording_info = RecordingInfo(
                         path=file_path,
-                        name=filename.split(".")[0],
-                        format=filename.split(".")[-1],
-                        duration=(
-                            self._get_duration(file_path)
-                            if not filename.endswith(".dwvo")
-                            else "00:00:00"
-                        ),
+                        # Bus IDs in filenames can contain dots, so split on the last
+                        name=os.path.splitext(filename)[0],
+                        format=os.path.splitext(filename)[1][1:],
+                        duration="00:00:00",
                         created=self._epoch_to_readable(file_stat.st_ctime),
                         size=self._format_size(file_stat.st_size),
                     )
+                    if not filename.endswith(".dwvo"):
+                        self._refresh_duration(
+                            recording_info, self._is_recently_modified(file_stat)
+                        )
                     recordings.append(recording_info)
 
             self.recordings = recordings
             self._last_dir_mtime = current_mtime
-            return recordings
+
+            self.save_durations()
+
+        return recordings
+
+    def _is_recently_modified(self, file_stat: os.stat_result) -> bool:
+        return time.time() - file_stat.st_mtime < self.ACTIVE_MTIME_THRESHOLD_S
+
+    def _refresh_duration(
+        self, recording: RecordingInfo, recently_modified: bool
+    ) -> None:
+        # Caller must hold recordings_lock
+        duration = self._get_duration(recording.path)
+
+        # A file with a valid duration has been finalized, even if it was just
+        # written to, so only an unreadable recent file is considered active
+        if recently_modified and duration == "Unknown":
+            # The file is incomplete, so show the time elapsed since it started
+            start = self.active_recordings.setdefault(recording.path, recording.created)
+            recording.duration = self._elapsed_since(start)
+            recording.created = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            return
+
+        self.active_recordings.pop(recording.path, None)
+        recording.duration = duration
+
+    def _elapsed_since(self, created: str) -> str:
+        start = datetime.strptime(created, "%Y-%m-%d %H:%M:%S")
+        secs = max(int((datetime.now() - start).total_seconds()), 0)
+        return f"{secs // 3600:02}:{secs % 3600 // 60:02}:{secs % 60:02}"
 
     def _format_size(self, size_bytes: int) -> str:
         return f"{size_bytes / (1024 * 1024):.2f} MB"
@@ -78,10 +216,30 @@ class RecordingsService:
 
         return datetime.fromtimestamp(epoch).strftime("%Y-%m-%d %H:%M:%S")
 
+    @staticmethod
+    def _exif_duration_to_seconds(value) -> float:
+        """Parses exiftool durations: '12.34 s', '0:01:05', or a bare number."""
+        if isinstance(value, (int, float)):
+            return float(value)
+        value = str(value).strip()
+        if value.endswith(" s"):
+            return float(value[:-2])
+        secs = 0.0
+        for part in value.split(":"):
+            secs = secs * 60 + float(part)
+        return secs
+
+    @staticmethod
+    def _format_seconds(secs: float) -> str:
+        secs = int(round(secs))
+        return f"{secs // 3600:02}:{secs % 3600 // 60:02}:{secs % 60:02}"
+
     def _get_duration(self, file_path: str) -> str:
         if file_path in self.durations:
-            self.logger.info(f"Found cached duration: {file_path}")
-            return self.durations[file_path]
+            # Only cache if the size is the same, otherwise it was modified
+            size = os.path.getsize(file_path)
+            if size == self.durations[file_path].size:
+                return self.durations[file_path].duration_value
 
         # FIXME: We need to change this function to use a better metadata library
         try:
@@ -95,13 +253,23 @@ class RecordingsService:
             if output:
                 data = json.loads(output)
 
-                if file_path.endswith(".mp4"):
-                    duration = data[0].get("Duration", "00:00:00")
-                    if "s" in duration:
-                        duration = (
-                            f"00:00:{round(float(duration.replace(' s', ''))):02}"
-                        )
-                    self.durations[file_path] = duration
+                size = os.path.getsize(file_path)
+
+                if file_path.endswith((".mp4", ".mkv")):
+                    raw_duration = data[0].get("Duration")
+                    if not raw_duration:
+                        return "Unknown"
+                    try:
+                        secs = self._exif_duration_to_seconds(raw_duration)
+                    except ValueError:
+                        return "Unknown"
+                    # exiftool reports an unfinalized file as 0 s
+                    if secs == 0:
+                        return "Unknown"
+                    duration = self._format_seconds(secs)
+                    self.durations[file_path] = Duration(
+                        duration_value=duration, size=size
+                    )
                     return duration
 
                 totalFrameCount = data[0].get("TotalFrameCount", 0)
@@ -112,16 +280,19 @@ class RecordingsService:
                     minutes = int((duration % 3600) // 60)
                     seconds = int(duration % 60)
                     duration = f"{hours:02}:{minutes:02}:{seconds:02d}"
-                    self.durations[file_path] = duration
+                    self.durations[file_path] = Duration(
+                        duration_value=duration, size=size
+                    )
                     return duration
 
-            return "00:00:00"
+            return "Unknown"
         except FileNotFoundError as e:
             self.logger.error(f"exiftool was not found: {e}")
         except json.JSONDecodeError as e:
             self.logger.error(f"Error decoding output from exiftool: {e}")
-        except Exception as e:
-            self.logger.error(f"exiftool had an unknown system error: {e}")
+        except Exception:
+            # self.logger.error(f"exiftool had an unknown system error: {e}")
+            pass
         return "Unknown"
 
     def get_recording(self, filename: str) -> RecordingInfo | None:
@@ -136,6 +307,7 @@ class RecordingsService:
         # Caller must hold recordings_lock
         recording_path = os.path.join(self.recordings_path, filename)
         self.durations.pop(recording_path, None)
+        self.active_recordings.pop(recording_path, None)
 
         if not os.path.exists(recording_path):
             return False
@@ -168,9 +340,9 @@ class RecordingsService:
             os.rename(old_path, new_path)
             for recording in self.recordings:
                 if recording.path == old_path:
-                    recording.name = new_name.split(".")[0]
+                    recording.name = os.path.splitext(new_name)[0]
                     recording.path = new_path
-                    recording.format = new_name.split(".")[-1]
+                    recording.format = os.path.splitext(new_name)[1][1:]
             return self.recordings
         return None
 

@@ -34,10 +34,10 @@ const Recordings = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortColumn, setSortColumn] = useState<keyof RecordingInfo | null>(
-    null,
+    "created",
   );
   const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(
-    null,
+    "desc",
   );
 
   // initial data fetch, then keep sizes of active recordings up to date
@@ -318,7 +318,7 @@ const Recordings = () => {
 
       {snap.zipJobs && snap.zipJobs.length > 0 && (
         <div
-          className="fixed bottom-0 right-6 flex flex-col z-50 w-80 bg-card/50 
+          className="fixed bottom-0 right-6 flex flex-col z-50 w-80 bg-card/50
                     backdrop-blur-sm rounded-t-md border-t border-x
                     animate-in slide-in-from-bottom-10 fade-in duration-300"
         >

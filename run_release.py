@@ -83,6 +83,7 @@ if __name__ == "__main__":
         sio,
         app,
         settings_path=args.settings_path,
+        pwm_light_mode=True # For #560 only
     )
 
     FRONTEND_DIR = os.path.abspath("./frontend/dist")

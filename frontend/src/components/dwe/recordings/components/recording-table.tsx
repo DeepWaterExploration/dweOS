@@ -305,7 +305,7 @@ export const RecordingTable = ({
                           onDoubleClick={(e) => e.stopPropagation()}
                           className="group"
                         >
-                          {recording?.format === "mp4" ? (
+                          {isPlayable(recording) ? (
                             <Eye className="h-8 w-8 border border-background rounded bg-accent text-background p-2 group-hover:text-primary" />
                           ) : (
                             <EyeOff className="h-8 w-8 border border-background rounded bg-muted text-foreground p-2" />
@@ -314,7 +314,7 @@ export const RecordingTable = ({
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>
-                          {recording?.format === "mp4"
+                          {isPlayable(recording)
                             ? "Playable in browser"
                             : "Download required to play"}
                         </p>

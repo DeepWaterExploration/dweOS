@@ -36,7 +36,7 @@ export const formatDate = (value: string | null | undefined): string => {
 
 export const fullName = (rec: RecordingInfo) => `${rec.name}.${rec.format}`;
 
-export const isPlayable = (rec: RecordingInfo) => rec.format === "mp4";
+export const isPlayable = (rec: RecordingInfo) => rec.format === "mkv" || rec.format === "mp4";
 
 export const getRecordingStreamUrl = (rec: RecordingInfo, baseUrl: string) =>
   `${baseUrl}/api/recordings/${encodeURIComponent(fullName(rec))}`;

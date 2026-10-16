@@ -216,6 +216,24 @@ class RecordingsService:
 
         return datetime.fromtimestamp(epoch).strftime("%Y-%m-%d %H:%M:%S")
 
+    @staticmethod
+    def _exif_duration_to_seconds(value) -> float:
+        """Parses exiftool durations: '12.34 s', '0:01:05', or a bare number."""
+        if isinstance(value, (int, float)):
+            return float(value)
+        value = str(value).strip()
+        if value.endswith(" s"):
+            return float(value[:-2])
+        secs = 0.0
+        for part in value.split(":"):
+            secs = secs * 60 + float(part)
+        return secs
+
+    @staticmethod
+    def _format_seconds(secs: float) -> str:
+        secs = int(round(secs))
+        return f"{secs // 3600:02}:{secs % 3600 // 60:02}:{secs % 60:02}"
+
     def _get_duration(self, file_path: str) -> str:
         if file_path in self.durations:
             # Only cache if the size is the same, otherwise it was modified
@@ -238,13 +256,17 @@ class RecordingsService:
                 size = os.path.getsize(file_path)
 
                 if file_path.endswith((".mp4", ".mkv")):
-                    duration = data[0].get("Duration", None)
-                    if not duration or float(data.get("Duration") or 0) <= 0:
+                    raw_duration = data[0].get("Duration")
+                    if not raw_duration:
                         return "Unknown"
-                    if "s" in duration:
-                        duration = (
-                            f"00:00:{round(float(duration.replace(' s', ''))):02}"
-                        )
+                    try:
+                        secs = self._exif_duration_to_seconds(raw_duration)
+                    except ValueError:
+                        return "Unknown"
+                    # exiftool reports an unfinalized file as 0 s
+                    if secs == 0:
+                        return "Unknown"
+                    duration = self._format_seconds(secs)
                     self.durations[file_path] = Duration(
                         duration_value=duration, size=size
                     )

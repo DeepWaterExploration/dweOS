@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if test -d release; then
-    rm -rf release
+    sudo rm -rf release
 fi
 mkdir -p release
 
@@ -42,7 +42,8 @@ cp run_release.py release
 cp install_requirements.sh release
 
 # Create offline wheels
-python3 -m pip wheel -q -r backend_py/requirements.txt -w "release/wheels"
+docker run --rm --platform linux/arm64 -v "$PWD":/work -w /work python:3.10 \
+    pip wheel -r backend_py/requirements.txt -w release/wheels
 
 cp create_venv.sh release
 cp run_release.sh release

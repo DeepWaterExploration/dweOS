@@ -515,6 +515,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/updater/releases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the releases available to install */
+        get: operations["get_releases_api_updater_releases_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/updater/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the status of the current update */
+        get: operations["get_status_api_updater_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/updater/install": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Install a release */
+        post: operations["install_release_api_updater_install_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/pwm/frequency": {
         parameters: {
             query?: never;
@@ -749,6 +800,8 @@ export interface components {
             wifi: boolean;
             /** Serial */
             serial: boolean;
+            /** Updater */
+            updater: boolean;
         };
         /** FormatSizeModel */
         FormatSizeModel: {
@@ -794,6 +847,11 @@ export interface components {
          * @enum {string}
          */
         IPV4Method: "manual" | "auto" | "unknown";
+        /** InstallReleasePayload */
+        InstallReleasePayload: {
+            /** Tag */
+            tag: string;
+        };
         /** IntervalModel */
         IntervalModel: {
             /** Numerator */
@@ -852,6 +910,21 @@ export interface components {
             size: string;
             /** Created */
             created: string;
+        };
+        /** ReleaseModel */
+        ReleaseModel: {
+            /** Tag */
+            tag: string;
+            /** Name */
+            name: string;
+            /** Published At */
+            published_at: string;
+            /** Prerelease */
+            prerelease: boolean;
+            /** Notes */
+            notes: string;
+            /** Url */
+            url: string;
         };
         /** SavedPreferencesModel */
         SavedPreferencesModel: {
@@ -952,6 +1025,17 @@ export interface components {
             control_id: number;
             /** Value */
             value: number | boolean;
+        };
+        /**
+         * UpdateStateEnum
+         * @enum {string}
+         */
+        UpdateStateEnum: "idle" | "running" | "failed";
+        /** UpdateStatusModel */
+        UpdateStatusModel: {
+            state: components["schemas"]["UpdateStateEnum"];
+            /** Log */
+            log: string;
         };
         /** ValidationError */
         ValidationError: {
@@ -1852,6 +1936,79 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_releases_api_updater_releases_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseModel"][];
+                };
+            };
+        };
+    };
+    get_status_api_updater_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UpdateStatusModel"];
+                };
+            };
+        };
+    };
+    install_release_api_updater_install_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InstallReleasePayload"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimpleRequestStatusModel"];
                 };
             };
             /** @description Validation Error */

@@ -24,6 +24,7 @@ from .routes import (
     pwm_router,
     recordings_router,
     system_router,
+    updater_router,
 )
 from .schemas import FeatureSupport
 from .services.cameras import DeviceManager, SerialPWMController
@@ -32,6 +33,7 @@ from .services.preferences import PreferencesManager, SettingsManager
 from .services.recordings import RecordingsService
 from .services.system import SystemManager
 from .services.ttyd import TTYDManager
+from .services.updater import UpdateManager
 
 
 class Server:
@@ -125,6 +127,11 @@ class Server:
 
         self.recordings_service = RecordingsService(self.data_dir)
 
+        # Installed with install.sh, not in a container (e.g. BlueOS updates
+        # extensions itself)
+        if self.feature_support.updater:
+            self.update_manager = UpdateManager(self.data_dir)
+
         # TTYD
         if self.feature_support.ttyd:
             self.ttyd_manager = TTYDManager(is_dev_mode)
@@ -144,6 +151,9 @@ class Server:
             self.network_wrapper if self.feature_support.wifi else None
         )
         self.app.state.recordings_service = self.recordings_service
+        self.app.state.update_manager = (
+            self.update_manager if self.feature_support.updater else None
+        )
         self.app.state.serial = self.serial
 
         self.app.include_router(camera_router, prefix="/api/devices")
@@ -154,6 +164,9 @@ class Server:
 
         if self.feature_support.wifi:
             self.app.include_router(network_router, prefix="/api/network")
+
+        if self.feature_support.updater:
+            self.app.include_router(updater_router, prefix="/api/updater")
 
         if feature_support.serial:
             self.app.include_router(pwm_router, prefix="/api/pwm")

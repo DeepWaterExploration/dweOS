@@ -157,6 +157,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/devices/external/add_follower": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a follower. This endpoint is identical to the standard add_follower but it bypasses some restrictions */
+        post: operations["external_add_follower_api_devices_external_add_follower_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/preferences": {
         parameters: {
             query?: never;
@@ -302,8 +319,42 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Zip files and generate token */
-        post: operations["prepare_zip_download_api_recordings_zip_prepare_post"];
+        /** Start background zip job */
+        post: operations["start_zip_job_api_recordings_zip_prepare_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recordings/zip/status/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Check zip job status */
+        get: operations["check_zip_status_api_recordings_zip_status__job_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recordings/zip/cancel/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a zip job */
+        post: operations["cancel_zip_job_api_recordings_zip_cancel__job_id__post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -441,6 +492,57 @@ export interface paths {
         put?: never;
         /** Activate a given profile for a device */
         post: operations["activate_profile_api_network_wired_activate_profile_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/updater/releases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the releases available to install */
+        get: operations["get_releases_api_updater_releases_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/updater/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the status of the current update */
+        get: operations["get_status_api_updater_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/updater/install": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Install a release */
+        post: operations["install_release_api_updater_install_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -627,7 +729,7 @@ export interface components {
              * String3
              * @default
              */
-            string3: string;
+            string3: string | null;
         };
         /** DeviceNicknameModel */
         DeviceNicknameModel: {
@@ -679,6 +781,8 @@ export interface components {
             wifi: boolean;
             /** Serial */
             serial: boolean;
+            /** Updater */
+            updater: boolean;
         };
         /** FormatSizeModel */
         FormatSizeModel: {
@@ -724,6 +828,11 @@ export interface components {
          * @enum {string}
          */
         IPV4Method: "manual" | "auto" | "unknown";
+        /** InstallReleasePayload */
+        InstallReleasePayload: {
+            /** Tag */
+            tag: string;
+        };
         /** IntervalModel */
         IntervalModel: {
             /** Numerator */
@@ -752,7 +861,7 @@ export interface components {
          * ManagedEvent
          * @enum {string}
          */
-        ManagedEvent: "DEVICE_MANAGED" | "STREAM_START" | "STREAM_STOP";
+        ManagedEvent: "DEVICE_MANAGED" | "DEVICE_UNMANAGED" | "STREAM_START";
         /** ManagedNotifyModel */
         ManagedNotifyModel: {
             /** Bus Info */
@@ -782,6 +891,21 @@ export interface components {
             size: string;
             /** Created */
             created: string;
+        };
+        /** ReleaseModel */
+        ReleaseModel: {
+            /** Tag */
+            tag: string;
+            /** Name */
+            name: string;
+            /** Published At */
+            published_at: string;
+            /** Prerelease */
+            prerelease: boolean;
+            /** Notes */
+            notes: string;
+            /** Url */
+            url: string;
         };
         /** SavedPreferencesModel */
         SavedPreferencesModel: {
@@ -870,6 +994,17 @@ export interface components {
             control_id: number;
             /** Value */
             value: number | boolean;
+        };
+        /**
+         * UpdateStateEnum
+         * @enum {string}
+         */
+        UpdateStateEnum: "idle" | "running" | "failed";
+        /** UpdateStatusModel */
+        UpdateStatusModel: {
+            state: components["schemas"]["UpdateStateEnum"];
+            /** Log */
+            log: string;
         };
         /** ValidationError */
         ValidationError: {
@@ -1179,6 +1314,39 @@ export interface operations {
             };
         };
     };
+    external_add_follower_api_devices_external_add_follower_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddFollowerPayload"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimpleRequestStatusModel"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_preferences_api_preferences_get: {
         parameters: {
             query?: never;
@@ -1354,7 +1522,7 @@ export interface operations {
             };
         };
     };
-    prepare_zip_download_api_recordings_zip_prepare_post: {
+    start_zip_job_api_recordings_zip_prepare_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -1366,6 +1534,72 @@ export interface operations {
                 "application/json": string[];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    check_zip_status_api_recordings_zip_status__job_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_zip_job_api_recordings_zip_cancel__job_id__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {
@@ -1646,6 +1880,79 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_releases_api_updater_releases_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseModel"][];
+                };
+            };
+        };
+    };
+    get_status_api_updater_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UpdateStatusModel"];
+                };
+            };
+        };
+    };
+    install_release_api_updater_install_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InstallReleasePayload"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimpleRequestStatusModel"];
                 };
             };
             /** @description Validation Error */

@@ -5,6 +5,7 @@ from .preferences import preferences_router
 from .pwm import pwm_router
 from .recordings import recordings_router
 from .system import system_router
+from .updater import updater_router
 
 __all__ = [
     "camera_router",
@@ -14,4 +15,5 @@ __all__ = [
     "recordings_router",
     "pwm_router",
     "network_router",
+    "updater_router",
 ]

@@ -15,6 +15,7 @@ import { useTour } from "@/components/tour/tour";
 import { SettingsCard } from "./settings-card";
 import FeaturesContext from "@/contexts/FeaturesContext";
 import { RangeControl } from "@/components/ui/range-control";
+import { parsePort } from "@/lib/util/device";
 
 export const IP_REGEX =
   /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$|^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)+([A-Za-z]|[A-Za-z][A-Za-z0-9-]*[A-Za-z0-9])$/;
@@ -24,7 +25,8 @@ const PreferencesLayout = () => {
   const features = useContext(FeaturesContext);
 
   const [host, setHost] = useState("");
-  const [port, setPort] = useState(5600);
+  const [portText, setPortText] = useState("5600");
+  const port = parsePort(portText, 1024);
   const [frequencyOffset, setFrequencyOffset] = useState(0);
 
   const [recommendHost, setRecommendHost] = useState(false);
@@ -41,7 +43,7 @@ const PreferencesLayout = () => {
       }
 
       setRecommendHost(newPreferences.suggest_host);
-      setPort(newPreferences.default_stream!.port);
+      setPortText(String(newPreferences.default_stream!.port));
       setHost(newPreferences.default_stream!.host);
       setFrequencyOffset(newPreferences.frequency_offset);
     };
@@ -74,8 +76,8 @@ const PreferencesLayout = () => {
   };
 
   useEffect(() => {
-    if (connected && host && port && recommendHost !== undefined) {
-      if (!IP_REGEX.test(host) || port < 1024 || port > 65535) {
+    if (connected && host && port !== null && recommendHost !== undefined) {
+      if (!IP_REGEX.test(host)) {
         return;
       }
       if (recommendHost) {
@@ -121,13 +123,13 @@ const PreferencesLayout = () => {
               <Input
                 id="stream-port"
                 type="number"
-                value={port}
-                onChange={(e) => setPort(parseInt(e.target.value))}
+                value={portText}
+                onChange={(e) => setPortText(e.target.value)}
                 placeholder="Enter port"
                 min={1024}
                 max={65535}
                 className={cn(
-                  (port < 1024 || port > 65535) && "border-red-500",
+                  port === null && "border-red-500",
                   "bg-background",
                 )}
               />

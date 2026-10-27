@@ -1,6 +1,16 @@
 import { components } from "@/schemas/dwe_os_2";
 
 /**
+ * Port typed into a text field, or null if it isn't a whole number between
+ * min and 65535 (e.g. the field was cleared).
+ */
+export function parsePort(text: string, min = 1): number | null {
+  if (!/^\d+$/.test(text.trim())) return null;
+  const port = Number(text);
+  return port >= min && port <= 65535 ? port : null;
+}
+
+/**
  * Lowest port at or above startPort that no camera's endpoints use yet, so a
  * new endpoint doesn't collide with another stream on the receiving end.
  */

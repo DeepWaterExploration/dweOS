@@ -31,6 +31,10 @@ cd ..
 
 mkdir -p release/frontend/dist
 cp frontend/dist/* -r release/frontend/dist
+# The backend reads the dweOS version from package.json, so ship a package.json
+# with only the version
+node -e 'console.log(JSON.stringify({ version: require("./frontend/package.json").version }, null, 2))' \
+    >release/frontend/package.json
 
 echo "Successfully packaged frontend"
 

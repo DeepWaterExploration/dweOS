@@ -60,6 +60,26 @@ const installedTag = (() => {
   return preview ? `preview-pr-${preview[1]}` : version;
 })();
 
+// Pre-release versions carry a suffix, e.g. v0.7.7-pr579.dadb0ce or
+// v0.4.3-beta
+const isPrereleaseVersion = version.includes("-");
+
+// Compares the X.Y.Z of two versions, ignoring any pre-release suffix. A
+// pre-release is built on its X.Y.Z release, so that release is not newer
+const compareVersions = (a: string, b: string) => {
+  const parse = (v: string) =>
+    v
+      .match(/^v?(\d+)\.(\d+)\.(\d+)/)
+      ?.slice(1)
+      .map(Number);
+  const [partsA, partsB] = [parse(a), parse(b)];
+  if (!partsA || !partsB) return 0;
+  for (let i = 0; i < 3; i++) {
+    if (partsA[i] !== partsB[i]) return partsA[i] - partsB[i];
+  }
+  return 0;
+};
+
 const formatDate = (date: string) =>
   date ? new Date(date).toLocaleDateString() : "";
 
@@ -125,7 +145,7 @@ export const Updater = () => {
   const [releases, setReleases] = useState<Release[] | null>(null);
   const [releasesError, setReleasesError] = useState<string | null>(null);
   const [loadingReleases, setLoadingReleases] = useState(false);
-  const [showPrereleases, setShowPrereleases] = useState(false);
+  const [showPrereleases, setShowPrereleases] = useState(isPrereleaseVersion);
   const [showAllReleases, setShowAllReleases] = useState(false);
   const [status, setStatus] = useState<UpdateStatus | null>(null);
   const [pendingRelease, setPendingRelease] = useState<Release | null>(null);
@@ -133,6 +153,7 @@ export const Updater = () => {
   // the new version when it comes back
   const restarting = useRef(false);
   const logRef = useRef<HTMLPreElement>(null);
+  const releasesLoaded = useRef(false);
 
   const updating = status?.state === "running";
 
@@ -141,6 +162,14 @@ export const Updater = () => {
     setReleasesError(null);
     const { data, error } = await API_CLIENT.GET("/api/updater/releases");
     if (data) {
+      // Some pre-releases are versioned like releases, e.g. v0.7.0
+      if (
+        !releasesLoaded.current &&
+        data.find((release) => release.tag === installedTag)?.prerelease
+      ) {
+        setShowPrereleases(true);
+      }
+      releasesLoaded.current = true;
       setReleases(data);
     } else {
       setReleasesError(
@@ -213,7 +242,10 @@ export const Updater = () => {
     ? filteredReleases
     : filteredReleases.slice(0, RECENT_RELEASE_COUNT);
   const latest = releases?.find((release) => !release.prerelease);
-  const updateAvailable = latest && latest.tag !== installedTag;
+  const onPrerelease =
+    isPrereleaseVersion ||
+    !!releases?.find((release) => release.tag === installedTag)?.prerelease;
+  const updateAvailable = latest && compareVersions(latest.tag, version) > 0;
 
   return (
     <div className="flex flex-col gap-4 h-full w-full">
@@ -224,7 +256,9 @@ export const Updater = () => {
             {latest
               ? updateAvailable
                 ? `${latest.tag} is available.`
-                : "You are on the latest release."
+                : onPrerelease
+                  ? `You are on a pre-release. The latest release is ${latest.tag}.`
+                  : "You are on the latest release."
               : "Checking for updates..."}
           </CardDescription>
         </CardHeader>

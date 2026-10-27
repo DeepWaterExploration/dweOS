@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from backend_py.src import FeatureSupport, Server
+from backend_py.src import VERSION, FeatureSupport, Server
 
 # Use AsyncServer
 sio = socketio.AsyncServer(async_mode="asgi", transports=["websocket"])
@@ -32,7 +32,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 # FastAPI application
 app = FastAPI(
-    lifespan=lifespan, title="DWE OS API", description="API for DWE OS", version="0.1.0"
+    lifespan=lifespan, title="DWE OS API", description="API for DWE OS", version=VERSION
 )
 
 # CORS
@@ -51,7 +51,7 @@ blueos_extension = {
     "description": "Web-based driver and software interface for DWE.ai cameras",
     "icon": "mdi-camera-plus",
     "company": "DeepWater Exploration",
-    "version": "1.0.0",
+    "version": VERSION,
     "webpage": "https://dwe.ai/products/dwe-os",
     "api": "https://dwe.ai/products/dwe-os",
 }

@@ -17,3 +17,7 @@ class FeatureSupport(BaseModel):
 
 class SimpleRequestStatusModel(BaseModel):
     success: bool = True
+
+
+class VersionModel(BaseModel):
+    version: str

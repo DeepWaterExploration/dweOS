@@ -13,7 +13,7 @@ import socketio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend_py.src import FeatureSupport, Server
+from backend_py.src import VERSION, FeatureSupport, Server
 
 ORIGINS = ["*"]
 
@@ -34,7 +34,7 @@ async def lifespan(app: FastAPI):  # noqa: ANN201
 
 # FastAPI application
 fastapi_app = FastAPI(
-    lifespan=lifespan, title="DWE OS API", description="API for DWE OS", version="0.1.0"
+    lifespan=lifespan, title="DWE OS API", description="API for DWE OS", version=VERSION
 )
 
 # CORS

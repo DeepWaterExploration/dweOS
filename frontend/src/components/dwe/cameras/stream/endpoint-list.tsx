@@ -12,7 +12,8 @@ import { Input } from "@/components/ui/input";
 import { components } from "@/schemas/dwe_os_2";
 
 import { TOUR_STEP_IDS } from "@/lib/tour-constants";
-import { getNextAvailablePort } from "@/lib/util/device";
+import { getNextAvailablePort, parsePort } from "@/lib/util/device";
+import { cn } from "@/lib/utils";
 import { useDeviceStore } from "@/store/devices";
 import { usePreferencesStore } from "@/store/preferences";
 
@@ -28,7 +29,8 @@ const Endpoint = ({
   const [isEditing, setIsEditing] = useState(false);
 
   const [tempHost, setTempHost] = useState(endpoint.host);
-  const [tempPort, setTempPort] = useState(endpoint.port);
+  const [tempPort, setTempPort] = useState(String(endpoint.port));
+  const parsedPort = parsePort(tempPort);
 
   return (
     <li className="flex items-start space-x-3">
@@ -50,8 +52,9 @@ const Endpoint = ({
             <Input
               value={tempPort}
               placeholder="Port"
-              className="h-8"
-              onChange={(e) => setTempPort(parseInt(e.target.value))}
+              inputMode="numeric"
+              className={cn("h-8", parsedPort === null && "border-red-500")}
+              onChange={(e) => setTempPort(e.target.value)}
             />
           </div>
           <div className="flex space-x-1 flex-shrink-0">
@@ -59,9 +62,11 @@ const Endpoint = ({
               variant="ghost"
               size="sm"
               className="h-8 w-8 p-0"
+              disabled={parsedPort === null}
               onClick={() => {
+                if (parsedPort === null) return;
                 setIsEditing(false);
-                onEdit({ host: tempHost, port: tempPort });
+                onEdit({ host: tempHost, port: parsedPort });
               }}
             >
               <Check className="h-4 w-4" />

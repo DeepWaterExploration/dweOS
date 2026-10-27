@@ -1,4 +1,4 @@
-from . import cameras, network, preferences, recordings, system, ttyd
+from . import cameras, network, preferences, recordings, system, ttyd, updater
 
 __all__ = [
     "cameras",
@@ -7,4 +7,5 @@ __all__ = [
     "system",
     "ttyd",
     "recordings",
+    "updater",
 ]

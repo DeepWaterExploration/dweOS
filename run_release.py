@@ -64,6 +64,9 @@ if __name__ == "__main__":
     parser.add_argument("--no-wifi", action="store_true", help="Disable WiFi")
     parser.add_argument("--serial", action="store_true", help="Disable WiFi")
     parser.add_argument(
+        "--no-updater", action="store_true", help="Disable the builtin updater"
+    )
+    parser.add_argument(
         "--port", type=int, default=80, help="Set the port of the server"
     )
     parser.add_argument(
@@ -78,7 +81,10 @@ if __name__ == "__main__":
     # Server instance
     server = Server(
         FeatureSupport(
-            ttyd=not args.no_ttyd, wifi=not args.no_wifi, serial=args.serial
+            ttyd=not args.no_ttyd,
+            wifi=not args.no_wifi,
+            serial=args.serial,
+            updater=not args.no_updater,
         ),
         sio,
         app,

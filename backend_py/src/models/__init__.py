@@ -42,6 +42,12 @@ from .saved_cameras import (
     SavedLeaderFollowerPairModel,
     SavedStreamModel,
 )
+from .updater import (
+    InstallReleasePayload,
+    ReleaseModel,
+    UpdateStateEnum,
+    UpdateStatusModel,
+)
 
 __all__ = [
     # Network
@@ -87,4 +93,9 @@ __all__ = [
     "SavedStreamModel",
     # Recordings
     "RecordingInfo",
+    # Updater
+    "InstallReleasePayload",
+    "ReleaseModel",
+    "UpdateStateEnum",
+    "UpdateStatusModel",
 ]

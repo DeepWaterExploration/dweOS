@@ -49,7 +49,7 @@ fastapi_app.add_middleware(
 # Server instance
 # server = Server(FeatureSupport.none(), sio, app, settings_path='.')
 server = Server(
-    FeatureSupport(ttyd=True, wifi=True, serial=True),
+    FeatureSupport(ttyd=True, wifi=True, serial=True, updater=True),
     sio,
     fastapi_app,
     data_dir=".",

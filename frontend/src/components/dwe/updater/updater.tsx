@@ -43,6 +43,8 @@ type Release = components["schemas"]["ReleaseModel"];
 type UpdateStatus = components["schemas"]["UpdateStatusModel"];
 
 const STATUS_POLL_INTERVAL = 1000;
+// Older releases are hidden until asked for, most people want a recent one
+const RECENT_RELEASE_COUNT = 5;
 
 const UPDATER_NOT_SUPPORTED_MSG = `
 The updater is not currently enabled in the backend.
@@ -75,35 +77,39 @@ const ReleaseRow = ({
   const installed = release.tag === installedTag;
 
   return (
-    <AccordionItem value={release.tag}>
-      <div className="flex items-center gap-4">
-        <AccordionTrigger className="flex-1 hover:no-underline">
-          <div className="flex flex-wrap items-center gap-2 text-left">
-            <span className="font-semibold">{release.name}</span>
-            {release.name !== release.tag && (
-              <span className="text-muted-foreground">{release.tag}</span>
-            )}
-            {isLatest && <Badge>Latest</Badge>}
-            {release.prerelease && <Badge variant="outline">Pre-release</Badge>}
-            {installed && <Badge variant="success">Installed</Badge>}
-            <span className="text-xs text-muted-foreground">
+    <AccordionItem
+      value={release.tag}
+      className="rounded-none border-b last:border-b-0"
+    >
+      <div className="flex items-center gap-2">
+        <div className="min-w-0 flex-1">
+          <AccordionTrigger className="gap-4 px-2 py-3">
+            <span className="flex min-w-0 flex-1 items-center gap-2">
+              <span className="truncate font-medium">{release.name}</span>
+              {isLatest && <Badge>Latest</Badge>}
+              {installed && <Badge variant="success">Installed</Badge>}
+            </span>
+            <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
               {formatDate(release.published_at)}
             </span>
-          </div>
-        </AccordionTrigger>
+          </AccordionTrigger>
+        </div>
         <Button
           size="sm"
-          variant={installed ? "outline" : "default"}
+          variant={installed ? "ghost" : "outline"}
+          className="w-24 shrink-0"
           disabled={disabled}
           onClick={() => onInstall(release)}
         >
-          <DownloadIcon />
           {installed ? "Reinstall" : "Install"}
         </Button>
       </div>
-      <AccordionContent>
+      <AccordionContent className="px-2">
         {release.notes ? (
-          <Markdown>{release.notes}</Markdown>
+          // Release notes hold long install commands, wrap them in the card
+          <div className="min-w-0 break-words [&_pre]:whitespace-pre-wrap [&_pre]:break-all [&_pre]:rounded-md [&_pre]:bg-muted [&_pre]:p-3 [&_pre]:text-xs">
+            <Markdown>{release.notes}</Markdown>
+          </div>
         ) : (
           <p className="text-sm text-muted-foreground">No release notes.</p>
         )}
@@ -120,6 +126,7 @@ export const Updater = () => {
   const [releasesError, setReleasesError] = useState<string | null>(null);
   const [loadingReleases, setLoadingReleases] = useState(false);
   const [showPrereleases, setShowPrereleases] = useState(false);
+  const [showAllReleases, setShowAllReleases] = useState(false);
   const [status, setStatus] = useState<UpdateStatus | null>(null);
   const [pendingRelease, setPendingRelease] = useState<Release | null>(null);
   // Set once the backend goes down for the update, so the page reloads into
@@ -199,9 +206,12 @@ export const Updater = () => {
     );
   }
 
-  const visibleReleases = (releases ?? []).filter(
+  const filteredReleases = (releases ?? []).filter(
     (release) => showPrereleases || !release.prerelease,
   );
+  const visibleReleases = showAllReleases
+    ? filteredReleases
+    : filteredReleases.slice(0, RECENT_RELEASE_COUNT);
   const latest = releases?.find((release) => !release.prerelease);
   const updateAvailable = latest && latest.tag !== installedTag;
 
@@ -290,7 +300,7 @@ export const Updater = () => {
             <p className="text-sm text-destructive">{releasesError}</p>
           ) : !releases ? (
             <Spinner />
-          ) : visibleReleases.length === 0 ? (
+          ) : filteredReleases.length === 0 ? (
             <p className="text-sm text-muted-foreground">No releases found.</p>
           ) : (
             <Accordion type="single" collapsible>
@@ -304,6 +314,18 @@ export const Updater = () => {
                 />
               ))}
             </Accordion>
+          )}
+          {filteredReleases.length > RECENT_RELEASE_COUNT && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-2 w-full text-muted-foreground"
+              onClick={() => setShowAllReleases(!showAllReleases)}
+            >
+              {showAllReleases
+                ? "Show fewer releases"
+                : `Show ${filteredReleases.length - RECENT_RELEASE_COUNT} older releases`}
+            </Button>
           )}
         </CardContent>
       </Card>

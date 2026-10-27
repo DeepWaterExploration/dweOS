@@ -16,6 +16,7 @@ from colorlog import ColoredFormatter
 from fastapi import FastAPI
 
 from .logging import LogHandler
+from .models import SavedPreferencesModel
 from .routes import (
     camera_router,
     logs_router,
@@ -112,6 +113,15 @@ class Server:
         )
 
         self.recordings_service = RecordingsService(self.data_dir)
+
+        def apply_split_recording(preferences: SavedPreferencesModel) -> None:
+            self.recordings_service.set_split_recording(
+                preferences.split_recording_enabled,
+                preferences.split_recording_minutes,
+            )
+
+        apply_split_recording(self.preferences_manager.get_preferences())
+        self.preferences_manager.on("preferences_updated", apply_split_recording)
 
         # Device Manager
         self.device_manager = DeviceManager(

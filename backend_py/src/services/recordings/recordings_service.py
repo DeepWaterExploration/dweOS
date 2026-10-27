@@ -29,6 +29,9 @@ class Duration:
 
 class RecordingsService:
     BASE_PATH = ""
+    # Length of each file a recording is split into, 0 means no splitting.
+    # Only applies to recordings started after it is changed
+    SPLIT_DURATION_S = 0
     # a file modified within this window is assumed to still be recording
     ACTIVE_MTIME_THRESHOLD_S = 5.0
     DURATION_CACHE_INTERVAL_S = 300
@@ -104,6 +107,9 @@ class RecordingsService:
             except Exception as e:
                 self.logger.error(f"Failed to cache recording durations: {e}")
             self._stop_event.wait(self.DURATION_CACHE_INTERVAL_S)
+
+    def set_split_recording(self, enabled: bool, minutes: int) -> None:
+        RecordingsService.SPLIT_DURATION_S = minutes * 60 if enabled else 0
 
     def get_disk_stats(self) -> shutil._ntuple_diskusage:
         return shutil.disk_usage(self.recordings_path)

@@ -22,7 +22,9 @@ class GStreamerPipelineBuilder:
         source = cls._build_source(stream)
         caps = GStreamerPipelineBuilder._construct_caps(stream)
         payload = GStreamerPipelineBuilder._build_payload(stream)
-        sink = GStreamerPipelineBuilder._build_sink(stream, RecordingsService.BASE_PATH)
+        sink = GStreamerPipelineBuilder._build_sink(
+            stream, RecordingsService.BASE_PATH, RecordingsService.SPLIT_DURATION_S
+        )
         return f"{source} ! {caps} ! {payload} ! {sink}"
 
     @staticmethod
@@ -92,7 +94,9 @@ class GStreamerPipelineBuilder:
                 return ""
 
     @staticmethod
-    def _build_sink(stream: Stream, recording_directory: str) -> str:
+    def _build_sink(
+        stream: Stream, recording_directory: str, split_duration_s: int = 0
+    ) -> str:
         match stream.stream_type:
             case StreamTypeEnum.UDP:
                 if len(stream.endpoints) == 0:
@@ -104,14 +108,18 @@ class GStreamerPipelineBuilder:
                 extension = "mkv"
                 timestamp = datetime.now().strftime("%F-%T")
                 fixed_bus_info = stream.bus_info.replace(".", "_")
-                unique_filename = f"{fixed_bus_info}__{timestamp}_%02d.{extension}"
+                # splitmuxsink fills in the segment number
+                segment = "_%02d" if split_duration_s > 0 else ""
+                unique_filename = f"{fixed_bus_info}__{timestamp}{segment}.{extension}"
                 unique_path = os.path.join(recording_directory, unique_filename)
                 stream.file_path = unique_path
+                # A max-size-time of 0 never splits
+                # See: https://gstreamer.freedesktop.org/documentation/multifile/splitmuxsink.html?gi-language=c#splitmuxsink:max-size-time
                 return (
                     f'splitmuxsink location="{unique_path}" '
                     "muxer-factory=matroskamux "
                     'muxer-properties="properties,streamable=true" '
-                    "max-size-time=300000000000"
+                    f"max-size-time={split_duration_s * 1_000_000_000}"
                 )
             case _:
                 return ""

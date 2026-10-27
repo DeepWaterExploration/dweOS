@@ -4,6 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import WebsocketContext from "@/contexts/WebsocketContext";
 import { cn } from "@/lib/utils";
 import { components } from "@/schemas/dwe_os_2";
@@ -28,6 +29,13 @@ const PreferencesLayout = () => {
   const [portText, setPortText] = useState("5600");
   const port = parsePort(portText, 1024);
   const [frequencyOffset, setFrequencyOffset] = useState(0);
+  const [splitRecordingEnabled, setSplitRecordingEnabled] = useState(false);
+  const [splitMinutesText, setSplitMinutesText] = useState("5");
+  // null if it isn't a whole number of at least 1 (e.g. the field was cleared)
+  const splitMinutes =
+    /^\d+$/.test(splitMinutesText.trim()) && Number(splitMinutesText) >= 1
+      ? Number(splitMinutesText)
+      : null;
 
   const [recommendHost, setRecommendHost] = useState(false);
   const tour = useTour();
@@ -46,6 +54,8 @@ const PreferencesLayout = () => {
       setPortText(String(newPreferences.default_stream!.port));
       setHost(newPreferences.default_stream!.host);
       setFrequencyOffset(newPreferences.frequency_offset);
+      setSplitRecordingEnabled(newPreferences.split_recording_enabled);
+      setSplitMinutesText(String(newPreferences.split_recording_minutes));
     };
 
     if (connected) {
@@ -76,7 +86,13 @@ const PreferencesLayout = () => {
   };
 
   useEffect(() => {
-    if (connected && host && port !== null && recommendHost !== undefined) {
+    if (
+      connected &&
+      host &&
+      port !== null &&
+      splitMinutes !== null &&
+      recommendHost !== undefined
+    ) {
       if (!IP_REGEX.test(host)) {
         return;
       }
@@ -87,9 +103,19 @@ const PreferencesLayout = () => {
         suggest_host: recommendHost,
         default_stream: { host, port },
         frequency_offset: frequencyOffset,
+        split_recording_enabled: splitRecordingEnabled,
+        split_recording_minutes: splitMinutes,
       });
     }
-  }, [recommendHost, host, port, frequencyOffset, connected]);
+  }, [
+    recommendHost,
+    host,
+    port,
+    frequencyOffset,
+    splitRecordingEnabled,
+    splitMinutes,
+    connected,
+  ]);
 
   if (!connected) return <NotConnected />;
 
@@ -171,6 +197,41 @@ const PreferencesLayout = () => {
                 </p>
               </div>
             )}
+          </div>
+        </SettingsCard>
+
+        <SettingsCard cardTitle="Recording">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="split-recording">Split Recordings</Label>
+              <Switch
+                id="split-recording"
+                checked={splitRecordingEnabled}
+                onCheckedChange={setSplitRecordingEnabled}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="split-recording-minutes">
+                Split Interval (minutes)
+              </Label>
+              <Input
+                id="split-recording-minutes"
+                type="number"
+                value={splitMinutesText}
+                onChange={(e) => setSplitMinutesText(e.target.value)}
+                disabled={!splitRecordingEnabled}
+                min={1}
+                className={cn(
+                  splitMinutes === null && "border-red-500",
+                  "bg-background",
+                )}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground italic">
+              Start a new file every interval, so that a long recording is
+              saved as smaller files. Applies to recordings started after the
+              change.
+            </p>
           </div>
         </SettingsCard>
       </div>

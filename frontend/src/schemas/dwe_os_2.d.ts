@@ -800,6 +800,16 @@ export interface components {
              * @default 0
              */
             frequency_offset: number;
+            /**
+             * Split Recording Enabled
+             * @default false
+             */
+            split_recording_enabled: boolean;
+            /**
+             * Split Recording Minutes
+             * @default 5
+             */
+            split_recording_minutes: number;
         };
         /** SimpleRequestStatusModel */
         SimpleRequestStatusModel: {

@@ -148,7 +148,7 @@ class DeviceManager(events.EventEmitter):
         # there may be a kernel issue
         device.stream_runner.on(
             "stream_error",
-            lambda _: self._append_stream_error(DeviceModel.model_validate(device)),
+            lambda _: self._append_stream_error(device),
         )
 
         # Hack to allow shd to save follower and leader settings on removal
@@ -168,7 +168,7 @@ class DeviceManager(events.EventEmitter):
 
         return device
 
-    def _append_stream_error(self, device: DeviceModel) -> None:
+    def _append_stream_error(self, device: Device) -> None:
         """
         Helper function to append a gst error
         """

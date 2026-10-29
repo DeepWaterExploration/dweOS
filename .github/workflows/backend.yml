@@ -47,7 +47,7 @@ jobs:
       - name: Saved cached virtualenv
         uses: actions/cache/save@v4
         with:
-          key: ${{ steps.cache-primes-restore.outputs.cache-primary-key }}
+          key: ${{ steps.cache-venv-restore.outputs.key }}
           path: .venv
 
       - name: Ruff linting

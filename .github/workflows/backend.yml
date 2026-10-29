@@ -42,17 +42,17 @@ jobs:
           ./create_venv.sh
           pip install ruff bandit ty
 
-      - name: Activate venv
-        run: |
-          source .venv/bin/activate
-          echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
-          echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
-
       - name: Saved cached virtualenv
         uses: actions/cache/save@v4
         with:
           key: ${{ steps.cache-venv-restore.outputs.cache-primary-key }}
           path: .venv
+
+      - name: Activate venv
+        run: |
+          source .venv/bin/activate
+          echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
+          echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
 
       - name: Ruff linting
         run: ruff check --output-format=github backend_py

@@ -40,15 +40,18 @@ jobs:
         run: | # TODO: switch to using proper dev dependencies
           sudo apt-get install build-essential libdbus-glib-1-dev libdbus-1-dev libpython3-dev -y # For dbus-python
           ./create_venv.sh
+          pip install ruff bandit ty
+
+      - name: Activate venv
+        run: |
           source .venv/bin/activate
           echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
           echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
-          pip install ruff bandit ty
 
       - name: Saved cached virtualenv
         uses: actions/cache/save@v4
         with:
-          key: ${{ steps.cache-venv-restore.outputs.key }}
+          key: ${{ steps.cache-venv-restore.outputs.cache-primary-key }}
           path: .venv
 
       - name: Ruff linting

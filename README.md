@@ -67,7 +67,7 @@ The image will be found in the deploy folder. The latest release from github wil
 
 ## Preview Builds
 
-Every pull request can be installed before it is merged. The [Preview Release](.github/workflows/preview-release.yml) workflow builds the pull request merged into its base branch and publishes it as the GitHub prerelease `preview-pr-<number>`. It also comments the install command on the pull request:
+Every pull request can be installed before it is merged. The [Preview Release](.github/workflows/preview-release.yml) workflow builds the pull request merged into its base branch and uploads it to Google Cloud Storage as `previews/pr-<number>/release.tar.gz`, so previews do not appear on the Releases page. It also comments the install command on the pull request:
 
 ```sh
 curl -s https://raw.githubusercontent.com/DeepwaterExploration/dweOS/main/install.sh | sudo bash -s preview-pr-<number>
@@ -75,7 +75,7 @@ curl -s https://raw.githubusercontent.com/DeepwaterExploration/dweOS/main/instal
 
 - The version badge shows the build as a preview, for example `v0.7.7-pr556.a1b2c3d`.
 - Every push to the pull request rebuilds the preview in place.
-- Closing or merging the pull request deletes the prerelease and its tag.
+- Closing or merging the pull request deletes the preview.
 - Previews are only built for branches in this repository, not forks, and are not published for BlueOS.
 
 To return to the latest stable release, run the install command without a tag.

@@ -1,7 +1,7 @@
 name: Preview Release
 
-# Publish every PR as a GitHub prerelease tagged preview-pr-<number>, so a
-# customer can install an unmerged feature with:
+# Publish every PR to Cloud Storage at pr-<number>/release.tar.gz,
+# so a customer can install an unmerged feature with:
 #   curl -s .../install.sh | sudo bash -s preview-pr-<number>
 # Every push to the PR rebuilds the preview. Closing the PR deletes it.
 on:
@@ -63,27 +63,27 @@ jobs:
           path: release.tar.gz
           retention-days: 1
 
-  # Never runs the PR's code, so it can hold a write token
+  # Never runs the PR's code, so it can hold a write token and the Google
+  # Cloud credential
   publish:
     needs: build
     runs-on: ubuntu-22.04
-    # Shared with cleanup and never cancelled, so a release is not left half
+    # Shared with cleanup and never cancelled, so a preview is not left half
     # published
     concurrency:
       group: preview-publish-${{ github.event.pull_request.number }}
       cancel-in-progress: false
     permissions:
-      contents: write # Create the tag and the prerelease
+      contents: write # Point the preview tag at the built commit
       pull-requests: write # Comment the install command on the PR
+      id-token: write # Authenticate to Google Cloud with Workload Identity Federation
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
       PR_NUMBER: ${{ github.event.pull_request.number }}
-      PR_TITLE: ${{ github.event.pull_request.title }}
-      PR_URL: ${{ github.event.pull_request.html_url }}
-      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
       BUILD_SHA: ${{ needs.build.outputs.sha }}
       VERSION: ${{ needs.build.outputs.version }}
+      PREVIEW_BUCKET: ${{ vars.PREVIEW_BUCKET }}
 
     steps:
       - name: "Download release archive"
@@ -101,11 +101,22 @@ jobs:
             echo "Pull request is closed; not publishing" >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - name: "Publish prerelease"
+      - name: "Authenticate to Google Cloud"
+        if: steps.wanted.outputs.wanted == 'true'
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+
+      - name: "Set up gcloud"
+        if: steps.wanted.outputs.wanted == 'true'
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: "Publish preview"
         if: steps.wanted.outputs.wanted == 'true'
         run: |
           TAG="preview-pr-${PR_NUMBER}"
-          INSTALL_URL="https://raw.githubusercontent.com/${GH_REPO}/main/install.sh"
+          OBJECT="pr-${PR_NUMBER}/release.tar.gz"
 
           # Point the tag at the commit that was built. The tag protects the
           # merge commit from garbage collection after the PR moves on.
@@ -113,40 +124,17 @@ jobs:
             && gh api -X PATCH "repos/${GH_REPO}/git/refs/tags/${TAG}" -f sha="$BUILD_SHA" -F force=true >/dev/null \
             || gh api "repos/${GH_REPO}/git/refs" -f ref="refs/tags/${TAG}" -f sha="$BUILD_SHA" >/dev/null
 
-          cat > notes.md <<EOF
-          > [!WARNING]
-          > This is a preview of an unmerged pull request, not a supported release. It is replaced on every push to the pull request and deleted when the pull request closes.
+          # Overwriting an object is atomic, so an install that is already
+          # downloading gets the old or the new archive, never a mix. Disable
+          # caching so the next install gets this build.
+          gcloud storage cp release.tar.gz "gs://${PREVIEW_BUCKET}/${OBJECT}" \
+            --cache-control=no-store \
+            --custom-metadata="version=${VERSION},commit=${BUILD_SHA}"
 
-          Preview of ${PR_URL}: **${PR_TITLE}**
-
-          - Version: \`${VERSION}\`
-          - Pull request commit: \`${HEAD_SHA}\`
-          - Built from: \`${BUILD_SHA}\` (the pull request merged into its base branch)
-
-          ## Install
-
-          \`\`\`sh
-          curl -s ${INSTALL_URL} | sudo bash -s ${TAG}
-          \`\`\`
-
-          ## Return to the latest stable release
-
-          \`\`\`sh
-          curl -s ${INSTALL_URL} | sudo bash -s
-          \`\`\`
-          EOF
-
-          # Update the release in place rather than recreating it, so the
-          # download URL never disappears mid-install
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" release.tar.gz --clobber
-            gh release edit "$TAG" --title "Preview: PR #${PR_NUMBER}" --notes-file notes.md --prerelease --latest=false
-          else
-            gh release create "$TAG" release.tar.gz --verify-tag --title "Preview: PR #${PR_NUMBER}" --notes-file notes.md --prerelease --latest=false
-          fi
-
+          # Must match the URL that install.sh builds for preview-* versions
           echo "tag=$TAG" >> "$GITHUB_ENV"
-          echo "install_url=$INSTALL_URL" >> "$GITHUB_ENV"
+          echo "download_url=https://storage.googleapis.com/${PREVIEW_BUCKET}/${OBJECT}" >> "$GITHUB_ENV"
+          echo "install_url=https://raw.githubusercontent.com/${GH_REPO}/main/install.sh" >> "$GITHUB_ENV"
 
       # Keep one comment per PR and edit it on every push
       - name: "Comment install command"
@@ -155,7 +143,7 @@ jobs:
           MARKER="<!-- preview-release -->"
           cat > comment.md <<EOF
           ${MARKER}
-          **Preview build:** [\`${tag}\`](https://github.com/${GH_REPO}/releases/tag/${tag}) (\`${VERSION}\`)
+          **Preview build:** [\`${tag}\`](${download_url}) (\`${VERSION}\`, built from \`${BUILD_SHA::7}\`)
 
           \`\`\`sh
           curl -s ${install_url} | sudo bash -s ${tag}
@@ -183,21 +171,33 @@ jobs:
       group: preview-publish-${{ github.event.pull_request.number }}
       cancel-in-progress: false
     permissions:
-      contents: write # Delete the tag and the prerelease
+      contents: write # Delete the preview tag
       pull-requests: write # Update the PR comment
+      id-token: write # Authenticate to Google Cloud with Workload Identity Federation
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
       PR_NUMBER: ${{ github.event.pull_request.number }}
+      PREVIEW_BUCKET: ${{ vars.PREVIEW_BUCKET }}
 
     steps:
-      - name: "Delete prerelease"
+      - name: "Authenticate to Google Cloud"
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+
+      - name: "Set up gcloud"
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: "Delete preview"
         run: |
           TAG="preview-pr-${PR_NUMBER}"
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release delete "$TAG" --cleanup-tag --yes
+          PREFIX="gs://${PREVIEW_BUCKET}/pr-${PR_NUMBER}/"
+          # Nothing is uploaded if the PR closed before its first build finished
+          if gcloud storage ls "$PREFIX" >/dev/null 2>&1; then
+            gcloud storage rm --recursive "$PREFIX"
           fi
-          # The tag can outlive the release if a publish failed halfway
           gh api -X DELETE "repos/${GH_REPO}/git/refs/tags/${TAG}" >/dev/null 2>&1 || true
 
           MARKER="<!-- preview-release -->"

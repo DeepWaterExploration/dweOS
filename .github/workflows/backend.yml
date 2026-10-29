@@ -24,6 +24,7 @@ jobs:
 
       - name: Install Python
         uses: actions/setup-python@v5
+        id: setup_python
         with:
           python-version: "3.11"
 

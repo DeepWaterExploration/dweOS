@@ -37,9 +37,10 @@ jobs:
 
       - name: Install dependencies
         if: steps.cache-venv-restore.outputs.cache-hit != 'true'
-        run: | # TODO: switch to using proper dev dependencies
+        run: |
           sudo apt-get install build-essential libdbus-glib-1-dev libdbus-1-dev libpython3-dev -y # For dbus-python
           ./create_venv.sh
+          source .venv/bin/activate
           pip install ruff bandit ty
 
       - name: Saved cached virtualenv

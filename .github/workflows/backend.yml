@@ -30,7 +30,7 @@ jobs:
 
       - name: Restore cached virtualenv
         id: cache-venv-restore
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v4
         with:
           key: venv-${{ runner.os }}-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('backend_py/requirements.txt') }}
           path: .venv

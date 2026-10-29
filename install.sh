@@ -10,6 +10,7 @@ fi
 
 INSTALL_DIR=/opt/DWE_OS_2
 SCRIPT_RUN_DIR=$PWD
+PREVIEW_BUCKET=dwe-os-previews
 
 # Check if a tag name was provided as an argument
 if [ -z "$1" ]; then
@@ -21,12 +22,16 @@ fi
 if [ "$VERSION" == "latest" ]; then
     echo "Installing DWE_OS 2 (latest release)"
     DOWNLOAD_URL="https://github.com/DeepwaterExploration/DWE_OS_2/releases/latest/download/release.tar.gz"
+elif [[ "$VERSION" == preview-* ]]; then
+    # preview-pr-<number> is stored at pr-<number>/release.tar.gz
+    echo "Installing DWE_OS 2 ($VERSION, unmerged pull request preview)"
+    DOWNLOAD_URL="https://storage.googleapis.com/${PREVIEW_BUCKET}/${VERSION#preview-}/release.tar.gz"
 else
     echo "Installing DWE_OS 2 ($VERSION)"
     DOWNLOAD_URL="https://github.com/DeepwaterExploration/DWE_OS_2/releases/download/$VERSION/release.tar.gz"
 fi
 
-wget $DOWNLOAD_URL -O release.tar.gz
+wget "$DOWNLOAD_URL" -O release.tar.gz
 
 tar -xvzf release.tar.gz
 

@@ -32,7 +32,7 @@ jobs:
         id: cache-venv-restore
         uses: actions/cache/restore@v5
         with:
-          key: venv-${{ runner.os }}-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('requirements.txt') }}
+          key: venv-${{ runner.os }}-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('backend_py/requirements.txt') }}
           path: .venv
 
       - name: Install dependencies

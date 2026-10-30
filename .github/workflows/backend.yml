@@ -45,6 +45,7 @@ jobs:
 
       - name: Saved cached virtualenv
         uses: actions/cache/save@v4
+        if: steps.cache-venv-restore.outputs.cache-hit != 'true'
         with:
           key: ${{ steps.cache-venv-restore.outputs.cache-primary-key }}
           path: .venv

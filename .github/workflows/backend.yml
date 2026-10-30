@@ -24,31 +24,37 @@ jobs:
 
       - name: Install Python
         uses: actions/setup-python@v5
+        id: setup_python
         with:
           python-version: "3.11"
 
       - name: Restore cached virtualenv
         id: cache-venv-restore
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v4
         with:
-          key: venv-${{ runner.os }}-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('requirements.txt') }}
+          key: venv-${{ runner.os }}-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('backend_py/requirements.txt') }}
           path: .venv
 
       - name: Install dependencies
         if: steps.cache-venv-restore.outputs.cache-hit != 'true'
-        run: | # TODO: switch to using proper dev dependencies
+        run: |
           sudo apt-get install build-essential libdbus-glib-1-dev libdbus-1-dev libpython3-dev -y # For dbus-python
           ./create_venv.sh
           source .venv/bin/activate
-          echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
-          echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
           pip install ruff bandit ty
 
       - name: Saved cached virtualenv
         uses: actions/cache/save@v4
+        if: steps.cache-venv-restore.outputs.cache-hit != 'true'
         with:
-          key: ${{ steps.cache-primes-restore.outputs.cache-primary-key }}
+          key: ${{ steps.cache-venv-restore.outputs.cache-primary-key }}
           path: .venv
+
+      - name: Activate venv
+        run: |
+          source .venv/bin/activate
+          echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
+          echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
 
       - name: Ruff linting
         run: ruff check --output-format=github backend_py

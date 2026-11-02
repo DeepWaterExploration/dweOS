@@ -67,3 +67,24 @@ jobs:
 
       - name: Type checking (ty)
         run: ty check backend_py
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: "./frontend/package-lock.json"
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Check frontend OpenAPI schema is up to date
+        run: |
+          python3 -m backend_py.scripts.export_openapi
+          cd frontend
+          npx openapi-typescript ../openapi.json -o ./src/schemas/dwe_os_2.d.ts
+          if ! git diff --exit-code -- src/schemas/dwe_os_2.d.ts; then
+            echo "::error file=frontend/src/schemas/dwe_os_2.d.ts::Schema is out of date. Start the backend, run 'npm run regenerate-schemas' in frontend/, and commit the result."
+            exit 1
+          fi

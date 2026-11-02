@@ -11,6 +11,8 @@ import logging
 import threading
 from typing import cast
 
+import pydantic
+
 from backend_py.src.models import (
     SavedDeviceModel,
 )
@@ -45,7 +47,7 @@ class SettingsManager:
             self.saved_by_bus_info: dict[str, SavedDeviceModel] = {
                 dev.bus_info: dev for dev in self.settings
             }
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, pydantic.ValidationError):
             self.file_object.seek(0)
             self.file_object.write("[]")
             self.file_object.truncate()

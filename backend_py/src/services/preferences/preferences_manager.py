@@ -11,6 +11,7 @@ import json
 import pathlib
 import threading
 
+import pydantic
 from event_emitter import events
 
 from backend_py.src.models import SavedPreferencesModel
@@ -45,7 +46,11 @@ class PreferencesManager(events.EventEmitter):
                 self.settings: SavedPreferencesModel = (
                     SavedPreferencesModel.model_validate(settings)
                 )
-        except FileNotFoundError:
+        except (
+            FileNotFoundError,
+            json.decoder.JSONDecodeError,
+            pydantic.ValidationError,
+        ):
             self.settings = SavedPreferencesModel()
 
     def _save_settings(self) -> None:

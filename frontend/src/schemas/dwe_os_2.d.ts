@@ -682,9 +682,11 @@ export interface components {
              * @default false
              */
             is_managed: boolean;
-            /** @default {
+            /**
+             * @default {
              *       "num_drops": 0
-             *     } */
+             *     }
+             */
             frame_stats: components["schemas"]["FrameDropStats"];
             /**
              * Is Externally Managed
@@ -853,10 +855,12 @@ export interface components {
         };
         /** SavedPreferencesModel */
         SavedPreferencesModel: {
-            /** @default {
+            /**
+             * @default {
              *       "host": "192.168.2.1",
              *       "port": 5600
-             *     } */
+             *     }
+             */
             default_stream: components["schemas"]["StreamEndpointModel"] | null;
             /**
              * Suggest Host

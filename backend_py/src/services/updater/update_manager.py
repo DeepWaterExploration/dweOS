@@ -59,7 +59,7 @@ class UpdateManager:
         with urllib.request.urlopen(request, timeout=self.REQUEST_TIMEOUT) as response:
             return json.loads(response.read())
 
-    def _parse_gcp_item(self, release: dict) -> ReleaseModel:
+    def _parse_gcp_item(self, release: dict) -> ReleaseModel | None:
         """
         Parse item from GCP storage items list (storage#object)
         and convert it to a ReleaseModel
@@ -69,27 +69,50 @@ class UpdateManager:
 
         name: str = release["name"]
 
-        # Ex. pr-560
-        pr_name = name.split("/")[0]
-        pr_number = pr_name.split("-")[1]
+        # Ex. "pr-560" or "main"
+        release_name = name.split("/")[0]
+        notes = ""
+
+        if release_name == "main":
+            notes += f"Preview release: {metadata['version']}\n\n"
+            notes += (
+                "This release is the most up-to-date version of the "
+                "[main branch](https://github.com/DeepWaterExploration/dweOS/tree/main)."
+                " It is rebuilt on every push and is only recommended to test "
+                " bleeding-edge features "
+                "(do not expect support or things to work properly).\n\n"
+            )
+            notes += f"Commit: [{metadata['commit'][:7]}](https://github.com/DeepWaterExploration/dweOS/commit/{metadata['commit']})"
+        else:
+            # Pattern to match if it's a PR preview
+            pr_pattern = re.compile(r"pr-([0-9]+)")
+            res = pr_pattern.fullmatch(release_name)
+            if res:
+                notes = (
+                    f"Preview release: [{metadata['version']}]"
+                    f"({self.PR_BASE_URL}/{res.group(1)})"
+                )
+            else:
+                return None
 
         return ReleaseModel(
-            tag=f"preview-{pr_name}",
+            tag=f"preview-{release_name}",
             name=metadata["version"],
             published_at=release["timeCreated"],
             prerelease=True,
             url=release["selfLink"],
-            notes=(
-                f"Preview release: [{metadata['version']}]"
-                f"({self.PR_BASE_URL}/{pr_number})"
-            ),
+            notes=notes,
         )
 
     def get_preview_releases(self) -> list[ReleaseModel]:
         releases = self._get_response(self.PREVIEW_RELEASES_URL, "application/json")
 
         items = releases["items"]
-        return [self._parse_gcp_item(release) for release in items]
+        return [
+            parsed
+            for release in items
+            if (parsed := self._parse_gcp_item(release)) is not None
+        ]
 
     def get_releases(self) -> list[ReleaseModel]:
         request = urllib.request.Request(

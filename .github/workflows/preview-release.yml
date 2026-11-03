@@ -5,6 +5,8 @@ name: Preview Release
 #   curl -s .../install.sh | sudo bash -s preview-pr-<number>
 # Every push to the PR rebuilds the preview. Closing the PR deletes it.
 on:
+  push:
+    branches: ["main"]
   pull_request:
     types: [opened, synchronize, reopened, closed]
 
@@ -17,16 +19,18 @@ jobs:
     # Fork PRs get a read-only token and cannot publish, so only build PRs from
     # this repository
     if: >-
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      github.event.action != 'closed'
+      github.event_name == 'push' ||
+        (github.event.pull_request.head.repo.full_name == github.repository &&
+         github.event.action != 'closed')
     runs-on: ubuntu-22.04
     # A new push makes the running build stale
     concurrency:
-      group: preview-build-${{ github.event.pull_request.number }}
+      group: preview-build-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     outputs:
       sha: ${{ steps.version.outputs.sha }}
       version: ${{ steps.version.outputs.version }}
+      name: ${{ steps.version.outputs.name }}
 
     steps:
       # Checkout the code at head, so we aren't merging with main
@@ -48,10 +52,21 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           BASE_VERSION="$(node -p "require('./frontend/package.json').version")"
-          VERSION="${BASE_VERSION}-pr${PR_NUMBER}.${HEAD_SHA::7}"
+          SHORT_SHA="${HEAD_SHA:-$GITHUB_SHA}"
+          SHORT_SHA="${SHORT_SHA::7}"
+
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            NAME="pr-${PR_NUMBER}"
+            VERSION="${BASE_VERSION}-pr${PR_NUMBER}.${SHORT_SHA}"
+          else
+            NAME="main"
+            VERSION="${BASE_VERSION}-main.${SHORT_SHA}"
+          fi
+
           (cd frontend && npm pkg set version="$VERSION")
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
 
       - name: "Build Project"
         run: |
@@ -72,7 +87,7 @@ jobs:
     # Shared with cleanup and never cancelled, so a preview is not left half
     # published
     concurrency:
-      group: preview-publish-${{ github.event.pull_request.number }}
+      group: preview-publish-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: false
     permissions:
       contents: write # Point the preview tag at the built commit
@@ -85,6 +100,7 @@ jobs:
       BUILD_SHA: ${{ needs.build.outputs.sha }}
       VERSION: ${{ needs.build.outputs.version }}
       PREVIEW_BUCKET: ${{ vars.PREVIEW_BUCKET }}
+      NAME: ${{ needs.build.outputs.name }}
 
     steps:
       - name: "Download release archive"
@@ -96,7 +112,12 @@ jobs:
       - name: "Check the preview is still wanted"
         id: wanted
         run: |
-          WANTED="$(gh pr view "$PR_NUMBER" --json state --jq '.state == "OPEN"')"
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            WANTED="$(gh pr view "$PR_NUMBER" --json state --jq '.state == "OPEN"')"
+          else
+            WANTED="true"
+          fi
+
           echo "wanted=$WANTED" >> "$GITHUB_OUTPUT"
           if [ "$WANTED" != "true" ]; then
             echo "Pull request is closed; not publishing" >> "$GITHUB_STEP_SUMMARY"
@@ -116,14 +137,16 @@ jobs:
       - name: "Publish preview"
         if: steps.wanted.outputs.wanted == 'true'
         run: |
-          TAG="preview-pr-${PR_NUMBER}"
-          OBJECT="pr-${PR_NUMBER}/release.tar.gz"
+          TAG="preview-${NAME}"
+          OBJECT="${NAME}/release.tar.gz"
 
-          # Point the tag at the commit that was built. The tag protects the
-          # merge commit from garbage collection after the PR moves on.
-          gh api "repos/${GH_REPO}/git/refs/tags/${TAG}" >/dev/null 2>&1 \
-            && gh api -X PATCH "repos/${GH_REPO}/git/refs/tags/${TAG}" -f sha="$BUILD_SHA" -F force=true >/dev/null \
-            || gh api "repos/${GH_REPO}/git/refs" -f ref="refs/tags/${TAG}" -f sha="$BUILD_SHA" >/dev/null
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            # Point the tag at the commit that was built. The tag protects the
+            # merge commit from garbage collection after the PR moves on.
+            gh api "repos/${GH_REPO}/git/refs/tags/${TAG}" >/dev/null 2>&1 \
+              && gh api -X PATCH "repos/${GH_REPO}/git/refs/tags/${TAG}" -f sha="$BUILD_SHA" -F force=true >/dev/null \
+              || gh api "repos/${GH_REPO}/git/refs" -f ref="refs/tags/${TAG}" -f sha="$BUILD_SHA" >/dev/null
+          fi
 
           # Overwriting an object is atomic, so an install that is already
           # downloading gets the old or the new archive, never a mix. Disable
@@ -137,9 +160,11 @@ jobs:
           echo "download_url=https://storage.googleapis.com/${PREVIEW_BUCKET}/${OBJECT}" >> "$GITHUB_ENV"
           echo "install_url=https://raw.githubusercontent.com/${GH_REPO}/main/install.sh" >> "$GITHUB_ENV"
 
+          echo "Published \`${TAG}\` (\`${VERSION}\`)" >> "$GITHUB_STEP_SUMMARY"
+
       # Keep one comment per PR and edit it on every push
       - name: "Comment install command"
-        if: steps.wanted.outputs.wanted == 'true'
+        if: steps.wanted.outputs.wanted == 'true' && github.event_name == 'pull_request'
         run: |
           MARKER="<!-- preview-release -->"
           cat > comment.md <<EOF
@@ -160,8 +185,6 @@ jobs:
           else
             gh api "repos/${GH_REPO}/issues/${PR_NUMBER}/comments" -F body=@comment.md >/dev/null
           fi
-
-          echo "Published \`${tag}\` (\`${VERSION}\`)" >> "$GITHUB_STEP_SUMMARY"
 
   cleanup:
     if: >-

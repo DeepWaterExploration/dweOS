@@ -391,9 +391,7 @@ class ASICInterface:
         # This is extremely scuffed: switch to waiting for
         # trigger register before release (See below)
         # time.sleep(write_delay_s)
-        self.logger.info("Starting read")
         self._wait_sensor_ready()
-        self.logger.info("Finishing read")
 
         # Maybe: add check for success (0xAA in REG_TRIG)
         # REG_TRIG actually seems to not work properly, so maybe

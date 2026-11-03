@@ -242,7 +242,6 @@ class Server:
 
         self.device_manager.stop_monitoring()
         self.recordings_service.stop()
-        self.settings_manager.cleanup()
 
         if self.feature_support.ttyd:
             self.ttyd_manager.kill()

@@ -7,25 +7,26 @@ server_preferences.json
 Handles loading saved prefs and updating the json when settings are modified
 """
 
-import json
-import pathlib
-import threading
-
-import pydantic
 from event_emitter import events
 
 from backend_py.src.models import SavedPreferencesModel
 
+from .persistent_manager import PersistentManager
 
-class PreferencesManager(events.EventEmitter):
+
+class PreferencesManager(PersistentManager[SavedPreferencesModel], events.EventEmitter):
     def __init__(self, settings_path: str = ".") -> None:
-        super().__init__()
+        PersistentManager.__init__(self, settings_path, "server_preferences.json")
+        events.EventEmitter.__init__(self)
 
-        self.path = pathlib.Path(settings_path, "server_preferences.json")
-        self.settings = SavedPreferencesModel()
-        self._load_settings()
+    def _default_settings(self) -> SavedPreferencesModel:
+        return SavedPreferencesModel()
 
-        self._lock = threading.Lock()
+    def _parse_settings(self, raw: bytes) -> SavedPreferencesModel:
+        return SavedPreferencesModel.model_validate_json(raw)
+
+    def _serialize_settings(self) -> str:
+        return self.settings.model_dump_json(indent=4)
 
     def save(self, preferences: SavedPreferencesModel) -> None:
         with self._lock:
@@ -38,24 +39,3 @@ class PreferencesManager(events.EventEmitter):
 
     def serialize_preferences(self) -> SavedPreferencesModel:
         return self.settings
-
-    def _load_settings(self) -> None:
-        try:
-            with self.path.open("r") as f:
-                settings: dict = json.loads(f.read())
-                self.settings: SavedPreferencesModel = (
-                    SavedPreferencesModel.model_validate(settings)
-                )
-        except (
-            FileNotFoundError,
-            json.decoder.JSONDecodeError,
-            pydantic.ValidationError,
-        ):
-            self.settings = SavedPreferencesModel()
-
-    def _save_settings(self) -> None:
-        # I changed it to use the with statement and open the file every time we save,
-        # but it might be more performant to keep the file open. This is solves the ruff
-        # check that has issues with not using with
-        with self._lock and self.path.open("w", encoding="utf-8") as f:
-            f.write(self.settings.model_dump_json(indent=4))

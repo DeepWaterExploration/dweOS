@@ -8,7 +8,6 @@ and manages background sync of settings
 
 import json
 import logging
-import threading
 from typing import cast
 
 import pydantic
@@ -20,44 +19,27 @@ from backend_py.src.models import (
 from ..cameras.device_utils import find_device_with_bus_info
 from ..cameras.drivers.device import Device
 from ..cameras.drivers.shd import SHDDevice
+from .persistent_manager import PersistentManager
+
+_SAVED_DEVICES_ADAPTER = pydantic.TypeAdapter(list[SavedDeviceModel])
 
 
-class SettingsManager:
+class SettingsManager(PersistentManager[list[SavedDeviceModel]]):
     def __init__(self, settings_path: str = ".") -> None:
-        path = f"{settings_path}/device_settings.json"
-        try:
-            self.file_object = open(path, "r+")  # noqa: SIM115
-        except FileNotFoundError:
-            open(path, "w").close()
-            self.file_object = open(path, "r+")  # noqa: SIM115
-
-        # NOTE: not sure if RLock is the correct change to make,
-        # Lock might work fine here
-        self._lock = threading.RLock()
+        super().__init__(settings_path, "device_settings.json")
 
         self.logger = logging.getLogger("dwe_os_2.SettingsManager")
 
-        try:
-            settings: list[dict] = json.loads(self.file_object.read())
-            self.settings: list[SavedDeviceModel] = [
-                SavedDeviceModel.model_validate(saved_device)
-                for saved_device in settings
-            ]
+    def _default_settings(self) -> list[SavedDeviceModel]:
+        return []
 
-            self.saved_by_bus_info: dict[str, SavedDeviceModel] = {
-                dev.bus_info: dev for dev in self.settings
-            }
-        except (json.JSONDecodeError, pydantic.ValidationError):
-            self.file_object.seek(0)
-            self.file_object.write("[]")
-            self.file_object.truncate()
-            self.saved_by_bus_info = {}
-            self.settings = []
-            self.file_object.flush()
+    def _parse_settings(self, raw: bytes) -> list[SavedDeviceModel]:
+        return _SAVED_DEVICES_ADAPTER.validate_json(raw)
 
-    def cleanup(self) -> None:
-        if self.file_object:
-            self.file_object.close()
+    def _serialize_settings(self) -> str:
+        # FIXME: remove indent when we are done testing settings
+        # (switch to dev mode only)
+        return json.dumps([model.model_dump() for model in self.settings], indent=4)
 
     def _load_device(
         self, device: Device, saved_device: SavedDeviceModel, devices: dict[str, Device]
@@ -139,21 +121,11 @@ class SettingsManager:
 
                 saved_device.followers = new_followers
 
-                self._update_settings()
+                self._save_settings()
 
             # Either all of its followers are found, or it doesn't have any
             if device_should_start and device.stream.enabled:
                 device.start_stream()
-
-    def _update_settings(self) -> None:
-        self.file_object.seek(0)
-        # FIXME: remove indent when we are done testing settings
-        # (switch to dev mode only)
-        self.file_object.write(
-            json.dumps([model.model_dump() for model in self.settings], indent=4)
-        )
-        self.file_object.truncate()
-        self.file_object.flush()
 
     def _save_device(self, saved_device: SavedDeviceModel) -> None:
         # self.logger.debug(f"Saving device: {saved_device.bus_info}")
@@ -165,7 +137,7 @@ class SettingsManager:
                     self.settings.remove(dev)
                     break
             self.settings.append(saved_device)
-            self._update_settings()
+            self._save_settings()
 
     def save_device(self, device: Device) -> None:
         saved_device = SavedDeviceModel.model_validate(device)

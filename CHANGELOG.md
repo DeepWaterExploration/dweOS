@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.9.0] - 2026-11-03
+
+### Features
+
+- *(updater)* Add an updates tab to install new and old dweOS releases
+
+### Bug Fixes
+
+- *(frontend)* Update dwe_os_2.d.ts openapi schema types (#590)
+- *(settings)* Add fallbacks for corrupted settings files (#595)
+- *(install)* Keep the existing install until the new one is ready
+- *(updater)* Prevent errors with main previews
+- *(frontend)* Identify main releases correctly
+
+### Miscellaneous Tasks
+
+- *(preview)* Switch preview to use google cloud storage (#586)
+- *(backend)* Fix caching for backend ci pipeline (#588)
+- Add check for out-of-date opeapi schemas (#590)
+- Release BlueOS extension on every release (#593)
+- Update frontend dependencies (#585)
+- Create PR previews at head instead of merge commit
+- Add preview PR for main branch
+- Remove unnecessary logging from backend
+
 ## [0.8.0] - 2026-10-28
 
 ### Features

@@ -101,7 +101,6 @@ class RecordingsService:
     def _cache_durations_loop(self) -> None:
         while not self._stop_event.is_set():
             try:
-                self.logger.info("Updating recordings cache.")
                 # get_recordings refreshes the durations cache
                 self.get_recordings()
             except Exception as e:

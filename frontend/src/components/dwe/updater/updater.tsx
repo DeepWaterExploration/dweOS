@@ -90,7 +90,7 @@ const ReleaseRow = ({
   disabled: boolean;
   onInstall: (release: Release) => void;
 }) => {
-  const installed = release.tag === installedTag;
+  const installed = release.tag === installedTag || release.name === version;
 
   return (
     <AccordionItem
@@ -161,7 +161,7 @@ export const Updater = () => {
       // Some pre-releases are versioned like releases, e.g. v0.7.0
       if (
         !releasesLoaded.current &&
-        data.find((release) => release.tag === installedTag)?.prerelease
+        data.find((release) => release.tag === installedTag || release.name === version)?.prerelease
       ) {
         setShowPrereleases(true);
       }
@@ -239,7 +239,7 @@ export const Updater = () => {
     : filteredReleases.slice(0, RECENT_RELEASE_COUNT);
   const latest = releases?.find((release) => !release.prerelease);
   const onPrerelease = !!releases?.find(
-    (release) => release.tag === installedTag,
+    (release) => release.tag === installedTag || release.name === version,
   )?.prerelease;
   const updateAvailable = latest && compareVersions(latest.tag, version) > 0;
 

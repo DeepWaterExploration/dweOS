@@ -53,12 +53,30 @@ The updater is not currently enabled in the backend.
 - If you have installed dweOS as an extension on BlueOS, please update it from the BlueOS extensions manager.
 `.trim();
 
-// Preview builds are versioned <version>-pr<number>.<sha> and tagged
-// preview-pr-<number>
-const installedTag = (() => {
-  const preview = version.match(/-pr(\d+)\./);
-  return preview ? `preview-pr-${preview[1]}` : version;
-})();
+//   v0.9.0-pr609.c9cf9e2 -> preview-pr-609
+//   v0.9.0-main.5d542e2  -> preview-main
+//   v0.9.0               -> v0.9.0
+const versionToTag = (version: string) => {
+  // Extract pr number from the string
+  const pr = version.match(/-pr(\d+)\./);
+  if (pr) return `preview-pr-${pr[1]}`;
+
+  // Otherwise it's just a basic version string / main preview
+  return version.includes("-main.") ? "preview-main" : version;
+};
+
+const installedTag = versionToTag(version);
+// If version is different from the tag, then it must be a preview build
+const isPreviewBuild = installedTag !== version;
+
+// A release's tag is its version. Every build of a preview shares a tag, so the
+// version of a preview comes from its name
+const isInstalled = (release: Release) =>
+  isPreviewBuild ? release.name === version : release.tag === version;
+
+// Another build under the installed tag is a newer build of this preview
+const isNewerBuild = (release: Release) =>
+  release.tag === installedTag && !isInstalled(release);
 
 // Compares the X.Y.Z of two versions, ignoring any pre-release suffix. A
 // pre-release is built on its X.Y.Z release, so that release is not newer
@@ -90,7 +108,8 @@ const ReleaseRow = ({
   disabled: boolean;
   onInstall: (release: Release) => void;
 }) => {
-  const installed = release.tag === installedTag || release.name === version;
+  const installed = isInstalled(release);
+  const newerBuild = isNewerBuild(release);
 
   return (
     <AccordionItem
@@ -104,6 +123,7 @@ const ReleaseRow = ({
               <span className="truncate font-medium">{release.name}</span>
               {isLatest && <Badge>Latest</Badge>}
               {installed && <Badge variant="success">Installed</Badge>}
+              {newerBuild && <Badge variant="secondary">Update available</Badge>}
             </span>
             <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
               {formatDate(release.published_at)}
@@ -117,7 +137,7 @@ const ReleaseRow = ({
           disabled={disabled}
           onClick={() => onInstall(release)}
         >
-          {installed ? "Reinstall" : "Install"}
+          {installed ? "Reinstall" : newerBuild ? "Update" : "Install"}
         </Button>
       </div>
       <AccordionContent className="px-2">
@@ -161,7 +181,7 @@ export const Updater = () => {
       // Some pre-releases are versioned like releases, e.g. v0.7.0
       if (
         !releasesLoaded.current &&
-        data.find((release) => release.tag === installedTag || release.name === version)?.prerelease
+        (isPreviewBuild || data.find(isInstalled)?.prerelease)
       ) {
         setShowPrereleases(true);
       }
@@ -238,10 +258,13 @@ export const Updater = () => {
     ? filteredReleases
     : filteredReleases.slice(0, RECENT_RELEASE_COUNT);
   const latest = releases?.find((release) => !release.prerelease);
-  const onPrerelease = !!releases?.find(
-    (release) => release.tag === installedTag || release.name === version,
-  )?.prerelease;
-  const updateAvailable = latest && compareVersions(latest.tag, version) > 0;
+  // A preview is deleted when its PR closes, so it may not be in the list
+  const onPrerelease =
+    isPreviewBuild || !!releases?.find(isInstalled)?.prerelease;
+  // A preview follows its own branch before the main releases
+  const update =
+    releases?.find(isNewerBuild) ??
+    (latest && compareVersions(latest.tag, version) > 0 ? latest : undefined);
 
   return (
     <div className="flex flex-col gap-4 h-full w-full">
@@ -249,23 +272,23 @@ export const Updater = () => {
         <CardHeader>
           <CardTitle>dweOS {version}</CardTitle>
           <CardDescription>
-            {latest
-              ? updateAvailable
-                ? `${latest.tag} is available.`
-                : onPrerelease
+            {update
+              ? `${update.name} is available.`
+              : latest
+                ? onPrerelease
                   ? `You are on a pre-release. The latest release is ${latest.tag}.`
                   : "You are on the latest release."
-              : "Checking for updates..."}
+                : "Checking for updates..."}
           </CardDescription>
         </CardHeader>
-        {updateAvailable && (
+        {update && (
           <CardContent>
             <Button
               disabled={updating}
-              onClick={() => setPendingRelease(latest)}
+              onClick={() => setPendingRelease(update)}
             >
               <DownloadIcon />
-              Update to {latest.tag}
+              Update to {update.name}
             </Button>
           </CardContent>
         )}

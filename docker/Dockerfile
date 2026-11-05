@@ -72,7 +72,7 @@ LABEL links='{\
   "support": "https://dwe.ai/pages/contact"\
   }'
 
-LABEL readme="https://raw.githubusercontent.com/DeepwaterExploration/DWE_OS_2/main/DESCRIPTION.md"
+LABEL readme="https://raw.githubusercontent.com/DeepwaterExploration/dweOS/main/DESCRIPTION.md"
 
 # Expose required ports
 EXPOSE 8000

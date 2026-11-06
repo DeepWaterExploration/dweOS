@@ -31,6 +31,7 @@ export const CameraStream = ({ bus_id }: { bus_id: string }) => {
   const controls = device.controls;
 
   const isManaged = device.is_managed || device.is_externally_managed;
+  const isSynchronized = canLead(device) && device.followers.length > 0;
 
   const configureStream = useDeviceStore((state) => state.configureStream);
   const isStreamLoading = useDeviceStore(
@@ -164,9 +165,11 @@ export const CameraStream = ({ bus_id }: { bus_id: string }) => {
               </div>
             </div>
 
-            {!isManaged && device.stream.stream_type === "UDP" && (
-              <EndpointList bus_id={bus_id} />
-            )}
+            {/* Synchronized cameras can be streamed while they record */}
+            {!isManaged &&
+              (device.stream.stream_type === "UDP" || isSynchronized) && (
+                <EndpointList bus_id={bus_id} />
+              )}
 
             {!isManaged && (
               <Button

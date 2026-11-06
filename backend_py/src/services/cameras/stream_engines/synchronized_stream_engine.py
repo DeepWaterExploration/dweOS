@@ -30,15 +30,14 @@ class SynchronizedStreamEngine(BaseStreamEngine):
         self.is_recording = streams[0].stream_type == StreamTypeEnum.RECORDING
 
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        # A live stream only wants the newest frames, but a recording has to keep
-        # every frame it can
-        self.frame_queue: collections.deque[tuple[CopiedFrame, CopiedFrame]] = (
+        # Two queues, one for streaming and one for recording
+        # Recording prioritizes saving every frame possible
+        self.stream_queue: collections.deque[tuple[CopiedFrame, CopiedFrame]] = (
+            collections.deque(maxlen=2)
+        )
+        self.record_queue: collections.deque[tuple[CopiedFrame, CopiedFrame]] = (
             collections.deque(
-                maxlen=(
-                    streams[0].interval.denominator * RECORDING_BUFFER_SECONDS
-                    if self.is_recording
-                    else 2
-                )
+                maxlen=streams[0].interval.denominator * RECORDING_BUFFER_SECONDS
             )
         )
 
@@ -47,6 +46,7 @@ class SynchronizedStreamEngine(BaseStreamEngine):
         self.sequence_number = 1
 
         self.stream_thread: threading.Thread | None = None
+        self.record_thread: threading.Thread | None = None
         self.capture_thread: threading.Thread | None = None
         self._running = False
 
@@ -160,10 +160,13 @@ class SynchronizedStreamEngine(BaseStreamEngine):
         self.capture_thread.start()
 
         # We cannot handle more than 2 synchronized streams yet in the protocol
-        self.stream_thread = threading.Thread(
-            target=self.record_loop_ if self.is_recording else self.stream_loop_
-        )
+        # Streaming always runs, so a recording can be watched live
+        self.stream_thread = threading.Thread(target=self.stream_loop_)
         self.stream_thread.start()
+
+        if self.is_recording:
+            self.record_thread = threading.Thread(target=self.record_loop_)
+            self.record_thread.start()
 
         self.monitor_thread = threading.Thread(target=self.monitor_)
         self.monitor_thread.start()
@@ -182,6 +185,8 @@ class SynchronizedStreamEngine(BaseStreamEngine):
             self.capture_thread.join()
         if self.stream_thread:
             self.stream_thread.join()
+        if self.record_thread:
+            self.record_thread.join()
 
         self.exit_event.set()
         if self.monitor_thread:
@@ -207,10 +212,13 @@ class SynchronizedStreamEngine(BaseStreamEngine):
                 time.sleep(1 / self.streams[0].interval.denominator)
                 continue
 
-            if self.is_recording and len(self.frame_queue) == self.frame_queue.maxlen:
-                # The writer fell behind, so the oldest unsaved frame is lost
-                self.emit("frame_drop")
-            self.frame_queue.append((frames[0], frames[1]))
+            pair = (frames[0], frames[1])
+            if self.is_recording:
+                if len(self.record_queue) == self.record_queue.maxlen:
+                    # The writer fell behind, so the oldest unsaved frame is lost
+                    self.emit("frame_drop")
+                self.record_queue.append(pair)
+            self.stream_queue.append(pair)
         self.synchronized_camera.stop()
 
     def stream_loop_(self) -> None:
@@ -222,7 +230,7 @@ class SynchronizedStreamEngine(BaseStreamEngine):
                 continue
             # TODO: do not assume two
             try:
-                (left, right) = self.frame_queue.popleft()
+                (left, right) = self.stream_queue.popleft()
                 # TODO: make less scuffed
                 self._send_frame([left, right], endpoint)
             except IndexError:
@@ -255,9 +263,9 @@ class SynchronizedStreamEngine(BaseStreamEngine):
 
                 # Capture stops first on shutdown, so keep going until everything
                 # it queued has been written
-                while self._is_capturing() or self.frame_queue:
+                while self._is_capturing() or self.record_queue:
                     try:
-                        frames = self.frame_queue.popleft()
+                        frames = self.record_queue.popleft()
                     except IndexError:
                         time.sleep(1 / leader.interval.denominator)
                         continue

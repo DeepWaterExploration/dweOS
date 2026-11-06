@@ -24,13 +24,13 @@ cp -r release/* ${INSTALL_DIR}
 
 cd ${INSTALL_DIR}
 
-# Comment the next two lines and uncomment the one after if you are developing locally and already have an install
-
-if [ "$1" != "--local" ]; then
-    sh install_requirements.sh &&
-    sh create_venv.sh
+if [ "$1" == "--local" ]; then
+  cp -r $SCRIPT_RUN_DIR/.venv $INSTALL_DIR
+elif [ "$1" == "--offline" ]; then
+  sh create_venv.sh
 else
-    cp -r $SCRIPT_RUN_DIR/.venv $INSTALL_DIR
+  sh install_requirements.sh &&
+  sh create_venv.sh
 fi
 
 # check if the service is already running, and stop it if necessary

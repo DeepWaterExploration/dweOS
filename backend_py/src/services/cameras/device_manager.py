@@ -227,6 +227,19 @@ class DeviceManager(events.EventEmitter):
         stream_type: StreamTypeEnum = stream_info.stream_type
         endpoints = stream_info.endpoints
 
+        # For DWVO streams only:
+        # Endpoints are read live while recording, so changing only them must not
+        # restart the stream and split the recording into a new file
+        only_endpoints_changed = (
+            device.stream_runner.started
+            and device.stream.stream_type == StreamTypeEnum.RECORDING
+            and stream_type == StreamTypeEnum.RECORDING
+            and device.stream.encode_type == encode_type
+            and device.stream.width == width
+            and device.stream.height == height
+            and device.stream.interval == interval
+        )
+
         device.configure_stream(
             encode_type, width, height, interval, stream_type, endpoints
         )
@@ -247,7 +260,10 @@ class DeviceManager(events.EventEmitter):
             device.emit("updated")
 
         if should_start:
-            device.start_stream()
+            # We don't restart the stream if it's a dwvo stream that is also recording
+            # and only changed its endpoints
+            if not only_endpoints_changed:
+                device.start_stream()
         else:
             device.stop_stream()
 

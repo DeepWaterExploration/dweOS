@@ -183,6 +183,10 @@ class SynchronizedStreamEngine(BaseStreamEngine):
         if self.stream_thread:
             self.stream_thread.join()
 
+        self.exit_event.set()
+        if self.monitor_thread:
+            self.monitor_thread.join()
+
     def capture_loop_(self) -> None:
         if not self.synchronized_camera:
             self.exit_msg = (

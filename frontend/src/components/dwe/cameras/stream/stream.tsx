@@ -25,6 +25,19 @@ import { FollowerList } from "./follower-list";
 import { CameraControls } from "../camera-controls";
 import { toast } from "sonner";
 
+type StreamScale = components["schemas"]["StreamModel"]["stream_scale"];
+
+// Fractions of the recorded resolution a synchronized recording can be streamed at
+const STREAM_SCALES: Record<string, StreamScale> = {
+  Full: 1,
+  "1/2": 2,
+  "1/4": 4,
+  "1/8": 8,
+};
+
+const streamScaleLabel = (scale: StreamScale) =>
+  Object.keys(STREAM_SCALES).find((label) => STREAM_SCALES[label] === scale);
+
 export const CameraStream = ({ bus_id }: { bus_id: string }) => {
   const device = useDeviceStore((state) => state.devices[bus_id]);
   const setUVCControl = useDeviceStore((state) => state.setUVCControl);
@@ -169,6 +182,24 @@ export const CameraStream = ({ bus_id }: { bus_id: string }) => {
             {!isManaged &&
               (device.stream.stream_type === "UDP" || isSynchronized) && (
                 <EndpointList bus_id={bus_id} />
+              )}
+
+            {/* The recording keeps full resolution, only the stream is scaled */}
+            {!isManaged &&
+              isSynchronized &&
+              device.stream.stream_type === "RECORDING" && (
+                <StreamSelector
+                  options={Object.keys(STREAM_SCALES)}
+                  placeholder="Stream Resolution"
+                  label="Stream Resolution"
+                  value={streamScaleLabel(device.stream.stream_scale)}
+                  disabled={isStreamLoading}
+                  onChange={(label) => {
+                    configureStream(bus_id, {
+                      stream_scale: STREAM_SCALES[label],
+                    });
+                  }}
+                />
               )}
 
             {!isManaged && (

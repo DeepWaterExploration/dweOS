@@ -226,11 +226,12 @@ class DeviceManager(events.EventEmitter):
         encode_type: StreamEncodeTypeEnum = stream_info.encode_type
         stream_type: StreamTypeEnum = stream_info.stream_type
         endpoints = stream_info.endpoints
+        stream_scale = stream_info.stream_scale
 
         # For DWVO streams only:
-        # Endpoints are read live while recording, so changing only them must not
-        # restart the stream and split the recording into a new file
-        only_endpoints_changed = (
+        # Endpoints and stream scale are read live while recording, so changing only
+        # them must not restart the stream and split the recording into a new file
+        only_live_settings_changed = (
             device.stream_runner.started
             and device.stream.stream_type == StreamTypeEnum.RECORDING
             and stream_type == StreamTypeEnum.RECORDING
@@ -241,7 +242,7 @@ class DeviceManager(events.EventEmitter):
         )
 
         device.configure_stream(
-            encode_type, width, height, interval, stream_type, endpoints
+            encode_type, width, height, interval, stream_type, endpoints, stream_scale
         )
 
         should_start = stream_info.enabled
@@ -261,8 +262,8 @@ class DeviceManager(events.EventEmitter):
 
         if should_start:
             # We don't restart the stream if it's a dwvo stream that is also recording
-            # and only changed its endpoints
-            if not only_endpoints_changed:
+            # and only changed its endpoints or stream scale
+            if not only_live_settings_changed:
                 device.start_stream()
         else:
             device.stop_stream()

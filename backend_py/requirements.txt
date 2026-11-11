@@ -9,3 +9,5 @@ sdbus==0.14.0
 sdbus-networkmanager==2.0.0
 pyserial
 colorlog==6.10.1
+# 2.x requires libjpeg-turbo 3, which Debian 12 and Ubuntu 22.04 do not have
+PyTurboJPEG==1.8.3

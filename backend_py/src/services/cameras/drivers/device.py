@@ -221,6 +221,7 @@ class Device(events.EventEmitter):
         interval: IntervalModel,
         stream_type: StreamTypeEnum,
         stream_endpoints: list[StreamEndpointModel] | None = None,
+        stream_scale: int = 1,
     ) -> None:
         if stream_endpoints is None:
             stream_endpoints = []
@@ -251,6 +252,7 @@ class Device(events.EventEmitter):
             self.stream.height = height
             self.stream.interval = interval
             self.stream.endpoints = stream_endpoints
+            self.stream.stream_scale = stream_scale
             self.stream.encode_type = encode_type
             self.stream.stream_type = stream_type
 
@@ -321,6 +323,7 @@ class Device(events.EventEmitter):
             saved_device.stream.interval,
             saved_device.stream.stream_type,
             saved_device.stream.endpoints,
+            saved_device.stream.stream_scale,
         )
 
         with self._configuration_lock:

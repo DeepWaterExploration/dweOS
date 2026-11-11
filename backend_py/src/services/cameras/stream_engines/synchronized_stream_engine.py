@@ -17,7 +17,7 @@ from ..synchronized_camera.dwvo import (
     DWVOVideoFrame,
     DWVOWriter,
 )
-from ..synchronized_camera.jpeg_scaler import AutoJpegScaler, JpegScaler
+from ..synchronized_camera.jpeg_scaler import AutoJpegScaler
 from .base_stream_engine import BaseStreamEngine
 
 # How much video a recording can buffer while the disk catches up
@@ -223,7 +223,7 @@ class SynchronizedStreamEngine(BaseStreamEngine):
     def stream_loop_(self) -> None:
         # Only created once a frame needs scaling, since the hardware scaler runs
         # its own process
-        scaler: JpegScaler | None = None
+        scaler: AutoJpegScaler | None = None
         try:
             while self._running:
                 try:

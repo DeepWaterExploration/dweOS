@@ -20,7 +20,17 @@ from typing import BinaryIO
 # Factors libjpeg-turbo can decode to directly, without a full size decode
 SUPPORTED_SCALES = (1, 2, 4, 8)
 
-JPEG_QUALITY = 80
+# Placeholder for a frame without a quantization table, which cannot be decoded
+# anyway, so it never decides the quality of a real frame
+DEFAULT_JPEG_QUALITY = 90
+
+# Standard JPEG luminance quantization table (Annex K), in zigzag order like DQT
+_STD_LUMA_TABLE = (
+    16, 11, 12, 14, 12, 10, 16, 14, 13, 14, 18, 17, 16, 19, 24, 40,
+    26, 24, 22, 22, 24, 49, 35, 37, 29, 40, 58, 51, 61, 60, 57, 51,
+    56, 55, 64, 72, 92, 78, 64, 68, 87, 69, 55, 56, 80, 109, 81, 87,
+    95, 98, 103, 104, 103, 62, 77, 113, 121, 112, 100, 120, 92, 101, 103, 99,
+)  # fmt: skip
 
 logger = logging.getLogger("dwe_os_2.cameras.JpegScaler")
 
@@ -30,11 +40,63 @@ def scaled_size(width: int, height: int, scale: int) -> tuple[int, int]:
     return (-(-width // scale), -(-height // scale))
 
 
+def estimate_quality(data: bytes) -> int:
+    """
+    Quality (1-100) the frame was encoded at, so it can be re-encoded without
+    losing more than the resolution. Cameras change quality from frame to frame,
+    so this is read from every frame
+    """
+    table = _luma_table(data)
+    if table is None:
+        return DEFAULT_JPEG_QUALITY
+    return _quality_of_table(table)
+
+
+def _luma_table(data: bytes) -> tuple[int, ...] | None:
+    """The first quantization table (luminance) of a JPEG, in zigzag order"""
+    i = 2  # Skip SOI
+    while i + 4 <= len(data) and data[i] == 0xFF:
+        marker = data[i + 1]
+        length = int.from_bytes(data[i + 2 : i + 4], "big")
+        # Tables always come before the start of scan
+        if marker == 0xDA:
+            return None
+        if marker == 0xDB:
+            precision = data[i + 4] >> 4
+            start = i + 5
+            size = 2 if precision else 1
+            if start + 64 * size > len(data):
+                return None
+            return tuple(
+                int.from_bytes(data[start + size * k : start + size * (k + 1)], "big")
+                for k in range(64)
+            )
+        i += 2 + length
+    return None
+
+
+@functools.lru_cache(maxsize=256)
+def _quality_of_table(table: tuple[int, ...]) -> int:
+    # Cameras reuse a few tables, so the fit is cached by table
+    def libjpeg_table(quality: int) -> tuple[int, ...]:
+        scale = 5000 // quality if quality < 50 else 200 - 2 * quality
+        return tuple(min(max((v * scale + 50) // 100, 1), 255) for v in _STD_LUMA_TABLE)
+
+    # The quality whose libjpeg table is closest to the camera's
+    def distance(quality: int) -> int:
+        pairs = zip(libjpeg_table(quality), table, strict=True)
+        return sum(abs(a - b) for a, b in pairs)
+
+    return min(range(1, 101), key=distance)
+
+
 class JpegScaler(ABC):
     name: str
 
     @abstractmethod
-    def scale(self, data: bytes, width: int, height: int, scale: int) -> bytes:
+    def scale(
+        self, data: bytes, width: int, height: int, scale: int, quality: int
+    ) -> bytes:
         """Return the JPEG in data shrunk to 1/scale of width and height"""
 
     def close(self) -> None:  # noqa: B027 - most scalers have nothing to clean up
@@ -49,16 +111,17 @@ class TurboJpegScaler(JpegScaler):
 
     name = "libjpeg-turbo (software)"
 
-    def __init__(self, quality: int = JPEG_QUALITY) -> None:
+    def __init__(self) -> None:
         # Imported here so a missing libturbojpeg only disables scaling
         from turbojpeg import TurboJPEG
 
         self._turbo = TurboJPEG()
-        self._quality = quality
 
-    def scale(self, data: bytes, width: int, height: int, scale: int) -> bytes:
+    def scale(
+        self, data: bytes, width: int, height: int, scale: int, quality: int
+    ) -> bytes:
         return self._turbo.scale_with_quality(
-            data, scaling_factor=(1, scale), quality=self._quality
+            data, scaling_factor=(1, scale), quality=quality
         )
 
 
@@ -83,27 +146,26 @@ class GStreamerJpegScaler(JpegScaler):
         converter: str,
         encoder: str,
         raw_caps: str = "video/x-raw",
-        quality: int = JPEG_QUALITY,
     ) -> None:
         self._decoder = decoder
         self._converter = converter
         self._encoder = encoder
         self._raw_caps = raw_caps
-        self._quality = quality
 
         self._process: subprocess.Popen[bytes] | None = None
         self._frames: queue.Queue[bytes | None] = queue.Queue()
         # Input and output sizes the running pipeline was built for
         self._sizes: tuple[int, int, int, int] | None = None
+        # Encoder quality of the running pipeline
+        self._quality = 0
 
     @classmethod
-    def jetson(cls, quality: int = JPEG_QUALITY) -> GStreamerJpegScaler:
+    def jetson(cls) -> GStreamerJpegScaler:
         scaler = cls(
             "nvjpegdec",
             "nvvidconv",
             "nvjpegenc",
             raw_caps="video/x-raw(memory:NVMM)",
-            quality=quality,
         )
         scaler.name = "Jetson nvjpeg (hardware)"
         return scaler
@@ -112,7 +174,9 @@ class GStreamerJpegScaler(JpegScaler):
     def has_elements(*elements: str) -> bool:
         return _has_gstreamer_elements(elements)
 
-    def scale(self, data: bytes, width: int, height: int, scale: int) -> bytes:
+    def scale(
+        self, data: bytes, width: int, height: int, scale: int, quality: int
+    ) -> bytes:
         out_width, out_height = scaled_size(width, height, scale)
         # Raw video has to be an even size
         out_width += out_width % 2
@@ -120,7 +184,11 @@ class GStreamerJpegScaler(JpegScaler):
 
         sizes = (width, height, out_width, out_height)
         timeout = self.TIMEOUT_S
-        if self._process is None or self._sizes != sizes:
+        # The encoder quality is fixed once the pipeline runs, so it restarts for
+        # higher quality frames and never encodes below the source. Lower quality
+        # frames keep the pipeline, since restarting on every change is too slow
+        if self._process is None or self._sizes != sizes or quality > self._quality:
+            self._quality = max(quality, self._quality)
             self._start(out_width, out_height)
             self._sizes = sizes
             timeout = self.STARTUP_TIMEOUT_S
@@ -251,30 +319,32 @@ def _has_gstreamer_elements(elements: tuple[str, ...]) -> bool:
     return True
 
 
-class AutoJpegScaler(JpegScaler):
+class AutoJpegScaler:
     """
     Uses the hardware codec when the platform has one, and falls back to
     libjpeg-turbo if it is missing or fails. Frames are passed through at full
     size if nothing can scale them
     """
 
-    name = "auto"
-
-    def __init__(self, quality: int = JPEG_QUALITY) -> None:
-        self._quality = quality
+    def __init__(self) -> None:
         self._candidates = [self._create_jetson, self._create_turbo]
         self._active: JpegScaler | None = None
         self._next_backend()
 
     def scale(self, data: bytes, width: int, height: int, scale: int) -> bytes:
+        """
+        Return the JPEG in data shrunk to 1/scale of width and height, at the
+        quality it was encoded at
+        """
         if scale == 1:
             return data
         if scale not in SUPPORTED_SCALES:
             raise ValueError(f"Unsupported stream scale: {scale}")
 
+        quality = estimate_quality(data)
         while self._active is not None:
             try:
-                return self._active.scale(data, width, height, scale)
+                return self._active.scale(data, width, height, scale, quality)
             except Exception as e:
                 logger.warning("%s could not scale a frame: %s", self._active.name, e)
                 self._active.close()
@@ -299,11 +369,11 @@ class AutoJpegScaler(JpegScaler):
         if not GStreamerJpegScaler.has_elements("nvjpegdec", "nvvidconv", "nvjpegenc"):
             logger.info("No hardware JPEG codec found, falling back to software")
             return None
-        return GStreamerJpegScaler.jetson(self._quality)
+        return GStreamerJpegScaler.jetson()
 
     def _create_turbo(self) -> JpegScaler | None:
         try:
-            return TurboJpegScaler(self._quality)
+            return TurboJpegScaler()
         except (ImportError, OSError, RuntimeError) as e:
             logger.warning("libjpeg-turbo is unavailable: %s", e)
             return None

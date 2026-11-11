@@ -13,6 +13,7 @@ from .cameras import (
     IntervalModel,
     StreamEncodeTypeEnum,
     StreamEndpointModel,
+    StreamScale,
     StreamTypeEnum,
 )
 
@@ -35,6 +36,7 @@ class SavedStreamModel(BaseModel):
     height: int
     interval: IntervalModel
     enabled: bool
+    stream_scale: StreamScale = 1
 
     class Config:
         # use_enum_values = True

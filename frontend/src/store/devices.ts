@@ -79,6 +79,7 @@ export const useDeviceStore = create<DeviceState>()(
             interval: stream.interval,
           },
           stream_type: streamType,
+          stream_scale: partialStreamInfo.stream_scale ?? stream.stream_scale,
         };
 
         set((state) => {

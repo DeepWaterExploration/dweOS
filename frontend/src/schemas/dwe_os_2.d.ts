@@ -995,6 +995,12 @@ export interface components {
             enabled: boolean;
             /** Endpoints */
             endpoints: components["schemas"]["StreamEndpointModel"][];
+            /**
+             * Stream Scale
+             * @default 1
+             * @enum {integer}
+             */
+            stream_scale: 1 | 2 | 4 | 8;
         };
         /** StreamModel */
         StreamModel: {
@@ -1011,6 +1017,12 @@ export interface components {
             interval: components["schemas"]["IntervalModel"];
             /** Enabled */
             enabled: boolean;
+            /**
+             * Stream Scale
+             * @default 1
+             * @enum {integer}
+             */
+            stream_scale: 1 | 2 | 4 | 8;
         };
         /**
          * StreamTypeEnum

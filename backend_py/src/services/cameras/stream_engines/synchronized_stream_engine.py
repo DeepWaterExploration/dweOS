@@ -17,6 +17,7 @@ from ..synchronized_camera.dwvo import (
     DWVOVideoFrame,
     DWVOWriter,
 )
+from ..synchronized_camera.jpeg_scaler import AutoJpegScaler
 from .base_stream_engine import BaseStreamEngine
 
 # How much video a recording can buffer while the disk catches up
@@ -72,9 +73,7 @@ class SynchronizedStreamEngine(BaseStreamEngine):
                 self.emit_error(e.strerror)
 
     # <AI-Assisted> Custom RTP improves performance compared to RTP class
-    def _send_frame(
-        self, frames: list[CopiedFrame], endpoint: StreamEndpointModel
-    ) -> None:
+    def _send_frame(self, frames: list[bytes], endpoint: StreamEndpointModel) -> None:
         # TODO: change protocol to handle more than two cameras
         if len(frames) > 2:
             self.logger.warning(
@@ -87,10 +86,10 @@ class SynchronizedStreamEngine(BaseStreamEngine):
         right_frame = frames[1]
 
         # payload headers
-        frame_header = struct.pack("<QQ", len(left_frame.data), len(right_frame.data))
+        frame_header = struct.pack("<QQ", len(left_frame), len(right_frame))
 
         # Copy everything into a payload
-        full_payload = frame_header + left_frame.data + right_frame.data
+        full_payload = frame_header + left_frame + right_frame
         payload_view = memoryview(full_payload)
         payload_size = len(payload_view)
 
@@ -222,20 +221,39 @@ class SynchronizedStreamEngine(BaseStreamEngine):
         self.synchronized_camera.stop()
 
     def stream_loop_(self) -> None:
-        while self._running:
-            try:
-                endpoint = self.streams[0].endpoints[0]
-            except IndexError:
-                time.sleep(1)
-                continue
-            # TODO: do not assume two
-            try:
-                (left, right) = self.stream_queue.popleft()
+        # Only created once a frame needs scaling, since the hardware scaler runs
+        # its own process
+        scaler: AutoJpegScaler | None = None
+        try:
+            while self._running:
+                try:
+                    endpoint = self.streams[0].endpoints[0]
+                except IndexError:
+                    time.sleep(1)
+                    continue
+                # TODO: do not assume two
+                try:
+                    (left, right) = self.stream_queue.popleft()
+                except IndexError:
+                    time.sleep(1 / self.streams[0].interval.denominator)
+                    continue
+
+                # Read live, so it can change without splitting the recording.
+                # Only the stream is scaled, the recording keeps the full frames
+                scale = self.streams[0].stream_scale if self.is_recording else 1
+                frames = [left.data, right.data]
+                if scale > 1:
+                    if scaler is None:
+                        scaler = AutoJpegScaler()
+                    frames = [
+                        scaler.scale(frame.data, frame.width, frame.height, scale)
+                        for frame in (left, right)
+                    ]
                 # TODO: make less scuffed
-                self._send_frame([left, right], endpoint)
-            except IndexError:
-                time.sleep(1 / self.streams[0].interval.denominator)
-                continue
+                self._send_frame(frames, endpoint)
+        finally:
+            if scaler is not None:
+                scaler.close()
 
     def record_loop_(self) -> None:
         leader = self.streams[0]

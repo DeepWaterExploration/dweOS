@@ -6,6 +6,7 @@ Includes schemas for streams, controls, device info, and API request/response st
 """
 
 from enum import Enum, IntEnum
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -45,6 +46,11 @@ class StreamTypeEnum(str, Enum):
     UDP = "UDP"
 
     RECORDING = "RECORDING"
+
+
+# Fraction of the recorded resolution a synchronized recording is streamed at
+# (1 = full size, 2 = half, ...)
+StreamScale = Literal[1, 2, 4, 8]
 
 
 class H264Mode(IntEnum):
@@ -161,6 +167,7 @@ class StreamModel(BaseModel):
     height: int
     interval: IntervalModel
     enabled: bool
+    stream_scale: StreamScale = 1
 
     class Config:
         from_attributes = True
@@ -230,6 +237,7 @@ class StreamInfoModel(BaseModel):
     encode_type: StreamEncodeTypeEnum
     enabled: bool
     endpoints: list[StreamEndpointModel]
+    stream_scale: StreamScale = 1
 
     class Config:
         from_attributes = True

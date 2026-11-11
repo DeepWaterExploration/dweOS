@@ -26,6 +26,8 @@ class Stream:
         default_factory=lambda: IntervalModel(numerator=1, denominator=30)
     )
     enabled: bool = False
+    # Synchronized recordings stream at 1/stream_scale of the recorded resolution
+    stream_scale: int = 1
 
     # Configuration specific
     software_h264_bitrate: int = 5000

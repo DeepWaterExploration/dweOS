@@ -42,5 +42,6 @@ export function getStreamFromStreamInfo(
     width: streamInfo.stream_format.width,
     height: streamInfo.stream_format.height,
     interval: streamInfo.stream_format.interval,
+    stream_scale: streamInfo.stream_scale,
   };
 }

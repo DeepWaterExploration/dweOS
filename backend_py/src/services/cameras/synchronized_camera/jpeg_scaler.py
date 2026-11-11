@@ -47,7 +47,7 @@ class TurboJpegScaler(JpegScaler):
     which keeps the cost low enough for the CPU
     """
 
-    name = "libjpeg-turbo"
+    name = "libjpeg-turbo (software)"
 
     def __init__(self, quality: int = JPEG_QUALITY) -> None:
         # Imported here so a missing libturbojpeg only disables scaling
@@ -105,7 +105,7 @@ class GStreamerJpegScaler(JpegScaler):
             raw_caps="video/x-raw(memory:NVMM)",
             quality=quality,
         )
-        scaler.name = "Jetson nvjpeg"
+        scaler.name = "Jetson nvjpeg (hardware)"
         return scaler
 
     @staticmethod
@@ -290,13 +290,14 @@ class AutoJpegScaler(JpegScaler):
         while self._candidates:
             scaler = self._candidates.pop(0)()
             if scaler is not None:
-                logger.info("Scaling streamed frames with %s", scaler.name)
+                logger.info("Scaling streamed frames with JPEG codec: %s", scaler.name)
                 self._active = scaler
                 return
         logger.error("No JPEG scaler is available, so frames are streamed full size")
 
     def _create_jetson(self) -> JpegScaler | None:
         if not GStreamerJpegScaler.has_elements("nvjpegdec", "nvvidconv", "nvjpegenc"):
+            logger.info("No hardware JPEG codec found, falling back to software")
             return None
         return GStreamerJpegScaler.jetson(self._quality)
 

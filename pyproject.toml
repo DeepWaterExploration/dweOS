@@ -1,3 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "dweos"
+version = "0.9.0"
+description = "dweOS driver interface"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "linuxpy==0.13.0", "natsort==8.4.0", "PyEventEmitter==1.0.5",
+  "fastapi", "pydantic", "python-socketio", "uvicorn",
+  "sdbus==0.14.0", "sdbus-networkmanager==2.0.0", "pyserial", "colorlog==6.10.1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["backend_py"]
+
 [tool.ruff]
 line-length = 88
 indent-width = 4

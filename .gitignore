@@ -321,6 +321,8 @@ release
 release.tar.gz
 **/device_settings.json
 **/server_preferences.json
+**/device_settings.json.tmp
+**/server_preferences.json.tmp
 .env
 pi-gen
 /recordings/

@@ -13,6 +13,7 @@ find . -type d -name ".pytest_cache" -exec rm -rf {} +
 # Remove the device_settings.json file if it exists
 rm -f device_settings.json || true
 rm -f server_preferences.json || true
+rm -f device_settings.json.tmp server_preferences.json.tmp || true
 
 find . -type f -name "*.log.*" -exec rm {} +
 find . -type f -name "*.log" -exec rm {} +

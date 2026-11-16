@@ -10,7 +10,6 @@ Both need root (or kernel.dmesg_restrict=0).
 import asyncio
 import logging
 import os
-import time
 from collections import deque
 
 from pydantic import BaseModel

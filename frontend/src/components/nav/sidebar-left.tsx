@@ -61,6 +61,10 @@ const data = {
       title: "Logs",
       url: "/log-viewer",
       icon: LogsIcon,
+      items: [
+        { title: "Application", url: "/log-viewer" },
+        { title: "Kernel", url: "/log-viewer/kernel" },
+      ],
     },
     {
       title: "Terminal",

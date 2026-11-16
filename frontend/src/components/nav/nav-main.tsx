@@ -8,6 +8,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import { Link, useLocation } from "react-router-dom";
 
@@ -19,6 +22,7 @@ export function NavMain({
     url: string;
     icon: LucideIcon;
     isActive?: boolean;
+    items?: { title: string; url: string }[];
   }[];
 }) {
   const location = useLocation();
@@ -38,6 +42,22 @@ export function NavMain({
                   <span>{item.title}</span>
                 </Link>
               </SidebarMenuButton>
+              {item.items && (
+                <SidebarMenuSub>
+                  {item.items.map((sub) => (
+                    <SidebarMenuSubItem key={sub.title}>
+                      <SidebarMenuSubButton
+                        asChild
+                        isActive={sub.url == location.pathname}
+                      >
+                        <Link to={sub.url}>
+                          <span>{sub.title}</span>
+                        </Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  ))}
+                </SidebarMenuSub>
+              )}
             </SidebarMenuItem>
           ))}
         </SidebarMenu>

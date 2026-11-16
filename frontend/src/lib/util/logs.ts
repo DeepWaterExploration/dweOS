@@ -107,3 +107,16 @@ export async function copyText(text: string): Promise<boolean> {
     document.body.removeChild(textarea);
   }
 }
+
+type KernelLog = components["schemas"]["KernelLogEntry"];
+
+/** Like dmesg: "[    5.140900] message" */
+export function formatKernelLog(log: KernelLog): string {
+  return `[${log.timestamp.toFixed(6).padStart(12)}] ${log.message}`;
+}
+
+export function kernelLogsToText(logs: KernelLog[]): string {
+  return logs
+    .map((log) => `${log.level.padEnd(7)} ${formatKernelLog(log)}\n`)
+    .join("");
+}

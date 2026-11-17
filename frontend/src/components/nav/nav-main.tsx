@@ -35,7 +35,8 @@ export function NavMain({
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
                 asChild
-                isActive={item.url == location.pathname}
+                // With sub-items, only the matching sub-item is highlighted
+                isActive={!item.items && item.url == location.pathname}
               >
                 <Link to={item.url}>
                   <item.icon />

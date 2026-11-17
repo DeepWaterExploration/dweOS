@@ -1,4 +1,5 @@
 from .cameras import camera_router
+from .kernel_logs import kernel_logs_router
 from .logs import logs_router
 from .network import network_router
 from .preferences import preferences_router
@@ -10,6 +11,7 @@ from .updater import updater_router
 __all__ = [
     "camera_router",
     "logs_router",
+    "kernel_logs_router",
     "preferences_router",
     "system_router",
     "recordings_router",

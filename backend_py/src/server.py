@@ -19,6 +19,7 @@ from .logging import LogHandler
 from .models import SavedPreferencesModel
 from .routes import (
     camera_router,
+    kernel_logs_router,
     logs_router,
     network_router,
     preferences_router,
@@ -29,6 +30,7 @@ from .routes import (
 )
 from .schemas import FeatureSupport
 from .services.cameras import DeviceManager, SerialPWMController
+from .services.kernel_logs import KernelLogService
 from .services.network import NetworkWrapper
 from .services.preferences import PreferencesManager, SettingsManager
 from .services.recordings import RecordingsService
@@ -141,6 +143,7 @@ class Server:
             self.network_wrapper = NetworkWrapper(sio)
 
         self.system_manager = SystemManager()
+        self.kernel_log_service = KernelLogService(self.sio)
 
         self.recordings_service = RecordingsService(self.data_dir)
 
@@ -158,6 +161,7 @@ class Server:
         # FAST API
         self.app.state.device_manager = self.device_manager
         self.app.state.log_handler = self.log_handler
+        self.app.state.kernel_log_service = self.kernel_log_service
         self.app.state.settings_manager = self.settings_manager
         self.app.state.preferences_manager = self.preferences_manager
         self.app.state.system_manager = self.system_manager
@@ -176,6 +180,7 @@ class Server:
         self.app.include_router(camera_router, prefix="/api/devices")
         self.app.include_router(preferences_router, prefix="/api/preferences")
         self.app.include_router(system_router, prefix="/api/system")
+        self.app.include_router(kernel_logs_router, prefix="/api/logs/kernel")
         self.app.include_router(logs_router, prefix="/api/logs")
         self.app.include_router(recordings_router, prefix="/api/recordings")
 
@@ -222,6 +227,7 @@ class Server:
         if self.feature_support.serial:
             self.serial.start()
 
+        self.kernel_log_service.start()
         self.device_manager.start_monitoring()
         self.recordings_service.start()
 
@@ -240,6 +246,7 @@ class Server:
     def shutdown(self) -> None:
         self.server_logger.info("Shutting down")
 
+        self.kernel_log_service.stop()
         self.device_manager.stop_monitoring()
         self.recordings_service.stop()
         self.settings_manager.cleanup()

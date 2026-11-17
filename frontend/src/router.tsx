@@ -5,6 +5,7 @@ import DeviceListLayout from "./components/dwe/cameras/device-list";
 import PreferencesLayout from "./components/dwe/preferences/preferences";
 import NetworkLayout from "./components/dwe/network/network";
 import { LogViewer } from "./components/dwe/log-page/log-viewer";
+import { KernelLogViewer } from "./components/dwe/log-page/kernel-log-viewer";
 import Terminal from "./components/dwe/terminal/terminal";
 import Recordings from "./components/dwe/recordings/recordings";
 import Updater from "./components/dwe/updater/updater";
@@ -19,6 +20,7 @@ export const router = createBrowserRouter([
       { path: "/network", element: <NetworkLayout /> },
       { path: "/preferences", element: <PreferencesLayout /> },
       { path: "/log-viewer", element: <LogViewer /> },
+      { path: "/log-viewer/kernel", element: <KernelLogViewer /> },
       { path: "/terminal", element: <Terminal /> },
       { path: "/recordings", element: <Recordings /> },
       { path: "/updater", element: <Updater /> },

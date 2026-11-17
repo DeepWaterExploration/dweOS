@@ -276,6 +276,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/logs/kernel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the buffered kernel logs */
+        get: operations["get_kernel_logs_api_logs_kernel_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/logs": {
         parameters: {
             query?: never;
@@ -858,6 +875,26 @@ export interface components {
             numerator: number;
             /** Denominator */
             denominator: number;
+        };
+        /** KernelLogEntry */
+        KernelLogEntry: {
+            /** Sequence */
+            sequence: number;
+            /** Timestamp */
+            timestamp: number;
+            /** Level */
+            level: string;
+            /** Facility */
+            facility: number;
+            /** Message */
+            message: string;
+        };
+        /** KernelLogsModel */
+        KernelLogsModel: {
+            /** Available */
+            available: boolean;
+            /** Logs */
+            logs: components["schemas"]["KernelLogEntry"][];
         };
         /** LogSchema */
         LogSchema: {
@@ -1514,6 +1551,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SimpleRequestStatusModel"];
+                };
+            };
+        };
+    };
+    get_kernel_logs_api_logs_kernel_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KernelLogsModel"];
                 };
             };
         };

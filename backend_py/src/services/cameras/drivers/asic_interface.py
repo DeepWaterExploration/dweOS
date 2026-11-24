@@ -5,6 +5,7 @@ Defines low level read/write functions to interact with the SHD ASIC and
 sensor registers.
 """
 
+import ctypes
 import logging
 import struct
 import threading
@@ -29,6 +30,22 @@ class DeviceFamily(Enum):
 
 
 CHIP_ID_DEVICE_MAP = {0x86: DeviceFamily.STELLARHD, 0x92: DeviceFamily.EXPLOREHD}
+
+# Firmware sensor I2C command (XU unit 3, selector 2). Fixed 64-byte payload:
+#   [0]  slave id (8-bit write address)
+#   [1]  register address byte count (1 or 2)
+#   [2]  address bytes + data bytes (in a read reply: data bytes read, 0 = NACK)
+#   [3:] register address big-endian, then write data (read reply: the data)
+#   [63] 0x00 = write, 0xFF = read
+# A read is a SET_CUR of the request followed by a GET_CUR of the reply.
+SENSOR_I2C_LEN = 64
+SENSOR_I2C_HEADER = 3
+SENSOR_I2C_FLAG = 63
+SENSOR_I2C_READ = 0xFF
+SENSOR_I2C_WRITE = 0x00
+SENSOR_ADDR_BYTES = 2
+SENSOR_I2C_MAX_DATA = SENSOR_I2C_FLAG - SENSOR_I2C_HEADER - SENSOR_ADDR_BYTES
+DEFAULT_SENSOR_SLAVE_ID = 0x60
 
 
 class ASICInterface:
@@ -61,6 +78,17 @@ class ASICInterface:
             self.logger.error("Unable to read chip ID, device may be faulty")
         else:
             self.device_family = CHIP_ID_DEVICE_MAP.get(self.chip_id)
+
+        self.sensor_slave_id = DEFAULT_SENSOR_SLAVE_ID
+        if self.device_family == DeviceFamily.STELLARHD:
+            ret, slave_id = self.asic_read(StellarRegisterMap.REG_SENSOR_SLAVE_ID)
+            if ret == 0 and slave_id not in (0x00, 0xFF):
+                self.sensor_slave_id = slave_id
+            else:
+                self.logger.warning(
+                    "Unable to read sensor slave id, defaulting to 0x%02X",
+                    DEFAULT_SENSOR_SLAVE_ID,
+                )
 
     def stop(self) -> None:
         self.logger.info("Stopping asic interface")
@@ -104,8 +132,27 @@ class ASICInterface:
             [addr_high, addr_low, value],
         )
 
+    def set_auto_exposure(self, key: str, enabled: bool) -> None:
+        self.queue_command(key, self.sync_set_auto_exposure, [enabled])
+
+    def sync_set_auto_exposure(self, enabled: bool) -> int:
+        """
+        Toggle firmware auto exposure. Read-modify-write so only the enable
+        bit of the AE control register changes.
+        """
+        with self._lock:
+            ret, val = self.asic_read(StellarRegisterMap.REG_AE)
+            if ret != 0:
+                return ret
+            val = (val | 0x01) if enabled else (val & ~0x01)
+            return self.sync_asic_write(StellarRegisterMap.REG_AE, val & 0xFF)
+
+    def get_auto_exposure(self) -> bool | None:
+        ret, val = self.asic_read(StellarRegisterMap.REG_AE)
+        return bool(val & 0x01) if ret == 0 else None
+
     def sensor_write(self, key: str, addr: int, data: int) -> None:
-        self.queue_command(key, self.sync_sensor_write, [addr, data])
+        self.queue_command(key, self.sync_sensor_write, [addr, bytes([data & 0xFF])])
 
     def _get_chip_id(self) -> int | None:
         known_first = {0x92}
@@ -237,12 +284,11 @@ class ASICInterface:
         addr_high: int,
         addr_low: int,
         value: int,
-        write_delay_s: float | None = None,
     ) -> None:
         self.queue_command(
             key,
             self.sync_sensor_write_high_low,
-            [addr_high, addr_low, value, write_delay_s],
+            [addr_high, addr_low, value],
         )
 
     def sync_asic_write(self, addr: int, data: int, dummy: bool = False) -> int:
@@ -320,89 +366,124 @@ class ASICInterface:
             return None
         return val_high << 8 | val_low
 
-    def sync_sensor_write(self, reg: int, val: int) -> int:
+    def _sensor_i2c_request(
+        self, reg: int, data: bytes | None = None, read_len: int = 0
+    ) -> bytes:
         """
-        Write a value to a sensor register.
+        Build a firmware sensor I2C request. Pass `data` for a write or
+        `read_len` for a read.
         """
+        n = read_len if data is None else len(data)
+        if not 0 < n <= SENSOR_I2C_MAX_DATA:
+            raise ValueError(f"Invalid sensor I2C data length: {n}")
+
+        buf = bytearray(SENSOR_I2C_LEN)
+        buf[0] = self.sensor_slave_id
+        buf[1] = SENSOR_ADDR_BYTES
+        buf[2] = SENSOR_ADDR_BYTES + n
+        buf[3] = (reg >> 8) & 0xFF
+        buf[4] = reg & 0xFF
+        if data is not None:
+            start = SENSOR_I2C_HEADER + SENSOR_ADDR_BYTES
+            buf[start : start + n] = data
+            buf[SENSOR_I2C_FLAG] = SENSOR_I2C_WRITE
+        else:
+            buf[SENSOR_I2C_FLAG] = SENSOR_I2C_READ
+        return bytes(buf)
+
+    def sync_sensor_write(self, reg: int, data: bytes) -> int:
+        """
+        Write consecutive bytes to sensor registers starting at `reg` through
+        the firmware I2C command.
+
+        Returns 0 on success (ioctl style).
+        """
+        request = self._sensor_i2c_request(reg, data=data)
 
         with self._lock:
-            high = (reg >> 8) & 0xFF
-            low = reg & 0xFF
+            if self._is_disabled:
+                return 1
 
-            ret = 0
+            return self.camera.uvc_set_ctrl(
+                Unit.SYS_ID.value,
+                Selector.SYS_SENSOR_I2C.value,
+                request,
+                SENSOR_I2C_LEN,
+            )
 
-            # Set address high
-            ret |= self.sync_asic_write(StellarRegisterMap.REG_ADDR_H, high)
-            # Set address low
-            ret |= self.sync_asic_write(StellarRegisterMap.REG_ADDR_L, low)
-            # Set data
-            ret |= self.sync_asic_write(StellarRegisterMap.REG_DATA, val)
-            # Set mode to write ('W' = 0x57)
-            ret |= self.sync_asic_write(StellarRegisterMap.REG_MODE, 0x57)
-            # Trigger the command (0x55)
-            ret |= self.sync_asic_write(StellarRegisterMap.REG_TRIG, 0x55)
-
-            return ret
-
-    def sensor_read(self, reg: int) -> tuple[int, int]:
+    def sensor_read(self, reg: int, length: int = 1) -> tuple[int, bytes]:
         """
-        Read a value from the sensor.
+        Read `length` consecutive bytes from sensor registers starting at `reg`
+        through the firmware I2C command.
 
-        Returns 0 on success, along with the value read. (ioctl style)
-        On failure, returns a non-zero error code and -1 as the value.
+        Returns 0 on success, along with the bytes read. (ioctl style)
+        On failure, returns a non-zero error code and empty bytes.
         """
-        high = (reg >> 8) & 0xFF
-        low = reg & 0xFF
+        request = self._sensor_i2c_request(reg, read_len=length)
 
-        ret = 0
+        with self._lock:
+            if self._is_disabled:
+                return (1, b"")
 
-        # Set address high
-        ret |= self.sync_asic_write(StellarRegisterMap.REG_ADDR_H, high)
-        # Set address low
-        ret |= self.sync_asic_write(StellarRegisterMap.REG_ADDR_L, low)
-        # Set mode to write ('R' = 0x52)
-        ret |= self.sync_asic_write(StellarRegisterMap.REG_MODE, 0x52)
-        # Trigger the command (0x55)
-        ret |= self.sync_asic_write(StellarRegisterMap.REG_TRIG, 0x55)
+            ret = self.camera.uvc_set_ctrl(
+                Unit.SYS_ID.value,
+                Selector.SYS_SENSOR_I2C.value,
+                request,
+                SENSOR_I2C_LEN,
+            )
+            if ret != 0:
+                return (ret, b"")
 
-        if ret != 0:
-            return ret, -1
+            reply = ctypes.create_string_buffer(SENSOR_I2C_LEN)
+            ret = self.camera.uvc_get_ctrl(
+                Unit.SYS_ID.value,
+                Selector.SYS_SENSOR_I2C.value,
+                reply,
+                SENSOR_I2C_LEN,
+            )
+            if ret != 0:
+                return (ret, b"")
 
-        ret, val = self.asic_read(StellarRegisterMap.REG_DATA)
+        raw = reply.raw
+        # A wrong slave id / absent sensor comes back as a 0 byte count
+        if raw[2] != length:
+            self.logger.warning(
+                "Sensor did not respond reading 0x%04X (slave 0x%02X)",
+                reg,
+                self.sensor_slave_id,
+            )
+            return (1, b"")
 
-        return ret, val
-
-    def _wait_sensor_ready(self, timeout_s: float = 5) -> bool:
-        deadline = time.monotonic() + timeout_s
-        while self._is_worker_running and time.monotonic() < deadline:
-            ret, val = self.asic_read(StellarRegisterMap.REG_TRIG)
-            if ret == 0 and val == 0xAA:
-                return True
-            time.sleep(0.1)
-        return False
+        return (0, raw[SENSOR_I2C_HEADER : SENSOR_I2C_HEADER + length])
 
     def sync_sensor_write_high_low(
-        self, reg_high: int, reg_low: int, value: int, write_delay_s=0.05
-    ) -> None:
+        self, reg_high: int, reg_low: int, value: int
+    ) -> int:
         """
         Write high byte from value to high register, low byte to low
         """
-        self.sync_sensor_write(reg_high, (value >> 8) & 0xFF)
-        # This is extremely scuffed: switch to waiting for
-        # trigger register before release (See below)
-        # time.sleep(write_delay_s)
-        self._wait_sensor_ready()
+        high = (value >> 8) & 0xFF
+        low = value & 0xFF
 
-        # Maybe: add check for success (0xAA in REG_TRIG)
-        # REG_TRIG actually seems to not work properly, so maybe
-        # we find another alternative
-        self.sync_sensor_write(reg_low, value & 0xFF)
-        self._wait_sensor_ready()
+        # Adjacent registers go in one transaction so the sensor never latches
+        # a half-written value
+        if reg_low == reg_high + 1:
+            return self.sync_sensor_write(reg_high, bytes([high, low]))
 
-    def sensor_read_high_low(self, reg_high, reg_low) -> int | None:
+        ret = self.sync_sensor_write(reg_high, bytes([high]))
+        ret |= self.sync_sensor_write(reg_low, bytes([low]))
+        return ret
+
+    def sensor_read_high_low(self, reg_high: int, reg_low: int) -> int | None:
         """
         Read high byte from high register to value, low byte to low
         """
+        if reg_low == reg_high + 1:
+            ret, data = self.sensor_read(reg_high, 2)
+            if ret != 0:
+                return None
+            return (data[0] << 8) | data[1]
+
         ret, high = self.sensor_read(reg_high)
         if ret != 0:
             return None
@@ -410,4 +491,4 @@ class ASICInterface:
         if ret != 0:
             return None
 
-        return (high << 8) | (low & 0xFF)
+        return (high[0] << 8) | low[0]

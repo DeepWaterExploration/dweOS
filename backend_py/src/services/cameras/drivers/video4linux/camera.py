@@ -1,3 +1,4 @@
+import ctypes
 import fcntl
 
 from backend_py.src.models import FormatSizeModel, IntervalModel, StreamFormatModel
@@ -26,7 +27,11 @@ class Camera:
         return camera_helper.uvc_set_ctrl(self._fd, unit, ctrl, data, size)
 
     # uvc_get_ctrl function defined in uvc_functions.c
-    def uvc_get_ctrl(self, unit: int, ctrl: int, data: bytes, size: int) -> int:
+    # `data` receives the result, so pass a writable buffer
+    # (e.g. ctypes.create_string_buffer)
+    def uvc_get_ctrl(
+        self, unit: int, ctrl: int, data: bytes | ctypes.Array[ctypes.c_char], size: int
+    ) -> int:
         return camera_helper.uvc_get_ctrl(self._fd, unit, ctrl, data, size)
 
     def has_format(self, pixformat: str) -> bool:

@@ -69,12 +69,10 @@ class AutoExposureOption(ASICOption):
         )
 
     def _write(self, value: int | float | bool) -> None:
-        self._interface.asic_write(self.name, StellarRegisterMap.REG_AE, int(value))
+        self._interface.set_auto_exposure(self.name, bool(value))
 
     def _read(self) -> bool | None:
-        ae, ret = self._interface.asic_read(StellarRegisterMap.REG_AE)
-
-        return bool(ae) if ret == 0 else None
+        return self._interface.get_auto_exposure()
 
 
 class ASICHighLowOption(ASICOption):
@@ -160,15 +158,12 @@ class SensorHighLowOption(ASICOption):
         asic_interface: ASICInterface,
         high_register: int,
         low_register: int,
-        # FIXME: check write delay
-        write_delay_s: float = 0.6,
         **kwargs,
     ) -> None:
         super().__init__(name, control_flags, asic_interface, **kwargs)
 
         self.high_register = high_register
         self.low_register = low_register
-        self.write_delay_s = write_delay_s
 
     def _write(self, value: int | float | bool) -> None:
         self._interface.sensor_write_high_low(
@@ -176,7 +171,6 @@ class SensorHighLowOption(ASICOption):
             self.high_register,
             self.low_register,
             int(value),
-            self.write_delay_s,
         )
 
     def _read(self) -> int | float | bool | None:
@@ -199,7 +193,6 @@ class ShutterSpeedOption(SensorHighLowOption):
             asic_interface,
             StellarSensorMap.SHUTTER_HIGH,
             StellarSensorMap.SHUTTER_LOW,
-            write_delay_s=0.6,
             **kwargs,
         )
 

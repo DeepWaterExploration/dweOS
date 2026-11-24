@@ -138,14 +138,21 @@ class ASICInterface:
     def sync_set_auto_exposure(self, enabled: bool) -> int:
         """
         Toggle firmware auto exposure. Read-modify-write so only the enable
-        bit of the AE control register changes.
+        bit of the AE control register changes. Also sets the legacy AE
+        register, which firmware with the older workaround requires.
         """
         with self._lock:
+            legacy_ret = self.sync_asic_write(
+                StellarRegisterMap.REG_AE_LEGACY, 1 if enabled else 0
+            )
+
             ret, val = self.asic_read(StellarRegisterMap.REG_AE)
             if ret != 0:
                 return ret
             val = (val | 0x01) if enabled else (val & ~0x01)
-            return self.sync_asic_write(StellarRegisterMap.REG_AE, val & 0xFF)
+            return legacy_ret | self.sync_asic_write(
+                StellarRegisterMap.REG_AE, val & 0xFF
+            )
 
     def get_auto_exposure(self) -> bool | None:
         ret, val = self.asic_read(StellarRegisterMap.REG_AE)

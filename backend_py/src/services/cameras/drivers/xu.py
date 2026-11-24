@@ -64,6 +64,9 @@ class StellarRegisterMap:
 
     # Firmware auto exposure control. Bit 0 = AE enabled (0x61 on / 0x60 off)
     REG_AE = 0x8100
+    # Auto exposure switch from an older firmware workaround (1 = on, 0 = off).
+    # Firmware with the workaround also needs this set for AE to change
+    REG_AE_LEGACY = 0x1673
     # Sensor I2C slave id (8-bit write address) as reported by the firmware
     REG_SENSOR_SLAVE_ID = 0x8601
     REG_HW_BITRATE_HIGH = 0x2D6

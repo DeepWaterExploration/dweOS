@@ -27,6 +27,7 @@ class Selector(Enum):
     """
 
     SYS_ASIC_RW = 0x01
+    SYS_SENSOR_I2C = 0x02
     SYS_FLASH_CTRL = 0x03
     SYS_FRAME_INFO = 0x06
     SYS_H264_CTRL = 0x07
@@ -61,13 +62,13 @@ class StellarRegisterMap:
     which can be accessed through the SYS_ASIC_RW selector
     """
 
-    REG_AE = 0x1673
-    REG_ADDR_H = 0x1674
-    REG_ADDR_L = 0x1675
-    REG_DATA = 0x1676
-    REG_MODE = 0x1677
-    REG_TRIG = 0x1678
-    REG_STROBE_ENABLED = 0x8100
+    # Firmware auto exposure control. Bit 0 = AE enabled (0x61 on / 0x60 off)
+    REG_AE = 0x8100
+    # Auto exposure switch from an older firmware workaround (1 = on, 0 = off).
+    # Firmware with the workaround also needs this set for AE to change
+    REG_AE_LEGACY = 0x1673
+    # Sensor I2C slave id (8-bit write address) as reported by the firmware
+    REG_SENSOR_SLAVE_ID = 0x8601
     REG_HW_BITRATE_HIGH = 0x2D6
     REG_HW_BITRATE_LOW = 0x2D7
     REG_HW_BITRATE_TRIG = 0x2DB
@@ -75,7 +76,8 @@ class StellarRegisterMap:
 
 class StellarSensorMap:
     """
-    Map of sensor registers for stellar devices, which can be accessed through the ASIC
+    Map of sensor registers for stellar devices, which can be accessed through the
+    firmware I2C command (SYS_SENSOR_I2C selector)
     """
 
     SHUTTER_HIGH = 0x3501

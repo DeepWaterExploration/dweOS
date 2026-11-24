@@ -9,6 +9,7 @@ and manages background sync of settings
 import json
 import logging
 import threading
+import time
 from typing import cast
 
 import pydantic
@@ -20,6 +21,10 @@ from backend_py.src.models import (
 from ..cameras.device_utils import find_device_with_bus_info
 from ..cameras.drivers.device import Device
 from ..cameras.drivers.shd import SHDDevice
+
+# Saves are written at most this often, so bursts of changes (e.g. dragging a
+# control slider) collapse into one file write
+SAVE_INTERVAL_S = 1.0
 
 
 class SettingsManager:
@@ -55,9 +60,53 @@ class SettingsManager:
             self.settings = []
             self.file_object.flush()
 
+        # Background writer: only this thread writes the file after __init__
+        self._save_cond = threading.Condition()
+        self._save_pending = False
+        self._is_running = True
+        self._save_thread = threading.Thread(
+            target=self._save_worker, name="SettingsManagerSave", daemon=True
+        )
+        self._save_thread.start()
+
     def cleanup(self) -> None:
+        # Stop the writer, letting it flush any pending save first
+        with self._save_cond:
+            self._is_running = False
+            self._save_cond.notify()
+        self._save_thread.join()
+
         if self.file_object:
             self.file_object.close()
+
+    def _schedule_save(self) -> None:
+        with self._save_cond:
+            self._save_pending = True
+            self._save_cond.notify()
+
+    def _save_worker(self) -> None:
+        while True:
+            with self._save_cond:
+                while not self._save_pending and self._is_running:
+                    self._save_cond.wait()
+                if not self._save_pending:
+                    return
+
+                # Collect further changes until the interval passes; cleanup()
+                # cuts the wait short
+                deadline = time.monotonic() + SAVE_INTERVAL_S
+                while self._is_running:
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        break
+                    self._save_cond.wait(remaining)
+
+                self._save_pending = False
+
+            try:
+                self._write_settings()
+            except Exception:
+                self.logger.exception("Failed to write device settings")
 
     def _load_device(
         self, device: Device, saved_device: SavedDeviceModel, devices: dict[str, Device]
@@ -139,19 +188,20 @@ class SettingsManager:
 
                 saved_device.followers = new_followers
 
-                self._update_settings()
+                self._schedule_save()
 
             # Either all of its followers are found, or it doesn't have any
             if device_should_start and device.stream.enabled:
                 device.start_stream()
 
-    def _update_settings(self) -> None:
+    def _write_settings(self) -> None:
+        with self._lock:
+            # FIXME: remove indent when we are done testing settings
+            # (switch to dev mode only)
+            data = json.dumps([model.model_dump() for model in self.settings], indent=4)
+
         self.file_object.seek(0)
-        # FIXME: remove indent when we are done testing settings
-        # (switch to dev mode only)
-        self.file_object.write(
-            json.dumps([model.model_dump() for model in self.settings], indent=4)
-        )
+        self.file_object.write(data)
         self.file_object.truncate()
         self.file_object.flush()
 
@@ -165,7 +215,8 @@ class SettingsManager:
                     self.settings.remove(dev)
                     break
             self.settings.append(saved_device)
-            self._update_settings()
+
+        self._schedule_save()
 
     def save_device(self, device: Device) -> None:
         saved_device = SavedDeviceModel.model_validate(device)

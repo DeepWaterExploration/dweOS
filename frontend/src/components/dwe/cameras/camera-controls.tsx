@@ -90,17 +90,21 @@ export const CameraControls = ({
     [controls, device],
   );
 
-  const InternalControlWrapper = ({
-    control,
-    disabled,
-  }: {
-    control: UIControlModel;
-    disabled: boolean;
-  }) => (
+  // Rendered directly rather than through a component defined in this
+  // function: a new component type on every render would remount the controls
+  // and break a slider drag whenever the store updates mid-drag
+  const renderControl = (control: UIControlModel) => (
     <ControlWrapper
       key={control.control_id}
       control={control}
-      disabled={control.uiFlags.disabled || isResetting || disabled}
+      // NOTE: External management behavior is changed after v0.7.3 to account for SDK v1.2.0 changes
+      // This means versions AFTER v0.7.3 will no longer work as intended with SDK versions before v1.2.0
+      disabled={
+        control.uiFlags.disabled ||
+        isResetting ||
+        device.is_managed ||
+        device.is_externally_managed
+      }
       setValue={(value) => {
         setUVCControl(bus_id, control.control_id, value);
       }}
@@ -139,16 +143,7 @@ export const CameraControls = ({
             <AccordionContent>
               <div className="grid gap-4 mt-1">
                 {controlNames.map(
-                  (name) =>
-                    uiControls[name] && (
-                      <InternalControlWrapper
-                        key={uiControls[name].control_id}
-                        control={uiControls[name]}
-                        // NOTE: External management behavior is changed after v0.7.3 to account for SDK v1.2.0 changes
-                        // This means versions AFTER v0.7.3 will no longer work as intended with SDK versions before v1.2.0
-                        disabled={device.is_managed || device.is_externally_managed}
-                      />
-                    ),
+                  (name) => uiControls[name] && renderControl(uiControls[name]),
                 )}
               </div>
             </AccordionContent>

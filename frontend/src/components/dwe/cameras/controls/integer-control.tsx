@@ -8,6 +8,9 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { CirclePlus, CircleMinus } from "lucide-react";
 
+// How often a slider drag sends its value to the camera
+const DRAG_UPDATE_INTERVAL_MS = 50;
+
 const IntegerControl = ({
   control,
   setValue = undefined,
@@ -32,12 +35,6 @@ const IntegerControl = ({
     controlValue.toFixed(precision).toString(),
   );
 
-  useEffect(() => {
-    const nextValue = control.value as number;
-    setCurrentValue(nextValue);
-    setInputValue(nextValue.toFixed(precision).toString());
-  }, [control.value, precision]);
-
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -46,6 +43,27 @@ const IntegerControl = ({
     startValue: number;
     containerWidth: number;
   } | null>(null);
+
+  // Live updates sent during a drag: when the last one went out, and the
+  // trailing timer that sends the newest value once the interval passes
+  const lastSentAt = useRef(0);
+  const pendingSend = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    // Responses to live updates arrive while dragging; don't let them pull
+    // the slider back to an older value
+    if (dragState.current) return;
+    const nextValue = control.value as number;
+    setCurrentValue(nextValue);
+    setInputValue(nextValue.toFixed(precision).toString());
+  }, [control.value, precision]);
+
+  useEffect(
+    () => () => {
+      if (pendingSend.current) clearTimeout(pendingSend.current);
+    },
+    [],
+  );
 
   const clamp = useCallback(
     (val: number): number => {
@@ -77,6 +95,32 @@ const IntegerControl = ({
     [clamp, snapToStep, precision, setValue],
   );
 
+  const cancelPendingSend = () => {
+    if (pendingSend.current) {
+      clearTimeout(pendingSend.current);
+      pendingSend.current = null;
+    }
+  };
+
+  // Throttled send while dragging (leading + trailing edge)
+  const sendWhileDragging = (value: number) => {
+    if (!setValue) return;
+    const snapped = snapToStep(clamp(value));
+
+    cancelPendingSend();
+    const wait = DRAG_UPDATE_INTERVAL_MS - (Date.now() - lastSentAt.current);
+    if (wait <= 0) {
+      lastSentAt.current = Date.now();
+      setValue(snapped);
+    } else {
+      pendingSend.current = setTimeout(() => {
+        pendingSend.current = null;
+        lastSentAt.current = Date.now();
+        setValue(snapped);
+      }, wait);
+    }
+  };
+
   const handlePointerDown = (e: React.PointerEvent) => {
     e.preventDefault();
 
@@ -105,6 +149,7 @@ const IntegerControl = ({
 
     setCurrentValue(newValue);
     setInputValue(newValue.toFixed(precision).toString());
+    sendWhileDragging(newValue);
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
@@ -113,6 +158,7 @@ const IntegerControl = ({
     (e.target as HTMLElement).releasePointerCapture(e.pointerId);
     dragState.current = null;
 
+    cancelPendingSend();
     commitValue(currentValue);
   };
 
@@ -157,9 +203,7 @@ const IntegerControl = ({
       return;
     }
 
-    const newValue = inputRef.current.value;
-    setInputValue(newValue);
-    setCurrentValue(parseFloat(newValue));
+    commitValue(parseFloat(inputRef.current.value));
 
     inputRef.current.focus();
   };

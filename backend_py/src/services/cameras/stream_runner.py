@@ -62,6 +62,7 @@ class StreamRunner(events.EventEmitter):
             self.engine: BaseStreamEngine = self._select_engine()
 
             self.engine.on("frame_drop", lambda: self.emit("frame_drop"))
+            self.engine.on("frames", lambda frames: self.emit("frames", frames))
 
             self.started = True
             # We don't need to catch exceptions, maybe remove later

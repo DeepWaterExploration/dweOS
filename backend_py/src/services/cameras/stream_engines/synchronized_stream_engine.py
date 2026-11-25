@@ -188,7 +188,8 @@ class SynchronizedStreamEngine(BaseStreamEngine):
         if self.record_thread:
             self.record_thread.join()
 
-        self.exit_event.set()
+        if self.exit_event:
+            self.exit_event.set()
         if self.monitor_thread:
             self.monitor_thread.join()
 
@@ -211,6 +212,9 @@ class SynchronizedStreamEngine(BaseStreamEngine):
             if frames is None:
                 time.sleep(1 / self.streams[0].interval.denominator)
                 continue
+
+            # Listeners must return quickly, they run on the capture thread
+            self.emit("frames", frames)
 
             pair = (frames[0], frames[1])
             if self.is_recording:

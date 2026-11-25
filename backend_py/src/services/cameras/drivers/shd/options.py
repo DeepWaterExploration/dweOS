@@ -52,6 +52,67 @@ class ASICOption(BaseOption):
     def get_value(self) -> int | float | bool:
         return self._cached
 
+    def cache_value(self, value: int) -> None:
+        """
+        Record a value that was written to the device by other means
+        """
+        self._cached = value
+
+
+class SoftwareOption(BaseOption):
+    """
+    Option handled in the backend instead of on the device
+    """
+
+    def __init__(
+        self,
+        name: str,
+        control_flags: ControlFlagsModel,
+        callback: Callable[[int | float | bool], None],
+    ) -> None:
+        super().__init__(name, control_flags)
+        self._cached = control_flags.default_value
+        self._callback = callback
+
+    def set_value(self, value: int | float | bool) -> None:
+        self._cached = int(value)
+        self._callback(self._cached)
+
+    def get_value(self) -> int | float | bool:
+        return self._cached
+
+
+class SoftwareAutoExposureOption(SoftwareOption):
+    def __init__(self, callback: Callable[[int | float | bool], None]) -> None:
+        super().__init__(
+            "Auto Exposure (Software)",
+            ControlFlagsModel(
+                default_value=False,
+                max_value=1,
+                min_value=0,
+                step=1,
+                control_type=ControlTypeEnum.BOOLEAN,
+            ),
+            callback,
+        )
+
+
+class AETargetOption(SoftwareOption):
+    def __init__(
+        self, default: int, callback: Callable[[int | float | bool], None]
+    ) -> None:
+        super().__init__(
+            "AE Target Brightness",
+            ControlFlagsModel(
+                default_value=default,
+                max_value=235,
+                min_value=20,
+                step=1,
+                control_type=ControlTypeEnum.INTEGER,
+            ),
+            callback,
+        )
+
 
 class AutoExposureOption(ASICOption):
     def __init__(self, asic_interface: ASICInterface, **kwargs) -> None:

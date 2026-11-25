@@ -4,7 +4,9 @@
     "Strobe Width",
     "ISO",
     "Exposure Time",
-    "Auto Exposure (ASIC)"
+    "Auto Exposure (ASIC)",
+    "Auto Exposure (Software)",
+    "AE Target Brightness"
   ],
   "System Controls": [
     "Software H.264 Bitrate",

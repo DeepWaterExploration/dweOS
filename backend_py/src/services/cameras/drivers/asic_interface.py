@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from .video4linux import Camera
-from .xu import Selector, StellarRegisterMap, Unit
+from .xu import Selector, StellarRegisterMap, StellarSensorMap, Unit
 
 
 @dataclass
@@ -417,6 +417,35 @@ class ASICInterface:
                 request,
                 SENSOR_I2C_LEN,
             )
+
+    def sync_sensor_write_many(
+        self, writes: list[tuple[int, bytes]], group_hold: bool = False
+    ) -> int:
+        """
+        Write several sensor register runs in order. With `group_hold`, the
+        sensor latches all of them on the same frame.
+
+        Returns 0 on success (ioctl style).
+        """
+        with self._lock:
+            ret = 0
+            if group_hold:
+                ret |= self.sync_sensor_write(
+                    StellarSensorMap.GROUP_HOLD,
+                    bytes([StellarSensorMap.GROUP_HOLD_START]),
+                )
+            for reg, data in writes:
+                ret |= self.sync_sensor_write(reg, data)
+            if group_hold:
+                ret |= self.sync_sensor_write(
+                    StellarSensorMap.GROUP_HOLD,
+                    bytes([StellarSensorMap.GROUP_HOLD_END]),
+                )
+                ret |= self.sync_sensor_write(
+                    StellarSensorMap.GROUP_HOLD,
+                    bytes([StellarSensorMap.GROUP_HOLD_LAUNCH]),
+                )
+            return ret
 
     def sensor_read(self, reg: int, length: int = 1) -> tuple[int, bytes]:
         """

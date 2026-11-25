@@ -4,18 +4,34 @@ shd.py
 Adds additional features to stellarHD devices
 """
 
+import threading
+import time
+from collections.abc import Callable
+
 from backend_py.src.models import DeviceType
 
 from ..device import Device, DeviceMetadata
 from ..video4linux import DeviceInfo
 from .options import (
+    AETargetOption,
+    ASICOption,
     AutoExposureOption,
     BaseOption,
     GainOption,
     HardwareBitrateOption,
     ShutterSpeedOption,
+    SoftwareAutoExposureOption,
     StrobeWidthOption,
 )
+from .software_ae import DEFAULT_TARGET, SoftwareAutoExposure
+
+# How long a sensor gets to start answering after the stream starts
+SENSOR_READY_TIMEOUT_S = 10
+# Checks that the firmware AE matches the setting after the sensor starts
+FIRMWARE_AE_CHECKS = 3
+FIRMWARE_AE_CHECK_INTERVAL_S = 0.5
+# Options that only mean something on the leader
+LEADER_ONLY_OPTIONS = ["software_ae", "ae_target"]
 
 
 class SHDDevice(Device):
@@ -48,9 +64,31 @@ class SHDDevice(Device):
         # Should directly correspond with self.is_managed
         self.leader_device: SHDDevice | None = None
 
+        # Changes on every stream start, so an older settings reapply gives up
+        self._stream_generation = 0
+
+        # Runs on the leader, using the synchronized frames, and drives every
+        # camera in the group
+        self.software_ae = SoftwareAutoExposure(
+            get_interfaces=lambda: [d.asic_interface for d in self._ae_group()],
+            get_fps=lambda: self.stream.interval.denominator,
+            on_update=self._on_software_ae_update,
+            name=self.bus_info,
+        )
+        self.stream_runner.on("frames", self.software_ae.submit)
+
         def on_auto_exposure(value: int | float | bool) -> None:
-            if not value:
-                self.reapply_sensor_config(ignore_list=["auto_exposure"])
+            if value:
+                # The firmware AE takes over from the software AE, which runs on
+                # the leader for the whole group
+                leader = self.leader_device or self
+                if leader.get_option("software_ae"):
+                    leader._set_option_and_control("software_ae", False)
+            else:
+                self.reapply_sensor_config(ignore_list=["auto_exposure", "software_ae"])
+
+        def on_ae_target(value: int | float | bool) -> None:
+            self.software_ae.target = int(value)
 
         # options
         options: dict[str, BaseOption] = {
@@ -61,9 +99,62 @@ class SHDDevice(Device):
             "iso": GainOption(self.asic_interface),
             "strobe_width": StrobeWidthOption(self.asic_interface),
             "hw_bitrate": HardwareBitrateOption(self.asic_interface),
+            # New options go last, since control ids follow this order
+            "software_ae": SoftwareAutoExposureOption(callback=self._on_software_ae),
+            "ae_target": AETargetOption(DEFAULT_TARGET, callback=on_ae_target),
         }
 
         self.add_controls_from_options(options)
+
+    def _ae_group(self) -> list["SHDDevice"]:
+        return [self, *self.follower_devices.values()]
+
+    def _set_control_value(self, name: str, value: int | float | bool) -> None:
+        for control in self.controls:
+            if control.name == name:
+                control.value = value
+                return
+
+    def _set_option_and_control(self, key: str, value: int | float | bool) -> None:
+        """
+        Set an option from the backend and show the change in the UI
+        """
+        option = self._options[key]
+        self._set_control_value(option.name, value)
+        option.set_value(value)
+        self.emit("updated")
+
+    def _on_software_ae(self, value: int | float | bool) -> None:
+        if not value:
+            self.software_ae.stop()
+            return
+        if self.software_ae.running:
+            return
+
+        # The firmware AE would fight the software AE. Write it even when the
+        # setting already says off, in case the camera does not match
+        for device in self._ae_group():
+            device._set_option_and_control("auto_exposure", False)
+
+        self.software_ae.start(
+            int(self.get_option("shutter")), int(self.get_option("strobe_width"))
+        )
+
+    def _on_software_ae_update(self, exposure: int, strobe: int) -> None:
+        """
+        Show the values the software AE wrote. Called at most once a second
+        """
+        for device in self._ae_group():
+            for key, value in (("shutter", exposure), ("strobe_width", strobe)):
+                option = device._options[key]
+                if isinstance(option, ASICOption):
+                    option.cache_value(value)
+                device._set_control_value(option.name, value)
+            device.emit("updated")
+
+    def close(self) -> None:
+        self.software_ae.stop()
+        super().close()
 
     @property
     def can_lead(self) -> bool:
@@ -250,7 +341,79 @@ class SHDDevice(Device):
             # Way to set options from the backend on stream start
             # This doesn't actually update it internally
             # This is likely not necessary
-            follower.reapply_sensor_config(options=self._options)
+            follower.reapply_sensor_config(
+                options=self._options, ignore_list=LEADER_ONLY_OPTIONS
+            )
+
+        self._reapply_when_sensors_ready()
+
+    def _reapply_when_sensors_ready(self) -> None:
+        """
+        Sensor registers only take writes once the sensor is running, a second or
+        two after the stream starts, so the writes in start_stream can be lost.
+        The firmware also turns its AE on while it starts the sensor. Once every
+        sensor answers, write the settings again and check the firmware AE.
+        """
+        self._stream_generation += 1
+        generation = self._stream_generation
+        devices = self._ae_group()
+
+        def cancelled() -> bool:
+            return generation != self._stream_generation or not self.stream.enabled
+
+        def run() -> None:
+            for device in devices:
+                if not device.asic_interface.wait_for_sensor(
+                    SENSOR_READY_TIMEOUT_S, cancelled
+                ):
+                    if not cancelled():
+                        self.logger.warning(
+                            "Sensor of %s did not start, settings may not apply",
+                            device.bus_info,
+                        )
+                    return
+
+            self.logger.info("Sensors started, reapplying settings")
+            self.reapply_sensor_config()
+            for follower in devices[1:]:
+                follower.reapply_sensor_config(
+                    options=self._options, ignore_list=LEADER_ONLY_OPTIONS
+                )
+            self._check_firmware_ae(devices, cancelled)
+
+        threading.Thread(target=run, daemon=True).start()
+
+    def _check_firmware_ae(
+        self, devices: list["SHDDevice"], cancelled: Callable[[], bool]
+    ) -> None:
+        """
+        Make the camera's firmware AE match the setting
+        """
+        for _ in range(FIRMWARE_AE_CHECKS):
+            # Let the queued writes go out first
+            time.sleep(FIRMWARE_AE_CHECK_INTERVAL_S)
+            if cancelled():
+                return
+
+            mismatched = []
+            for device in devices:
+                wanted = bool(device.get_option("auto_exposure"))
+                actual = device.asic_interface.get_auto_exposure()
+                if actual is not None and actual != wanted:
+                    mismatched.append((device, wanted))
+            if not mismatched:
+                return
+
+            for device, wanted in mismatched:
+                self.logger.info(
+                    "Firmware AE of %s is %s, setting it %s",
+                    device.bus_info,
+                    "off" if wanted else "on",
+                    "on" if wanted else "off",
+                )
+                device.asic_interface.sync_set_auto_exposure(wanted)
+
+        self.logger.warning("Firmware AE does not match the setting")
 
     def remove_device(self) -> None:
         # Unplugging a device makes it too complicated to handle its follower stream,

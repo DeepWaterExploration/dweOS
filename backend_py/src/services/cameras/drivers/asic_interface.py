@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from .video4linux import Camera
-from .xu import Selector, StellarRegisterMap, Unit
+from .xu import Selector, StellarRegisterMap, StellarSensorMap, Unit
 
 
 @dataclass
@@ -418,10 +418,61 @@ class ASICInterface:
                 SENSOR_I2C_LEN,
             )
 
-    def sensor_read(self, reg: int, length: int = 1) -> tuple[int, bytes]:
+    def sync_sensor_write_many(
+        self, writes: list[tuple[int, bytes]], group_hold: bool = False
+    ) -> int:
+        """
+        Write several sensor register runs in order. With `group_hold`, the
+        sensor latches all of them on the same frame.
+
+        Returns 0 on success (ioctl style).
+        """
+        with self._lock:
+            ret = 0
+            if group_hold:
+                ret |= self.sync_sensor_write(
+                    StellarSensorMap.GROUP_HOLD,
+                    bytes([StellarSensorMap.GROUP_HOLD_START]),
+                )
+            for reg, data in writes:
+                ret |= self.sync_sensor_write(reg, data)
+            if group_hold:
+                ret |= self.sync_sensor_write(
+                    StellarSensorMap.GROUP_HOLD,
+                    bytes([StellarSensorMap.GROUP_HOLD_END]),
+                )
+                ret |= self.sync_sensor_write(
+                    StellarSensorMap.GROUP_HOLD,
+                    bytes([StellarSensorMap.GROUP_HOLD_LAUNCH]),
+                )
+            return ret
+
+    def wait_for_sensor(
+        self, timeout_s: float, cancelled: Callable[[], bool] | None = None
+    ) -> bool:
+        """
+        Wait until the sensor answers on I2C. It only does while streaming, a
+        second or two after the stream starts.
+
+        Returns False on timeout, when cancelled, or when the interface stops.
+        """
+        deadline = time.monotonic() + timeout_s
+        while time.monotonic() < deadline:
+            if not self._is_worker_running or (cancelled and cancelled()):
+                return False
+            ret, _ = self.sensor_read(StellarSensorMap.VTS_HIGH, warn=False)
+            if ret == 0:
+                return True
+            time.sleep(0.1)
+        return False
+
+    def sensor_read(
+        self, reg: int, length: int = 1, warn: bool = True
+    ) -> tuple[int, bytes]:
         """
         Read `length` consecutive bytes from sensor registers starting at `reg`
-        through the firmware I2C command.
+        through the firmware I2C command. With `warn`, a sensor that does not
+        answer is logged.
 
         Returns 0 on success, along with the bytes read. (ioctl style)
         On failure, returns a non-zero error code and empty bytes.
@@ -454,6 +505,8 @@ class ASICInterface:
         raw = reply.raw
         # A wrong slave id / absent sensor comes back as a 0 byte count
         if raw[2] != length:
+            if not warn:
+                return (1, b"")
             self.logger.warning(
                 "Sensor did not respond reading 0x%04X (slave 0x%02X)",
                 reg,

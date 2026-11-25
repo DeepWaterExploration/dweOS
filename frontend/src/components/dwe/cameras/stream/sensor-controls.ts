@@ -3,6 +3,7 @@ import { components } from "@/schemas/dwe_os_2";
 type ControlModel = components["schemas"]["ControlModel"];
 type ControlFlags = NonNullable<ControlModel["flags"]>;
 
+// Keep in sync with software_ae.py in the backend
 const FPS_TO_MAX_EXPOSURE: Record<number, number> = {
   60: 1462,
   50: 1756,
@@ -49,6 +50,15 @@ const checkIfValue = (
   expected: boolean | number = true,
 ) => controls.find((c) => c.name === name)?.value === expected;
 
+// Boolean controls can arrive as true/false or 1/0
+const isEnabled = (controls: ControlModel[], name: string) =>
+  Boolean(controls.find((c) => c.name === name)?.value);
+
+// Exposure Time and Strobe Width are set by either auto exposure
+const isAutoExposure = (controls: ControlModel[]) =>
+  isEnabled(controls, "Auto Exposure (ASIC)") ||
+  isEnabled(controls, "Auto Exposure (Software)");
+
 // The performance for this is not great, or even good
 // it needs to loop over everything just to get one value which is horrendous
 const DYNAMIC_RULES: Record<string, RuleConfiguration> = {
@@ -59,7 +69,7 @@ const DYNAMIC_RULES: Record<string, RuleConfiguration> = {
           0) * (STROBE_MULTIPLIER[device.stream.interval.denominator] ?? 0),
     },
     uiFlags: {
-      disabled: (controls) => checkIfValue(controls, "Auto Exposure (ASIC)"),
+      disabled: isAutoExposure,
     },
   },
   ISO: {
@@ -75,7 +85,7 @@ const DYNAMIC_RULES: Record<string, RuleConfiguration> = {
       },
     },
     uiFlags: {
-      disabled: (controls) => checkIfValue(controls, "Auto Exposure (ASIC)"),
+      disabled: isAutoExposure,
     },
   },
   "White Balance Temperature": {

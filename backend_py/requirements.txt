@@ -9,3 +9,4 @@ sdbus==0.14.0
 sdbus-networkmanager==2.0.0
 pyserial
 colorlog==6.10.1
+pillow

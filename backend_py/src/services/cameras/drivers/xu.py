@@ -90,3 +90,8 @@ class StellarSensorMap:
     VTS_LOW = 0x380F
     HTS_HIGH = 0x380C
     HTS_LOW = 0x380D
+    # OmniVision group hold: writes between start and end latch on one frame
+    GROUP_HOLD = 0x3208
+    GROUP_HOLD_START = 0x00
+    GROUP_HOLD_END = 0x10
+    GROUP_HOLD_LAUNCH = 0xA0

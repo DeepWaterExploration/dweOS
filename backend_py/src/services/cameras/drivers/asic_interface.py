@@ -447,10 +447,32 @@ class ASICInterface:
                 )
             return ret
 
-    def sensor_read(self, reg: int, length: int = 1) -> tuple[int, bytes]:
+    def wait_for_sensor(
+        self, timeout_s: float, cancelled: Callable[[], bool] | None = None
+    ) -> bool:
+        """
+        Wait until the sensor answers on I2C. It only does while streaming, a
+        second or two after the stream starts.
+
+        Returns False on timeout, when cancelled, or when the interface stops.
+        """
+        deadline = time.monotonic() + timeout_s
+        while time.monotonic() < deadline:
+            if not self._is_worker_running or (cancelled and cancelled()):
+                return False
+            ret, _ = self.sensor_read(StellarSensorMap.VTS_HIGH, warn=False)
+            if ret == 0:
+                return True
+            time.sleep(0.1)
+        return False
+
+    def sensor_read(
+        self, reg: int, length: int = 1, warn: bool = True
+    ) -> tuple[int, bytes]:
         """
         Read `length` consecutive bytes from sensor registers starting at `reg`
-        through the firmware I2C command.
+        through the firmware I2C command. With `warn`, a sensor that does not
+        answer is logged.
 
         Returns 0 on success, along with the bytes read. (ioctl style)
         On failure, returns a non-zero error code and empty bytes.
@@ -483,6 +505,8 @@ class ASICInterface:
         raw = reply.raw
         # A wrong slave id / absent sensor comes back as a 0 byte count
         if raw[2] != length:
+            if not warn:
+                return (1, b"")
             self.logger.warning(
                 "Sensor did not respond reading 0x%04X (slave 0x%02X)",
                 reg,
